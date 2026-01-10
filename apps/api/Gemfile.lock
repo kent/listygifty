@@ -218,6 +218,8 @@ GEM
     pg (1.6.2-arm64-darwin)
     pg (1.6.2-x86_64-linux)
     pg (1.6.2-x86_64-linux-musl)
+    posthog-ruby (3.4.0)
+      concurrent-ruby (~> 1)
     postmark (1.25.1)
       json
     postmark-rails (0.22.1)
@@ -385,6 +387,7 @@ DEPENDENCIES
   minitest (< 6.0)
   oj
   pg (~> 1.5)
+  posthog-ruby
   postmark-rails
   puma (>= 5.0)
   rack-attack
