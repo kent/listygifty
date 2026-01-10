@@ -119,14 +119,6 @@ export function ApiKeysSection() {
     setDialogOpen(open);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
-      </div>
-    );
-  }
-
   return (
     <section className="space-y-8">
       {/* Header */}

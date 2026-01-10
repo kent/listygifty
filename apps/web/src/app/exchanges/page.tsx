@@ -87,14 +87,6 @@ export default function ExchangesPage() {
     initialData: [],
   });
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-violet-500 border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
   const myExchanges = exchanges.filter((e) => e.is_owner);
   const participatingIn = exchanges.filter((e) => !e.is_owner);
 

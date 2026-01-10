@@ -124,14 +124,6 @@ export default function WishlistsPage() {
     initialData: [],
   });
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-violet-500 border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">

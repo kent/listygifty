@@ -3,9 +3,10 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { giftsService } from "@/services";
+import { useWorkspace } from "@/contexts/workspace-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle2, Package, Truck, MapPin, Lightbulb } from "lucide-react";
+import { CheckCircle2, Package, Truck, MapPin, Lightbulb } from "lucide-react";
 import type { Gift } from "@niftygifty/types";
 
 const STATUS_CONFIG: Record<string, { icon: React.ReactNode; color: string }> = {
@@ -16,10 +17,12 @@ const STATUS_CONFIG: Record<string, { icon: React.ReactNode; color: string }> = 
 };
 
 export function GiftTodoList() {
+  const { currentWorkspace } = useWorkspace();
   const [gifts, setGifts] = useState<Gift[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const loadGifts = useCallback(async () => {
+    if (!currentWorkspace) return;
+
     try {
       const allGifts = await giftsService.getAll();
       // Filter out completed gifts (status "Done")
@@ -27,30 +30,13 @@ export function GiftTodoList() {
       setGifts(pendingGifts);
     } catch {
       // Silently fail - dashboard still works
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  }, [currentWorkspace]);
 
+  // Re-fetch when workspace changes
   useEffect(() => {
     loadGifts();
   }, [loadGifts]);
-
-  if (loading) {
-    return (
-      <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
-        <CardContent className="p-4">
-          <h2 className="font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-violet-500 dark:text-violet-400" />
-            To Do
-          </h2>
-          <div className="flex justify-center py-4">
-            <Loader2 className="h-5 w-5 animate-spin text-slate-500" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   if (gifts.length === 0) {
     return (

@@ -89,20 +89,6 @@ export default function SettingsPage() {
     );
   }, []);
 
-  if (authLoading || dataLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative">
-            <div className="animate-spin h-10 w-10 border-4 border-violet-500/30 border-t-violet-500 rounded-full" />
-            <div className="absolute inset-0 animate-ping h-10 w-10 border-4 border-violet-500/20 rounded-full" />
-          </div>
-          <span className="text-sm text-slate-500 dark:text-slate-400">Loading settings...</span>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">

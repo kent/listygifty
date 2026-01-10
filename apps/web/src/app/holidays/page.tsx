@@ -303,13 +303,9 @@ function QuickHolidayCard({
                   {daysText}
                 </p>
               </div>
-              {isCreating ? (
-                <div className="animate-spin h-5 w-5 border-2 border-violet-500 border-t-transparent rounded-full shrink-0 mt-1" />
-              ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500 text-white shrink-0 group-hover:bg-violet-600 transition-colors shadow-lg shadow-violet-500/25">
-                  <Plus className="h-5 w-5" />
-                </div>
-              )}
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500 text-white shrink-0 group-hover:bg-violet-600 transition-colors shadow-lg shadow-violet-500/25">
+                <Plus className="h-5 w-5" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -339,11 +335,7 @@ function QuickHolidayCard({
               )}
             </div>
           </div>
-          {isCreating ? (
-            <div className="animate-spin h-4 w-4 border-2 border-violet-500 border-t-transparent rounded-full shrink-0" />
-          ) : (
-            <Plus className="h-4 w-4 text-slate-400 dark:text-slate-600 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors shrink-0" />
-          )}
+          <Plus className="h-4 w-4 text-slate-400 dark:text-slate-600 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors shrink-0" />
         </CardContent>
       </Card>
     </button>
@@ -850,14 +842,6 @@ export default function HolidaysPage() {
       toast.error("Failed to update gift list");
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-violet-500 border-t-transparent rounded-full" />
-      </div>
-    );
-  }
 
   if (error) {
     return (

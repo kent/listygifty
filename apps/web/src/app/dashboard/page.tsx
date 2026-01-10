@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
+import { useWorkspace } from "@/contexts/workspace-context";
 import { holidaysService, peopleService, AUTH_ROUTES } from "@/services";
 import { AppHeader } from "@/components/layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,12 +28,12 @@ const HOLIDAY_ICONS: Record<string, string> = {
 
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading, signOut } = useAuth();
+  const { currentWorkspace } = useWorkspace();
   const router = useRouter();
 
   const [templates, setTemplates] = useState<Holiday[]>([]);
   const [userHolidays, setUserHolidays] = useState<Holiday[]>([]);
   const [people, setPeople] = useState<Person[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
   const [creatingHolidayId, setCreatingHolidayId] = useState<number | null>(null);
   const [newPersonName, setNewPersonName] = useState("");
   const [addingPerson, setAddingPerson] = useState(false);
@@ -44,6 +45,8 @@ export default function DashboardPage() {
   );
 
   const loadData = useCallback(async () => {
+    if (!currentWorkspace) return;
+
     try {
       const [templatesData, holidaysData, peopleData] = await Promise.all([
         holidaysService.getTemplates(),
@@ -55,10 +58,8 @@ export default function DashboardPage() {
       setPeople(peopleData);
     } catch {
       toast.error("Failed to load data");
-    } finally {
-      setLoadingData(false);
     }
-  }, []);
+  }, [currentWorkspace]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -66,11 +67,12 @@ export default function DashboardPage() {
     }
   }, [isLoading, isAuthenticated, router]);
 
+  // Reload data when workspace changes
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && currentWorkspace) {
       loadData();
     }
-  }, [isAuthenticated, loadData]);
+  }, [isAuthenticated, currentWorkspace, loadData]);
 
   const handleStartPlanning = async (template: Holiday) => {
     setCreatingHolidayId(template.id);
@@ -106,14 +108,6 @@ export default function DashboardPage() {
       setAddingPerson(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
-      </div>
-    );
-  }
 
   const getIcon = (name: string) => {
     for (const [key, icon] of Object.entries(HOLIDAY_ICONS)) {
@@ -173,33 +167,21 @@ export default function DashboardPage() {
           <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
             <CardContent className="p-4">
               <h2 className="font-semibold text-slate-900 dark:text-white mb-3">Start a Gift List</h2>
-              {loadingData ? (
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="h-9 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {templates.slice(0, 6).map((template) => (
-                    <Button
-                      key={template.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleStartPlanning(template)}
-                      disabled={creatingHolidayId === template.id}
-                      className="border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
-                    >
-                      {creatingHolidayId === template.id ? (
-                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                      ) : (
-                        <span className="mr-1">{getIcon(template.name)}</span>
-                      )}
-                      {template.name}
-                    </Button>
-                  ))}
-                </div>
-              )}
+              <div className="flex flex-wrap gap-2">
+                {templates.slice(0, 6).map((template) => (
+                  <Button
+                    key={template.id}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleStartPlanning(template)}
+                    disabled={creatingHolidayId === template.id}
+                    className="border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                  >
+                    <span className="mr-1">{getIcon(template.name)}</span>
+                    {template.name}
+                  </Button>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
