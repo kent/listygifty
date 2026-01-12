@@ -1,4 +1,4 @@
-require "posthog-ruby"
+require "posthog"
 
 POSTHOG = PostHog::Client.new({
   api_key: ENV.fetch("POSTHOG_API_KEY", "REDACTED_POSTHOG_KEY_ROTATED_2026_05"),

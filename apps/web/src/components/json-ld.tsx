@@ -8,6 +8,7 @@ export function JsonLd<T extends Thing>({ data }: JsonLdProps<T>) {
   return (
     <script
       type="application/ld+json"
+      suppressHydrationWarning
       dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
     />
   );

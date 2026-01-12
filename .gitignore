@@ -34,3 +34,5 @@ Thumbs.db
 # Eames design sessions
 .eames/
 .vercel
+.env*.local
+.env.production
