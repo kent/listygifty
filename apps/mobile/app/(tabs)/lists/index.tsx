@@ -5,7 +5,6 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useRouter } from "expo-router";
@@ -14,6 +13,9 @@ import { useServices } from "@/lib/use-api";
 import { useTheme } from "@/lib/theme";
 import type { Holiday } from "@niftygifty/types";
 import { GiftListCard } from "@/components/GiftListCard";
+import { ScreenLoader } from "@/components/ScreenLoader";
+import { InlineError } from "@/components/InlineError";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 
 export default function GiftListsScreen() {
   const router = useRouter();
@@ -89,22 +91,13 @@ export default function GiftListsScreen() {
   };
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <ScreenLoader />;
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
       {error ? (
-        <View style={{ padding: 16, backgroundColor: colors.errorLight, margin: 16, borderRadius: 8 }}>
-          <Text style={{ color: colors.error }}>{error}</Text>
-          <TouchableOpacity onPress={fetchLists} style={{ marginTop: 8 }}>
-            <Text style={{ color: colors.primary }}>Retry</Text>
-          </TouchableOpacity>
-        </View>
+        <InlineError message={error} onRetry={fetchLists} margin={16} />
       ) : null}
 
       <FlatList
@@ -151,27 +144,7 @@ export default function GiftListsScreen() {
       />
 
       {lists.length > 0 ? (
-        <TouchableOpacity
-          onPress={handleAddList}
-          style={{
-            position: "absolute",
-            right: 16,
-            bottom: 24,
-            backgroundColor: colors.primary,
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            justifyContent: "center",
-            alignItems: "center",
-            shadowColor: colors.primary,
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 8,
-            elevation: 8,
-          }}
-        >
-          <Text style={{ color: colors.textInverse, fontSize: 28, lineHeight: 32 }}>+</Text>
-        </TouchableOpacity>
+        <FloatingActionButton onPress={handleAddList} accessibilityLabel="Add List" />
       ) : null}
     </GestureHandlerRootView>
   );

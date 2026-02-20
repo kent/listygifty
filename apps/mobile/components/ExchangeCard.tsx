@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type { GiftExchange } from "@niftygifty/types";
 import { StatusBadge } from "./StatusBadge";
 import { useTheme } from "@/lib/theme";
+import { formatBudgetRange, formatShortDate } from "@/lib/formatters";
 
 interface ExchangeCardProps {
   exchange: GiftExchange;
@@ -11,17 +12,8 @@ interface ExchangeCardProps {
 
 export function ExchangeCard({ exchange, onPress }: ExchangeCardProps) {
   const { colors } = useTheme();
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
-    return new Date(dateString).toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const formattedDate = formatDate(exchange.exchange_date);
+  const formattedDate = formatShortDate(exchange.exchange_date);
+  const budgetRange = formatBudgetRange(exchange.budget_min, exchange.budget_max);
 
   return (
     <TouchableOpacity
@@ -64,11 +56,11 @@ export function ExchangeCard({ exchange, onPress }: ExchangeCardProps) {
           </View>
 
           {/* Budget info if available */}
-          {(exchange.budget_min || exchange.budget_max) ? (
+          {budgetRange ? (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 8 }}>
               <Ionicons name="cash-outline" size={14} color={colors.muted} />
               <Text style={{ color: colors.muted, fontSize: 12 }}>
-                ${exchange.budget_min || "0"} - ${exchange.budget_max || "No limit"}
+                {budgetRange}
               </Text>
             </View>
           ) : null}

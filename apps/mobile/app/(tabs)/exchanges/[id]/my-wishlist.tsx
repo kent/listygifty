@@ -4,16 +4,17 @@ import {
   Text,
   FlatList,
   RefreshControl,
-  ActivityIndicator,
   TouchableOpacity,
   Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import { useServices } from "@/lib/use-api";
 import { useTheme } from "@/lib/theme";
 import type { GiftExchangeWithParticipants, WishlistItem } from "@niftygifty/types";
 import { WishlistItemCard } from "@/components/WishlistItemCard";
+import { ScreenLoader } from "@/components/ScreenLoader";
+import { InlineError } from "@/components/InlineError";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 
 export default function MyWishlistScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -103,11 +104,7 @@ export default function MyWishlistScreen() {
   };
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <ScreenLoader />;
   }
 
   return (
@@ -115,9 +112,7 @@ export default function MyWishlistScreen() {
       <Stack.Screen options={{ title: "My Wishlist" }} />
 
       {error ? (
-        <View style={{ padding: 16, backgroundColor: colors.errorLight, margin: 16, borderRadius: 8 }}>
-          <Text style={{ color: colors.error }}>{error}</Text>
-        </View>
+        <InlineError message={error} onRetry={fetchData} margin={16} />
       ) : null}
 
       <FlatList
@@ -171,27 +166,7 @@ export default function MyWishlistScreen() {
 
       {/* FAB to add items */}
       {items.length > 0 ? (
-        <TouchableOpacity
-          onPress={handleAddItem}
-          style={{
-            position: "absolute",
-            right: 16,
-            bottom: 24,
-            backgroundColor: colors.primary,
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            justifyContent: "center",
-            alignItems: "center",
-            shadowColor: colors.primary,
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 8,
-            elevation: 8,
-          }}
-        >
-          <Ionicons name="add" size={28} color={colors.textInverse} />
-        </TouchableOpacity>
+        <FloatingActionButton onPress={handleAddItem} accessibilityLabel="Add Wishlist Item" />
       ) : null}
     </View>
   );

@@ -1,7 +1,9 @@
-import { View, Text, TouchableOpacity, Image, Linking } from "react-native";
+import { View, Text, TouchableOpacity, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { WishlistItem } from "@niftygifty/types";
 import { useTheme } from "@/lib/theme";
+import { formatCurrency } from "@/lib/formatters";
+import { openExternalUrl } from "@/lib/linking";
 
 interface WishlistItemCardProps {
   item: WishlistItem;
@@ -12,10 +14,11 @@ interface WishlistItemCardProps {
 
 export function WishlistItemCard({ item, editable = false, onDelete, onPress }: WishlistItemCardProps) {
   const { colors } = useTheme();
+  const formattedPrice = formatCurrency(item.price);
 
-  const handleOpenLink = () => {
+  const handleOpenLink = async () => {
     if (item.link) {
-      Linking.openURL(item.link);
+      await openExternalUrl(item.link);
     }
   };
 
@@ -69,10 +72,10 @@ export function WishlistItemCard({ item, editable = false, onDelete, onPress }: 
           ) : null}
 
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 4 }}>
-            {item.price ? (
+            {formattedPrice ? (
               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                 <Ionicons name="cash-outline" size={14} color={colors.success} />
-                <Text style={{ color: colors.success, fontSize: 12 }}>${item.price}</Text>
+                <Text style={{ color: colors.success, fontSize: 12 }}>{formattedPrice}</Text>
               </View>
             ) : null}
 

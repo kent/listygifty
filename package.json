@@ -12,7 +12,14 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "gcp:bootstrap": "bash infra/gcp/scripts/bootstrap.sh",
+    "gcp:sync-secrets": "bash infra/gcp/scripts/sync-heroku-secrets.sh",
+    "gcp:migrate-db": "bash infra/gcp/scripts/migrate-heroku-db.sh",
+    "gcp:verify-db": "bash infra/gcp/scripts/verify-migration.sh",
+    "gcp:deploy:api": "bash infra/gcp/scripts/deploy-api.sh",
+    "gcp:deploy:web": "bash infra/gcp/scripts/deploy-web.sh",
+    "gcp:release": "bash infra/gcp/scripts/release.sh"
   },
   "devDependencies": {
     "schema-dts": "^1.1.5",

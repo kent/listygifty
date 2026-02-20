@@ -27,7 +27,7 @@ const mockHoliday = {
   updated_at: "2025-01-01T00:00:00Z",
 };
 
-const mockGift: Gift = {
+const mockGift = {
   id: 1,
   name: "Nintendo Switch",
   description: "Gaming console",
@@ -44,7 +44,7 @@ const mockGift: Gift = {
   is_mine: true,
   created_at: "2025-01-01T00:00:00Z",
   updated_at: "2025-01-01T00:00:00Z",
-};
+} as unknown as Gift;
 
 describe("GiftItem", () => {
   beforeEach(() => {
@@ -71,15 +71,15 @@ describe("GiftItem", () => {
     expect(screen.getByText("Idea")).toBeTruthy();
   });
 
-  it("renders View Link button when link is present", () => {
+  it("renders link button when link is present", () => {
     render(<GiftItem item={mockGift} />);
-    expect(screen.getByText("View Link")).toBeTruthy();
+    expect(screen.getByText("Link")).toBeTruthy();
   });
 
-  it("does not show View Link when no link", () => {
+  it("does not show link button when no link", () => {
     const giftWithoutLink = { ...mockGift, link: null };
     render(<GiftItem item={giftWithoutLink} />);
-    expect(screen.queryByText("View Link")).toBeNull();
+    expect(screen.queryByText("Link")).toBeNull();
   });
 
   it("handles null cost gracefully", () => {
@@ -103,6 +103,8 @@ describe("GiftItem", () => {
         {
           id: 1,
           name: "John",
+          email: "john@example.com",
+          notes: null,
           relationship: null,
           age: null,
           gender: null,
@@ -114,7 +116,7 @@ describe("GiftItem", () => {
           updated_at: "2025-01-01T00:00:00Z",
         },
       ],
-    };
+    } as Gift;
     render(<GiftItem item={giftWithRecipients} />);
     expect(screen.getByText("For: John")).toBeTruthy();
   });

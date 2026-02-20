@@ -9,6 +9,9 @@ Rails.application.configure do
   # Eager load code on boot for better performance and memory savings (ignored by Rake tasks).
   config.eager_load = true
 
+  # Rails 8 defaults to enabling YJIT outside local environments; keep it explicit for runtime control.
+  config.yjit = ENV.fetch("RAILS_ENABLE_YJIT", "true") != "false"
+
   # Full error reports are disabled.
   config.consider_all_requests_local = false
 

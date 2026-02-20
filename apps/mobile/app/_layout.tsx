@@ -4,11 +4,12 @@ import { ClerkProvider, ClerkLoaded, useAuth } from "@clerk/clerk-expo";
 import { PostHogProvider } from "posthog-react-native";
 import { tokenCache } from "@/lib/token-cache";
 import { StatusBar } from "expo-status-bar";
-import { View, ActivityIndicator } from "react-native";
 import { ThemeProvider, useTheme } from "@/lib/theme";
+import { ScreenLoader } from "@/components/ScreenLoader";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-const posthogApiKey = process.env.EXPO_PUBLIC_POSTHOG_KEY || "REDACTED_POSTHOG_KEY_ROTATED_2026_05";
+const posthogApiKey = process.env.EXPO_PUBLIC_POSTHOG_KEY;
+const posthogHost = process.env.EXPO_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
 
 if (!publishableKey) {
   throw new Error("Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY");
@@ -18,7 +19,7 @@ function AuthRouter() {
   const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  const { colors, isDark } = useTheme();
+  const { isDark } = useTheme();
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -34,11 +35,7 @@ function AuthRouter() {
   }, [isLoaded, isSignedIn, segments]);
 
   if (!isLoaded) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <ScreenLoader />;
   }
 
   return (
@@ -50,20 +47,28 @@ function AuthRouter() {
 }
 
 export default function RootLayout() {
+  const appShell = (
+    <ThemeProvider>
+      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+        <ClerkLoaded>
+          <AuthRouter />
+        </ClerkLoaded>
+      </ClerkProvider>
+    </ThemeProvider>
+  );
+
+  if (!posthogApiKey) {
+    return appShell;
+  }
+
   return (
     <PostHogProvider
       apiKey={posthogApiKey}
       options={{
-        host: "https://us.i.posthog.com",
+        host: posthogHost,
       }}
     >
-      <ThemeProvider>
-        <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-          <ClerkLoaded>
-            <AuthRouter />
-          </ClerkLoaded>
-        </ClerkProvider>
-      </ThemeProvider>
+      {appShell}
     </PostHogProvider>
   );
 }

@@ -1,0 +1,11 @@
+.git
+.gitignore
+**/.DS_Store
+**/node_modules
+**/.next
+**/dist
+**/coverage
+**/tmp
+apps/mobile
+apps/api/tmp
+apps/api/log

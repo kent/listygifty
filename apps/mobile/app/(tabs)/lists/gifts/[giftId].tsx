@@ -7,7 +7,6 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  Linking,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
@@ -18,9 +17,13 @@ import { useServices } from "@/lib/use-api";
 import { useTheme } from "@/lib/theme";
 import { PersonPicker } from "@/components/PersonPicker";
 import type { Gift, GiftStatus } from "@niftygifty/types";
+import { getGiftStatusColors } from "@/lib/gift-status-colors";
+import { openExternalUrl } from "@/lib/linking";
+import { ScreenLoader } from "@/components/ScreenLoader";
+import { InlineError } from "@/components/InlineError";
 
 export default function GiftDetailScreen() {
-  const { giftId, holiday_id } = useLocalSearchParams<{ giftId: string; holiday_id: string }>();
+  const { giftId } = useLocalSearchParams<{ giftId: string }>();
   const router = useRouter();
   const { gifts, giftStatuses } = useServices();
   const { colors, isDark } = useTheme();
@@ -83,14 +86,24 @@ export default function GiftDetailScreen() {
   // Track changes
   useEffect(() => {
     if (!gift) return;
+
+    const sortedRecipientIds = [...recipientIds].sort((left, right) => left - right);
+    const sortedOriginalRecipientIds = [...gift.recipients.map((recipient) => recipient.id)].sort(
+      (left, right) => left - right
+    );
+    const sortedGiverIds = [...giverIds].sort((left, right) => left - right);
+    const sortedOriginalGiverIds = [...gift.givers.map((giver) => giver.id)].sort(
+      (left, right) => left - right
+    );
+
     const changed =
       name !== gift.name ||
       description !== (gift.description || "") ||
       link !== (gift.link || "") ||
       cost !== (gift.cost || "") ||
       selectedStatusId !== gift.gift_status_id ||
-      JSON.stringify(recipientIds.sort()) !== JSON.stringify(gift.recipients.map((r) => r.id).sort()) ||
-      JSON.stringify(giverIds.sort()) !== JSON.stringify(gift.givers.map((g) => g.id).sort());
+      JSON.stringify(sortedRecipientIds) !== JSON.stringify(sortedOriginalRecipientIds) ||
+      JSON.stringify(sortedGiverIds) !== JSON.stringify(sortedOriginalGiverIds);
     setHasChanges(changed);
   }, [gift, name, description, link, cost, selectedStatusId, recipientIds, giverIds]);
 
@@ -153,9 +166,9 @@ export default function GiftDetailScreen() {
     );
   };
 
-  const handleOpenLink = () => {
+  const handleOpenLink = async () => {
     if (link) {
-      Linking.openURL(link);
+      await openExternalUrl(link);
     }
   };
 
@@ -164,29 +177,8 @@ export default function GiftDetailScreen() {
     await Haptics.selectionAsync();
   };
 
-  const getStatusColor = (statusName: string) => {
-    const name = statusName.toLowerCase();
-    if (name.includes("idea") || name.includes("thinking")) {
-      return { bg: isDark ? "#1e1b4b" : "#f3e8ff", text: isDark ? "#a78bfa" : "#7c3aed" };
-    }
-    if (name.includes("bought") || name.includes("purchased")) {
-      return { bg: isDark ? "#14532d" : "#dcfce7", text: isDark ? "#86efac" : "#15803d" };
-    }
-    if (name.includes("wrapped")) {
-      return { bg: isDark ? "#164e63" : "#cffafe", text: isDark ? "#67e8f9" : "#0e7490" };
-    }
-    if (name.includes("given") || name.includes("delivered")) {
-      return { bg: isDark ? "#065f46" : "#d1fae5", text: isDark ? "#6ee7b7" : "#059669" };
-    }
-    return { bg: colors.surfaceSecondary, text: colors.textTertiary };
-  };
-
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <ScreenLoader />;
   }
 
   if (error && !gift) {
@@ -233,9 +225,7 @@ export default function GiftDetailScreen() {
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         {error ? (
-          <View style={{ backgroundColor: colors.errorLight, padding: 12, borderRadius: 8, marginBottom: 16 }}>
-            <Text style={{ color: colors.error }}>{error}</Text>
-          </View>
+          <InlineError message={error} margin={0} />
         ) : null}
 
         {/* Name */}
@@ -341,23 +331,23 @@ export default function GiftDetailScreen() {
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
           {statuses.map((status) => {
             const isSelected = selectedStatusId === status.id;
-            const statusColor = getStatusColor(status.name);
+            const statusColor = getGiftStatusColors(status.name, colors, isDark);
             return (
               <TouchableOpacity
                 key={status.id}
                 onPress={() => handleStatusChange(status.id)}
                 style={{
-                  backgroundColor: isSelected ? statusColor.bg : colors.input,
+                  backgroundColor: isSelected ? statusColor.backgroundColor : colors.input,
                   paddingHorizontal: 16,
                   paddingVertical: 10,
                   borderRadius: 8,
                   borderWidth: 2,
-                  borderColor: isSelected ? statusColor.text : colors.inputBorder,
+                  borderColor: isSelected ? statusColor.textColor : colors.inputBorder,
                 }}
               >
                 <Text
                   style={{
-                    color: isSelected ? statusColor.text : colors.textTertiary,
+                    color: isSelected ? statusColor.textColor : colors.textTertiary,
                     fontWeight: isSelected ? "600" : "400",
                   }}
                 >

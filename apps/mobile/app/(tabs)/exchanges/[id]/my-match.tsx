@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   RefreshControl,
-  ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, Stack } from "expo-router";
 import { useServices } from "@/lib/use-api";
@@ -12,6 +11,7 @@ import { useTheme } from "@/lib/theme";
 import type { GiftExchangeWithParticipants, WishlistItem } from "@niftygifty/types";
 import { MatchRevealCard } from "@/components/MatchRevealCard";
 import { WishlistItemCard } from "@/components/WishlistItemCard";
+import { ScreenLoader } from "@/components/ScreenLoader";
 
 export default function MyMatchScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -67,11 +67,7 @@ export default function MyMatchScreen() {
   }, [fetchData]);
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <ScreenLoader />;
   }
 
   if (!exchange || !matchedParticipant) {

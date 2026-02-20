@@ -18,6 +18,22 @@ jest.mock("expo-router", () => ({
   Slot: () => null,
 }));
 
+// Mock theme hooks/provider for component unit tests
+jest.mock("@/lib/theme", () => {
+  const actualTheme = jest.requireActual("@/lib/theme");
+  return {
+    ...actualTheme,
+    ThemeProvider: ({ children }) => children,
+    useTheme: () => ({
+      colors: actualTheme.lightColors,
+      colorScheme: "light",
+      isDark: false,
+      setColorScheme: jest.fn(),
+    }),
+    useColors: () => actualTheme.lightColors,
+  };
+});
+
 // Mock @clerk/clerk-expo
 jest.mock("@clerk/clerk-expo", () => ({
   ClerkProvider: ({ children }) => children,
@@ -51,8 +67,26 @@ jest.mock("expo-secure-store", () => ({
   deleteItemAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
+// Mock AsyncStorage used by theme persistence
+jest.mock(
+  "@react-native-async-storage/async-storage",
+  () => require("@react-native-async-storage/async-storage/jest/async-storage-mock")
+);
+
 // Mock expo-status-bar
 jest.mock("expo-status-bar", () => ({
   StatusBar: () => null,
 }));
 
+// Mock icon components to avoid async font loading in tests
+jest.mock("@expo/vector-icons", () => {
+  const React = require("react");
+  const { Text } = require("react-native");
+
+  const MockIcon = ({ name, ...props }) => React.createElement(Text, props, name ?? "icon");
+  MockIcon.glyphMap = {};
+
+  return {
+    Ionicons: MockIcon,
+  };
+});

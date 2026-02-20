@@ -1,0 +1,33 @@
+options:
+  substitutionOption: ALLOW_LOOSE
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 3600s
+
+steps:
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    env:
+      - SHORT_SHA=$SHORT_SHA
+      - COMMIT_SHA=$COMMIT_SHA
+      - PROJECT_ID=$PROJECT_ID
+    args:
+      - -lc
+      - |
+        set -euo pipefail
+
+        ENVIRONMENT="${_ENVIRONMENT:?_ENVIRONMENT substitution is required}"
+        REGION="${_REGION:-us-east1}"
+        BINDINGS_FILE="${_BINDINGS_FILE:-infra/gcp/secret-bindings.${_ENVIRONMENT}.env}"
+
+        if [[ ! -f "${BINDINGS_FILE}" ]]; then
+          echo "Missing bindings file: ${BINDINGS_FILE}" >&2
+          exit 1
+        fi
+
+        echo "Deploying ${ENVIRONMENT} from ${COMMIT_SHA:-unknown} using ${BINDINGS_FILE}"
+        ENVIRONMENT="${ENVIRONMENT}" REGION="${REGION}" HEROKU_SECRET_BINDINGS_FILE="${BINDINGS_FILE}" \
+          bash infra/gcp/scripts/deploy-api.sh
+        ENVIRONMENT="${ENVIRONMENT}" REGION="${REGION}" HEROKU_SECRET_BINDINGS_FILE="${BINDINGS_FILE}" \
+          bash infra/gcp/scripts/deploy-web.sh

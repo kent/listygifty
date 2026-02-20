@@ -5,7 +5,6 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
   TextInput,
   ScrollView,
 } from "react-native";
@@ -17,6 +16,10 @@ import { useServices } from "@/lib/use-api";
 import { useTheme } from "@/lib/theme";
 import type { Gift, Holiday, GiftStatus, Person } from "@niftygifty/types";
 import { GiftItem } from "@/components/GiftItem";
+import { ScreenLoader } from "@/components/ScreenLoader";
+import { InlineError } from "@/components/InlineError";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
+import { getGiftStatusColors } from "@/lib/gift-status-colors";
 
 export default function GiftsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -138,31 +141,10 @@ export default function GiftsScreen() {
     setSearch("");
   };
 
-  const getStatusColor = (statusName: string) => {
-    const name = statusName.toLowerCase();
-    if (name.includes("idea") || name.includes("thinking")) {
-      return { bg: isDark ? "#1e1b4b" : "#f3e8ff", text: isDark ? "#a78bfa" : "#7c3aed" };
-    }
-    if (name.includes("bought") || name.includes("purchased")) {
-      return { bg: isDark ? "#14532d" : "#dcfce7", text: isDark ? "#86efac" : "#15803d" };
-    }
-    if (name.includes("wrapped")) {
-      return { bg: isDark ? "#164e63" : "#cffafe", text: isDark ? "#67e8f9" : "#0e7490" };
-    }
-    if (name.includes("given") || name.includes("delivered")) {
-      return { bg: isDark ? "#065f46" : "#d1fae5", text: isDark ? "#6ee7b7" : "#059669" };
-    }
-    return { bg: colors.surfaceSecondary, text: colors.textTertiary };
-  };
-
   const hasActiveFilters = selectedStatusIds.length > 0 || search.trim().length > 0;
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <ScreenLoader />;
   }
 
   return (
@@ -231,23 +213,23 @@ export default function GiftsScreen() {
               <View style={{ flexDirection: "row", gap: 8 }}>
                 {statuses.map((status) => {
                   const isSelected = selectedStatusIds.includes(status.id);
-                  const statusColor = getStatusColor(status.name);
+                  const statusColor = getGiftStatusColors(status.name, colors, isDark);
                   return (
                     <TouchableOpacity
                       key={status.id}
                       onPress={() => toggleStatusFilter(status.id)}
                       style={{
-                        backgroundColor: isSelected ? statusColor.bg : colors.surfaceSecondary,
+                        backgroundColor: isSelected ? statusColor.backgroundColor : colors.surfaceSecondary,
                         paddingHorizontal: 12,
                         paddingVertical: 8,
                         borderRadius: 16,
                         borderWidth: 2,
-                        borderColor: isSelected ? statusColor.text : "transparent",
+                        borderColor: isSelected ? statusColor.textColor : "transparent",
                       }}
                     >
                       <Text
                         style={{
-                          color: isSelected ? statusColor.text : colors.muted,
+                          color: isSelected ? statusColor.textColor : colors.muted,
                           fontSize: 13,
                           fontWeight: isSelected ? "600" : "400",
                         }}
@@ -264,12 +246,7 @@ export default function GiftsScreen() {
       </View>
 
       {error ? (
-        <View style={{ padding: 16, backgroundColor: colors.errorLight, marginHorizontal: 16, borderRadius: 8 }}>
-          <Text style={{ color: colors.error }}>{error}</Text>
-          <TouchableOpacity onPress={fetchData} style={{ marginTop: 8 }}>
-            <Text style={{ color: colors.primary }}>Retry</Text>
-          </TouchableOpacity>
-        </View>
+        <InlineError message={error} onRetry={fetchData} margin={16} />
       ) : null}
 
       <FlatList
@@ -332,27 +309,7 @@ export default function GiftsScreen() {
 
       {/* FAB */}
       {filteredGifts.length > 0 || hasActiveFilters ? (
-        <TouchableOpacity
-          onPress={handleAddGift}
-          style={{
-            position: "absolute",
-            right: 16,
-            bottom: 24,
-            backgroundColor: colors.primary,
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            justifyContent: "center",
-            alignItems: "center",
-            shadowColor: colors.primary,
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 8,
-            elevation: 8,
-          }}
-        >
-          <Ionicons name="add" size={28} color={colors.textInverse} />
-        </TouchableOpacity>
+        <FloatingActionButton onPress={handleAddGift} accessibilityLabel="Add Gift" />
       ) : null}
     </GestureHandlerRootView>
   );

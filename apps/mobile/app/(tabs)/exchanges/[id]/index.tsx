@@ -11,9 +11,11 @@ import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useServices } from "@/lib/use-api";
 import { useTheme } from "@/lib/theme";
-import type { GiftExchangeWithParticipants, ExchangeParticipant } from "@niftygifty/types";
+import type { GiftExchangeWithParticipants } from "@niftygifty/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ParticipantListItem } from "@/components/ParticipantListItem";
+import { ScreenLoader } from "@/components/ScreenLoader";
+import { formatBudgetRange, formatLongDate } from "@/lib/formatters";
 
 export default function ExchangeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -25,7 +27,6 @@ export default function ExchangeDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
 
   const exchangeId = parseInt(id, 10);
 
@@ -58,15 +59,8 @@ export default function ExchangeDetailScreen() {
     fetchExchange();
   }, [fetchExchange]);
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
-    return new Date(dateString).toLocaleDateString(undefined, {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
+  const formattedExchangeDate = formatLongDate(exchange?.exchange_date);
+  const formattedBudgetRange = formatBudgetRange(exchange?.budget_min, exchange?.budget_max);
 
   // Find current user's participant record
   const myParticipant = exchange?.my_participant;
@@ -82,11 +76,7 @@ export default function ExchangeDetailScreen() {
   };
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <ScreenLoader />;
   }
 
   if (!exchange) {
@@ -142,20 +132,20 @@ export default function ExchangeDetailScreen() {
           </View>
         </View>
 
-        {formatDate(exchange.exchange_date) ? (
+        {formattedExchangeDate ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
             <Ionicons name="calendar-outline" size={16} color={colors.textTertiary} />
             <Text style={{ color: colors.textTertiary, fontSize: 14 }}>
-              {formatDate(exchange.exchange_date)}
+              {formattedExchangeDate}
             </Text>
           </View>
         ) : null}
 
-        {(exchange.budget_min || exchange.budget_max) ? (
+        {formattedBudgetRange ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             <Ionicons name="cash-outline" size={16} color={colors.success} />
             <Text style={{ color: colors.success, fontSize: 14 }}>
-              Budget: ${exchange.budget_min || "0"} - ${exchange.budget_max || "No limit"}
+              Budget: {formattedBudgetRange}
             </Text>
           </View>
         ) : null}

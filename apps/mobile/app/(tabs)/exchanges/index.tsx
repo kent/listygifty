@@ -2,9 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
-  FlatList,
   RefreshControl,
-  ActivityIndicator,
   SectionList,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -12,6 +10,8 @@ import { useServices } from "@/lib/use-api";
 import { useTheme } from "@/lib/theme";
 import type { GiftExchange } from "@niftygifty/types";
 import { ExchangeCard } from "@/components/ExchangeCard";
+import { ScreenLoader } from "@/components/ScreenLoader";
+import { InlineError } from "@/components/InlineError";
 
 export default function ExchangesScreen() {
   const router = useRouter();
@@ -55,30 +55,24 @@ export default function ExchangesScreen() {
     const owned = exchanges.filter((e) => e.is_owner);
     const participating = exchanges.filter((e) => !e.is_owner);
 
-    const result = [];
+    const result: Array<{ key: "owned" | "participating"; title: string; data: GiftExchange[] }> = [];
     if (owned.length > 0) {
-      result.push({ title: "My Exchanges", data: owned });
+      result.push({ key: "owned", title: "My Exchanges", data: owned });
     }
     if (participating.length > 0) {
-      result.push({ title: "Participating In", data: participating });
+      result.push({ key: "participating", title: "Participating In", data: participating });
     }
     return result;
   }, [exchanges]);
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <ScreenLoader />;
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {error ? (
-        <View style={{ padding: 16, backgroundColor: colors.errorLight, margin: 16, borderRadius: 8 }}>
-          <Text style={{ color: colors.error }}>{error}</Text>
-        </View>
+        <InlineError message={error} onRetry={fetchExchanges} margin={16} />
       ) : null}
 
       <SectionList
@@ -100,7 +94,7 @@ export default function ExchangesScreen() {
               fontSize: 14,
               fontWeight: "600",
               marginBottom: 12,
-              marginTop: sections.indexOf(sections.find((s) => s.title === title)!) > 0 ? 24 : 0,
+              marginTop: title === "Participating In" ? 24 : 0,
               textTransform: "uppercase",
               letterSpacing: 0.5,
             }}

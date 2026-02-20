@@ -1,0 +1,32 @@
+options:
+  substitutionOption: ALLOW_LOOSE
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - apps/web/Dockerfile
+      - -t
+      - ${_IMAGE}
+      - --build-arg
+      - NEXT_PUBLIC_API_URL=${_NEXT_PUBLIC_API_URL}
+      - --build-arg
+      - NEXT_PUBLIC_APP_URL=${_NEXT_PUBLIC_APP_URL}
+      - --build-arg
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      - --build-arg
+      - NEXT_PUBLIC_CLERK_SIGN_IN_URL=${_NEXT_PUBLIC_CLERK_SIGN_IN_URL}
+      - --build-arg
+      - NEXT_PUBLIC_CLERK_SIGN_UP_URL=${_NEXT_PUBLIC_CLERK_SIGN_UP_URL}
+      - --build-arg
+      - NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=${_NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL}
+      - --build-arg
+      - NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=${_NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL}
+      - --build-arg
+      - NEXT_PUBLIC_POSTHOG_KEY=${_NEXT_PUBLIC_POSTHOG_KEY}
+      - --build-arg
+      - NEXT_PUBLIC_POSTHOG_HOST=${_NEXT_PUBLIC_POSTHOG_HOST}
+      - .
+images:
+  - ${_IMAGE}

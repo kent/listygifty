@@ -15,6 +15,8 @@ import { useServices } from "@/lib/use-api";
 import { useTheme } from "@/lib/theme";
 import { PersonPicker } from "@/components/PersonPicker";
 import type { GiftStatus } from "@niftygifty/types";
+import { getGiftStatusColors } from "@/lib/gift-status-colors";
+import { InlineError } from "@/components/InlineError";
 
 export default function NewGiftScreen() {
   const router = useRouter();
@@ -53,23 +55,6 @@ export default function NewGiftScreen() {
   useEffect(() => {
     fetchStatuses();
   }, [fetchStatuses]);
-
-  const getStatusColor = (statusName: string) => {
-    const name = statusName.toLowerCase();
-    if (name.includes("idea") || name.includes("thinking")) {
-      return { bg: isDark ? "#1e1b4b" : "#f3e8ff", text: isDark ? "#a78bfa" : "#7c3aed" };
-    }
-    if (name.includes("bought") || name.includes("purchased")) {
-      return { bg: isDark ? "#14532d" : "#dcfce7", text: isDark ? "#86efac" : "#15803d" };
-    }
-    if (name.includes("wrapped")) {
-      return { bg: isDark ? "#164e63" : "#cffafe", text: isDark ? "#67e8f9" : "#0e7490" };
-    }
-    if (name.includes("given") || name.includes("delivered")) {
-      return { bg: isDark ? "#065f46" : "#d1fae5", text: isDark ? "#6ee7b7" : "#059669" };
-    }
-    return { bg: colors.surfaceSecondary, text: colors.textTertiary };
-  };
 
   const handleStatusChange = async (statusId: number) => {
     setSelectedStatusId(statusId);
@@ -124,9 +109,7 @@ export default function NewGiftScreen() {
     >
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         {error ? (
-          <View style={{ backgroundColor: colors.errorLight, padding: 12, borderRadius: 8, marginBottom: 16 }}>
-            <Text style={{ color: colors.error }}>{error}</Text>
-          </View>
+          <InlineError message={error} margin={0} />
         ) : null}
 
         <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Name *</Text>
@@ -215,23 +198,23 @@ export default function NewGiftScreen() {
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
             {statuses.map((status) => {
               const isSelected = selectedStatusId === status.id;
-              const statusColor = getStatusColor(status.name);
+              const statusColor = getGiftStatusColors(status.name, colors, isDark);
               return (
                 <TouchableOpacity
                   key={status.id}
                   onPress={() => handleStatusChange(status.id)}
                   style={{
-                    backgroundColor: isSelected ? statusColor.bg : colors.input,
+                    backgroundColor: isSelected ? statusColor.backgroundColor : colors.input,
                     paddingHorizontal: 16,
                     paddingVertical: 10,
                     borderRadius: 8,
                     borderWidth: 2,
-                    borderColor: isSelected ? statusColor.text : colors.inputBorder,
+                    borderColor: isSelected ? statusColor.textColor : colors.inputBorder,
                   }}
                 >
                   <Text
                     style={{
-                      color: isSelected ? statusColor.text : colors.textTertiary,
+                      color: isSelected ? statusColor.textColor : colors.textTertiary,
                       fontWeight: isSelected ? "600" : "400",
                     }}
                   >

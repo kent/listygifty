@@ -12,6 +12,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useServices } from "@/lib/use-api";
 import { useTheme } from "@/lib/theme";
 import type { ExchangeInviteDetails } from "@niftygifty/types";
+import { ScreenLoader } from "@/components/ScreenLoader";
+import { formatBudgetRange, formatLongDate } from "@/lib/formatters";
 
 export default function ExchangeInviteScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();
@@ -24,6 +26,8 @@ export default function ExchangeInviteScreen() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const formattedExchangeDate = formatLongDate(invite?.exchange.exchange_date);
+  const formattedBudgetRange = formatBudgetRange(invite?.exchange.budget_min, invite?.exchange.budget_max);
 
   const fetchInvite = useCallback(async () => {
     if (!token) {
@@ -80,22 +84,8 @@ export default function ExchangeInviteScreen() {
     }
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
-    return new Date(dateString).toLocaleDateString(undefined, {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
   if (loading || !isLoaded) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <ScreenLoader />;
   }
 
   if (error || !invite) {
@@ -169,20 +159,20 @@ export default function ExchangeInviteScreen() {
           {invite.exchange.name}
         </Text>
 
-        {formatDate(invite.exchange.exchange_date) ? (
+        {formattedExchangeDate ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
             <Ionicons name="calendar-outline" size={20} color={colors.textTertiary} />
             <Text style={{ color: colors.textTertiary, fontSize: 14 }}>
-              {formatDate(invite.exchange.exchange_date)}
+              {formattedExchangeDate}
             </Text>
           </View>
         ) : null}
 
-        {(invite.exchange.budget_min || invite.exchange.budget_max) ? (
+        {formattedBudgetRange ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
             <Ionicons name="cash-outline" size={20} color={colors.success} />
             <Text style={{ color: colors.success, fontSize: 14 }}>
-              Budget: ${invite.exchange.budget_min || "0"} - ${invite.exchange.budget_max || "No limit"}
+              Budget: {formattedBudgetRange}
             </Text>
           </View>
         ) : null}

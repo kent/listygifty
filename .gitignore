@@ -36,3 +36,6 @@ Thumbs.db
 .vercel
 .env*.local
 .env.production
+
+# Generated GCP migration artifacts
+.gcp/

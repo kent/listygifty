@@ -1,9 +1,12 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  output: "standalone",
+  outputFileTracingRoot: path.join(process.cwd(), "../.."),
 
   // Strict build checks
   typescript: {

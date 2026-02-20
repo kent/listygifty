@@ -4,6 +4,9 @@ import { tokenCache } from "@/lib/token-cache";
 jest.mock("expo-secure-store");
 
 describe("tokenCache", () => {
+  const saveToken = tokenCache.saveToken!;
+  const clearToken = tokenCache.clearToken!;
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -31,7 +34,7 @@ describe("tokenCache", () => {
     it("saves token to SecureStore", async () => {
       (SecureStore.setItemAsync as jest.Mock).mockResolvedValue(undefined);
 
-      await tokenCache.saveToken("clerk-token", "new-token");
+      await saveToken("clerk-token", "new-token");
 
       expect(SecureStore.setItemAsync).toHaveBeenCalledWith("clerk-token", "new-token");
     });
@@ -40,7 +43,7 @@ describe("tokenCache", () => {
       (SecureStore.setItemAsync as jest.Mock).mockRejectedValue(new Error("Failed"));
 
       // Should not throw
-      await expect(tokenCache.saveToken("clerk-token", "new-token")).resolves.toBeUndefined();
+      await expect(saveToken("clerk-token", "new-token")).resolves.toBeUndefined();
     });
   });
 
@@ -48,7 +51,7 @@ describe("tokenCache", () => {
     it("deletes token from SecureStore", async () => {
       (SecureStore.deleteItemAsync as jest.Mock).mockResolvedValue(undefined);
 
-      await tokenCache.clearToken("clerk-token");
+      await clearToken("clerk-token");
 
       expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("clerk-token");
     });
@@ -57,7 +60,7 @@ describe("tokenCache", () => {
       (SecureStore.deleteItemAsync as jest.Mock).mockRejectedValue(new Error("Failed"));
 
       // Should not throw
-      await expect(tokenCache.clearToken("clerk-token")).resolves.toBeUndefined();
+      await expect(clearToken("clerk-token")).resolves.toBeUndefined();
     });
   });
 });

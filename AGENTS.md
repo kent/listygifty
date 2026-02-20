@@ -25,7 +25,7 @@ niftygifty/
 ```
 
 ### Technology Stack
-- **Backend**: Rails 8.1, SQLite, Devise + Clerk, Blueprinter
+- **Backend**: Rails 8.1, PostgreSQL (Cloud SQL for staging/prod; SQLite optional in local/dev), Devise + Clerk, Blueprinter
 - **Web Frontend**: Next.js 16, React 19, Tailwind CSS, shadcn/ui
 - **Mobile App**: Expo SDK 54, React Native 0.81, React 19.1
 - **Shared**: TypeScript packages for types, API client, services
@@ -135,6 +135,17 @@ npm test
 
 **API Client**: Shared API client in `packages/api-client/`
 
+### 1.1 Clean Code Rules (Required)
+
+1. Extract repeated logic before it appears in a third place.
+2. Keep API access in service layers (`packages/services`, `@/lib/api`) and out of UI components.
+3. Keep components focused on UI and screen orchestration, not request formatting/parsing.
+4. Prefer existing shared utilities/components over copy/paste:
+   - Mobile formatters: `apps/mobile/lib/formatters.ts`
+   - Mobile status mapping: `apps/mobile/lib/gift-status-colors.ts`
+   - Mobile reusable states: `apps/mobile/components/ScreenLoader.tsx`, `apps/mobile/components/InlineError.tsx`, `apps/mobile/components/FloatingActionButton.tsx`
+5. For behavior changes, add or update tests in the affected app.
+
 ### 2. Service Layer Pattern
 
 Components should NEVER make direct API calls. Always use services:
@@ -223,7 +234,9 @@ cd apps/mobile && npx expo start
 3. **Create/update blueprint** in `apps/api/app/blueprints/`
 4. **Create/update controller** in `apps/api/app/controllers/`
 5. **Add service method** in `packages/services/` if shared
-6. **Build UI** in web and/or mobile
+6. **Build UI** in web and/or mobile using shared services/utilities (no direct API calls in components)
+7. **Run tests** in all touched apps
+8. **Deploy to staging first**, then production after validation
 
 ### Adding a New API Endpoint
 
@@ -275,3 +288,56 @@ EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 
 ### API
 Uses Rails credentials. Clerk keys configured in credentials or environment.
+
+## GCP Deployment Profile (listygifty)
+
+Use this profile for all Cloud Run/Cloud Build deploy actions so commands never target the wrong project.
+
+- Project ID: `listygifty`
+- Project number: `906707282968`
+- Region: `us-east1`
+- Deployer service account: `niftygifty-deployer@listygifty.iam.gserviceaccount.com`
+- Local key file (gitignored): `.gcp/keys/listygifty-deployer.json`
+- Local profile file (gitignored): `.gcp/listygifty-deploy.env`
+
+### Activate deploy profile
+
+```bash
+source .gcp/listygifty-deploy.env
+```
+
+### Deploy commands (explicit staging/prod)
+
+```bash
+# API
+ENVIRONMENT=staging HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.staging.env bash infra/gcp/scripts/deploy-api.sh
+ENVIRONMENT=production HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.production.env bash infra/gcp/scripts/deploy-api.sh
+
+# Web
+ENVIRONMENT=staging HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.staging.env bash infra/gcp/scripts/deploy-web.sh
+ENVIRONMENT=production HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.production.env bash infra/gcp/scripts/deploy-web.sh
+```
+
+### Standard release command (preferred)
+
+```bash
+source .gcp/listygifty-deploy.env
+npm run gcp:release
+```
+
+This runs local checks, deploys staging + production, and executes smoke tests for both.
+
+### Branch deploy policy
+
+- Push to `staging` -> deploy staging
+- Push to `main` -> deploy production
+
+### If the deployer key is missing
+
+```bash
+mkdir -p .gcp/keys
+CLOUDSDK_CORE_ACCOUNT=kent.fenwick@gmail.com CLOUDSDK_CORE_PROJECT=listygifty \
+  gcloud iam service-accounts keys create .gcp/keys/listygifty-deployer.json \
+  --iam-account=niftygifty-deployer@listygifty.iam.gserviceaccount.com
+chmod 600 .gcp/keys/listygifty-deployer.json .gcp/listygifty-deploy.env
+```

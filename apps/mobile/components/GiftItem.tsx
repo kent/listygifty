@@ -2,7 +2,6 @@ import { useRef } from "react";
 import {
   View,
   Text,
-  Linking,
   TouchableOpacity,
   Animated,
   Alert,
@@ -12,49 +11,27 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import type { Gift } from "@niftygifty/types";
 import { useTheme } from "@/lib/theme";
+import { getGiftStatusColors } from "@/lib/gift-status-colors";
+import { formatCurrency } from "@/lib/formatters";
+import { openExternalUrl } from "@/lib/linking";
 
 interface GiftItemProps {
   item: Gift;
   onPress?: () => void;
   onDelete?: () => void;
-  onStatusChange?: (statusId: number) => void;
 }
 
-export function GiftItem({ item, onPress, onDelete, onStatusChange }: GiftItemProps) {
+export function GiftItem({ item, onPress, onDelete }: GiftItemProps) {
   const { colors, isDark } = useTheme();
   const swipeableRef = useRef<Swipeable>(null);
 
-  const handleOpenLink = () => {
+  const handleOpenLink = async () => {
     if (item.link) {
-      Linking.openURL(item.link);
+      await openExternalUrl(item.link);
     }
   };
 
-  const formatCost = (cost: string | null) => {
-    if (!cost) return null;
-    const num = parseFloat(cost);
-    if (isNaN(num)) return cost;
-    return `$${num.toFixed(2)}`;
-  };
-
-  const getStatusColor = (statusName: string) => {
-    const name = statusName.toLowerCase();
-    if (name.includes("idea") || name.includes("thinking")) {
-      return { bg: isDark ? "#1e1b4b" : "#f3e8ff", text: isDark ? "#a78bfa" : "#7c3aed" };
-    }
-    if (name.includes("bought") || name.includes("purchased")) {
-      return { bg: isDark ? "#14532d" : "#dcfce7", text: isDark ? "#86efac" : "#15803d" };
-    }
-    if (name.includes("wrapped")) {
-      return { bg: isDark ? "#164e63" : "#cffafe", text: isDark ? "#67e8f9" : "#0e7490" };
-    }
-    if (name.includes("given") || name.includes("delivered")) {
-      return { bg: isDark ? "#065f46" : "#d1fae5", text: isDark ? "#6ee7b7" : "#059669" };
-    }
-    return { bg: colors.surfaceSecondary, text: colors.textTertiary };
-  };
-
-  const statusColors = getStatusColor(item.gift_status?.name || "");
+  const statusColors = getGiftStatusColors(item.gift_status?.name || "", colors, isDark);
 
   const handleDelete = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -133,7 +110,7 @@ export function GiftItem({ item, onPress, onDelete, onStatusChange }: GiftItemPr
 
         {item.cost ? (
           <Text style={{ color: colors.primary, fontSize: 16, fontWeight: "600", marginLeft: 12 }}>
-            {formatCost(item.cost)}
+            {formatCurrency(item.cost)}
           </Text>
         ) : null}
       </View>
@@ -142,13 +119,13 @@ export function GiftItem({ item, onPress, onDelete, onStatusChange }: GiftItemPr
         {item.gift_status ? (
           <View
             style={{
-              backgroundColor: statusColors.bg,
+              backgroundColor: statusColors.backgroundColor,
               paddingHorizontal: 8,
               paddingVertical: 4,
               borderRadius: 4,
             }}
           >
-            <Text style={{ color: statusColors.text, fontSize: 12, fontWeight: "500" }}>
+            <Text style={{ color: statusColors.textColor, fontSize: 12, fontWeight: "500" }}>
               {item.gift_status.name}
             </Text>
           </View>
@@ -158,7 +135,7 @@ export function GiftItem({ item, onPress, onDelete, onStatusChange }: GiftItemPr
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
             <Ionicons name="person-outline" size={14} color={colors.muted} />
             <Text style={{ color: colors.muted, fontSize: 13 }}>
-              {item.recipients.map((r) => r.name).join(", ")}
+              For: {item.recipients.map((r) => r.name).join(", ")}
             </Text>
           </View>
         ) : null}

@@ -1,6 +1,7 @@
 import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/theme";
+import { formatBudgetRange, formatLongDate } from "@/lib/formatters";
 
 interface MatchRevealCardProps {
   matchName: string;
@@ -11,19 +12,8 @@ interface MatchRevealCardProps {
 
 export function MatchRevealCard({ matchName, exchangeDate, budgetMin, budgetMax }: MatchRevealCardProps) {
   const { colors } = useTheme();
-
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return null;
-    return new Date(dateString).toLocaleDateString(undefined, {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const formattedDate = formatDate(exchangeDate);
-  const hasBudget = budgetMin || budgetMax;
+  const formattedDate = formatLongDate(exchangeDate);
+  const budgetRange = formatBudgetRange(budgetMin, budgetMax);
 
   return (
     <View
@@ -55,11 +45,11 @@ export function MatchRevealCard({ matchName, exchangeDate, budgetMin, budgetMax 
         </View>
       ) : null}
 
-      {hasBudget ? (
+      {budgetRange ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Ionicons name="cash-outline" size={16} color={colors.success} />
           <Text style={{ color: colors.success, fontSize: 14 }}>
-            Budget: ${budgetMin || "0"} - ${budgetMax || "No limit"}
+            Budget: {budgetRange}
           </Text>
         </View>
       ) : null}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -26,7 +26,7 @@ export function PersonPicker({
   label,
   placeholder = "Select people...",
 }: PersonPickerProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { people: peopleService } = useServices();
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -49,10 +49,10 @@ export function PersonPicker({
   }, [peopleService]);
 
   useEffect(() => {
-    if (modalVisible) {
+    if (modalVisible || (selectedIds.length > 0 && people.length === 0)) {
       fetchPeople();
     }
-  }, [modalVisible, fetchPeople]);
+  }, [modalVisible, selectedIds.length, people.length, fetchPeople]);
 
   const handleTogglePerson = (personId: number) => {
     if (selectedIds.includes(personId)) {
@@ -78,11 +78,14 @@ export function PersonPicker({
     }
   };
 
-  const filteredPeople = people.filter((person) =>
-    person.name.toLowerCase().includes(search.toLowerCase())
+  const filteredPeople = useMemo(
+    () => people.filter((person) => person.name.toLowerCase().includes(search.toLowerCase())),
+    [people, search]
   );
-
-  const selectedPeople = people.filter((p) => selectedIds.includes(p.id));
+  const selectedPeople = useMemo(
+    () => people.filter((person) => selectedIds.includes(person.id)),
+    [people, selectedIds]
+  );
 
   return (
     <View style={{ marginBottom: 16 }}>
