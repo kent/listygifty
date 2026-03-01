@@ -16,7 +16,7 @@ SECRET_PREFIX="${SECRET_PREFIX:-$(default_secret_prefix "${ENVIRONMENT}")}"
 
 PROJECT_ID="${PROJECT_ID:-listygifty}"
 HEROKU_APP="${HEROKU_APP:-$(resolve_heroku_app "${ENVIRONMENT}")}"
-SQL_INSTANCE="${SQL_INSTANCE:-niftygifty-postgres}"
+SQL_INSTANCE="${SQL_INSTANCE:-niftygifty-postgres-central}"
 SQL_DB_NAME="${SQL_DB_NAME:-niftygifty_$(resolve_environment "${ENVIRONMENT}")}"
 if [[ "${ENVIRONMENT}" == "production" ]]; then
   default_sql_db_user="niftygifty"

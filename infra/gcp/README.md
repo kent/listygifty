@@ -6,7 +6,7 @@ This folder contains scripts to migrate a Heroku deployment to GCP project `list
 
 - API: Cloud Run services `niftygifty-api` (prod) and `niftygifty-staging-api` (staging)
 - Web: Cloud Run services `niftygifty-web` (prod) and `niftygifty-staging-web` (staging)
-- Database: Cloud SQL Postgres instance `niftygifty-postgres` with separate DB/user per environment
+- Database: Cloud SQL Postgres instance `niftygifty-postgres-central` with separate DB/user per environment
 - Images: Artifact Registry `${ARTIFACT_REGION:-us-central1}-docker.pkg.dev/listygifty/niftygifty/*`
 - Secrets: Secret Manager (environment-prefixed secret names)
 
