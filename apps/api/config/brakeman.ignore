@@ -19,8 +19,17 @@
       "line": 49,
       "code": "params.require(:workspace_membership).permit(:role)",
       "note": "Intentional: admins need to update member roles. Access is controlled by require_admin before_action."
+    },
+    {
+      "warning_type": "Redirect",
+      "fingerprint": "bdc20e1e9600e20860f092842983a2f035b3f46a4a8ee690aece940963ac1aa4",
+      "check_name": "Redirect",
+      "message": "Possible unprotected redirect",
+      "file": "app/controllers/oauth_controller.rb",
+      "line": 104,
+      "note": "Safe: redirect_uri is validated against client's registered URIs on line 75-77 before use. This is standard OAuth 2.1 authorization code flow."
     }
   ],
-  "updated": "2026-01-09",
-  "brakeman_version": "7.1.2"
+  "updated": "2026-03-01",
+  "brakeman_version": "8.0.4"
 }
