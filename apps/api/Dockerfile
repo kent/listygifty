@@ -10,6 +10,8 @@ RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
+    libyaml-dev \
+    libvips \
     git \
     && rm -rf /var/lib/apt/lists/*
 
@@ -28,6 +30,8 @@ FROM ruby:3.4-slim AS runtime
 RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends \
     libpq5 \
+    libyaml-0-2 \
+    libvips \
     curl \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -m -s /bin/bash rails
