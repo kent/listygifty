@@ -41,6 +41,9 @@ jobs:
       - name: Configure Docker for GCR
         run: gcloud auth configure-docker --quiet
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Set environment variables
         id: env
         run: |
@@ -56,27 +59,28 @@ jobs:
             echo "CLERK_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build Docker image
-        run: |
-          docker build \
-            -f apps/web/Dockerfile \
-            -t ${{ env.IMAGE }}:${{ github.sha }} \
-            -t ${{ env.IMAGE }}:${{ steps.env.outputs.ENV }} \
-            --build-arg NEXT_PUBLIC_API_URL=${{ steps.env.outputs.API_URL }} \
-            --build-arg NEXT_PUBLIC_APP_URL=${{ steps.env.outputs.APP_URL }} \
-            --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ steps.env.outputs.CLERK_KEY }} \
-            --build-arg NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login \
-            --build-arg NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup \
-            --build-arg NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard \
-            --build-arg NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard \
-            --build-arg NEXT_PUBLIC_POSTHOG_KEY=${{ secrets.POSTHOG_KEY }} \
-            --build-arg NEXT_PUBLIC_POSTHOG_HOST=${{ secrets.POSTHOG_HOST }} \
-            .
-
-      - name: Push Docker image
-        run: |
-          docker push ${{ env.IMAGE }}:${{ github.sha }}
-          docker push ${{ env.IMAGE }}:${{ steps.env.outputs.ENV }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:${{ steps.env.outputs.ENV }}
+            ${{ env.IMAGE }}:latest
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ steps.env.outputs.API_URL }}
+            NEXT_PUBLIC_APP_URL=${{ steps.env.outputs.APP_URL }}
+            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ steps.env.outputs.CLERK_KEY }}
+            NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+            NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup
+            NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+            NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+            NEXT_PUBLIC_POSTHOG_KEY=${{ secrets.POSTHOG_KEY }}
+            NEXT_PUBLIC_POSTHOG_HOST=${{ secrets.POSTHOG_HOST }}
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
 
       - name: Deploy to Cloud Run
         run: |
@@ -89,8 +93,11 @@ jobs:
             --memory=512Mi \
             --cpu=1 \
             --min-instances=0 \
-            --max-instances=10
+            --max-instances=10 \
+            --no-cpu-throttling
 
       - name: Show deployment URL
         run: |
-          echo "Deployed to: $(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(status.url)')"
+          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(status.url)')
+          echo "## 🚀 Deployed to ${{ steps.env.outputs.ENV }}" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** $URL" >> $GITHUB_STEP_SUMMARY

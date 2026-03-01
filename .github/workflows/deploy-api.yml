@@ -36,6 +36,9 @@ jobs:
       - name: Configure Docker for GCR
         run: gcloud auth configure-docker --quiet
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Set environment variables
         id: env
         run: |
@@ -57,18 +60,17 @@ jobs:
             echo "SECRET_KEY_SECRET=listygifty-rails-key-staging" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build Docker image
-        working-directory: apps/api
-        run: |
-          docker build \
-            -t ${{ env.IMAGE }}:${{ github.sha }} \
-            -t ${{ env.IMAGE }}:${{ steps.env.outputs.ENV }} \
-            .
-
-      - name: Push Docker image
-        run: |
-          docker push ${{ env.IMAGE }}:${{ github.sha }}
-          docker push ${{ env.IMAGE }}:${{ steps.env.outputs.ENV }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/api
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:${{ steps.env.outputs.ENV }}
+            ${{ env.IMAGE }}:latest
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
 
       - name: Deploy to Cloud Run
         run: |
@@ -82,6 +84,7 @@ jobs:
             --cpu=1 \
             --min-instances=0 \
             --max-instances=10 \
+            --no-cpu-throttling \
             --set-cloudsql-instances=${{ steps.env.outputs.CLOUD_SQL_INSTANCE }} \
             --set-env-vars="RAILS_ENV=${{ steps.env.outputs.RAILS_ENV }}" \
             --set-secrets="DATABASE_URL=niftygifty-database-url:latest,SECRET_KEY_BASE=${{ steps.env.outputs.SECRET_KEY_SECRET }}:latest,ALLOWED_HOSTS=${{ steps.env.outputs.ALLOWED_HOSTS_SECRET }}:latest,CLERK_SECRET_KEY=niftygifty-clerk-secret:latest,STRIPE_SECRET_KEY=niftygifty-stripe-secret:latest,STRIPE_WEBHOOK_SECRET=niftygifty-stripe-webhook-secret:latest,POSTMARK_API_KEY=niftygifty-postmark-api-key:latest,OPENAI_API_KEY=niftygifty-openai-api-key:latest"
@@ -95,4 +98,6 @@ jobs:
 
       - name: Show deployment URL
         run: |
-          echo "Deployed to: $(gcloud run services describe ${{ steps.env.outputs.SERVICE_NAME }} --region=${{ steps.env.outputs.REGION }} --format='value(status.url)')"
+          URL=$(gcloud run services describe ${{ steps.env.outputs.SERVICE_NAME }} --region=${{ steps.env.outputs.REGION }} --format='value(status.url)')
+          echo "## 🚀 Deployed API to ${{ steps.env.outputs.ENV }}" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** $URL" >> $GITHUB_STEP_SUMMARY
