@@ -1,10 +1,10 @@
 "use client";
 
-import { Tags, User, CreditCard, ChevronRight, Bell, Palette, Building2, Users, Code2 } from "lucide-react";
+import { Tags, User, CreditCard, ChevronRight, Bell, Palette, Building2, Users, Code2, Plug } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/contexts/workspace-context";
 
-export type SettingsSection = "profile" | "notifications" | "appearance" | "statuses" | "billing" | "workspace" | "team" | "company" | "api-keys";
+export type SettingsSection = "profile" | "notifications" | "appearance" | "statuses" | "billing" | "workspace" | "team" | "company" | "api-keys" | "integrations";
 
 interface SettingsNavProps {
   activeSection: SettingsSection;
@@ -29,12 +29,14 @@ const NAV_ITEMS: NavItem[] = [
   { id: "appearance", label: "Appearance", icon: Palette, color: "violet" },
   { id: "statuses", label: "Gift Statuses", icon: Tags, color: "violet" },
   { id: "api-keys", label: "API Keys", icon: Code2, color: "violet" },
+  { id: "integrations", label: "AI Integrations", icon: Plug, color: "cyan" },
   { id: "billing", label: "Billing", icon: CreditCard, disabled: true, color: "amber" },
 ];
 
 const colorMap = {
   violet: "from-violet-500 to-fuchsia-500 text-violet-300 shadow-violet-500/20",
   amber: "from-amber-500 to-orange-500 text-amber-300 shadow-amber-500/20",
+  cyan: "from-cyan-500 to-blue-500 text-cyan-300 shadow-cyan-500/20",
 };
 
 export function SettingsNav({ activeSection, onSectionChange }: SettingsNavProps) {
