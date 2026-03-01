@@ -6,7 +6,7 @@ class OauthControllerTest < ActionDispatch::IntegrationTest
     @client = OauthClient.register_system_client(
       name: "Test Client",
       client_id: "test-oauth-client",
-      redirect_uris: ["https://example.com/callback", "http://localhost:3000/callback"]
+      redirect_uris: [ "https://example.com/callback", "http://localhost:3000/callback" ]
     )
   end
 
@@ -51,7 +51,7 @@ class OauthControllerTest < ActionDispatch::IntegrationTest
   test "register creates new client" do
     post "/oauth/register", params: {
       client_name: "New App",
-      redirect_uris: ["https://newapp.com/callback"]
+      redirect_uris: [ "https://newapp.com/callback" ]
     }, as: :json
 
     assert_response :created
@@ -59,7 +59,7 @@ class OauthControllerTest < ActionDispatch::IntegrationTest
 
     assert json["client_id"].present?
     assert_equal "New App", json["client_name"]
-    assert_equal ["https://newapp.com/callback"], json["redirect_uris"]
+    assert_equal [ "https://newapp.com/callback" ], json["redirect_uris"]
   end
 
   test "register fails without redirect_uris" do
@@ -106,7 +106,7 @@ class OauthControllerTest < ActionDispatch::IntegrationTest
       client: @client,
       user: @user,
       redirect_uri: "https://example.com/callback",
-      scopes: ["read", "write"],
+      scopes: [ "read", "write" ],
       code_challenge: code_challenge,
       code_challenge_method: "S256"
     )
@@ -136,7 +136,7 @@ class OauthControllerTest < ActionDispatch::IntegrationTest
       client: @client,
       user: @user,
       redirect_uri: "https://example.com/callback",
-      scopes: ["read"],
+      scopes: [ "read" ],
       code_challenge: code_challenge,
       code_challenge_method: "S256"
     )
@@ -158,7 +158,7 @@ class OauthControllerTest < ActionDispatch::IntegrationTest
     token_result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read", "write"]
+      scopes: [ "read", "write" ]
     )
 
     post "/oauth/token", params: {
@@ -193,7 +193,7 @@ class OauthControllerTest < ActionDispatch::IntegrationTest
     token_result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read"]
+      scopes: [ "read" ]
     )
 
     post "/oauth/revoke", params: {

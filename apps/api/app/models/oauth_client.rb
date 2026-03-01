@@ -47,8 +47,8 @@ class OauthClient < ApplicationRecord
       client.name = name
       client.redirect_uris = Array(redirect_uris)
       client.is_system = true
-      client.grant_types = ["authorization_code", "refresh_token"]
-      client.response_types = ["code"]
+      client.grant_types = [ "authorization_code", "refresh_token" ]
+      client.response_types = [ "code" ]
       client.scopes = %w[read write]
       attrs.each { |k, v| client.send("#{k}=", v) }
     end
@@ -65,8 +65,8 @@ class OauthClient < ApplicationRecord
       logo_uri: metadata[:logo_uri],
       client_uri: metadata[:client_uri],
       redirect_uris: Array(metadata[:redirect_uris]),
-      grant_types: metadata[:grant_types] || ["authorization_code"],
-      response_types: metadata[:response_types] || ["code"],
+      grant_types: metadata[:grant_types] || [ "authorization_code" ],
+      response_types: metadata[:response_types] || [ "code" ],
       token_endpoint_auth_method: metadata[:token_endpoint_auth_method] || "none",
       scopes: metadata[:scopes] || %w[read write],
       is_dynamic: true

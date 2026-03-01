@@ -42,7 +42,7 @@ module OauthTokenAuthenticatable
   end
 
   def www_authenticate_header
-    parts = ["Bearer"]
+    parts = [ "Bearer" ]
 
     resource_metadata = resource_metadata_url
     parts << %(resource_metadata="#{resource_metadata}") if resource_metadata

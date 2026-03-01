@@ -12,7 +12,7 @@ class WellKnownControllerTest < ActionDispatch::IntegrationTest
     assert json["scopes_supported"].is_a?(Array)
     assert_includes json["scopes_supported"], "read"
     assert_includes json["scopes_supported"], "write"
-    assert_equal ["header"], json["bearer_methods_supported"]
+    assert_equal [ "header" ], json["bearer_methods_supported"]
   end
 
   test "returns oauth authorization server metadata" do

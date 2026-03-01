@@ -9,10 +9,10 @@ class CreateOauthTables < ActiveRecord::Migration[8.1]
       t.string :logo_uri
       t.string :client_uri
       t.jsonb :redirect_uris, default: [], null: false
-      t.jsonb :grant_types, default: ["authorization_code"], null: false
-      t.jsonb :response_types, default: ["code"], null: false
+      t.jsonb :grant_types, default: [ "authorization_code" ], null: false
+      t.jsonb :response_types, default: [ "code" ], null: false
       t.string :token_endpoint_auth_method, default: "none" # none, client_secret_basic, client_secret_post
-      t.jsonb :scopes, default: ["read", "write"], null: false
+      t.jsonb :scopes, default: [ "read", "write" ], null: false
       t.boolean :is_system, default: false, null: false # true for pre-registered clients like Claude
       t.boolean :is_dynamic, default: false, null: false # true for dynamically registered clients
       t.references :user, foreign_key: true # owner for user-registered clients
@@ -62,6 +62,6 @@ class CreateOauthTables < ActiveRecord::Migration[8.1]
     add_index :oauth_access_tokens, :token_hash, unique: true
     add_index :oauth_access_tokens, :refresh_token_hash, unique: true, where: "refresh_token_hash IS NOT NULL"
     add_index :oauth_access_tokens, :expires_at
-    add_index :oauth_access_tokens, [:user_id, :revoked_at], name: "idx_oauth_tokens_user_active"
+    add_index :oauth_access_tokens, [ :user_id, :revoked_at ], name: "idx_oauth_tokens_user_active"
   end
 end

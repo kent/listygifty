@@ -107,4 +107,3 @@ class OauthAuthorizationCode < ApplicationRecord
     end
   end
 end
-

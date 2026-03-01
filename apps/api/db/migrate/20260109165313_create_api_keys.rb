@@ -12,7 +12,7 @@ class CreateApiKeys < ActiveRecord::Migration[8.1]
       t.timestamps
 
       t.index :key_prefix, unique: true
-      t.index [:user_id, :revoked_at]
+      t.index [ :user_id, :revoked_at ]
     end
   end
 end

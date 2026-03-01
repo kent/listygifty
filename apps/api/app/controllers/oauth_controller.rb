@@ -1,7 +1,7 @@
 # OAuth 2.1 Authorization Server implementation
 # Implements RFC 6749, OAuth 2.1, RFC 7636 (PKCE), RFC 7591 (Dynamic Client Registration)
 class OauthController < ApplicationController
-  skip_before_action :authenticate!, only: [:authorize, :token, :register, :revoke]
+  skip_before_action :authenticate!, only: [ :authorize, :token, :register, :revoke ]
 
   # GET /oauth/authorize
   # Authorization endpoint - renders consent UI
@@ -298,7 +298,7 @@ class OauthController < ApplicationController
   def build_redirect_uri(base_uri, params)
     uri = URI.parse(base_uri)
     existing_params = URI.decode_www_form(uri.query || "")
-    new_params = params.compact.map { |k, v| [k.to_s, v.to_s] }
+    new_params = params.compact.map { |k, v| [ k.to_s, v.to_s ] }
     uri.query = URI.encode_www_form(existing_params + new_params)
     uri.to_s
   end

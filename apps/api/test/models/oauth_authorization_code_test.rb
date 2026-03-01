@@ -6,7 +6,7 @@ class OauthAuthorizationCodeTest < ActiveSupport::TestCase
     @client = OauthClient.register_system_client(
       name: "Test Client",
       client_id: "test-client-#{SecureRandom.hex(4)}",
-      redirect_uris: ["https://example.com/callback"]
+      redirect_uris: [ "https://example.com/callback" ]
     )
   end
 
@@ -15,7 +15,7 @@ class OauthAuthorizationCodeTest < ActiveSupport::TestCase
       client: @client,
       user: @user,
       redirect_uri: "https://example.com/callback",
-      scopes: ["read", "write"],
+      scopes: [ "read", "write" ],
       code_challenge: Base64.urlsafe_encode64(Digest::SHA256.digest("test_verifier"), padding: false),
       code_challenge_method: "S256"
     )
@@ -31,7 +31,7 @@ class OauthAuthorizationCodeTest < ActiveSupport::TestCase
       client: @client,
       user: @user,
       redirect_uri: "https://example.com/callback",
-      scopes: ["read"],
+      scopes: [ "read" ],
       code_challenge: Base64.urlsafe_encode64(Digest::SHA256.digest("test_verifier"), padding: false),
       code_challenge_method: "S256"
     )
@@ -50,7 +50,7 @@ class OauthAuthorizationCodeTest < ActiveSupport::TestCase
       client: @client,
       user: @user,
       redirect_uri: "https://example.com/callback",
-      scopes: ["read"],
+      scopes: [ "read" ],
       code_challenge: Base64.urlsafe_encode64(Digest::SHA256.digest("test_verifier"), padding: false),
       code_challenge_method: "S256"
     )
@@ -70,7 +70,7 @@ class OauthAuthorizationCodeTest < ActiveSupport::TestCase
       client: @client,
       user: @user,
       redirect_uri: "https://example.com/callback",
-      scopes: ["read", "write"],
+      scopes: [ "read", "write" ],
       code_challenge: code_challenge,
       code_challenge_method: "S256"
     )
@@ -91,7 +91,7 @@ class OauthAuthorizationCodeTest < ActiveSupport::TestCase
       client: @client,
       user: @user,
       redirect_uri: "https://example.com/callback",
-      scopes: ["read"],
+      scopes: [ "read" ],
       code_challenge: code_challenge,
       code_challenge_method: "S256"
     )
@@ -109,7 +109,7 @@ class OauthAuthorizationCodeTest < ActiveSupport::TestCase
       client: @client,
       user: @user,
       redirect_uri: "https://example.com/callback",
-      scopes: ["read"],
+      scopes: [ "read" ],
       code_challenge: code_challenge,
       code_challenge_method: "S256"
     )
@@ -129,7 +129,7 @@ class OauthAuthorizationCodeTest < ActiveSupport::TestCase
       client: @client,
       user: @user,
       redirect_uri: "https://example.com/callback",
-      scopes: ["read"],
+      scopes: [ "read" ],
       code_challenge: code_challenge,
       code_challenge_method: "S256"
     )

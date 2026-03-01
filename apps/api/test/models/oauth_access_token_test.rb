@@ -6,7 +6,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     @client = OauthClient.register_system_client(
       name: "Test Client",
       client_id: "test-client-#{SecureRandom.hex(4)}",
-      redirect_uris: ["https://example.com/callback"]
+      redirect_uris: [ "https://example.com/callback" ]
     )
   end
 
@@ -14,7 +14,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read", "write"]
+      scopes: [ "read", "write" ]
     )
 
     assert result.access_token.persisted?
@@ -28,7 +28,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read"],
+      scopes: [ "read" ],
       include_refresh: false
     )
 
@@ -41,7 +41,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read"]
+      scopes: [ "read" ]
     )
 
     found = OauthAccessToken.find_by_token(result.token)
@@ -57,7 +57,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read"]
+      scopes: [ "read" ]
     )
 
     assert result.access_token.active?
@@ -72,7 +72,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read"]
+      scopes: [ "read" ]
     )
 
     assert_not result.access_token.refresh_token_expired?
@@ -86,7 +86,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read", "write"]
+      scopes: [ "read", "write" ]
     )
 
     old_token = result.access_token
@@ -104,7 +104,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read"]
+      scopes: [ "read" ]
     )
 
     result.access_token.revoke!
@@ -118,7 +118,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read"]
+      scopes: [ "read" ]
     )
 
     travel 31.days do
@@ -132,7 +132,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read"]
+      scopes: [ "read" ]
     )
 
     assert result.access_token.can?("read")
@@ -143,7 +143,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read", "write"]
+      scopes: [ "read", "write" ]
     )
 
     response = result.access_token.to_token_response(result.token, result.refresh_token)
@@ -159,7 +159,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read"]
+      scopes: [ "read" ]
     )
 
     assert_nil result.access_token.last_used_at
@@ -173,7 +173,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read"],
+      scopes: [ "read" ],
       resource: "https://api.example.com/mcp"
     )
 

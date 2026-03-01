@@ -4,7 +4,7 @@ class OauthClientTest < ActiveSupport::TestCase
   test "generates client with credentials" do
     result = OauthClient.generate(
       name: "Test Client",
-      redirect_uris: ["https://example.com/callback"]
+      redirect_uris: [ "https://example.com/callback" ]
     )
 
     assert result.client.persisted?
@@ -16,7 +16,7 @@ class OauthClientTest < ActiveSupport::TestCase
   test "generates confidential client with secret" do
     result = OauthClient.generate(
       name: "Confidential Client",
-      redirect_uris: ["https://example.com/callback"],
+      redirect_uris: [ "https://example.com/callback" ],
       is_confidential: true
     )
 
@@ -29,7 +29,7 @@ class OauthClientTest < ActiveSupport::TestCase
     client = OauthClient.register_system_client(
       name: "Claude",
       client_id: "claude-test",
-      redirect_uris: ["https://claude.ai/callback"]
+      redirect_uris: [ "https://claude.ai/callback" ]
     )
 
     assert client.persisted?
@@ -41,7 +41,7 @@ class OauthClientTest < ActiveSupport::TestCase
     client = OauthClient.new(
       name: "Test",
       client_id: SecureRandom.hex(16),
-      redirect_uris: ["http://example.com/callback"]
+      redirect_uris: [ "http://example.com/callback" ]
     )
 
     assert_not client.valid?
@@ -52,7 +52,7 @@ class OauthClientTest < ActiveSupport::TestCase
     client = OauthClient.new(
       name: "Test",
       client_id: SecureRandom.hex(16),
-      redirect_uris: ["http://localhost:3000/callback"]
+      redirect_uris: [ "http://localhost:3000/callback" ]
     )
 
     client.valid?
@@ -63,8 +63,8 @@ class OauthClientTest < ActiveSupport::TestCase
     client = OauthClient.new(
       name: "Test",
       client_id: SecureRandom.hex(16),
-      redirect_uris: ["https://example.com/callback"],
-      scopes: ["invalid_scope"]
+      redirect_uris: [ "https://example.com/callback" ],
+      scopes: [ "invalid_scope" ]
     )
 
     assert_not client.valid?
@@ -74,7 +74,7 @@ class OauthClientTest < ActiveSupport::TestCase
   test "dynamic registration creates client" do
     client = OauthClient.dynamic_register(
       client_name: "Dynamic Client",
-      redirect_uris: ["https://example.com/callback"]
+      redirect_uris: [ "https://example.com/callback" ]
     )
 
     assert client.persisted?
@@ -85,7 +85,7 @@ class OauthClientTest < ActiveSupport::TestCase
   test "verifies client secret correctly" do
     result = OauthClient.generate(
       name: "Confidential",
-      redirect_uris: ["https://example.com/callback"],
+      redirect_uris: [ "https://example.com/callback" ],
       is_confidential: true
     )
 
@@ -96,7 +96,7 @@ class OauthClientTest < ActiveSupport::TestCase
   test "revokes client" do
     result = OauthClient.generate(
       name: "Test",
-      redirect_uris: ["https://example.com/callback"]
+      redirect_uris: [ "https://example.com/callback" ]
     )
 
     assert result.client.active?
@@ -108,7 +108,7 @@ class OauthClientTest < ActiveSupport::TestCase
   test "validates redirect_uri" do
     result = OauthClient.generate(
       name: "Test",
-      redirect_uris: ["https://example.com/callback", "https://example.com/other"]
+      redirect_uris: [ "https://example.com/callback", "https://example.com/other" ]
     )
 
     assert result.client.valid_redirect_uri?("https://example.com/callback")
@@ -118,8 +118,8 @@ class OauthClientTest < ActiveSupport::TestCase
   test "checks scope permissions" do
     result = OauthClient.generate(
       name: "Test",
-      redirect_uris: ["https://example.com/callback"],
-      scopes: ["read"]
+      redirect_uris: [ "https://example.com/callback" ],
+      scopes: [ "read" ]
     )
 
     assert result.client.can_request_scope?("read")

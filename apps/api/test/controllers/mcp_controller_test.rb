@@ -13,16 +13,16 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     @client = OauthClient.register_system_client(
       name: "Test MCP Client",
       client_id: "test-mcp-client",
-      redirect_uris: ["https://example.com/callback"]
+      redirect_uris: [ "https://example.com/callback" ]
     )
 
     @token_result = OauthAccessToken.generate_for(
       client: @client,
       user: @user,
-      scopes: ["read", "write"]
+      scopes: [ "read", "write" ]
     )
 
-    @api_key_result = ApiKey.generate_for(@user, name: "Test MCP Key", scopes: ["read", "write"])
+    @api_key_result = ApiKey.generate_for(@user, name: "Test MCP Key", scopes: [ "read", "write" ])
   end
 
   def auth_headers(token = nil)

@@ -103,7 +103,7 @@ class OauthAccessToken < ApplicationRecord
     response = {
       access_token: access_token_value,
       token_type: "Bearer",
-      expires_in: [(expires_at - Time.current).to_i, 0].max,
+      expires_in: [ (expires_at - Time.current).to_i, 0 ].max,
       scope: scopes.join(" ")
     }
     response[:refresh_token] = refresh_token_value if refresh_token_value

@@ -8,11 +8,11 @@ class WellKnownController < ApplicationController
   def oauth_protected_resource
     render json: {
       resource: mcp_server_uri,
-      authorization_servers: [authorization_server_uri],
+      authorization_servers: [ authorization_server_uri ],
       scopes_supported: OauthClient::VALID_SCOPES,
-      bearer_methods_supported: ["header"],
+      bearer_methods_supported: [ "header" ],
       resource_documentation: "https://docs.listygifty.com/mcp",
-      resource_signing_alg_values_supported: ["none"],
+      resource_signing_alg_values_supported: [ "none" ],
       resource_name: "ListyGifty MCP Server"
     }
   end
@@ -27,13 +27,13 @@ class WellKnownController < ApplicationController
       registration_endpoint: "#{api_base_url}/oauth/register",
       revocation_endpoint: "#{api_base_url}/oauth/revoke",
       scopes_supported: OauthClient::VALID_SCOPES,
-      response_types_supported: ["code"],
-      response_modes_supported: ["query"],
-      grant_types_supported: ["authorization_code", "refresh_token"],
-      token_endpoint_auth_methods_supported: ["none", "client_secret_basic", "client_secret_post"],
-      code_challenge_methods_supported: ["S256"],
+      response_types_supported: [ "code" ],
+      response_modes_supported: [ "query" ],
+      grant_types_supported: [ "authorization_code", "refresh_token" ],
+      token_endpoint_auth_methods_supported: [ "none", "client_secret_basic", "client_secret_post" ],
+      code_challenge_methods_supported: [ "S256" ],
       service_documentation: "https://docs.listygifty.com/oauth",
-      ui_locales_supported: ["en"],
+      ui_locales_supported: [ "en" ],
       op_policy_uri: "https://listygifty.com/privacy",
       op_tos_uri: "https://listygifty.com/terms",
       # Client ID Metadata Document support
@@ -50,16 +50,16 @@ class WellKnownController < ApplicationController
       token_endpoint: "#{api_base_url}/oauth/token",
       registration_endpoint: "#{api_base_url}/oauth/register",
       revocation_endpoint: "#{api_base_url}/oauth/revoke",
-      scopes_supported: OauthClient::VALID_SCOPES + ["openid"],
-      response_types_supported: ["code"],
-      response_modes_supported: ["query"],
-      grant_types_supported: ["authorization_code", "refresh_token"],
-      token_endpoint_auth_methods_supported: ["none", "client_secret_basic", "client_secret_post"],
-      code_challenge_methods_supported: ["S256"],
+      scopes_supported: OauthClient::VALID_SCOPES + [ "openid" ],
+      response_types_supported: [ "code" ],
+      response_modes_supported: [ "query" ],
+      grant_types_supported: [ "authorization_code", "refresh_token" ],
+      token_endpoint_auth_methods_supported: [ "none", "client_secret_basic", "client_secret_post" ],
+      code_challenge_methods_supported: [ "S256" ],
       # Mark that we don't actually support full OIDC
       id_token_signing_alg_values_supported: [],
       claims_supported: [],
-      subject_types_supported: ["public"]
+      subject_types_supported: [ "public" ]
     }
   end
 

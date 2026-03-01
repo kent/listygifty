@@ -216,7 +216,7 @@ class McpController < ApplicationController
     end
 
     result = tool_handler[:handler].call(tool_args)
-    { content: [{ type: "text", text: result.to_json }] }
+    { content: [ { type: "text", text: result.to_json } ] }
   end
 
   def handle_list_resources(_params)
@@ -229,7 +229,7 @@ class McpController < ApplicationController
     raise McpError.new(-32602, "Unknown resource: #{uri}") unless resource
 
     result = resource[:handler].call
-    { contents: [{ uri: uri, mimeType: "application/json", text: result.to_json }] }
+    { contents: [ { uri: uri, mimeType: "application/json", text: result.to_json } ] }
   end
 
   def can_access_scope?(scope)
@@ -297,21 +297,21 @@ class McpController < ApplicationController
         description: "List all workspaces the user has access to",
         scope: "read",
         schema: { type: "object", properties: {} },
-        handler: -> (_args) { WorkspaceMembership.where(user: @current_user).includes(:workspace).map { |m| workspace_to_json(m.workspace, m.role) } }
+        handler: ->(_args) { WorkspaceMembership.where(user: @current_user).includes(:workspace).map { |m| workspace_to_json(m.workspace, m.role) } }
       },
       "get_workspace" => {
         description: "Get details of a specific workspace",
         scope: "read",
-        schema: { type: "object", properties: { workspace_id: { type: "integer" } }, required: ["workspace_id"] },
-        handler: -> (args) { workspace_to_json(find_workspace(args["workspace_id"])) }
+        schema: { type: "object", properties: { workspace_id: { type: "integer" } }, required: [ "workspace_id" ] },
+        handler: ->(args) { workspace_to_json(find_workspace(args["workspace_id"])) }
       },
 
       # Holiday tools
       "list_holidays" => {
         description: "List all holidays in a workspace",
         scope: "read",
-        schema: { type: "object", properties: { workspace_id: { type: "integer" } }, required: ["workspace_id"] },
-        handler: -> (args) { find_workspace(args["workspace_id"]).holidays.map { |h| holiday_to_json(h) } }
+        schema: { type: "object", properties: { workspace_id: { type: "integer" } }, required: [ "workspace_id" ] },
+        handler: ->(args) { find_workspace(args["workspace_id"]).holidays.map { |h| holiday_to_json(h) } }
       },
       "create_holiday" => {
         description: "Create a new holiday",
@@ -324,9 +324,9 @@ class McpController < ApplicationController
             date: { type: "string", format: "date" },
             icon: { type: "string" }
           },
-          required: ["workspace_id", "name"]
+          required: [ "workspace_id", "name" ]
         },
-        handler: -> (args) {
+        handler: ->(args) {
           workspace = find_workspace(args["workspace_id"])
           holiday = workspace.holidays.create!(
             name: args["name"],
@@ -342,8 +342,8 @@ class McpController < ApplicationController
       "list_gifts" => {
         description: "List all gifts for a holiday",
         scope: "read",
-        schema: { type: "object", properties: { holiday_id: { type: "integer" } }, required: ["holiday_id"] },
-        handler: -> (args) {
+        schema: { type: "object", properties: { holiday_id: { type: "integer" } }, required: [ "holiday_id" ] },
+        handler: ->(args) {
           holiday = find_holiday(args["holiday_id"])
           holiday.gifts.includes(:gift_recipients, :gift_givers, :gift_status).map { |g| gift_to_json(g) }
         }
@@ -361,9 +361,9 @@ class McpController < ApplicationController
             cost: { type: "number" },
             recipient_ids: { type: "array", items: { type: "integer" } }
           },
-          required: ["holiday_id", "name"]
+          required: [ "holiday_id", "name" ]
         },
-        handler: -> (args) {
+        handler: ->(args) {
           holiday = find_holiday(args["holiday_id"])
           gift = holiday.gifts.create!(
             name: args["name"],
@@ -384,8 +384,8 @@ class McpController < ApplicationController
       "list_people" => {
         description: "List all people in a workspace",
         scope: "read",
-        schema: { type: "object", properties: { workspace_id: { type: "integer" } }, required: ["workspace_id"] },
-        handler: -> (args) { find_workspace(args["workspace_id"]).people.map { |p| person_to_json(p) } }
+        schema: { type: "object", properties: { workspace_id: { type: "integer" } }, required: [ "workspace_id" ] },
+        handler: ->(args) { find_workspace(args["workspace_id"]).people.map { |p| person_to_json(p) } }
       },
       "create_person" => {
         description: "Create a new person/contact",
@@ -399,9 +399,9 @@ class McpController < ApplicationController
             relationship: { type: "string" },
             notes: { type: "string" }
           },
-          required: ["workspace_id", "name"]
+          required: [ "workspace_id", "name" ]
         },
-        handler: -> (args) {
+        handler: ->(args) {
           workspace = find_workspace(args["workspace_id"])
           person = workspace.people.create!(
             name: args["name"],
@@ -418,8 +418,8 @@ class McpController < ApplicationController
       "list_wishlists" => {
         description: "List all wishlists in a workspace",
         scope: "read",
-        schema: { type: "object", properties: { workspace_id: { type: "integer" } }, required: ["workspace_id"] },
-        handler: -> (args) { find_workspace(args["workspace_id"]).wishlists.map { |w| wishlist_to_json(w) } }
+        schema: { type: "object", properties: { workspace_id: { type: "integer" } }, required: [ "workspace_id" ] },
+        handler: ->(args) { find_workspace(args["workspace_id"]).wishlists.map { |w| wishlist_to_json(w) } }
       }
     }
   end

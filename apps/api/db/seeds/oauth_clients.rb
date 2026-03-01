@@ -14,8 +14,8 @@ OauthClient.register_system_client(
   description: "Anthropic's Claude AI assistant",
   logo_uri: "https://claude.ai/favicon.ico",
   client_uri: "https://claude.ai",
-  grant_types: ["authorization_code", "refresh_token"],
-  response_types: ["code"],
+  grant_types: [ "authorization_code", "refresh_token" ],
+  response_types: [ "code" ],
   scopes: %w[read write]
 )
 
@@ -33,8 +33,8 @@ OauthClient.register_system_client(
   ],
   description: "Claude Code CLI for developers",
   client_uri: "https://docs.anthropic.com/claude-code",
-  grant_types: ["authorization_code", "refresh_token"],
-  response_types: ["code"],
+  grant_types: [ "authorization_code", "refresh_token" ],
+  response_types: [ "code" ],
   scopes: %w[read write]
 )
 
@@ -51,8 +51,8 @@ OauthClient.register_system_client(
   description: "OpenAI's ChatGPT assistant",
   logo_uri: "https://chat.openai.com/favicon.ico",
   client_uri: "https://chat.openai.com",
-  grant_types: ["authorization_code", "refresh_token"],
-  response_types: ["code"],
+  grant_types: [ "authorization_code", "refresh_token" ],
+  response_types: [ "code" ],
   scopes: %w[read write]
 )
 
