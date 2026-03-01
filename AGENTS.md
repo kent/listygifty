@@ -295,14 +295,29 @@ Use this profile for all Cloud Run/Cloud Build deploy actions so commands never 
 
 - Project ID: `listygifty`
 - Project number: `906707282968`
-- Region: `us-east1`
+- Region: `us-central1`
 - Deployer service account: `niftygifty-deployer@listygifty.iam.gserviceaccount.com`
+- GitHub Actions SA: `github-actions@listygifty.iam.gserviceaccount.com`
 - Local key file (gitignored): `.gcp/keys/listygifty-deployer.json`
 - Local profile file (gitignored): `.gcp/listygifty-deploy.env`
+
+### gcloud Configuration Profile
+
+A named gcloud configuration `listygifty` is set up to avoid account switching issues:
+
+```bash
+# Activate the listygifty profile before running any gcloud commands
+gcloud config configurations activate listygifty
+```
+
+This profile is pre-configured with:
+- Account: `kent.fenwick@gmail.com`
+- Project: `listygifty`
 
 ### Activate deploy profile
 
 ```bash
+gcloud config configurations activate listygifty
 source .gcp/listygifty-deploy.env
 ```
 
