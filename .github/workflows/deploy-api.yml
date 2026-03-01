@@ -49,7 +49,13 @@ jobs:
             echo "RAILS_ENV=production" >> $GITHUB_OUTPUT
             echo "CLOUD_SQL_INSTANCE=listygifty:us-central1:niftygifty-prod" >> $GITHUB_OUTPUT
             echo "ALLOWED_HOSTS_SECRET=niftygifty-allowed-hosts" >> $GITHUB_OUTPUT
-            echo "SECRET_KEY_SECRET=listygifty-rails-key" >> $GITHUB_OUTPUT
+            echo "SECRET_KEY_SECRET=listygifty-rails-key-prod" >> $GITHUB_OUTPUT
+            echo "CLERK_SECRET=niftygifty-clerk-secret-key" >> $GITHUB_OUTPUT
+            echo "STRIPE_SECRET=niftygifty-stripe-secret-key" >> $GITHUB_OUTPUT
+            echo "STRIPE_WEBHOOK_SECRET=niftygifty-stripe-webhook-secret" >> $GITHUB_OUTPUT
+            echo "POSTMARK_SECRET=niftygifty-postmark-api-token" >> $GITHUB_OUTPUT
+            echo "OPENAI_SECRET=niftygifty-openai-api-key" >> $GITHUB_OUTPUT
+            echo "DATABASE_URL_SECRET=niftygifty-database-url" >> $GITHUB_OUTPUT
           else
             echo "ENV=staging" >> $GITHUB_OUTPUT
             echo "SERVICE_NAME=listygifty-api-staging" >> $GITHUB_OUTPUT
@@ -58,6 +64,12 @@ jobs:
             echo "CLOUD_SQL_INSTANCE=listygifty:us-central1:niftygifty-staging" >> $GITHUB_OUTPUT
             echo "ALLOWED_HOSTS_SECRET=niftygifty-staging-allowed-hosts" >> $GITHUB_OUTPUT
             echo "SECRET_KEY_SECRET=listygifty-rails-key-staging" >> $GITHUB_OUTPUT
+            echo "CLERK_SECRET=niftygifty-staging-clerk-secret-key" >> $GITHUB_OUTPUT
+            echo "STRIPE_SECRET=niftygifty-staging-stripe-secret-key" >> $GITHUB_OUTPUT
+            echo "STRIPE_WEBHOOK_SECRET=niftygifty-staging-stripe-webhook-secret" >> $GITHUB_OUTPUT
+            echo "POSTMARK_SECRET=niftygifty-staging-postmark-api-token" >> $GITHUB_OUTPUT
+            echo "OPENAI_SECRET=niftygifty-staging-openai-api-key" >> $GITHUB_OUTPUT
+            echo "DATABASE_URL_SECRET=niftygifty-staging-database-url" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and push Docker image
@@ -87,7 +99,7 @@ jobs:
             --no-cpu-throttling \
             --set-cloudsql-instances=${{ steps.env.outputs.CLOUD_SQL_INSTANCE }} \
             --set-env-vars="RAILS_ENV=${{ steps.env.outputs.RAILS_ENV }}" \
-            --set-secrets="DATABASE_URL=niftygifty-database-url:latest,SECRET_KEY_BASE=${{ steps.env.outputs.SECRET_KEY_SECRET }}:latest,ALLOWED_HOSTS=${{ steps.env.outputs.ALLOWED_HOSTS_SECRET }}:latest,CLERK_SECRET_KEY=niftygifty-clerk-secret:latest,STRIPE_SECRET_KEY=niftygifty-stripe-secret:latest,STRIPE_WEBHOOK_SECRET=niftygifty-stripe-webhook-secret:latest,POSTMARK_API_KEY=niftygifty-postmark-api-key:latest,OPENAI_API_KEY=niftygifty-openai-api-key:latest"
+            --set-secrets="DATABASE_URL=${{ steps.env.outputs.DATABASE_URL_SECRET }}:latest,SECRET_KEY_BASE=${{ steps.env.outputs.SECRET_KEY_SECRET }}:latest,ALLOWED_HOSTS=${{ steps.env.outputs.ALLOWED_HOSTS_SECRET }}:latest,CLERK_SECRET_KEY=${{ steps.env.outputs.CLERK_SECRET }}:latest,STRIPE_SECRET_KEY=${{ steps.env.outputs.STRIPE_SECRET }}:latest,STRIPE_WEBHOOK_SECRET=${{ steps.env.outputs.STRIPE_WEBHOOK_SECRET }}:latest,POSTMARK_API_KEY=${{ steps.env.outputs.POSTMARK_SECRET }}:latest,OPENAI_API_KEY=${{ steps.env.outputs.OPENAI_SECRET }}:latest"
 
       - name: Run database migrations
         run: |
