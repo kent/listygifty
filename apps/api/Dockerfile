@@ -23,6 +23,11 @@ RUN bundle config set --local deployment 'true' && \
     bundle config set --local without 'development test' && \
     bundle install
 
+# Copy application code and precompile bootsnap in builder stage
+COPY . .
+ENV RAILS_ENV=production
+RUN bundle exec bootsnap precompile --gemfile app/ lib/
+
 # Stage 2: Runtime stage
 FROM ruby:3.4-slim AS runtime
 
@@ -41,8 +46,8 @@ WORKDIR /app
 # Copy bundled gems from builder
 COPY --from=builder /usr/local/bundle /usr/local/bundle
 
-# Copy application code
-COPY --chown=rails:rails . .
+# Copy application code with bootsnap cache from builder
+COPY --from=builder --chown=rails:rails /app .
 
 # Set environment variables
 ENV RAILS_ENV=production \
@@ -50,9 +55,6 @@ ENV RAILS_ENV=production \
     RAILS_SERVE_STATIC_FILES=true \
     BUNDLE_DEPLOYMENT=true \
     BUNDLE_WITHOUT="development:test"
-
-# Precompile bootsnap cache
-RUN bundle exec bootsnap precompile --gemfile app/ lib/
 
 # Switch to non-root user
 USER rails
