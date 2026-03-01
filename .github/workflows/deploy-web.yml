@@ -14,9 +14,8 @@ on:
 
 env:
   PROJECT_ID: listygifty
-  REGION: us-east1
-  SERVICE_NAME: niftygifty-web
-  IMAGE: gcr.io/listygifty/niftygifty-web
+  REGION: us-central1
+  IMAGE: gcr.io/listygifty/listygifty-web
 
 jobs:
   deploy:
@@ -49,11 +48,13 @@ jobs:
         run: |
           if [[ "${{ github.ref_name }}" == "main" ]]; then
             echo "ENV=production" >> $GITHUB_OUTPUT
+            echo "SERVICE_NAME=listygifty-web-prod" >> $GITHUB_OUTPUT
             echo "API_URL=https://api.listygifty.com" >> $GITHUB_OUTPUT
             echo "APP_URL=https://listygifty.com" >> $GITHUB_OUTPUT
             echo "CLERK_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY_PROD }}" >> $GITHUB_OUTPUT
           else
             echo "ENV=staging" >> $GITHUB_OUTPUT
+            echo "SERVICE_NAME=listygifty-web-staging" >> $GITHUB_OUTPUT
             echo "API_URL=https://api-staging.listygifty.com" >> $GITHUB_OUTPUT
             echo "APP_URL=https://staging.listygifty.com" >> $GITHUB_OUTPUT
             echo "CLERK_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING }}" >> $GITHUB_OUTPUT
@@ -84,7 +85,7 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy ${{ env.SERVICE_NAME }} \
+          gcloud run deploy ${{ steps.env.outputs.SERVICE_NAME }} \
             --image=${{ env.IMAGE }}:${{ github.sha }} \
             --region=${{ env.REGION }} \
             --platform=managed \
@@ -98,6 +99,6 @@ jobs:
 
       - name: Show deployment URL
         run: |
-          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(status.url)')
-          echo "## 🚀 Deployed to ${{ steps.env.outputs.ENV }}" >> $GITHUB_STEP_SUMMARY
+          URL=$(gcloud run services describe ${{ steps.env.outputs.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(status.url)')
+          echo "## 🚀 Deployed Web to ${{ steps.env.outputs.ENV }}" >> $GITHUB_STEP_SUMMARY
           echo "**URL:** $URL" >> $GITHUB_STEP_SUMMARY
