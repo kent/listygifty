@@ -20,6 +20,8 @@ export const PUBLIC_ROUTES = [
   "/signup(.*)",
   "/giving-pledge",
   "/billing(.*)",
+  "/integrations",
+  "/business/signup",
 ] as const;
 
 // =============================================================================
