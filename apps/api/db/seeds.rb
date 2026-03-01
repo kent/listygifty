@@ -38,3 +38,6 @@ end
     holiday.date = holiday_attrs[:date]
   end
 end
+
+# Load OAuth client seeds
+load Rails.root.join("db/seeds/oauth_clients.rb")

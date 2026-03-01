@@ -1,5 +1,36 @@
 Rails.application.routes.draw do
+  # =============================================================================
+  # OAuth 2.1 Authorization Server
+  # =============================================================================
+
+  # Well-known discovery endpoints (RFC 9728, RFC 8414)
+  get ".well-known/oauth-protected-resource" => "well_known#oauth_protected_resource"
+  get ".well-known/oauth-authorization-server" => "well_known#oauth_authorization_server"
+  get ".well-known/openid-configuration" => "well_known#openid_configuration"
+
+  # OAuth authorization and token endpoints
+  scope :oauth do
+    get "authorize", to: "oauth#authorize"
+    post "authorize", to: "oauth#authorize_decision"
+    post "token", to: "oauth#token"
+    post "register", to: "oauth#register"
+    post "revoke", to: "oauth#revoke"
+  end
+
+  # =============================================================================
+  # MCP (Model Context Protocol) Remote Server
+  # =============================================================================
+
+  # Streamable HTTP transport (primary)
+  post "mcp", to: "mcp#handle"
+
+  # SSE transport (legacy/fallback)
+  get "mcp", to: "mcp#sse_connect"
+  post "mcp/messages", to: "mcp#sse_message"
+
+  # =============================================================================
   # API Keys (for MCP server and other integrations)
+  # =============================================================================
   resources :api_keys, only: %i[index create destroy]
 
   # Workspaces

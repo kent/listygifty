@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_09_165313) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_28_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -306,6 +306,72 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_09_165313) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_notification_preferences_on_user_id", unique: true
+  end
+
+  create_table "oauth_access_tokens", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.string "ip_address"
+    t.datetime "last_used_at"
+    t.bigint "oauth_client_id", null: false
+    t.datetime "refresh_token_expires_at"
+    t.string "refresh_token_hash"
+    t.string "resource"
+    t.datetime "revoked_at"
+    t.jsonb "scopes", default: [], null: false
+    t.string "token_hash", null: false
+    t.datetime "updated_at", null: false
+    t.string "user_agent"
+    t.bigint "user_id", null: false
+    t.index ["expires_at"], name: "index_oauth_access_tokens_on_expires_at"
+    t.index ["oauth_client_id"], name: "index_oauth_access_tokens_on_oauth_client_id"
+    t.index ["refresh_token_hash"], name: "index_oauth_access_tokens_on_refresh_token_hash", unique: true, where: "(refresh_token_hash IS NOT NULL)"
+    t.index ["token_hash"], name: "index_oauth_access_tokens_on_token_hash", unique: true
+    t.index ["user_id", "revoked_at"], name: "idx_oauth_tokens_user_active"
+    t.index ["user_id"], name: "index_oauth_access_tokens_on_user_id"
+  end
+
+  create_table "oauth_authorization_codes", force: :cascade do |t|
+    t.string "code_challenge"
+    t.string "code_challenge_method"
+    t.string "code_hash", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.bigint "oauth_client_id", null: false
+    t.string "redirect_uri", null: false
+    t.string "resource"
+    t.jsonb "scopes", default: [], null: false
+    t.string "state"
+    t.datetime "updated_at", null: false
+    t.datetime "used_at"
+    t.bigint "user_id", null: false
+    t.index ["code_hash"], name: "index_oauth_authorization_codes_on_code_hash", unique: true
+    t.index ["expires_at"], name: "index_oauth_authorization_codes_on_expires_at"
+    t.index ["oauth_client_id"], name: "index_oauth_authorization_codes_on_oauth_client_id"
+    t.index ["user_id"], name: "index_oauth_authorization_codes_on_user_id"
+  end
+
+  create_table "oauth_clients", force: :cascade do |t|
+    t.string "client_id", null: false
+    t.string "client_secret_hash"
+    t.string "client_uri"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.jsonb "grant_types", default: ["authorization_code"], null: false
+    t.boolean "is_dynamic", default: false, null: false
+    t.boolean "is_system", default: false, null: false
+    t.string "logo_uri"
+    t.string "name", null: false
+    t.jsonb "redirect_uris", default: [], null: false
+    t.jsonb "response_types", default: ["code"], null: false
+    t.datetime "revoked_at"
+    t.jsonb "scopes", default: ["read", "write"], null: false
+    t.string "token_endpoint_auth_method", default: "none"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["client_id"], name: "index_oauth_clients_on_client_id", unique: true
+    t.index ["is_system"], name: "index_oauth_clients_on_is_system"
+    t.index ["user_id"], name: "index_oauth_clients_on_user_id"
   end
 
   create_table "people", force: :cascade do |t|
@@ -608,6 +674,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_09_165313) do
   add_foreign_key "match_slots", "match_arrangements"
   add_foreign_key "match_slots", "people"
   add_foreign_key "notification_preferences", "users"
+  add_foreign_key "oauth_access_tokens", "oauth_clients"
+  add_foreign_key "oauth_access_tokens", "users"
+  add_foreign_key "oauth_authorization_codes", "oauth_clients"
+  add_foreign_key "oauth_authorization_codes", "users"
+  add_foreign_key "oauth_clients", "users"
   add_foreign_key "people", "users"
   add_foreign_key "people", "workspaces"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

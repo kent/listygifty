@@ -1,63 +1,64 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1
+# ListyGifty API - Rails 8.1 Application
+# Multi-stage build for production deployment on GCP Cloud Run
 
-FROM ruby:3.4.8-slim AS builder
+# Stage 1: Build stage
+FROM ruby:3.4-slim AS builder
 
-ENV BUNDLE_WITHOUT=development:test \
-    BUNDLE_DEPLOYMENT=1 \
-    BUNDLE_PATH=/usr/local/bundle
+# Install build dependencies
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y \
-      build-essential \
-      git \
-      libpq-dev \
-      libyaml-dev \
-      libvips \
-      pkg-config && \
-    rm -rf /var/lib/apt/lists/*
-
+# Install Ruby dependencies
 COPY Gemfile Gemfile.lock ./
-RUN bundle install && rm -rf /usr/local/bundle/cache/*.gem
+RUN bundle config set --local deployment 'true' && \
+    bundle config set --local without 'development test' && \
+    bundle install
 
-COPY . .
-RUN bundle exec bootsnap precompile --gemfile app/ config/
+# Stage 2: Runtime stage
+FROM ruby:3.4-slim AS runtime
 
-FROM ruby:3.4.8-slim
-
-ENV RAILS_ENV=production \
-    RACK_ENV=production \
-    BUNDLE_WITHOUT=development:test \
-    BUNDLE_DEPLOYMENT=1 \
-    BUNDLE_PATH=/usr/local/bundle \
-    RAILS_LOG_TO_STDOUT=1 \
-    RAILS_SERVE_STATIC_FILES=1 \
-    RUBY_YJIT_ENABLE=1
+# Install runtime dependencies
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -s /bin/bash rails
 
 WORKDIR /app
 
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y \
-      libjemalloc2 \
-      libpq5 \
-      libyaml-0-2 \
-      libvips \
-      postgresql-client \
-      tini && \
-    rm -rf /var/lib/apt/lists/*
-
-ENV LD_PRELOAD=libjemalloc.so.2
-
+# Copy bundled gems from builder
 COPY --from=builder /usr/local/bundle /usr/local/bundle
-COPY --from=builder /app /app
 
-RUN useradd --create-home --uid 1001 rails && \
-    chown -R rails:rails /app
+# Copy application code
+COPY --chown=rails:rails . .
 
+# Set environment variables
+ENV RAILS_ENV=production \
+    RAILS_LOG_TO_STDOUT=true \
+    RAILS_SERVE_STATIC_FILES=true \
+    BUNDLE_DEPLOYMENT=true \
+    BUNDLE_WITHOUT="development:test"
+
+# Precompile bootsnap cache
+RUN bundle exec bootsnap precompile --gemfile app/ lib/
+
+# Switch to non-root user
 USER rails
 
-EXPOSE 8080
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-3000}/up || exit 1
 
-ENTRYPOINT ["tini", "--"]
+# Expose port (Cloud Run will set PORT env var)
+EXPOSE 3000
+
+# Start the server
 CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
