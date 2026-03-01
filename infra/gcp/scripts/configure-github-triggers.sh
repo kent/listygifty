@@ -9,13 +9,13 @@ require_cmd gcloud
 require_cmd jq
 
 PROJECT_ID="${PROJECT_ID:-listygifty}"
-REGION="${REGION:-us-east1}"
+REGION="${REGION:-us-central1}"
 TRIGGER_REGION="${TRIGGER_REGION:-${REGION}}"
 CONNECTION_NAME="${CONNECTION_NAME:-niftygfity-github}"
 REPOSITORY_NAME="${REPOSITORY_NAME:-niftygfity}"
 REPOSITORY_REMOTE_URI="${REPOSITORY_REMOTE_URI:-https://github.com/kent/niftygfity}"
 DEPLOY_CONFIG="${DEPLOY_CONFIG:-infra/gcp/cloudbuild.deploy.yaml}"
-DEPLOY_REGION="${DEPLOY_REGION:-us-east1}"
+DEPLOY_REGION="${DEPLOY_REGION:-us-central1}"
 
 PROJECT_NUMBER="$(project_number "${PROJECT_ID}")"
 CLOUD_BUILD_SA="projects/${PROJECT_ID}/serviceAccounts/${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"

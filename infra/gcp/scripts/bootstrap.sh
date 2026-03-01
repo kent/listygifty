@@ -15,7 +15,7 @@ DB_SUFFIX="$(environment_db_suffix "${ENVIRONMENT}")"
 SECRET_PREFIX="${SECRET_PREFIX:-$(default_secret_prefix "${ENVIRONMENT}")}"
 
 PROJECT_ID="${PROJECT_ID:-listygifty}"
-REGION="${REGION:-us-east1}"
+REGION="${REGION:-us-central1}"
 ARTIFACT_REGION="${ARTIFACT_REGION:-${REGION}}"
 ARTIFACT_REPOSITORY="${ARTIFACT_REPOSITORY:-niftygifty}"
 SQL_INSTANCE="${SQL_INSTANCE:-niftygifty-postgres}"

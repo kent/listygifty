@@ -18,7 +18,7 @@ steps:
         set -euo pipefail
 
         ENVIRONMENT="${_ENVIRONMENT:?_ENVIRONMENT substitution is required}"
-        REGION="${_REGION:-us-east1}"
+        REGION="${_REGION:-us-central1}"
         BINDINGS_FILE="${_BINDINGS_FILE:-infra/gcp/secret-bindings.${_ENVIRONMENT}.env}"
 
         if [[ ! -f "${BINDINGS_FILE}" ]]; then

@@ -12,7 +12,7 @@ require_cmd npm
 PROFILE_FILE="${PROFILE_FILE:-${ROOT_DIR}/.gcp/listygifty-deploy.env}"
 SKIP_TESTS="${SKIP_TESTS:-0}"
 PROJECT_ID="${PROJECT_ID:-listygifty}"
-REGION="${REGION:-us-east1}"
+REGION="${REGION:-us-central1}"
 STAGING_BINDINGS_FILE="${STAGING_BINDINGS_FILE:-${ROOT_DIR}/infra/gcp/secret-bindings.staging.env}"
 PRODUCTION_BINDINGS_FILE="${PRODUCTION_BINDINGS_FILE:-${ROOT_DIR}/infra/gcp/secret-bindings.production.env}"
 

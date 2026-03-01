@@ -47,7 +47,7 @@ jobs:
             echo "SERVICE_NAME=listygifty-api-prod" >> $GITHUB_OUTPUT
             echo "REGION=us-central1" >> $GITHUB_OUTPUT
             echo "RAILS_ENV=production" >> $GITHUB_OUTPUT
-            echo "CLOUD_SQL_INSTANCE=listygifty:us-central1:niftygifty-prod" >> $GITHUB_OUTPUT
+            echo "CLOUD_SQL_INSTANCE=listygifty:us-central1:niftygifty-postgres" >> $GITHUB_OUTPUT
             echo "ALLOWED_HOSTS_SECRET=niftygifty-allowed-hosts" >> $GITHUB_OUTPUT
             echo "SECRET_KEY_SECRET=listygifty-rails-key-prod" >> $GITHUB_OUTPUT
             echo "CLERK_SECRET=niftygifty-clerk-secret-key" >> $GITHUB_OUTPUT
@@ -61,7 +61,7 @@ jobs:
             echo "SERVICE_NAME=listygifty-api-staging" >> $GITHUB_OUTPUT
             echo "REGION=us-central1" >> $GITHUB_OUTPUT
             echo "RAILS_ENV=staging" >> $GITHUB_OUTPUT
-            echo "CLOUD_SQL_INSTANCE=listygifty:us-central1:niftygifty-staging" >> $GITHUB_OUTPUT
+            echo "CLOUD_SQL_INSTANCE=listygifty:us-central1:niftygifty-postgres" >> $GITHUB_OUTPUT
             echo "ALLOWED_HOSTS_SECRET=niftygifty-staging-allowed-hosts" >> $GITHUB_OUTPUT
             echo "SECRET_KEY_SECRET=listygifty-rails-key-staging" >> $GITHUB_OUTPUT
             echo "CLERK_SECRET=niftygifty-staging-clerk-secret-key" >> $GITHUB_OUTPUT

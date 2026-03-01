@@ -135,7 +135,7 @@ Guidelines:
 Project:
 - Project ID: `listygifty`
 - Project number: `906707282968`
-- Region: `us-east1`
+- Region: `us-central1`
 
 ### One-command release (recommended)
 

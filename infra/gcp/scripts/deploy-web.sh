@@ -26,7 +26,7 @@ else
 fi
 
 PROJECT_ID="${PROJECT_ID:-listygifty}"
-REGION="${REGION:-us-east1}"
+REGION="${REGION:-us-central1}"
 ARTIFACT_REGION="${ARTIFACT_REGION:-${REGION}}"
 ARTIFACT_REPOSITORY="${ARTIFACT_REPOSITORY:-niftygifty}"
 API_SERVICE="${API_SERVICE:-${default_api_service}}"
