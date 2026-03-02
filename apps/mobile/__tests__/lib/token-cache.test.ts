@@ -28,6 +28,13 @@ describe("tokenCache", () => {
 
       expect(result).toBeNull();
     });
+
+    it("returns null and skips SecureStore when key is invalid", async () => {
+      const result = await tokenCache.getToken("");
+
+      expect(SecureStore.getItemAsync).not.toHaveBeenCalled();
+      expect(result).toBeNull();
+    });
   });
 
   describe("saveToken", () => {
@@ -45,6 +52,13 @@ describe("tokenCache", () => {
       // Should not throw
       await expect(saveToken("clerk-token", "new-token")).resolves.toBeUndefined();
     });
+
+    it("skips SecureStore when key or value is invalid", async () => {
+      await saveToken("", "new-token");
+      await saveToken("clerk-token", undefined as unknown as string);
+
+      expect(SecureStore.setItemAsync).not.toHaveBeenCalled();
+    });
   });
 
   describe("clearToken", () => {
@@ -61,6 +75,12 @@ describe("tokenCache", () => {
 
       // Should not throw
       await expect(clearToken("clerk-token")).resolves.toBeUndefined();
+    });
+
+    it("skips SecureStore when key is invalid", async () => {
+      await clearToken("");
+
+      expect(SecureStore.deleteItemAsync).not.toHaveBeenCalled();
     });
   });
 });
