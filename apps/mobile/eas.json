@@ -1,0 +1,47 @@
+{
+  "cli": {
+    "version": ">= 18.0.1",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "staging": {
+      "distribution": "store",
+      "autoIncrement": true,
+      "env": {
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+      }
+    }
+  },
+  "submit": {
+    "staging": {
+      "ios": {
+        "ascAppId": "6759929474",
+        "appleId": "kent.fenwick@gmail.com",
+        "appleTeamId": "PS5W7BFTQ2",
+        "groups": [
+          "Staging"
+        ]
+      }
+    },
+    "production": {
+      "ios": {
+        "ascAppId": "6759929474",
+        "appleId": "kent.fenwick@gmail.com",
+        "appleTeamId": "PS5W7BFTQ2"
+      }
+    }
+  }
+}

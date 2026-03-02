@@ -15,8 +15,13 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.niftygifty.app",
-      "associatedDomains": ["applinks:app.listygifty.com"]
+      "bundleIdentifier": "com.ewakened.niftygifty",
+      "associatedDomains": [
+        "applinks:app.listygifty.com"
+      ],
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -36,7 +41,10 @@
               "pathPrefix": "/join/exchange"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -55,6 +63,13 @@
           "color": "#8b5cf6"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "28392454-b8f9-4dd2-af13-33060522a8d2"
+      }
+    },
+    "owner": "kentf"
   }
 }

@@ -41,3 +41,6 @@ end
 
 # Load OAuth client seeds
 load Rails.root.join("db/seeds/oauth_clients.rb")
+
+# Load app review demo seeds
+load Rails.root.join("db/seeds/app_review_data.rb")
