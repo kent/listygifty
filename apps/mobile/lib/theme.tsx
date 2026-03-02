@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
 import { useColorScheme as useSystemColorScheme, Appearance } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { isIOS26OrHigher } from "@/lib/platform";
 
 // Color palette definitions
 const lightColors = {
@@ -147,21 +148,44 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const systemColorScheme = useSystemColorScheme();
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>("system");
   const [isLoaded, setIsLoaded] = useState(false);
+  const shouldPersistTheme = !isIOS26OrHigher();
 
   // Load saved preference
   useEffect(() => {
-    AsyncStorage.getItem(THEME_STORAGE_KEY).then((saved) => {
-      if (saved === "light" || saved === "dark" || saved === "system") {
-        setColorSchemeState(saved);
+    let isMounted = true;
+
+    const loadThemePreference = async () => {
+      if (!shouldPersistTheme) {
+        if (isMounted) setIsLoaded(true);
+        return;
       }
-      setIsLoaded(true);
-    });
-  }, []);
+
+      try {
+        const saved = await AsyncStorage.getItem(THEME_STORAGE_KEY);
+        if (saved === "light" || saved === "dark" || saved === "system") {
+          if (isMounted) setColorSchemeState(saved);
+        }
+      } catch {
+        // Keep default theme if persistence is unavailable
+      } finally {
+        if (isMounted) setIsLoaded(true);
+      }
+    };
+
+    loadThemePreference();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [shouldPersistTheme]);
 
   // Save preference
   const setColorScheme = (scheme: ColorScheme) => {
     setColorSchemeState(scheme);
-    AsyncStorage.setItem(THEME_STORAGE_KEY, scheme);
+    if (!shouldPersistTheme) return;
+    AsyncStorage.setItem(THEME_STORAGE_KEY, scheme).catch(() => {
+      // Keep in-memory preference if persistence is unavailable
+    });
   };
 
   // Determine effective theme

@@ -22,6 +22,9 @@ export const PUBLIC_ROUTES = [
   "/billing(.*)",
   "/integrations",
   "/business/signup",
+  "/privacy-policy",
+  "/support",
+  "/status",
 ] as const;
 
 // =============================================================================
@@ -106,4 +109,3 @@ class AuthService {
 }
 
 export const authService = new AuthService();
-
