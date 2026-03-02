@@ -854,9 +854,6 @@ export default function HolidaysPage() {
     );
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
   const activeHolidays = holidays.filter((h) => !h.completed && !h.archived);
   const pastHolidays = holidays.filter((h) => h.completed && !h.archived);
   const archivedHolidays = holidays.filter((h) => h.archived);
@@ -868,11 +865,20 @@ export default function HolidaysPage() {
       <AppHeader user={user} onSignOut={signOut} />
 
       <main className="relative z-10 container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Gift Lists</h1>
-          <p className="text-slate-600 dark:text-slate-400">
-            Plan gifts for upcoming occasions or review past ones.
-          </p>
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Gift Lists</h1>
+            <p className="text-slate-600 dark:text-slate-400">
+              Plan gifts for upcoming occasions or review past ones.
+            </p>
+          </div>
+          <Button
+            onClick={() => setActiveSection("new")}
+            className="gap-2 sm:self-start"
+          >
+            <Plus className="h-4 w-4" />
+            New Gift List
+          </Button>
         </div>
 
         <div className="flex flex-col md:flex-row md:gap-8">

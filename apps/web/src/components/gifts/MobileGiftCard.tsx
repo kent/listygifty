@@ -20,7 +20,7 @@ interface MobileGiftCardProps {
   onUpdateGift: (id: number, updates: { name?: string; gift_status_id?: number; cost?: number }) => void;
   onUpdateRecipients: (id: number, recipientIds: number[]) => void;
   onUpdateGivers: (id: number, giverIds: number[]) => void;
-  onDeleteGift: (id: number) => void;
+  onRequestDelete: (gift: Gift) => void;
   onPersonCreated: (person: Person) => void;
 }
 
@@ -32,7 +32,7 @@ export function MobileGiftCard({
   onUpdateGift,
   onUpdateRecipients,
   onUpdateGivers,
-  onDeleteGift,
+  onRequestDelete,
   onPersonCreated,
 }: MobileGiftCardProps) {
   const [expanded, setExpanded] = useState(false);
@@ -153,7 +153,7 @@ export function MobileGiftCard({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onDeleteGift(gift.id)}
+                onClick={() => onRequestDelete(gift)}
                 disabled={isDeleting}
                 className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
               >

@@ -15,7 +15,7 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, "node_modules"),
 ];
 
-// Force Metro to resolve workspace packages from the monorepo
-config.resolver.disableHierarchicalLookup = true;
+// Keep Expo defaults for hierarchical lookup to avoid doctor/runtime warnings.
+config.resolver.disableHierarchicalLookup = false;
 
 module.exports = config;

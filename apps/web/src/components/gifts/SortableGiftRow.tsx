@@ -45,7 +45,7 @@ interface SortableGiftRowProps {
   onUpdateGivers: (id: number, giverIds: number[]) => void;
   onUpdateRecipientAddress: (giftId: number, recipientId: number, addressId: number | null) => void;
   onInsertGift: (referenceId: number, position: "above" | "below") => void;
-  onDeleteGift: (id: number) => void;
+  onRequestDelete: (gift: Gift) => void;
   onPersonCreated: (person: Person) => void;
 }
 
@@ -61,7 +61,7 @@ export function SortableGiftRow({
   onUpdateGivers,
   onUpdateRecipientAddress,
   onInsertGift,
-  onDeleteGift,
+  onRequestDelete,
   onPersonCreated,
 }: SortableGiftRowProps) {
   const [infoOpen, setInfoOpen] = useState(false);
@@ -200,7 +200,7 @@ export function SortableGiftRow({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => onDeleteGift(gift.id)}
+              onClick={() => onRequestDelete(gift)}
               disabled={deletingId === gift.id}
               className="text-destructive focus:text-destructive"
             >
@@ -296,4 +296,3 @@ export function SortableGiftRow({
     </>
   );
 }
-

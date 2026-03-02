@@ -8,8 +8,9 @@ import {
   createWishlistItemsService,
   createExchangeInvitesService,
 } from "@niftygifty/services";
+import { runtimeConfig } from "@/lib/runtime-config";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3001";
+const API_URL = runtimeConfig.apiUrl;
 
 // Create the API client instance
 export const apiClient = new ApiClient({

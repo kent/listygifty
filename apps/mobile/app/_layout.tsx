@@ -6,35 +6,13 @@ import { tokenCache } from "@/lib/token-cache";
 import { StatusBar } from "expo-status-bar";
 import { ThemeProvider, useTheme } from "@/lib/theme";
 import { ScreenLoader } from "@/components/ScreenLoader";
-import { Text, View } from "react-native";
 import { isIOS26OrHigher } from "@/lib/platform";
+import { runtimeConfig } from "@/lib/runtime-config";
 
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-const posthogApiKey = process.env.EXPO_PUBLIC_POSTHOG_KEY;
-const posthogHost = process.env.EXPO_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
+const publishableKey = runtimeConfig.clerkPublishableKey;
+const posthogApiKey = runtimeConfig.posthogApiKey;
+const posthogHost = runtimeConfig.posthogHost;
 const shouldDisableSecureTokenCache = isIOS26OrHigher();
-
-function StartupConfigErrorScreen() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#0f172a",
-        paddingHorizontal: 24,
-      }}
-    >
-      <StatusBar style="light" />
-      <Text style={{ color: "#f8fafc", fontSize: 24, fontWeight: "700", marginBottom: 12, textAlign: "center" }}>
-        Listy Gifty Setup Required
-      </Text>
-      <Text style={{ color: "#cbd5e1", fontSize: 16, lineHeight: 22, textAlign: "center" }}>
-        This build is missing runtime configuration. Please update the mobile build environment and try again.
-      </Text>
-    </View>
-  );
-}
 
 function AuthRouter() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -68,10 +46,6 @@ function AuthRouter() {
 }
 
 export default function RootLayout() {
-  if (!publishableKey) {
-    return <StartupConfigErrorScreen />;
-  }
-
   const appShell = (
     <ThemeProvider>
       <ClerkProvider publishableKey={publishableKey} tokenCache={shouldDisableSecureTokenCache ? undefined : tokenCache}>

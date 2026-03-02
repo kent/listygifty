@@ -132,13 +132,13 @@ export default function SettingsPage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex gap-8">
+        <div className="flex flex-col gap-6 md:flex-row md:gap-8">
           <SettingsNav
             activeSection={activeSection}
             onSectionChange={setActiveSection}
           />
 
-          <div className="flex-1 max-w-2xl pl-4">
+          <div className="flex-1 max-w-2xl md:pl-4">
             {activeSection === "profile" && (
               <ProfileSection user={user} />
             )}

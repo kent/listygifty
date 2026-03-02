@@ -47,10 +47,10 @@ export function SettingsNav({ activeSection, onSectionChange }: SettingsNavProps
   const visibleItems = NAV_ITEMS.filter(item => !item.businessOnly || isBusiness);
 
   return (
-    <nav className="w-64 shrink-0">
-      <div className="sticky top-8">
+    <nav className="w-full md:w-64 shrink-0">
+      <div className="md:sticky md:top-8">
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/30 backdrop-blur-xl p-2 shadow-xl shadow-slate-200/50 dark:shadow-black/20">
-          <ul className="space-y-1">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-1">
             {visibleItems.map(({ id, label, icon: Icon, disabled, color }) => {
               const isActive = activeSection === id;
               const colors = colorMap[color as keyof typeof colorMap];

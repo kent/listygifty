@@ -25,6 +25,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { SortableGiftRow } from "./SortableGiftRow";
 import { MobileGiftCard } from "./MobileGiftCard";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
@@ -67,6 +77,7 @@ export function GiftGrid({
   const [localState, setLocalState] = useState<Record<number, { _isNew?: boolean; _isSaving?: boolean }>>({});
   const [isPending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [pendingDeleteGift, setPendingDeleteGift] = useState<Gift | null>(null);
   const { canCreateGift, giftsRemaining, isPremium, refreshBillingStatus } = useAuth();
   
   const onGiftsChangeRef = useRef(onGiftsChange);
@@ -289,6 +300,7 @@ export function GiftGrid({
       try {
         await giftsService.delete(id);
         setLocalMeta(id, null);
+        toast.success("Gift deleted");
         // Refresh billing status after deletion
         await refreshBillingStatus();
       } catch {
@@ -300,6 +312,17 @@ export function GiftGrid({
       }
     });
   }, [refreshBillingStatus, defaultHolidayId, holidays]);
+
+  const requestDeleteGift = useCallback((gift: Gift) => {
+    setPendingDeleteGift(gift);
+  }, []);
+
+  const confirmDeleteGift = useCallback(async () => {
+    if (!pendingDeleteGift) return;
+    const deleteId = pendingDeleteGift.id;
+    setPendingDeleteGift(null);
+    await deleteGift(deleteId);
+  }, [pendingDeleteGift, deleteGift]);
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -356,11 +379,10 @@ export function GiftGrid({
           </Button>
         ) : (
           <Button
-            variant="outline"
             size="sm"
             onClick={() => addGift()}
             disabled={isPending}
-            className="gap-2"
+            className="gap-2 bg-violet-600 hover:bg-violet-700 text-white"
           >
             {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -418,7 +440,7 @@ export function GiftGrid({
                     onUpdateGivers={updateGivers}
                     onUpdateRecipientAddress={updateRecipientAddress}
                     onInsertGift={insertGift}
-                    onDeleteGift={deleteGift}
+                    onRequestDelete={requestDeleteGift}
                     onPersonCreated={handlePersonCreated}
                   />
                 ))}
@@ -452,7 +474,7 @@ export function GiftGrid({
               onUpdateGift={updateGift}
               onUpdateRecipients={updateRecipients}
               onUpdateGivers={updateGivers}
-              onDeleteGift={deleteGift}
+              onRequestDelete={requestDeleteGift}
               onPersonCreated={handlePersonCreated}
             />
           ))
@@ -474,6 +496,33 @@ export function GiftGrid({
           )}
         </button>
       )}
+
+      <AlertDialog
+        open={pendingDeleteGift !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteGift(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete gift?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDeleteGift?.name
+                ? `This will permanently remove "${pendingDeleteGift.name}" from this gift list.`
+                : "This will permanently remove this gift from the list."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteGift}
+              className="bg-red-600 hover:bg-red-700 focus-visible:ring-red-500"
+            >
+              Delete Gift
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

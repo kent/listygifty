@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,12 @@ import { GiftListCard } from "@/components/GiftListCard";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { InlineError } from "@/components/InlineError";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
+import {
+  LIST_SECTION_OPTIONS,
+  filterListsBySection,
+  getListSectionCounts,
+  type ListSection,
+} from "@/lib/list-sections";
 
 export default function GiftListsScreen() {
   const router = useRouter();
@@ -23,9 +29,16 @@ export default function GiftListsScreen() {
   const { colors } = useTheme();
 
   const [lists, setLists] = useState<Holiday[]>([]);
+  const [activeSection, setActiveSection] = useState<ListSection>("active");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const sectionCounts = useMemo(() => getListSectionCounts(lists), [lists]);
+  const filteredLists = useMemo(
+    () => filterListsBySection(lists, activeSection),
+    [lists, activeSection]
+  );
 
   const fetchLists = useCallback(async () => {
     try {
@@ -100,8 +113,62 @@ export default function GiftListsScreen() {
         <InlineError message={error} onRetry={fetchLists} margin={16} />
       ) : null}
 
+      <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            backgroundColor: colors.surfaceSecondary,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+            padding: 4,
+            gap: 4,
+          }}
+        >
+          {LIST_SECTION_OPTIONS.map((section) => {
+            const isActive = activeSection === section.key;
+            return (
+              <TouchableOpacity
+                key={section.key}
+                onPress={() => setActiveSection(section.key)}
+                style={{
+                  flex: 1,
+                  borderRadius: 8,
+                  paddingVertical: 10,
+                  paddingHorizontal: 6,
+                  backgroundColor: isActive ? colors.primary : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "row",
+                  gap: 6,
+                }}
+              >
+                <Text
+                  style={{
+                    color: isActive ? "#fff" : colors.textTertiary,
+                    fontSize: 13,
+                    fontWeight: isActive ? "600" : "500",
+                  }}
+                >
+                  {section.label}
+                </Text>
+                <Text
+                  style={{
+                    color: isActive ? "#fff" : colors.muted,
+                    fontSize: 12,
+                    fontWeight: "600",
+                  }}
+                >
+                  {sectionCounts[section.key]}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
       <FlatList
-        data={lists}
+        data={filteredLists}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ padding: 16, gap: 12 }}
         refreshControl={
@@ -123,10 +190,12 @@ export default function GiftListsScreen() {
           <View style={{ alignItems: "center", paddingVertical: 48 }}>
             <Text style={{ fontSize: 48, marginBottom: 16 }}>🎁</Text>
             <Text style={{ color: colors.text, fontSize: 18, fontWeight: "600", marginBottom: 8 }}>
-              No Gift Lists Yet
+              {lists.length === 0 ? "No Gift Lists Yet" : "No Lists in This Section"}
             </Text>
             <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 24, textAlign: "center", paddingHorizontal: 32 }}>
-              Create your first list to start organizing gifts for any occasion.
+              {lists.length === 0
+                ? "Create your first list to start organizing gifts for any occasion."
+                : "Switch sections or create a new list."}
             </Text>
             <TouchableOpacity
               onPress={handleAddList}
