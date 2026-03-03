@@ -27,6 +27,12 @@ import {
 } from "@/lib/people-form";
 
 type PeopleGroupFilter = "all" | "family" | "friends" | "coworkers" | "other";
+type RelationshipOption = {
+  value: string;
+  label: string;
+  group: Exclude<PeopleGroupFilter, "all">;
+  icon: keyof typeof Ionicons.glyphMap;
+};
 
 const PEOPLE_GROUP_FILTERS: Array<{
   key: PeopleGroupFilter;
@@ -39,6 +45,30 @@ const PEOPLE_GROUP_FILTERS: Array<{
   { key: "coworkers", label: "Coworkers", icon: "briefcase-outline" },
   { key: "other", label: "Other", icon: "pricetag-outline" },
 ];
+
+const RELATIONSHIP_OPTIONS: RelationshipOption[] = [
+  { value: "family", label: "Family", group: "family", icon: "home-outline" },
+  { value: "parent", label: "Parent", group: "family", icon: "people-outline" },
+  { value: "sibling", label: "Sibling", group: "family", icon: "people-outline" },
+  { value: "child", label: "Child", group: "family", icon: "person-outline" },
+  { value: "partner", label: "Partner", group: "family", icon: "heart-outline" },
+  { value: "spouse", label: "Spouse", group: "family", icon: "heart-outline" },
+  { value: "relative", label: "Relative", group: "family", icon: "person-outline" },
+  { value: "friend", label: "Friend", group: "friends", icon: "person-add-outline" },
+  { value: "best-friend", label: "Best Friend", group: "friends", icon: "star-outline" },
+  { value: "coworker", label: "Coworker", group: "coworkers", icon: "briefcase-outline" },
+  { value: "manager", label: "Manager", group: "coworkers", icon: "ribbon-outline" },
+  { value: "teammate", label: "Teammate", group: "coworkers", icon: "people-outline" },
+  { value: "other", label: "Other", group: "other", icon: "pricetag-outline" },
+];
+
+const RELATIONSHIP_GROUP_BY_VALUE = RELATIONSHIP_OPTIONS.reduce(
+  (lookup, option) => {
+    lookup[option.value] = option.group;
+    return lookup;
+  },
+  {} as Record<string, Exclude<PeopleGroupFilter, "all">>
+);
 
 const FAMILY_KEYWORDS = [
   "family",
@@ -76,9 +106,26 @@ const COWORKER_KEYWORDS = [
   "client",
 ];
 
+function normalizeRelationship(relationship?: string | null): string {
+  return (relationship || "").trim().toLowerCase();
+}
+
+function getRelationshipOption(relationship?: string | null): RelationshipOption | undefined {
+  const normalized = normalizeRelationship(relationship);
+  return RELATIONSHIP_OPTIONS.find((option) => option.value === normalized);
+}
+
+function getRelationshipLabel(relationship?: string | null): string {
+  const matchedOption = getRelationshipOption(relationship);
+  if (matchedOption) return matchedOption.label;
+  return (relationship || "").trim();
+}
+
 function toRelationshipGroup(relationship?: string | null): Exclude<PeopleGroupFilter, "all"> {
-  const value = (relationship || "").trim().toLowerCase();
+  const value = normalizeRelationship(relationship);
   if (!value) return "other";
+  const mappedGroup = RELATIONSHIP_GROUP_BY_VALUE[value];
+  if (mappedGroup) return mappedGroup;
   if (FAMILY_KEYWORDS.some((keyword) => value.includes(keyword))) return "family";
   if (FRIEND_KEYWORDS.some((keyword) => value.includes(keyword))) return "friends";
   if (COWORKER_KEYWORDS.some((keyword) => value.includes(keyword))) return "coworkers";
@@ -97,6 +144,7 @@ export default function PeopleScreen() {
   const [search, setSearch] = useState("");
   const [activeGroup, setActiveGroup] = useState<PeopleGroupFilter>("all");
   const [editorOpen, setEditorOpen] = useState(false);
+  const [relationshipPickerOpen, setRelationshipPickerOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [formName, setFormName] = useState("");
   const [formRelationship, setFormRelationship] = useState("");
@@ -171,6 +219,11 @@ export default function PeopleScreen() {
     return trimmed ? trimmed.charAt(0).toUpperCase() : "?";
   };
 
+  const selectedRelationshipOption = useMemo(
+    () => getRelationshipOption(formRelationship),
+    [formRelationship]
+  );
+
   const openCreate = () => {
     setEditingPerson(null);
     setFormName("");
@@ -182,9 +235,14 @@ export default function PeopleScreen() {
   };
 
   const openEdit = (person: Person) => {
+    const normalizedRelationship = normalizeRelationship(person.relationship);
     setEditingPerson(person);
     setFormName(person.name);
-    setFormRelationship(person.relationship || "");
+    setFormRelationship(
+      RELATIONSHIP_GROUP_BY_VALUE[normalizedRelationship]
+        ? normalizedRelationship
+        : (person.relationship || "").trim()
+    );
     setFormEmail(person.email || "");
     setFormNotes(person.notes || "");
     setFormError(null);
@@ -193,6 +251,7 @@ export default function PeopleScreen() {
 
   const closeEditor = () => {
     if (saving || deleting) return;
+    setRelationshipPickerOpen(false);
     setEditorOpen(false);
   };
 
@@ -278,6 +337,11 @@ export default function PeopleScreen() {
   const handleDeleteFromEditor = () => {
     if (!editingPerson) return;
     handleDelete(editingPerson);
+  };
+
+  const handleSelectRelationship = (relationshipValue: string) => {
+    setFormRelationship(relationshipValue);
+    setRelationshipPickerOpen(false);
   };
 
   if (loading) {
@@ -460,7 +524,7 @@ export default function PeopleScreen() {
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }}>
                       <Ionicons name="heart-outline" size={12} color={colors.textTertiary} />
                       <Text style={{ color: colors.textTertiary, fontSize: 13 }}>
-                        {item.relationship}
+                        {getRelationshipLabel(item.relationship)}
                       </Text>
                     </View>
                   ) : null}
@@ -618,22 +682,41 @@ export default function PeopleScreen() {
             />
 
             <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Relationship</Text>
-            <TextInput
-              placeholder="e.g. family, friend, coworker"
-              placeholderTextColor={colors.placeholder}
-              value={formRelationship}
-              onChangeText={setFormRelationship}
+            <TouchableOpacity
+              onPress={() => setRelationshipPickerOpen(true)}
+              disabled={saving || deleting}
               style={{
                 backgroundColor: colors.input,
-                color: colors.text,
                 padding: 14,
                 borderRadius: 8,
                 marginBottom: 16,
                 borderWidth: 1,
                 borderColor: colors.inputBorder,
-                fontSize: 16,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
               }}
-            />
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+                <Ionicons
+                  name={selectedRelationshipOption?.icon || "pricetag-outline"}
+                  size={16}
+                  color={selectedRelationshipOption ? colors.primary : colors.placeholder}
+                />
+                <Text
+                  style={{
+                    color: formRelationship ? colors.text : colors.placeholder,
+                    fontSize: 16,
+                    flex: 1,
+                  }}
+                >
+                  {formRelationship
+                    ? getRelationshipLabel(formRelationship)
+                    : "Select relationship"}
+                </Text>
+              </View>
+              <Ionicons name="chevron-down" size={18} color={colors.muted} />
+            </TouchableOpacity>
 
             <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Email</Text>
             <TextInput
@@ -705,6 +788,100 @@ export default function PeopleScreen() {
             ) : null}
           </ScrollView>
         </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={relationshipPickerOpen}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setRelationshipPickerOpen(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+          >
+            <TouchableOpacity onPress={() => setRelationshipPickerOpen(false)}>
+              <Text style={{ color: colors.textTertiary, fontSize: 16 }}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={{ color: colors.text, fontSize: 17, fontWeight: "600" }}>
+              Select Relationship
+            </Text>
+            <TouchableOpacity onPress={() => setRelationshipPickerOpen(false)}>
+              <Text style={{ color: colors.primary, fontSize: 16, fontWeight: "600" }}>Done</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
+            <TouchableOpacity
+              onPress={() => handleSelectRelationship("")}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                backgroundColor: colors.card,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: !formRelationship ? colors.primary : colors.border,
+                padding: 14,
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <Ionicons name="remove-circle-outline" size={18} color={colors.muted} />
+                <Text style={{ color: colors.text, fontSize: 15 }}>None</Text>
+              </View>
+              {!formRelationship ? (
+                <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+              ) : null}
+            </TouchableOpacity>
+
+            {RELATIONSHIP_OPTIONS.map((option) => {
+              const isSelected = normalizeRelationship(formRelationship) === option.value;
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  onPress={() => handleSelectRelationship(option.value)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    backgroundColor: colors.card,
+                    borderRadius: 10,
+                    borderWidth: 1,
+                    borderColor: isSelected ? colors.primary : colors.border,
+                    padding: 14,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                    <Ionicons
+                      name={option.icon}
+                      size={18}
+                      color={isSelected ? colors.primary : colors.textTertiary}
+                    />
+                    <View>
+                      <Text style={{ color: colors.text, fontSize: 15, fontWeight: "600" }}>
+                        {option.label}
+                      </Text>
+                      <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
+                        {PEOPLE_GROUP_FILTERS.find((groupOption) => groupOption.key === option.group)
+                          ?.label || "Other"}
+                      </Text>
+                    </View>
+                  </View>
+                  {isSelected ? (
+                    <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+                  ) : null}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
       </Modal>
     </View>
   );
