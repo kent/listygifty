@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { useTheme } from "@/lib/theme";
+import { getClerkRedirectUrl } from "@/lib/clerk-sso";
 
 // Warm up browser for faster OAuth
 WebBrowser.maybeCompleteAuthSession();
@@ -27,6 +28,7 @@ export default function LoginScreen() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const redirectUrl = getClerkRedirectUrl();
 
   // Warm up browser on mount
   useEffect(() => {
@@ -40,21 +42,28 @@ export default function LoginScreen() {
     setError("");
     setGoogleLoading(true);
     try {
+      if (__DEV__) {
+        console.log("Clerk Google sign-in redirect URL:", redirectUrl);
+      }
       const { createdSessionId, setActive: setActiveSession } = await startSSOFlow({
         strategy: "oauth_google",
+        redirectUrl,
       });
 
       if (createdSessionId && setActiveSession) {
         await setActiveSession({ session: createdSessionId });
-        router.replace("/(app)");
+        router.replace("/(tabs)/lists");
       }
     } catch (err: unknown) {
       const clerkError = err as { errors?: Array<{ message: string }> };
+      if (__DEV__) {
+        console.log("Google sign-in failed", { redirectUrl, clerkError });
+      }
       setError(clerkError.errors?.[0]?.message || "Failed to sign in with Google");
     } finally {
       setGoogleLoading(false);
     }
-  }, [startSSOFlow, router]);
+  }, [startSSOFlow, router, redirectUrl]);
 
   const handleSignIn = async () => {
     if (!isLoaded) return;
@@ -70,7 +79,7 @@ export default function LoginScreen() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.replace("/(app)");
+        router.replace("/(tabs)/lists");
       }
     } catch (err: unknown) {
       const clerkError = err as { errors?: Array<{ message: string }> };

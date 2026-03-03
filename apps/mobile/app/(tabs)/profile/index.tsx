@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { Alert } from "react-native";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,9 +11,26 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { colors, colorScheme, setColorScheme, isDark } = useTheme();
 
+  const displayName = [user?.firstName, user?.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const email = user?.primaryEmailAddress?.emailAddress;
+
   const handleSignOut = async () => {
     await signOut();
     router.replace("/auth/login");
+  };
+
+  const promptSignOut = () => {
+    Alert.alert("Sign out", "You will need to sign in again to use Listy Gifty.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: handleSignOut,
+      },
+    ]);
   };
 
   const themeOptions: Array<{ value: "system" | "light" | "dark"; label: string; icon: keyof typeof Ionicons.glyphMap }> = [
@@ -22,21 +40,56 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background, padding: 16 }}>
-      {/* User Info */}
-      <View style={{ backgroundColor: colors.card, borderRadius: 12, padding: 16, marginBottom: 24, borderWidth: 1, borderColor: colors.border }}>
-        <Text style={{ color: colors.text, fontSize: 20, fontWeight: "600", marginBottom: 4 }}>
-          {user?.firstName || "User"} {user?.lastName || ""}
-        </Text>
-        <Text style={{ color: colors.textTertiary, fontSize: 14 }}>
-          {user?.primaryEmailAddress?.emailAddress || ""}
-        </Text>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: 16, gap: 16 }}>
+      <View
+        style={{
+          backgroundColor: colors.card,
+          borderRadius: 16,
+          padding: 16,
+          borderWidth: 1,
+          borderColor: colors.border,
+          gap: 8,
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <View
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              backgroundColor: colors.primarySurface,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="person" size={28} color={colors.primary} />
+          </View>
+          <View>
+            <Text style={{ color: colors.text, fontSize: 20, fontWeight: "600" }}>
+              {displayName || "User"}
+            </Text>
+            <Text style={{ color: colors.textTertiary, fontSize: 14 }}>
+              {email || "No email on file"}
+            </Text>
+          </View>
+        </View>
+        <View style={{ backgroundColor: colors.surfaceSecondary, borderRadius: 10, padding: 10, marginTop: 8, gap: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Ionicons name="mail-outline" size={16} color={colors.primary} />
+            <Text style={{ color: colors.textTertiary, fontSize: 12 }}>Primary email</Text>
+          </View>
+          <Text style={{ color: colors.text, fontSize: 13 }}>
+            {email || "No email address found"}
+          </Text>
+        </View>
       </View>
 
-      {/* Theme Selector */}
-      <View style={{ backgroundColor: colors.card, borderRadius: 12, marginBottom: 24, borderWidth: 1, borderColor: colors.border }}>
+      <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
         <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-          <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600", marginBottom: 4 }}>Appearance</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Ionicons name="color-palette-outline" size={18} color={colors.primary} />
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600" }}>Appearance</Text>
+          </View>
           <Text style={{ color: colors.textTertiary, fontSize: 13 }}>Choose your preferred theme</Text>
         </View>
         <View style={{ flexDirection: "row", padding: 12, gap: 8 }}>
@@ -48,7 +101,7 @@ export default function ProfileScreen() {
                 flex: 1,
                 backgroundColor: colorScheme === option.value ? colors.primary : colors.surfaceSecondary,
                 padding: 12,
-                borderRadius: 8,
+                borderRadius: 10,
                 alignItems: "center",
                 gap: 4,
               }}
@@ -72,25 +125,28 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Settings placeholder */}
-      <View style={{ backgroundColor: colors.card, borderRadius: 12, marginBottom: 24, borderWidth: 1, borderColor: colors.border }}>
-        <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-          <Text style={{ color: colors.textTertiary, fontSize: 14 }}>More settings coming soon</Text>
-        </View>
-      </View>
-
-      {/* Sign Out Button */}
       <TouchableOpacity
-        onPress={handleSignOut}
+        onPress={promptSignOut}
         style={{
-          backgroundColor: isDark ? "#7f1d1d" : "#fee2e2",
-          padding: 16,
-          borderRadius: 8,
+          backgroundColor: colors.card,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: colors.border,
+          paddingVertical: 16,
+          paddingHorizontal: 16,
+          flexDirection: "row",
           alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        <Text style={{ color: isDark ? "#fca5a5" : "#dc2626", fontSize: 16, fontWeight: "600" }}>Sign Out</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <Ionicons name="log-out-outline" size={18} color={isDark ? "#fca5a5" : "#dc2626"} />
+          <Text style={{ color: isDark ? "#fca5a5" : "#dc2626", fontSize: 16, fontWeight: "600" }}>
+            Sign Out
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={isDark ? "#fca5a5" : "#dc2626"} />
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }

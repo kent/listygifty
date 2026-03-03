@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { useTheme } from "@/lib/theme";
+import { getClerkRedirectUrl } from "@/lib/clerk-sso";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -28,6 +29,7 @@ export default function SignUpScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState("");
+  const redirectUrl = getClerkRedirectUrl();
 
   useEffect(() => {
     void WebBrowser.warmUpAsync();
@@ -40,21 +42,28 @@ export default function SignUpScreen() {
     setError("");
     setGoogleLoading(true);
     try {
+      if (__DEV__) {
+        console.log("Clerk Google sign-up redirect URL:", redirectUrl);
+      }
       const { createdSessionId, setActive: setActiveSession } = await startSSOFlow({
         strategy: "oauth_google",
+        redirectUrl,
       });
 
       if (createdSessionId && setActiveSession) {
         await setActiveSession({ session: createdSessionId });
-        router.replace("/(app)");
+        router.replace("/(tabs)/lists");
       }
     } catch (err: unknown) {
       const clerkError = err as { errors?: Array<{ message: string }> };
+      if (__DEV__) {
+        console.log("Google sign-up failed", { redirectUrl, clerkError });
+      }
       setError(clerkError.errors?.[0]?.message || "Failed to sign up with Google");
     } finally {
       setGoogleLoading(false);
     }
-  }, [startSSOFlow, router]);
+  }, [startSSOFlow, router, redirectUrl]);
 
   const handleSignUp = async () => {
     if (!isLoaded) return;
@@ -89,7 +98,7 @@ export default function SignUpScreen() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.replace("/(app)");
+        router.replace("/(tabs)/lists");
       }
     } catch (err: unknown) {
       const clerkError = err as { errors?: Array<{ message: string }> };

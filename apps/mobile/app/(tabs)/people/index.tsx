@@ -26,6 +26,65 @@ import {
   buildUpdatePersonPayload,
 } from "@/lib/people-form";
 
+type PeopleGroupFilter = "all" | "family" | "friends" | "coworkers" | "other";
+
+const PEOPLE_GROUP_FILTERS: Array<{
+  key: PeopleGroupFilter;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}> = [
+  { key: "all", label: "All", icon: "apps-outline" },
+  { key: "family", label: "Family", icon: "home-outline" },
+  { key: "friends", label: "Friends", icon: "people-outline" },
+  { key: "coworkers", label: "Coworkers", icon: "briefcase-outline" },
+  { key: "other", label: "Other", icon: "pricetag-outline" },
+];
+
+const FAMILY_KEYWORDS = [
+  "family",
+  "mom",
+  "mother",
+  "dad",
+  "father",
+  "parent",
+  "sister",
+  "brother",
+  "son",
+  "daughter",
+  "grandma",
+  "grandmother",
+  "grandpa",
+  "grandfather",
+  "aunt",
+  "uncle",
+  "cousin",
+  "wife",
+  "husband",
+  "spouse",
+  "partner",
+];
+const FRIEND_KEYWORDS = ["friend", "bestie", "buddy", "pal"];
+const COWORKER_KEYWORDS = [
+  "coworker",
+  "co-worker",
+  "colleague",
+  "work",
+  "boss",
+  "manager",
+  "team",
+  "employee",
+  "client",
+];
+
+function toRelationshipGroup(relationship?: string | null): Exclude<PeopleGroupFilter, "all"> {
+  const value = (relationship || "").trim().toLowerCase();
+  if (!value) return "other";
+  if (FAMILY_KEYWORDS.some((keyword) => value.includes(keyword))) return "family";
+  if (FRIEND_KEYWORDS.some((keyword) => value.includes(keyword))) return "friends";
+  if (COWORKER_KEYWORDS.some((keyword) => value.includes(keyword))) return "coworkers";
+  return "other";
+}
+
 export default function PeopleScreen() {
   const { colors } = useTheme();
   const { people: peopleService } = useServices();
@@ -36,6 +95,7 @@ export default function PeopleScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
+  const [activeGroup, setActiveGroup] = useState<PeopleGroupFilter>("all");
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [formName, setFormName] = useState("");
@@ -69,16 +129,47 @@ export default function PeopleScreen() {
     fetchPeople();
   }, [fetchPeople]);
 
+  const groupCounts = useMemo(
+    () =>
+      people.reduce(
+        (counts, person) => {
+          counts[toRelationshipGroup(person.relationship)] += 1;
+          counts.all += 1;
+          return counts;
+        },
+        { all: 0, family: 0, friends: 0, coworkers: 0, other: 0 } as Record<
+          PeopleGroupFilter,
+          number
+        >
+      ),
+    [people]
+  );
+
+  const activeGroupLabel = useMemo(
+    () => PEOPLE_GROUP_FILTERS.find((groupOption) => groupOption.key === activeGroup)?.label || "People",
+    [activeGroup]
+  );
+
   const filteredPeople = useMemo(() => {
-    if (!search.trim()) return people;
+    const groupFilteredPeople =
+      activeGroup === "all"
+        ? people
+        : people.filter((person) => toRelationshipGroup(person.relationship) === activeGroup);
+
+    if (!search.trim()) return groupFilteredPeople;
     const value = search.trim().toLowerCase();
-    return people.filter(
+    return groupFilteredPeople.filter(
       (person) =>
         person.name.toLowerCase().includes(value) ||
         person.relationship?.toLowerCase().includes(value) ||
         person.email?.toLowerCase().includes(value)
     );
-  }, [people, search]);
+  }, [activeGroup, people, search]);
+
+  const getPersonInitial = (person: Person) => {
+    const trimmed = person.name.trim();
+    return trimmed ? trimmed.charAt(0).toUpperCase() : "?";
+  };
 
   const openCreate = () => {
     setEditingPerson(null);
@@ -149,12 +240,10 @@ export default function PeopleScreen() {
     }
   };
 
-  const confirmDelete = () => {
-    if (!editingPerson) return;
-
+  const handleDelete = async (person: Person) => {
     Alert.alert(
       "Delete Person",
-      `Remove "${editingPerson.name}" from your people list?`,
+      `Remove "${person.name}" from your people list?`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -164,13 +253,18 @@ export default function PeopleScreen() {
             setDeleting(true);
             setFormError(null);
             try {
-              await peopleService.delete(editingPerson.id);
-              setPeople((prev) => prev.filter((person) => person.id !== editingPerson.id));
+              await peopleService.delete(person.id);
+              setPeople((prev) => prev.filter((personItem) => personItem.id !== person.id));
+              if (editingPerson?.id === person.id) {
+                setEditingPerson(null);
+                setEditorOpen(false);
+              }
               await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              setEditorOpen(false);
             } catch (err) {
               console.error("Failed to delete person", err);
-              setFormError("Could not delete this person. If gifts are attached, remove those first.");
+              setFormError(
+                "Could not delete this person. If gifts are attached, remove those first."
+              );
               await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             } finally {
               setDeleting(false);
@@ -179,6 +273,11 @@ export default function PeopleScreen() {
         },
       ]
     );
+  };
+
+  const handleDeleteFromEditor = () => {
+    if (!editingPerson) return;
+    handleDelete(editingPerson);
   };
 
   if (loading) {
@@ -227,21 +326,83 @@ export default function PeopleScreen() {
           </TouchableOpacity>
         </View>
 
-        <TextInput
-          placeholder="Search people..."
-          placeholderTextColor={colors.placeholder}
-          value={search}
-          onChangeText={setSearch}
+        <View
           style={{
             backgroundColor: colors.input,
-            color: colors.text,
-            padding: 12,
             borderRadius: 8,
-            fontSize: 16,
             borderWidth: 1,
             borderColor: colors.inputBorder,
+            paddingHorizontal: 12,
+            paddingVertical: Platform.OS === "ios" ? 12 : 10,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
           }}
-        />
+        >
+          <Ionicons name="search-outline" size={18} color={colors.placeholder} />
+          <TextInput
+            placeholder="Search people..."
+            placeholderTextColor={colors.placeholder}
+            value={search}
+            onChangeText={setSearch}
+            style={{
+              color: colors.text,
+              fontSize: 16,
+              flex: 1,
+            }}
+          />
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 8, paddingRight: 2 }}
+        >
+          {PEOPLE_GROUP_FILTERS.map((groupOption) => {
+            const isActive = groupOption.key === activeGroup;
+            return (
+              <TouchableOpacity
+                key={groupOption.key}
+                onPress={() => setActiveGroup(groupOption.key)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 6,
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: isActive ? colors.primary : colors.border,
+                  backgroundColor: isActive ? colors.primary : colors.surfaceSecondary,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                }}
+              >
+                <Ionicons
+                  name={groupOption.icon}
+                  size={14}
+                  color={isActive ? "#fff" : colors.textTertiary}
+                />
+                <Text
+                  style={{
+                    color: isActive ? "#fff" : colors.text,
+                    fontSize: 13,
+                    fontWeight: "600",
+                  }}
+                >
+                  {groupOption.label}
+                </Text>
+                <Text
+                  style={{
+                    color: isActive ? "rgba(255,255,255,0.9)" : colors.muted,
+                    fontSize: 12,
+                    fontWeight: "600",
+                  }}
+                >
+                  {groupCounts[groupOption.key]}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
       <FlatList
@@ -268,18 +429,66 @@ export default function PeopleScreen() {
             }}
             activeOpacity={0.7}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-              <View style={{ flex: 1, paddingRight: 8 }}>
-                <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600" }}>
-                  {item.name}
-                </Text>
-                {item.relationship ? (
-                  <Text style={{ color: colors.textTertiary, fontSize: 13, marginTop: 2 }}>
-                    {item.relationship}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1, paddingRight: 8 }}>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: colors.primarySurface,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ color: colors.primary, fontSize: 16, fontWeight: "700" }}>
+                    {getPersonInitial(item)}
                   </Text>
-                ) : null}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600" }}>
+                    {item.name}
+                  </Text>
+                  {item.relationship ? (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }}>
+                      <Ionicons name="heart-outline" size={12} color={colors.textTertiary} />
+                      <Text style={{ color: colors.textTertiary, fontSize: 13 }}>
+                        {item.relationship}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {item.email ? (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }}>
+                      <Ionicons name="mail-outline" size={12} color={colors.textTertiary} />
+                      <Text style={{ color: colors.textTertiary, fontSize: 12 }} numberOfLines={1}>
+                        {item.email}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <TouchableOpacity
+                  onPress={() => openEdit(item)}
+                  style={{ padding: 6, borderRadius: 20, backgroundColor: colors.surfaceSecondary }}
+                >
+                  <Ionicons name="create-outline" size={17} color={colors.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleDelete(item)}
+                  style={{ padding: 6, borderRadius: 20, backgroundColor: colors.surfaceSecondary }}
+                >
+                  <Ionicons name="trash-outline" size={17} color={colors.error} />
+                </TouchableOpacity>
+                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+              </View>
             </View>
 
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -314,14 +523,20 @@ export default function PeopleScreen() {
         )}
         ListEmptyComponent={
           <View style={{ alignItems: "center", paddingVertical: 56 }}>
-            <Text style={{ fontSize: 46, marginBottom: 16 }}>👥</Text>
+            <Ionicons name="people-outline" size={56} color={colors.muted} />
             <Text style={{ color: colors.text, fontSize: 18, fontWeight: "600", marginBottom: 8 }}>
-              {search.trim() ? "No Matches" : "No People Yet"}
+              {search.trim()
+                ? "No Matches"
+                : activeGroup === "all"
+                  ? "No People Yet"
+                  : `No ${activeGroupLabel} Yet`}
             </Text>
             <Text style={{ color: colors.textTertiary, fontSize: 14, textAlign: "center", marginBottom: 20 }}>
               {search.trim()
                 ? "Try a different name or clear search."
-                : "Add recipients and givers to speed up gift planning."}
+                : activeGroup === "all"
+                  ? "Add recipients and givers to speed up gift planning."
+                  : `Try another group or add a new ${activeGroupLabel.toLowerCase()} contact.`}
             </Text>
             {!search.trim() ? (
               <TouchableOpacity
@@ -382,9 +597,7 @@ export default function PeopleScreen() {
           </View>
 
           <ScrollView contentContainerStyle={{ padding: 16 }}>
-            {formError ? (
-              <InlineError message={formError} margin={0} />
-            ) : null}
+            {formError ? <InlineError message={formError} margin={0} /> : null}
 
             <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Name *</Text>
             <TextInput
@@ -465,7 +678,7 @@ export default function PeopleScreen() {
 
             {editingPerson ? (
               <TouchableOpacity
-                onPress={confirmDelete}
+                onPress={handleDeleteFromEditor}
                 disabled={saving || deleting}
                 style={{
                   marginTop: 8,

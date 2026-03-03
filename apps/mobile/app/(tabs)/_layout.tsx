@@ -58,7 +58,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="people"
+        name="people/index"
         options={{
           title: "People",
           tabBarIcon: ({ color, size }) => (
@@ -67,7 +67,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="profile/index"
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
