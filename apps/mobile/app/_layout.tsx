@@ -6,13 +6,11 @@ import { tokenCache } from "@/lib/token-cache";
 import { StatusBar } from "expo-status-bar";
 import { ThemeProvider, useTheme } from "@/lib/theme";
 import { ScreenLoader } from "@/components/ScreenLoader";
-import { isIOS26OrHigher } from "@/lib/platform";
 import { runtimeConfig } from "@/lib/runtime-config";
 
 const publishableKey = runtimeConfig.clerkPublishableKey;
 const posthogApiKey = runtimeConfig.posthogApiKey;
 const posthogHost = runtimeConfig.posthogHost;
-const shouldDisableSecureTokenCache = isIOS26OrHigher();
 
 function AuthRouter() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -48,7 +46,7 @@ function AuthRouter() {
 export default function RootLayout() {
   const appShell = (
     <ThemeProvider>
-      <ClerkProvider publishableKey={publishableKey} tokenCache={shouldDisableSecureTokenCache ? undefined : tokenCache}>
+      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
         <ClerkLoaded>
           <AuthRouter />
         </ClerkLoaded>
