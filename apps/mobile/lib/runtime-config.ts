@@ -12,4 +12,6 @@ export const runtimeConfig = {
   clerkPublishableKey: getEnvValue(process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY) || DEFAULT_CLERK_PUBLISHABLE_KEY,
   posthogApiKey: getEnvValue(process.env.EXPO_PUBLIC_POSTHOG_KEY),
   posthogHost: getEnvValue(process.env.EXPO_PUBLIC_POSTHOG_HOST) || DEFAULT_POSTHOG_HOST,
+  screenshotMode: getEnvValue(process.env.EXPO_PUBLIC_SCREENSHOT_MODE) === "1",
+  screenshotRoute: getEnvValue(process.env.EXPO_PUBLIC_SCREENSHOT_ROUTE) || "exchanges",
 };

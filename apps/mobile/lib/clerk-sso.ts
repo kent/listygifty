@@ -1,5 +1,6 @@
 import * as AuthSession from "expo-auth-session";
 import Constants from "expo-constants";
+import { Platform } from "react-native";
 
 const SSO_CALLBACK_PATH = "sso-callback";
 const APP_SCHEME = "niftygifty";
@@ -17,4 +18,8 @@ export function getClerkRedirectUrl(): string {
     scheme: APP_SCHEME,
     path: SSO_CALLBACK_PATH,
   });
+}
+
+export function shouldUseNativeAppleAuth(): boolean {
+  return Platform.OS === "ios" && Constants.appOwnership !== "expo";
 }

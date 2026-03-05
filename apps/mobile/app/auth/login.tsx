@@ -1,4 +1,4 @@
-import { useSignIn, useSSO } from "@clerk/clerk-expo";
+import { useSignIn, useSSO, useSignInWithApple } from "@clerk/clerk-expo";
 import { Link, useRouter } from "expo-router";
 import { useState, useCallback, useEffect } from "react";
 import {
@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { useTheme } from "@/lib/theme";
-import { getClerkRedirectUrl } from "@/lib/clerk-sso";
+import { getClerkRedirectUrl, shouldUseNativeAppleAuth } from "@/lib/clerk-sso";
 
 // Warm up browser for faster OAuth
 WebBrowser.maybeCompleteAuthSession();
@@ -20,6 +20,7 @@ WebBrowser.maybeCompleteAuthSession();
 export default function LoginScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const { startSSOFlow } = useSSO();
+  const { startAppleAuthenticationFlow } = useSignInWithApple();
   const router = useRouter();
   const { colors, isDark } = useTheme();
 
@@ -28,6 +29,7 @@ export default function LoginScreen() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const redirectUrl = getClerkRedirectUrl();
 
   // Warm up browser on mount
@@ -64,6 +66,33 @@ export default function LoginScreen() {
       setGoogleLoading(false);
     }
   }, [startSSOFlow, router, redirectUrl]);
+
+  const handleAppleSignIn = useCallback(async () => {
+    setError("");
+    setAppleLoading(true);
+    try {
+      const { createdSessionId, setActive: setActiveSession } =
+        shouldUseNativeAppleAuth()
+          ? await startAppleAuthenticationFlow()
+          : await startSSOFlow({
+              strategy: "oauth_apple",
+              redirectUrl,
+            });
+
+      if (createdSessionId && setActiveSession) {
+        await setActiveSession({ session: createdSessionId });
+        router.replace("/(tabs)/lists");
+      }
+    } catch (err: unknown) {
+      const clerkError = err as { errors?: Array<{ message: string }>; message?: string };
+      if (__DEV__) {
+        console.log("Apple sign-in failed", { redirectUrl, clerkError });
+      }
+      setError(clerkError.errors?.[0]?.message || clerkError.message || "Failed to sign in with Apple");
+    } finally {
+      setAppleLoading(false);
+    }
+  }, [startAppleAuthenticationFlow, startSSOFlow, router, redirectUrl]);
 
   const handleSignIn = async () => {
     if (!isLoaded) return;
@@ -110,7 +139,7 @@ export default function LoginScreen() {
 
         <TouchableOpacity
           onPress={handleGoogleSignIn}
-          disabled={googleLoading}
+          disabled={googleLoading || appleLoading}
           style={{
             backgroundColor: isDark ? "#fff" : "#f8fafc",
             padding: 16,
@@ -132,6 +161,28 @@ export default function LoginScreen() {
                 Continue with Google
               </Text>
             </>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handleAppleSignIn}
+          disabled={appleLoading || googleLoading}
+          style={{
+            backgroundColor: "#111827",
+            padding: 16,
+            borderRadius: 8,
+            alignItems: "center",
+            flexDirection: "row",
+            justifyContent: "center",
+            marginBottom: 24,
+          }}
+        >
+          {appleLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
+              Continue with Apple
+            </Text>
           )}
         </TouchableOpacity>
 

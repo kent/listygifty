@@ -17,6 +17,7 @@
     "gcp:sync-secrets": "bash infra/gcp/scripts/sync-heroku-secrets.sh",
     "gcp:migrate-db": "bash infra/gcp/scripts/migrate-heroku-db.sh",
     "gcp:verify-db": "bash infra/gcp/scripts/verify-migration.sh",
+    "gcp:seed:review": "bash infra/gcp/scripts/seed-app-review-data.sh",
     "gcp:deploy:api": "bash infra/gcp/scripts/deploy-api.sh",
     "gcp:deploy:web": "bash infra/gcp/scripts/deploy-web.sh",
     "gcp:release": "bash infra/gcp/scripts/release.sh"

@@ -10,6 +10,8 @@ import {
   wishlistItemsService,
   exchangeInvitesService,
 } from "./api";
+import { runtimeConfig } from "@/lib/runtime-config";
+import { screenshotServices } from "@/lib/screenshot-mocks";
 
 /**
  * Hook that configures the API client with the current Clerk session token.
@@ -19,6 +21,7 @@ export function useApiSetup() {
   const { getToken } = useAuth();
 
   useEffect(() => {
+    if (runtimeConfig.screenshotMode) return;
     apiClient.setTokenGetter(getToken);
   }, [getToken]);
 }
@@ -28,6 +31,18 @@ export function useApiSetup() {
  * Ensures the API client is set up with auth before returning services.
  */
 export function useServices() {
+  if (runtimeConfig.screenshotMode) {
+    return screenshotServices as unknown as {
+      holidays: typeof holidaysService;
+      gifts: typeof giftsService;
+      giftStatuses: typeof giftStatusesService;
+      people: typeof peopleService;
+      giftExchanges: typeof giftExchangesService;
+      wishlistItems: typeof wishlistItemsService;
+      exchangeInvites: typeof exchangeInvitesService;
+    };
+  }
+
   useApiSetup();
 
   return {

@@ -4,6 +4,8 @@ import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/theme";
+import { runtimeConfig } from "@/lib/runtime-config";
+import { screenshotProfile } from "@/lib/screenshot-mocks";
 
 export default function ProfileScreen() {
   const { signOut } = useAuth();
@@ -11,11 +13,21 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { colors, colorScheme, setColorScheme, isDark } = useTheme();
 
-  const displayName = [user?.firstName, user?.lastName]
+  const profileFirstName = runtimeConfig.screenshotMode
+    ? screenshotProfile.firstName
+    : user?.firstName;
+  const profileLastName = runtimeConfig.screenshotMode
+    ? screenshotProfile.lastName
+    : user?.lastName;
+  const profileEmail = runtimeConfig.screenshotMode
+    ? screenshotProfile.email
+    : user?.primaryEmailAddress?.emailAddress;
+
+  const displayName = [profileFirstName, profileLastName]
     .filter(Boolean)
     .join(" ")
     .trim();
-  const email = user?.primaryEmailAddress?.emailAddress;
+  const email = profileEmail;
 
   const handleSignOut = async () => {
     await signOut();
