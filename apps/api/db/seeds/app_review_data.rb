@@ -141,7 +141,7 @@ module AppReviewSeedData
     end
 
     clerk = Clerk::SDK.new
-    existing_user = clerk.users.get_user_list(email_address: [ REVIEWER_EMAIL ], limit: 1).first
+    existing_user = find_clerk_user_by_email(clerk)
 
     if existing_user
       update_request = ClerkHttpClient::UpdateUserRequest.new(
@@ -167,6 +167,16 @@ module AppReviewSeedData
     created_user.id
   rescue StandardError => e
     warn "  - Clerk sync failed (#{e.class}): #{e.message}"
+    nil
+  end
+
+  # Clerk SDK filtering can vary by version; query broad and match exact email in Ruby.
+  def find_clerk_user_by_email(clerk)
+    candidates = clerk.users.get_user_list(query: REVIEWER_EMAIL, limit: 20)
+    candidates.find do |candidate|
+      candidate.email_addresses.any? { |email| email.email_address.casecmp?(REVIEWER_EMAIL) }
+    end
+  rescue StandardError
     nil
   end
 
