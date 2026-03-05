@@ -5,7 +5,7 @@ module AppReviewSeedData
   module_function
 
   REVIEWER_EMAIL = "marie@gifts.com"
-  REVIEWER_PASSWORD = "password123"
+  REVIEWER_PASSWORD = "ListyGifty_Review_2026!K7mP9#"
   REVIEWER_FIRST_NAME = "Marie"
   REVIEWER_LAST_NAME = "Reviewer"
   REVIEWER_FALLBACK_CLERK_ID = "seed_marie_gifts_com"
