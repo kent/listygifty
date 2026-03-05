@@ -13,6 +13,7 @@ import {
 import * as WebBrowser from "expo-web-browser";
 import { useTheme } from "@/lib/theme";
 import { getClerkRedirectUrl, shouldUseNativeAppleAuth } from "@/lib/clerk-sso";
+import { AppleAuthButton } from "@/components/AppleAuthButton";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -244,27 +245,11 @@ export default function SignUpScreen() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity
+        <AppleAuthButton
           onPress={handleAppleSignUp}
-          disabled={appleLoading || googleLoading}
-          style={{
-            backgroundColor: "#111827",
-            padding: 16,
-            borderRadius: 8,
-            alignItems: "center",
-            flexDirection: "row",
-            justifyContent: "center",
-            marginBottom: 24,
-          }}
-        >
-          {appleLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
-              Continue with Apple
-            </Text>
-          )}
-        </TouchableOpacity>
+          loading={appleLoading}
+          disabled={googleLoading}
+        />
 
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 24 }}>
           <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
