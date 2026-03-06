@@ -13,6 +13,13 @@ class GiftsApiTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "index filters gifts by holiday" do
+    get "#{gifts_path}?holiday_id=#{@holiday.id}", headers: @auth_headers, as: :json
+
+    assert_response :success
+    assert_equal [ gifts(:sweater).id ], json_response.map { |gift| gift["id"] }
+  end
+
   test "show returns a gift" do
     gift = gifts(:sweater)
     get gift_path(gift), headers: @auth_headers, as: :json

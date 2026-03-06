@@ -2,7 +2,7 @@ import type { ApiClient } from "@niftygifty/api-client";
 import type { Gift, CreateGiftRequest, UpdateGiftRecipientRequest } from "@niftygifty/types";
 
 export interface GiftsService {
-  getAll(): Promise<Gift[]>;
+  getAll(options?: { holidayId?: number }): Promise<Gift[]>;
   getById(id: number): Promise<Gift>;
   create(data: CreateGiftRequest["gift"]): Promise<Gift>;
   update(id: number, data: Partial<CreateGiftRequest["gift"]>): Promise<Gift>;
@@ -13,8 +13,10 @@ export interface GiftsService {
 
 export function createGiftsService(client: ApiClient): GiftsService {
   return {
-    getAll() {
-      return client.get<Gift[]>("/gifts");
+    getAll(options) {
+      const holidayId = options?.holidayId;
+      const endpoint = holidayId ? `/gifts?holiday_id=${holidayId}` : "/gifts";
+      return client.get<Gift[]>(endpoint);
     },
 
     getById(id: number) {

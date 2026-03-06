@@ -66,7 +66,7 @@ export default function GiftsScreen() {
       setError(null);
       const [holidayData, giftsData, statusesData] = await Promise.all([
         holidays.getById(holidayId),
-        gifts.getAll(),
+        gifts.getAll({ holidayId }),
         giftStatuses.getAll(),
       ]);
       setHoliday(holidayData);
@@ -93,7 +93,6 @@ export default function GiftsScreen() {
   // Filter gifts for this holiday
   const filteredGifts = useMemo(() => {
     return allGifts
-      .filter((gift) => gift.holiday_id === holidayId)
       .filter((gift) => {
         // Search filter
         if (search.trim()) {

@@ -1,5 +1,5 @@
 class GiftRecipientBlueprint < ApplicationBlueprint
-  association :person, blueprint: PersonBlueprint
+  association :person, blueprint: PersonBlueprint, view: :gift_context
   association :shipping_address, blueprint: AddressBlueprint
 
   field :person_id do |gift_recipient|

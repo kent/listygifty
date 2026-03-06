@@ -3,12 +3,13 @@ class GiftsController < ApplicationController
   before_action :check_gift_limit, only: [ :create ]
 
   def index
-    gifts = Gift.joins(:holiday).where(holidays: { id: current_user.holiday_ids }).by_position
+    gifts = scoped_gifts
+    gifts = gifts.where(holiday_id: params[:holiday_id]) if params[:holiday_id].present?
     render json: GiftBlueprint.render(gifts, current_user: current_user)
   end
 
   def show
-    render json: GiftBlueprint.render(@gift, current_user: current_user)
+    render_gift(@gift)
   end
 
   def create
@@ -16,7 +17,7 @@ class GiftsController < ApplicationController
 
     if gift.save
       auto_share_people(gift)
-      render json: GiftBlueprint.render(gift, current_user: current_user), status: :created
+      render_gift(gift, status: :created)
     else
       render json: { errors: gift.errors.full_messages }, status: :unprocessable_entity
     end
@@ -25,7 +26,7 @@ class GiftsController < ApplicationController
   def update
     if @gift.update(gift_params)
       auto_share_people(@gift)
-      render json: GiftBlueprint.render(@gift, current_user: current_user)
+      render_gift(@gift)
     else
       render json: { errors: @gift.errors.full_messages }, status: :unprocessable_entity
     end
@@ -41,16 +42,34 @@ class GiftsController < ApplicationController
     Gift.reorder_within_holiday(@gift.holiday_id, @gift.id, new_position)
 
     # Return all gifts for this holiday with updated positions
-    gifts = Gift.where(holiday_id: @gift.holiday_id).by_position
+    gifts = scoped_gifts.where(holiday_id: @gift.holiday_id)
     render json: GiftBlueprint.render(gifts, current_user: current_user)
   end
 
   private
 
   def set_gift
-    @gift = Gift.joins(:holiday).where(holidays: { id: current_user.holiday_ids }).find(params[:id])
+    @gift = scoped_gifts.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Gift not found" }, status: :not_found
+  end
+
+  def scoped_gifts
+    Gift.where(holiday_id: current_user.holiday_ids)
+        .includes(
+          :gift_status,
+          :created_by,
+          { holiday: :holiday_users },
+          :recipients,
+          :givers,
+          { gift_recipients: [ :person, :shipping_address ] }
+        )
+        .by_position
+  end
+
+  def render_gift(gift, status: :ok)
+    reloaded_gift = scoped_gifts.find(gift.id)
+    render json: GiftBlueprint.render(reloaded_gift, current_user: current_user), status: status
   end
 
   def gift_params

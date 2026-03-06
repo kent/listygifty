@@ -8,7 +8,7 @@ class HolidaysController < ApplicationController
   before_action :require_owner, only: %i[destroy remove_collaborator]
 
   def index
-    holidays = current_workspace.holidays.user_holidays.where(id: current_user.holiday_ids)
+    holidays = current_workspace.holidays.user_holidays.where(id: current_user.holiday_ids).includes(:holiday_users)
     render json: HolidayBlueprint.render(holidays, current_user: current_user)
   end
 
@@ -110,7 +110,7 @@ class HolidaysController < ApplicationController
   private
 
   def set_holiday
-    @holiday = current_workspace.holidays.where(id: current_user.holiday_ids).find(params[:id])
+    @holiday = current_workspace.holidays.includes(:holiday_users).where(id: current_user.holiday_ids).find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Holiday not found" }, status: :not_found
   end
