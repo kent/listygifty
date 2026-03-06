@@ -8,6 +8,7 @@ import { StatusBar } from "expo-status-bar";
 import { ThemeProvider, useTheme } from "@/lib/theme";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { runtimeConfig } from "@/lib/runtime-config";
+import { clearCachedResources } from "@/lib/api";
 
 const publishableKey = runtimeConfig.clerkPublishableKey;
 const posthogApiKey = runtimeConfig.posthogApiKey;
@@ -66,6 +67,10 @@ function AuthRouter() {
         router.replace("/(tabs)/lists");
       }
       return;
+    }
+
+    if (!isSignedIn) {
+      clearCachedResources();
     }
 
     if (isSignedIn && inAuthGroup) {

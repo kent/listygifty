@@ -13,11 +13,11 @@ class PeopleController < ApplicationController
       return render json: { error: "Holiday not found" }, status: :not_found unless holiday
 
       # Workspace people + people shared to this holiday (from any collaborator)
-      people = accessible_people_for_holiday(holiday)
+      people = preload_people(accessible_people_for_holiday(holiday))
       render json: PersonBlueprint.render(people, current_user: current_user, current_workspace: current_workspace)
     else
       # All accessible people in workspace (+ shared via any holiday user is member of)
-      people = all_accessible_people
+      people = preload_people(all_accessible_people)
       render json: PersonBlueprint.render(people, current_user: current_user, current_workspace: current_workspace)
     end
   end
@@ -82,7 +82,9 @@ class PeopleController < ApplicationController
   def accessible_people_for_holiday(holiday)
     workspace_people = current_workspace.people
     shared_people = holiday.shared_people.where.not(workspace_id: current_workspace.id)
-    Person.where(id: workspace_people.select(:id)).or(Person.where(id: shared_people.select(:id)))
+    Person.where(id: workspace_people.select(:id))
+          .or(Person.where(id: shared_people.select(:id)))
+          .distinct
   end
 
   def all_accessible_people
@@ -93,6 +95,10 @@ class PeopleController < ApplicationController
                               .where(holidays: { id: workspace_holiday_ids })
                               .where.not(workspace_id: current_workspace.id)
                               .select(:id)
-    Person.where(id: workspace_people_ids).or(Person.where(id: shared_people_ids))
+    Person.where(id: workspace_people_ids).or(Person.where(id: shared_people_ids)).distinct
+  end
+
+  def preload_people(scope)
+    scope.includes(:gift_recipients, :gift_givers, { shared_holidays: :holiday_users }).order(:name)
   end
 end

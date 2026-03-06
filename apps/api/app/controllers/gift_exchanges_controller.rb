@@ -5,7 +5,10 @@ class GiftExchangesController < ApplicationController
   before_action :require_owner, only: %i[update destroy start]
 
   def index
-    exchanges = current_workspace.gift_exchanges.for_user(current_user).order(created_at: :desc)
+    exchanges = current_workspace.gift_exchanges
+                                 .for_user(current_user)
+                                 .includes(:exchange_participants)
+                                 .order(created_at: :desc)
     render json: GiftExchangeBlueprint.render(exchanges, current_user: current_user, view: :with_my_participation)
   end
 
@@ -57,7 +60,10 @@ class GiftExchangesController < ApplicationController
   private
 
   def set_gift_exchange
-    @gift_exchange = current_workspace.gift_exchanges.for_user(current_user).find(params[:id])
+    @gift_exchange = current_workspace.gift_exchanges
+                                     .for_user(current_user)
+                                     .includes(:exchange_participants)
+                                     .find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Gift exchange not found" }, status: :not_found
   end

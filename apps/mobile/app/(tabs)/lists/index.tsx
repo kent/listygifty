@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { useServices } from "@/lib/use-api";
 import { useTheme } from "@/lib/theme";
@@ -54,9 +55,11 @@ export default function GiftListsScreen() {
     }
   }, [holidays]);
 
-  useEffect(() => {
-    fetchLists();
-  }, [fetchLists]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchLists();
+    }, [fetchLists])
+  );
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);

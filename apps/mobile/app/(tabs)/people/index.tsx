@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import type { Person } from "@niftygifty/types";
 import { useTheme } from "@/lib/theme";
@@ -168,9 +169,11 @@ export default function PeopleScreen() {
     }
   }, [peopleService]);
 
-  useEffect(() => {
-    fetchPeople();
-  }, [fetchPeople]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchPeople();
+    }, [fetchPeople])
+  );
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);

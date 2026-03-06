@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   SectionList,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { useServices } from "@/lib/use-api";
 import { useTheme } from "@/lib/theme";
 import type { GiftExchange } from "@niftygifty/types";
@@ -37,9 +38,11 @@ export default function ExchangesScreen() {
     }
   }, [giftExchanges]);
 
-  useEffect(() => {
-    fetchExchanges();
-  }, [fetchExchanges]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchExchanges();
+    }, [fetchExchanges])
+  );
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);

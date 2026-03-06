@@ -6,7 +6,7 @@ class PersonBlueprint < ApplicationBlueprint
   end
 
   field :gift_count do |person|
-    person.gifts_received.count + person.gifts_given.count
+    person.gift_recipients.size + person.gift_givers.size
   end
 
   field :user_id do |person|
@@ -19,10 +19,7 @@ class PersonBlueprint < ApplicationBlueprint
   end
 
   field :is_shared do |person|
-    person.shared_holidays.joins(:holiday_users)
-          .group("holidays.id")
-          .having("COUNT(holiday_users.id) > 1")
-          .exists?
+    person.shared_holidays.any? { |holiday| holiday.holiday_users.size > 1 }
   end
 
   view :with_gifts do

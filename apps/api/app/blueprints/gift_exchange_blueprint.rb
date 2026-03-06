@@ -10,15 +10,18 @@ class GiftExchangeBlueprint < ApplicationBlueprint
   end
 
   field :participant_count do |exchange|
-    exchange.exchange_participants.count
+    GiftExchangeBlueprint.participants_for(exchange).size
   end
 
   field :accepted_count do |exchange|
-    exchange.exchange_participants.accepted.count
+    GiftExchangeBlueprint.participants_for(exchange).count { |participant| participant.status == "accepted" }
   end
 
   field :can_start do |exchange|
-    exchange.can_start?
+    participants = GiftExchangeBlueprint.participants_for(exchange)
+    exchange.status == "inviting" &&
+      participants.size >= 3 &&
+      participants.all? { |participant| participant.status == "accepted" }
   end
 
   view :with_participants do
@@ -28,8 +31,14 @@ class GiftExchangeBlueprint < ApplicationBlueprint
   view :with_my_participation do
     field :my_participant do |exchange, options|
       return nil unless options[:current_user]
-      participant = exchange.participant_for(options[:current_user])
+      participant = GiftExchangeBlueprint.participants_for(exchange).find do |item|
+        item.user_id == options[:current_user].id
+      end
       ExchangeParticipantBlueprint.render_as_hash(participant) if participant
     end
+  end
+
+  def self.participants_for(exchange)
+    exchange.exchange_participants.to_a
   end
 end
