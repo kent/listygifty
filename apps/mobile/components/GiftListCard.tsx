@@ -1,9 +1,10 @@
 import { useRef } from "react";
-import { View, Text, TouchableOpacity, Animated } from "react-native";
+import { View, Text, Animated } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import type { Holiday } from "@niftygifty/types";
+import { HapticPressable } from "@/components/HapticPressable";
+import { haptics } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
 
 interface GiftListCardProps {
@@ -32,13 +33,13 @@ export function GiftListCard({ item, onPress, onComplete, onArchive }: GiftListC
   };
 
   const handleComplete = async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await haptics.medium();
     swipeableRef.current?.close();
     onComplete?.();
   };
 
   const handleArchive = async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await haptics.medium();
     swipeableRef.current?.close();
     onArchive?.();
   };
@@ -57,8 +58,11 @@ export function GiftListCard({ item, onPress, onComplete, onArchive }: GiftListC
       <View style={{ flexDirection: "row" }}>
         {/* Complete/Uncomplete */}
         {onComplete ? (
-          <TouchableOpacity
+          <HapticPressable
             onPress={handleComplete}
+            haptic="medium"
+            accessibilityRole="button"
+            accessibilityLabel={`${item.completed ? "Reopen" : "Complete"} ${item.name}`}
             style={{
               backgroundColor: item.completed ? colors.warning : colors.success,
               justifyContent: "center",
@@ -76,13 +80,16 @@ export function GiftListCard({ item, onPress, onComplete, onArchive }: GiftListC
                 {item.completed ? "Reopen" : "Complete"}
               </Text>
             </Animated.View>
-          </TouchableOpacity>
+          </HapticPressable>
         ) : null}
 
         {/* Archive/Unarchive */}
         {onArchive ? (
-          <TouchableOpacity
+          <HapticPressable
             onPress={handleArchive}
+            haptic="medium"
+            accessibilityRole="button"
+            accessibilityLabel={`${item.archived ? "Unarchive" : "Archive"} ${item.name}`}
             style={{
               backgroundColor: item.archived ? colors.primary : colors.muted,
               justifyContent: "center",
@@ -102,15 +109,17 @@ export function GiftListCard({ item, onPress, onComplete, onArchive }: GiftListC
                 {item.archived ? "Unarchive" : "Archive"}
               </Text>
             </Animated.View>
-          </TouchableOpacity>
+          </HapticPressable>
         ) : null}
       </View>
     );
   };
 
   const content = (
-    <TouchableOpacity
+    <HapticPressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Open list ${item.name}`}
       style={{
         backgroundColor: colors.card,
         borderRadius: 12,
@@ -118,7 +127,6 @@ export function GiftListCard({ item, onPress, onComplete, onArchive }: GiftListC
         borderWidth: 1,
         borderColor: colors.border,
       }}
-      activeOpacity={0.7}
     >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
         <View style={{ flex: 1 }}>
@@ -182,7 +190,7 @@ export function GiftListCard({ item, onPress, onComplete, onArchive }: GiftListC
           <Ionicons name="chevron-forward" size={18} color={colors.muted} />
         </View>
       </View>
-    </TouchableOpacity>
+    </HapticPressable>
   );
 
   // Wrap in Swipeable if we have actions
@@ -194,7 +202,9 @@ export function GiftListCard({ item, onPress, onComplete, onArchive }: GiftListC
         rightThreshold={40}
         overshootRight={false}
         friction={2}
-        onSwipeableWillOpen={() => Haptics.selectionAsync()}
+        onSwipeableWillOpen={() => {
+          void haptics.selection();
+        }}
       >
         {content}
       </Swipeable>

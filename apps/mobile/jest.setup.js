@@ -78,6 +78,22 @@ jest.mock("expo-status-bar", () => ({
   StatusBar: () => null,
 }));
 
+// Mock expo-haptics
+jest.mock("expo-haptics", () => ({
+  selectionAsync: jest.fn().mockResolvedValue(undefined),
+  impactAsync: jest.fn().mockResolvedValue(undefined),
+  notificationAsync: jest.fn().mockResolvedValue(undefined),
+  ImpactFeedbackStyle: {
+    Light: "light",
+    Medium: "medium",
+  },
+  NotificationFeedbackType: {
+    Success: "success",
+    Warning: "warning",
+    Error: "error",
+  },
+}));
+
 // Mock icon components to avoid async font loading in tests
 jest.mock("@expo/vector-icons", () => {
   const React = require("react");

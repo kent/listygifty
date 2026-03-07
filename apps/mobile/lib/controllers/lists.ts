@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { Alert, Share } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import * as Haptics from "expo-haptics";
+import { haptics } from "@/lib/haptics";
 import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
@@ -65,13 +65,13 @@ export function useGiftListsController() {
     async (item: Holiday, changes: Partial<Pick<Holiday, "completed" | "archived">>) => {
       try {
         await holidays.update(item.id, changes);
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await haptics.success();
         resource.setData((current) =>
           current.map((list) => (list.id === item.id ? { ...list, ...changes } : list))
         );
       } catch (error) {
         console.error("Failed to update list", error);
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        await haptics.error();
       }
     },
     [holidays, resource]
@@ -111,6 +111,7 @@ export function useGiftListDetailController() {
   const [shareLoading, setShareLoading] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
+  const deferredSearch = useDeferredValue(search);
 
   const resource = useFocusResource<GiftListDetailState>({
     enabled: isValidHolidayId,
@@ -140,10 +141,10 @@ export function useGiftListDetailController() {
   const filteredGifts = useMemo(
     () =>
       filterGifts(resource.data.gifts, {
-        search,
+        search: deferredSearch,
         statusIds: selectedStatusIds,
       }),
-    [resource.data.gifts, search, selectedStatusIds]
+    [deferredSearch, resource.data.gifts, selectedStatusIds]
   );
 
   const hasActiveFilters = selectedStatusIds.length > 0 || search.trim().length > 0;
@@ -201,14 +202,14 @@ export function useGiftListDetailController() {
     async (giftId: number) => {
       try {
         await gifts.delete(giftId);
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await haptics.success();
         resource.setData((current) => ({
           ...current,
           gifts: current.gifts.filter((gift) => gift.id !== giftId),
         }));
       } catch (deleteError) {
         console.error("Failed to delete gift", deleteError);
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        await haptics.error();
       }
     },
     [gifts, resource]
@@ -233,7 +234,7 @@ export function useGiftListDetailController() {
         message: `Join my "${holiday.name}" gift list: ${shareUrl}`,
         url: shareUrl,
       });
-      await Haptics.selectionAsync();
+      await haptics.selection();
     } catch (nativeShareError) {
       console.error("Failed to share link", nativeShareError);
     }
@@ -250,11 +251,11 @@ export function useGiftListDetailController() {
     try {
       const data = await holidays.regenerateShareLink(holiday.id);
       setShareUrl(data.share_url);
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await haptics.success();
     } catch (regenerateError) {
       console.error("Failed to regenerate link", regenerateError);
       setShareError("Could not regenerate share link.");
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      await haptics.error();
     } finally {
       setRegenerating(false);
     }
@@ -280,11 +281,11 @@ export function useGiftListDetailController() {
                 setCollaborators((current) =>
                   current.filter((item) => item.user_id !== collaborator.user_id)
                 );
-                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                await haptics.success();
               } catch (removeError) {
                 console.error("Failed to remove collaborator", removeError);
                 setShareError("Could not remove collaborator.");
-                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                await haptics.error();
               }
             },
           },
@@ -295,7 +296,7 @@ export function useGiftListDetailController() {
   );
 
   const toggleStatusFilter = useCallback(async (statusId: number) => {
-    await Haptics.selectionAsync();
+    await haptics.selection();
     setSelectedStatusIds((current) =>
       current.includes(statusId)
         ? current.filter((idValue) => idValue !== statusId)
@@ -304,7 +305,7 @@ export function useGiftListDetailController() {
   }, []);
 
   const clearFilters = useCallback(async () => {
-    await Haptics.selectionAsync();
+    await haptics.selection();
     setSelectedStatusIds([]);
     setSearch("");
   }, []);
@@ -377,10 +378,12 @@ export function useNewListController() {
       await holidays.create(
         buildCreateHolidayPayload(form, new Date().toISOString().split("T")[0] || "")
       );
+      await haptics.success();
       router.back();
     } catch (submitError) {
       console.error("Failed to create list", submitError);
       setError("Failed to create list");
+      await haptics.error();
     } finally {
       setLoading(false);
     }
@@ -424,7 +427,7 @@ export function useNewGiftController() {
 
   const handleStatusChange = useCallback(async (statusId: number) => {
     setForm((current) => ({ ...current, giftStatusId: statusId }));
-    await Haptics.selectionAsync();
+    await haptics.selection();
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -454,12 +457,12 @@ export function useNewGiftController() {
 
     try {
       await gifts.create(buildCreateGiftPayload(holidayId, form, selectedStatusId));
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await haptics.success();
       router.back();
     } catch (submitError) {
       console.error("Failed to create gift", submitError);
       setError("Failed to create gift");
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      await haptics.error();
     } finally {
       setSaving(false);
     }
@@ -531,7 +534,7 @@ export function useGiftDetailController() {
 
   const handleStatusChange = useCallback(async (statusId: number) => {
     setForm((current) => ({ ...current, giftStatusId: statusId }));
-    await Haptics.selectionAsync();
+    await haptics.selection();
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -560,12 +563,12 @@ export function useGiftDetailController() {
 
     try {
       await gifts.update(id, buildUpdateGiftPayload(form, selectedStatusId));
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await haptics.success();
       router.back();
     } catch (saveError) {
       console.error("Failed to save gift", saveError);
       setActionError("Failed to save changes");
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      await haptics.error();
     } finally {
       setSaving(false);
     }
@@ -585,12 +588,12 @@ export function useGiftDetailController() {
 
             try {
               await gifts.delete(id);
-              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              await haptics.success();
               router.back();
             } catch (deleteError) {
               console.error("Failed to delete gift", deleteError);
               setActionError("Failed to delete gift");
-              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+              await haptics.error();
             } finally {
               setDeleting(false);
             }

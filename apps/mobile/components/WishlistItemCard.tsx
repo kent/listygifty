@@ -1,6 +1,7 @@
-import { View, Text, TouchableOpacity, Image } from "react-native";
+import { View, Text, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { WishlistItem } from "@niftygifty/types";
+import { HapticPressable } from "@/components/HapticPressable";
 import { useTheme } from "@/lib/theme";
 import { formatCurrency } from "@/lib/formatters";
 import { openExternalUrl } from "@/lib/linking";
@@ -80,25 +81,36 @@ export function WishlistItemCard({ item, editable = false, onDelete, onPress }: 
             ) : null}
 
             {item.link ? (
-              <TouchableOpacity
-                onPress={handleOpenLink}
+              <HapticPressable
+                onPress={(event) => {
+                  event.stopPropagation?.();
+                  void handleOpenLink();
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Open link for ${item.name}`}
                 style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
               >
                 <Ionicons name="link-outline" size={14} color={colors.primary} />
                 <Text style={{ color: colors.primary, fontSize: 12 }}>Open link</Text>
-              </TouchableOpacity>
+              </HapticPressable>
             ) : null}
           </View>
         </View>
 
         {/* Delete button for editable items */}
         {editable && onDelete ? (
-          <TouchableOpacity
-            onPress={onDelete}
+          <HapticPressable
+            onPress={(event) => {
+              event.stopPropagation?.();
+              onDelete();
+            }}
+            haptic="medium"
+            accessibilityRole="button"
+            accessibilityLabel={`Delete ${item.name}`}
             style={{ padding: 4 }}
           >
             <Ionicons name="trash-outline" size={20} color={colors.error} />
-          </TouchableOpacity>
+          </HapticPressable>
         ) : null}
       </View>
     </View>
@@ -106,9 +118,13 @@ export function WishlistItemCard({ item, editable = false, onDelete, onPress }: 
 
   if (onPress) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+      <HapticPressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Open wishlist item ${item.name}`}
+      >
         {content}
-      </TouchableOpacity>
+      </HapticPressable>
     );
   }
 

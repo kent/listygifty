@@ -1,7 +1,8 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { GiftExchange } from "@niftygifty/types";
 import { StatusBadge } from "./StatusBadge";
+import { HapticPressable } from "@/components/HapticPressable";
 import { useTheme } from "@/lib/theme";
 import { formatBudgetRange, formatShortDate } from "@/lib/formatters";
 
@@ -16,9 +17,10 @@ export function ExchangeCard({ exchange, onPress }: ExchangeCardProps) {
   const budgetRange = formatBudgetRange(exchange.budget_min, exchange.budget_max);
 
   return (
-    <TouchableOpacity
+    <HapticPressable
       onPress={onPress}
-      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`Open exchange ${exchange.name}`}
       style={{
         backgroundColor: colors.card,
         borderRadius: 12,
@@ -26,8 +28,8 @@ export function ExchangeCard({ exchange, onPress }: ExchangeCardProps) {
         borderWidth: 1,
         borderColor: colors.border,
       }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
+      >
+        <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <Text style={{ color: colors.text, fontSize: 18, fontWeight: "600" }} numberOfLines={1}>
@@ -68,6 +70,6 @@ export function ExchangeCard({ exchange, onPress }: ExchangeCardProps) {
 
         <Ionicons name="chevron-forward" size={20} color={colors.muted} />
       </View>
-    </TouchableOpacity>
+    </HapticPressable>
   );
 }

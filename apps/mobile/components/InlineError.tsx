@@ -1,4 +1,5 @@
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
+import { HapticPressable } from "@/components/HapticPressable";
 import { useTheme } from "@/lib/theme";
 
 interface InlineErrorProps {
@@ -18,12 +19,12 @@ export function InlineError({ message, onRetry, margin = 16 }: InlineErrorProps)
         margin,
         borderRadius: 8,
       }}
-    >
-      <Text style={{ color: colors.error }}>{message}</Text>
+      >
+        <Text style={{ color: colors.error }}>{message}</Text>
       {onRetry ? (
-        <TouchableOpacity onPress={onRetry} style={{ marginTop: 8 }}>
+        <HapticPressable onPress={onRetry} style={{ marginTop: 8 }}>
           <Text style={{ color: colors.primary, fontWeight: "600" }}>Retry</Text>
-        </TouchableOpacity>
+        </HapticPressable>
       ) : null}
     </View>
   );

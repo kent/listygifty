@@ -2,14 +2,14 @@ import { useRef } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
   Animated,
   Alert,
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import type { Gift } from "@niftygifty/types";
+import { HapticPressable } from "@/components/HapticPressable";
+import { haptics } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
 import { getGiftStatusColors } from "@/lib/gift-status-colors";
 import { formatCurrency } from "@/lib/formatters";
@@ -34,7 +34,7 @@ export function GiftItem({ item, onPress, onDelete }: GiftItemProps) {
   const statusColors = getGiftStatusColors(item.gift_status?.name || "", colors, isDark);
 
   const handleDelete = async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await haptics.medium();
     Alert.alert(
       "Delete Gift",
       `Are you sure you want to delete "${item.name}"?`,
@@ -67,8 +67,11 @@ export function GiftItem({ item, onPress, onDelete }: GiftItemProps) {
     });
 
     return (
-      <TouchableOpacity
+      <HapticPressable
         onPress={handleDelete}
+        haptic="medium"
+        accessibilityRole="button"
+        accessibilityLabel={`Delete ${item.name}`}
         style={{
           backgroundColor: colors.error,
           justifyContent: "center",
@@ -82,7 +85,7 @@ export function GiftItem({ item, onPress, onDelete }: GiftItemProps) {
           <Ionicons name="trash-outline" size={24} color="#fff" />
           <Text style={{ color: "#fff", fontSize: 12, marginTop: 4 }}>Delete</Text>
         </Animated.View>
-      </TouchableOpacity>
+      </HapticPressable>
     );
   };
 
@@ -141,16 +144,18 @@ export function GiftItem({ item, onPress, onDelete }: GiftItemProps) {
         ) : null}
 
         {item.link ? (
-          <TouchableOpacity
+          <HapticPressable
             onPress={(e) => {
               e.stopPropagation?.();
-              handleOpenLink();
+              void handleOpenLink();
             }}
+            accessibilityRole="button"
+            accessibilityLabel={`Open link for ${item.name}`}
             style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
           >
             <Ionicons name="link-outline" size={14} color={colors.primary} />
             <Text style={{ color: colors.primary, fontSize: 13 }}>Link</Text>
-          </TouchableOpacity>
+          </HapticPressable>
         ) : null}
 
         {/* Edit indicator when tappable */}
@@ -172,12 +177,18 @@ export function GiftItem({ item, onPress, onDelete }: GiftItemProps) {
         rightThreshold={40}
         overshootRight={false}
         friction={2}
-        onSwipeableWillOpen={() => Haptics.selectionAsync()}
+        onSwipeableWillOpen={() => {
+          void haptics.selection();
+        }}
       >
         {onPress ? (
-          <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+          <HapticPressable
+            onPress={onPress}
+            accessibilityRole="button"
+            accessibilityLabel={`Open gift ${item.name}`}
+          >
             {content}
-          </TouchableOpacity>
+          </HapticPressable>
         ) : (
           content
         )}
@@ -188,9 +199,13 @@ export function GiftItem({ item, onPress, onDelete }: GiftItemProps) {
   // Just tappable
   if (onPress) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+      <HapticPressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Open gift ${item.name}`}
+      >
         {content}
-      </TouchableOpacity>
+      </HapticPressable>
     );
   }
 

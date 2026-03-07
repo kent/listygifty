@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
-import * as Haptics from "expo-haptics";
+import { haptics } from "@/lib/haptics";
 import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
@@ -37,6 +37,7 @@ export function usePeopleController() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const deferredSearch = useDeferredValue(search);
 
   const groupCounts = useMemo(() => getPeopleGroupCounts(resource.data), [resource.data]);
   const activeGroupLabel = useMemo(
@@ -46,8 +47,8 @@ export function usePeopleController() {
     [activeGroup]
   );
   const filteredPeople = useMemo(
-    () => filterPeople(resource.data, search, activeGroup),
-    [activeGroup, resource.data, search]
+    () => filterPeople(resource.data, deferredSearch, activeGroup),
+    [activeGroup, deferredSearch, resource.data]
   );
   const selectedRelationshipOption = useMemo(
     () => getRelationshipOption(form.relationship),
@@ -106,12 +107,12 @@ export function usePeopleController() {
         resource.setData((current) => sortPeopleByName([...current, created]));
       }
 
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await haptics.success();
       setEditorOpen(false);
     } catch (saveError) {
       console.error("Failed to save person", saveError);
       setFormError("Failed to save person.");
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      await haptics.error();
     } finally {
       setSaving(false);
     }
@@ -142,13 +143,13 @@ export function usePeopleController() {
                   setEditorOpen(false);
                 }
 
-                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                await haptics.success();
               } catch (deleteError) {
                 console.error("Failed to delete person", deleteError);
                 setFormError(
                   "Could not delete this person. If gifts are attached, remove those first."
                 );
-                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                await haptics.error();
               } finally {
                 setDeleting(false);
               }
@@ -221,6 +222,7 @@ export function usePersonPickerController({
   const [newPersonName, setNewPersonName] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const deferredSearch = useDeferredValue(search);
 
   const shouldLoadPeople = modalVisible || (selectedIds.length > 0 && people.length === 0);
 
@@ -260,9 +262,9 @@ export function usePersonPickerController({
   }, [people.length, peopleService, selectedIds.length, shouldLoadPeople]);
 
   const filteredPeople = useMemo(() => {
-    const normalizedSearch = search.toLowerCase();
+    const normalizedSearch = deferredSearch.toLowerCase();
     return people.filter((person) => person.name.toLowerCase().includes(normalizedSearch));
-  }, [people, search]);
+  }, [deferredSearch, people]);
 
   const selectedPeople = useMemo(
     () => people.filter((person) => selectedIds.includes(person.id)),
@@ -294,9 +296,11 @@ export function usePersonPickerController({
       setPeople((current) => sortPeopleByName([...current, person]));
       onSelectionChange([...selectedIds, person.id]);
       setNewPersonName("");
+      await haptics.success();
     } catch (createError) {
       console.error("Failed to create person", createError);
       setError("Failed to create person");
+      await haptics.error();
     } finally {
       setCreating(false);
     }

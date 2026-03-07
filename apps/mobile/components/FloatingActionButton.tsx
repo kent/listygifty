@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Text, TouchableOpacity, ViewStyle } from "react-native";
+import { Text, ViewStyle } from "react-native";
+import { HapticPressable } from "@/components/HapticPressable";
 import { useTheme } from "@/lib/theme";
 
 interface FloatingActionButtonProps {
@@ -22,10 +23,12 @@ export function FloatingActionButton({
   const { colors } = useTheme();
 
   return (
-    <TouchableOpacity
+    <HapticPressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label ?? "Add"}
+      haptic="medium"
+      hitSlop={10}
       style={{
         position: "absolute",
         right: 16,
@@ -49,6 +52,6 @@ export function FloatingActionButton({
     >
       <Ionicons name={iconName} size={size} color={colors.textInverse} />
       {label ? <Text style={{ color: colors.textInverse, fontWeight: "600" }}>{label}</Text> : null}
-    </TouchableOpacity>
+    </HapticPressable>
   );
 }

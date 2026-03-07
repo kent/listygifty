@@ -1,6 +1,7 @@
 import Constants from "expo-constants";
 import * as AppleAuthentication from "expo-apple-authentication";
-import { ActivityIndicator, Platform, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Platform, Text, View } from "react-native";
+import { HapticPressable } from "@/components/HapticPressable";
 
 type AppleAuthButtonProps = {
   onPress: () => void;
@@ -40,9 +41,11 @@ export function AppleAuthButton({ onPress, loading, disabled = false }: AppleAut
   }
 
   return (
-    <TouchableOpacity
+    <HapticPressable
       onPress={onPress}
       disabled={isDisabled}
+      accessibilityRole="button"
+      accessibilityLabel="Continue with Apple"
       style={{
         backgroundColor: "#111827",
         padding: 16,
@@ -58,6 +61,6 @@ export function AppleAuthButton({ onPress, loading, disabled = false }: AppleAut
       ) : (
         <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>Continue with Apple</Text>
       )}
-    </TouchableOpacity>
+    </HapticPressable>
   );
 }
