@@ -1,92 +1,33 @@
-import { useState, useCallback, useMemo } from "react";
-import {
-  View,
-  Text,
-  RefreshControl,
-  SectionList,
-} from "react-native";
-import { useRouter } from "expo-router";
-import { useFocusEffect } from "@react-navigation/native";
-import { useServices } from "@/lib/use-api";
-import { useTheme } from "@/lib/theme";
-import type { GiftExchange } from "@niftygifty/types";
+import { View, Text, RefreshControl, SectionList } from "react-native";
 import { ExchangeCard } from "@/components/ExchangeCard";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { InlineError } from "@/components/InlineError";
+import { useTheme } from "@/lib/theme";
+import { useExchangesController } from "@/lib/controllers";
 
 export default function ExchangesScreen() {
-  const router = useRouter();
-  const { giftExchanges } = useServices();
   const { colors } = useTheme();
+  const controller = useExchangesController();
 
-  const [exchanges, setExchanges] = useState<GiftExchange[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchExchanges = useCallback(async () => {
-    try {
-      setError(null);
-      const data = await giftExchanges.getAll();
-      setExchanges(data);
-    } catch (err) {
-      setError("Failed to load exchanges");
-      console.error(err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [giftExchanges]);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchExchanges();
-    }, [fetchExchanges])
-  );
-
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchExchanges();
-  }, [fetchExchanges]);
-
-  const handlePressExchange = (exchange: GiftExchange) => {
-    router.push(`/(tabs)/exchanges/${exchange.id}`);
-  };
-
-  // Split exchanges into owned and participating
-  const sections = useMemo(() => {
-    const owned = exchanges.filter((e) => e.is_owner);
-    const participating = exchanges.filter((e) => !e.is_owner);
-
-    const result: Array<{ key: "owned" | "participating"; title: string; data: GiftExchange[] }> = [];
-    if (owned.length > 0) {
-      result.push({ key: "owned", title: "My Exchanges", data: owned });
-    }
-    if (participating.length > 0) {
-      result.push({ key: "participating", title: "Participating In", data: participating });
-    }
-    return result;
-  }, [exchanges]);
-
-  if (loading) {
+  if (controller.loading) {
     return <ScreenLoader />;
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {error ? (
-        <InlineError message={error} onRetry={fetchExchanges} margin={16} />
+      {controller.error ? (
+        <InlineError message={controller.error} onRetry={controller.retryLoad} margin={16} />
       ) : null}
 
       <SectionList
-        sections={sections}
+        sections={controller.sections}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
         stickySectionHeadersEnabled={false}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
+            refreshing={controller.refreshing}
+            onRefresh={controller.triggerRefresh}
             tintColor={colors.primary}
           />
         }
@@ -107,7 +48,10 @@ export default function ExchangesScreen() {
         )}
         renderItem={({ item }) => (
           <View style={{ marginBottom: 12 }}>
-            <ExchangeCard exchange={item} onPress={() => handlePressExchange(item)} />
+            <ExchangeCard
+              exchange={item}
+              onPress={() => controller.handlePressExchange(item.id)}
+            />
           </View>
         )}
         ListEmptyComponent={
@@ -116,7 +60,14 @@ export default function ExchangesScreen() {
             <Text style={{ color: colors.text, fontSize: 18, fontWeight: "600", marginBottom: 8 }}>
               No Exchanges Yet
             </Text>
-            <Text style={{ color: colors.textTertiary, fontSize: 14, textAlign: "center", paddingHorizontal: 32 }}>
+            <Text
+              style={{
+                color: colors.textTertiary,
+                fontSize: 14,
+                textAlign: "center",
+                paddingHorizontal: 32,
+              }}
+            >
               You'll see exchanges here when someone invites you to participate in a gift exchange.
             </Text>
           </View>

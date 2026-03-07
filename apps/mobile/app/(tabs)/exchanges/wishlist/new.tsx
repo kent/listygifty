@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   View,
   Text,
@@ -9,58 +8,12 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { useServices } from "@/lib/use-api";
 import { useTheme } from "@/lib/theme";
+import { useNewWishlistItemController } from "@/lib/controllers";
 
 export default function NewWishlistItemScreen() {
-  const router = useRouter();
-  const { exchange_id, participant_id } = useLocalSearchParams<{
-    exchange_id: string;
-    participant_id: string;
-  }>();
-  const { wishlistItems } = useServices();
   const { colors } = useTheme();
-
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [link, setLink] = useState("");
-  const [price, setPrice] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const exchangeId = exchange_id ? parseInt(exchange_id, 10) : null;
-  const participantId = participant_id ? parseInt(participant_id, 10) : null;
-
-  const handleCreate = async () => {
-    if (!name.trim()) {
-      setError("Name is required");
-      return;
-    }
-
-    if (!exchangeId || !participantId) {
-      setError("Missing exchange or participant information");
-      return;
-    }
-
-    setError("");
-    setLoading(true);
-
-    try {
-      await wishlistItems.create(exchangeId, participantId, {
-        name: name.trim(),
-        description: description.trim() || undefined,
-        link: link.trim() || undefined,
-        price: price ? parseFloat(price) : undefined,
-      });
-      router.back();
-    } catch (err) {
-      console.error(err);
-      setError("Failed to add item");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const controller = useNewWishlistItemController();
 
   return (
     <KeyboardAvoidingView
@@ -72,18 +25,27 @@ export default function NewWishlistItemScreen() {
           Add an item to your wishlist to help your Secret Santa find the perfect gift!
         </Text>
 
-        {error ? (
-          <View style={{ backgroundColor: colors.errorLight, padding: 12, borderRadius: 8, marginBottom: 16 }}>
-            <Text style={{ color: colors.error }}>{error}</Text>
+        {controller.error ? (
+          <View
+            style={{
+              backgroundColor: colors.errorLight,
+              padding: 12,
+              borderRadius: 8,
+              marginBottom: 16,
+            }}
+          >
+            <Text style={{ color: colors.error }}>{controller.error}</Text>
           </View>
         ) : null}
 
-        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Item Name *</Text>
+        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
+          Item Name *
+        </Text>
         <TextInput
           placeholder="e.g., Cozy wool sweater"
           placeholderTextColor={colors.placeholder}
-          value={name}
-          onChangeText={setName}
+          value={controller.form.name}
+          onChangeText={(value) => controller.updateField("name", value)}
           style={{
             backgroundColor: colors.input,
             color: colors.text,
@@ -96,12 +58,14 @@ export default function NewWishlistItemScreen() {
           }}
         />
 
-        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Description</Text>
+        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
+          Description
+        </Text>
         <TextInput
           placeholder="Size, color, or other details..."
           placeholderTextColor={colors.placeholder}
-          value={description}
-          onChangeText={setDescription}
+          value={controller.form.description}
+          onChangeText={(value) => controller.updateField("description", value)}
           multiline
           numberOfLines={3}
           style={{
@@ -118,12 +82,14 @@ export default function NewWishlistItemScreen() {
           }}
         />
 
-        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Link (optional)</Text>
+        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
+          Link (optional)
+        </Text>
         <TextInput
           placeholder="https://..."
           placeholderTextColor={colors.placeholder}
-          value={link}
-          onChangeText={setLink}
+          value={controller.form.link}
+          onChangeText={(value) => controller.updateField("link", value)}
           keyboardType="url"
           autoCapitalize="none"
           style={{
@@ -138,12 +104,14 @@ export default function NewWishlistItemScreen() {
           }}
         />
 
-        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Approximate Price</Text>
+        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
+          Approximate Price
+        </Text>
         <TextInput
           placeholder="e.g., 25.00"
           placeholderTextColor={colors.placeholder}
-          value={price}
-          onChangeText={setPrice}
+          value={controller.form.price}
+          onChangeText={(value) => controller.updateField("price", value)}
           keyboardType="decimal-pad"
           style={{
             backgroundColor: colors.input,
@@ -158,8 +126,8 @@ export default function NewWishlistItemScreen() {
         />
 
         <TouchableOpacity
-          onPress={handleCreate}
-          disabled={loading}
+          onPress={controller.handleSubmit}
+          disabled={controller.loading}
           style={{
             backgroundColor: colors.primary,
             padding: 16,
@@ -167,15 +135,17 @@ export default function NewWishlistItemScreen() {
             alignItems: "center",
           }}
         >
-          {loading ? (
+          {controller.loading ? (
             <ActivityIndicator color={colors.textInverse} />
           ) : (
-            <Text style={{ color: colors.textInverse, fontSize: 16, fontWeight: "600" }}>Add to Wishlist</Text>
+            <Text style={{ color: colors.textInverse, fontSize: 16, fontWeight: "600" }}>
+              Add to Wishlist
+            </Text>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={controller.handleCancel}
           style={{
             padding: 16,
             alignItems: "center",

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   View,
   Text,
@@ -9,42 +8,12 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { useServices } from "@/lib/use-api";
 import { useTheme } from "@/lib/theme";
+import { useNewListController } from "@/lib/controllers";
 
 export default function NewListScreen() {
-  const router = useRouter();
-  const { holidays } = useServices();
   const { colors } = useTheme();
-
-  const [name, setName] = useState("");
-  const [date, setDate] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleCreate = async () => {
-    if (!name.trim()) {
-      setError("Name is required");
-      return;
-    }
-
-    setError("");
-    setLoading(true);
-
-    try {
-      await holidays.create({
-        name: name.trim(),
-        date: date.trim() || new Date().toISOString().split("T")[0],
-      });
-      router.back();
-    } catch (err) {
-      console.error(err);
-      setError("Failed to create list");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const controller = useNewListController();
 
   return (
     <KeyboardAvoidingView
@@ -56,9 +25,16 @@ export default function NewListScreen() {
           Create a new gift list to organize gifts for an occasion.
         </Text>
 
-        {error ? (
-          <View style={{ backgroundColor: colors.errorLight, padding: 12, borderRadius: 8, marginBottom: 16 }}>
-            <Text style={{ color: colors.error }}>{error}</Text>
+        {controller.error ? (
+          <View
+            style={{
+              backgroundColor: colors.errorLight,
+              padding: 12,
+              borderRadius: 8,
+              marginBottom: 16,
+            }}
+          >
+            <Text style={{ color: colors.error }}>{controller.error}</Text>
           </View>
         ) : null}
 
@@ -66,8 +42,8 @@ export default function NewListScreen() {
         <TextInput
           placeholder="e.g., Christmas 2025"
           placeholderTextColor={colors.placeholder}
-          value={name}
-          onChangeText={setName}
+          value={controller.form.name}
+          onChangeText={(value) => controller.updateField("name", value)}
           style={{
             backgroundColor: colors.input,
             color: colors.text,
@@ -80,12 +56,14 @@ export default function NewListScreen() {
           }}
         />
 
-        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Date (YYYY-MM-DD)</Text>
+        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
+          Date (YYYY-MM-DD)
+        </Text>
         <TextInput
           placeholder="e.g., 2025-12-25"
           placeholderTextColor={colors.placeholder}
-          value={date}
-          onChangeText={setDate}
+          value={controller.form.date}
+          onChangeText={(value) => controller.updateField("date", value)}
           style={{
             backgroundColor: colors.input,
             color: colors.text,
@@ -99,8 +77,8 @@ export default function NewListScreen() {
         />
 
         <TouchableOpacity
-          onPress={handleCreate}
-          disabled={loading}
+          onPress={controller.handleSubmit}
+          disabled={controller.loading}
           style={{
             backgroundColor: colors.primary,
             padding: 16,
@@ -108,15 +86,17 @@ export default function NewListScreen() {
             alignItems: "center",
           }}
         >
-          {loading ? (
+          {controller.loading ? (
             <ActivityIndicator color={colors.textInverse} />
           ) : (
-            <Text style={{ color: colors.textInverse, fontSize: 16, fontWeight: "600" }}>Create List</Text>
+            <Text style={{ color: colors.textInverse, fontSize: 16, fontWeight: "600" }}>
+              Create List
+            </Text>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={controller.handleCancel}
           style={{
             padding: 16,
             alignItems: "center",

@@ -1,49 +1,11 @@
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import { Alert } from "react-native";
-import { useAuth, useUser } from "@clerk/clerk-expo";
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/theme";
-import { runtimeConfig } from "@/lib/runtime-config";
-import { screenshotProfile } from "@/lib/screenshot-mocks";
+import { useProfileController } from "@/lib/controllers";
 
 export default function ProfileScreen() {
-  const { signOut } = useAuth();
-  const { user } = useUser();
-  const router = useRouter();
   const { colors, colorScheme, setColorScheme, isDark } = useTheme();
-
-  const profileFirstName = runtimeConfig.screenshotMode
-    ? screenshotProfile.firstName
-    : user?.firstName;
-  const profileLastName = runtimeConfig.screenshotMode
-    ? screenshotProfile.lastName
-    : user?.lastName;
-  const profileEmail = runtimeConfig.screenshotMode
-    ? screenshotProfile.email
-    : user?.primaryEmailAddress?.emailAddress;
-
-  const displayName = [profileFirstName, profileLastName]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
-  const email = profileEmail;
-
-  const handleSignOut = async () => {
-    await signOut();
-    router.replace("/auth/login");
-  };
-
-  const promptSignOut = () => {
-    Alert.alert("Sign out", "You will need to sign in again to use Listy Gifty.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: handleSignOut,
-      },
-    ]);
-  };
+  const controller = useProfileController();
 
   const themeOptions: Array<{ value: "system" | "light" | "dark"; label: string; icon: keyof typeof Ionicons.glyphMap }> = [
     { value: "system", label: "System", icon: "phone-portrait-outline" },
@@ -78,10 +40,10 @@ export default function ProfileScreen() {
           </View>
           <View>
             <Text style={{ color: colors.text, fontSize: 20, fontWeight: "600" }}>
-              {displayName || "User"}
+              {controller.displayName || "User"}
             </Text>
             <Text style={{ color: colors.textTertiary, fontSize: 14 }}>
-              {email || "No email on file"}
+              {controller.email || "No email on file"}
             </Text>
           </View>
         </View>
@@ -91,7 +53,7 @@ export default function ProfileScreen() {
             <Text style={{ color: colors.textTertiary, fontSize: 12 }}>Primary email</Text>
           </View>
           <Text style={{ color: colors.text, fontSize: 13 }}>
-            {email || "No email address found"}
+            {controller.email || "No email address found"}
           </Text>
         </View>
       </View>
@@ -138,7 +100,7 @@ export default function ProfileScreen() {
       </View>
 
       <TouchableOpacity
-        onPress={promptSignOut}
+        onPress={controller.promptSignOut}
         style={{
           backgroundColor: colors.card,
           borderRadius: 12,

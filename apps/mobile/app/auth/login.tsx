@@ -1,6 +1,4 @@
-import { useSignIn, useSSO, useSignInWithApple } from "@clerk/clerk-expo";
-import { Link, useRouter } from "expo-router";
-import { useState, useCallback, useEffect } from "react";
+import { Link } from "expo-router";
 import {
   View,
   Text,
@@ -10,114 +8,13 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
-import * as WebBrowser from "expo-web-browser";
-import { useTheme } from "@/lib/theme";
-import { getClerkRedirectUrl, shouldUseNativeAppleAuth } from "@/lib/clerk-sso";
 import { AppleAuthButton } from "@/components/AppleAuthButton";
-
-// Warm up browser for faster OAuth
-WebBrowser.maybeCompleteAuthSession();
+import { useTheme } from "@/lib/theme";
+import { useLoginController } from "@/lib/controllers";
 
 export default function LoginScreen() {
-  const { signIn, setActive, isLoaded } = useSignIn();
-  const { startSSOFlow } = useSSO();
-  const { startAppleAuthenticationFlow } = useSignInWithApple();
-  const router = useRouter();
   const { colors, isDark } = useTheme();
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
-  const redirectUrl = getClerkRedirectUrl();
-
-  // Warm up browser on mount
-  useEffect(() => {
-    void WebBrowser.warmUpAsync();
-    return () => {
-      void WebBrowser.coolDownAsync();
-    };
-  }, []);
-
-  const handleGoogleSignIn = useCallback(async () => {
-    setError("");
-    setGoogleLoading(true);
-    try {
-      if (__DEV__) {
-        console.log("Clerk Google sign-in redirect URL:", redirectUrl);
-      }
-      const { createdSessionId, setActive: setActiveSession } = await startSSOFlow({
-        strategy: "oauth_google",
-        redirectUrl,
-      });
-
-      if (createdSessionId && setActiveSession) {
-        await setActiveSession({ session: createdSessionId });
-        router.replace("/(tabs)/lists");
-      }
-    } catch (err: unknown) {
-      const clerkError = err as { errors?: Array<{ message: string }> };
-      if (__DEV__) {
-        console.log("Google sign-in failed", { redirectUrl, clerkError });
-      }
-      setError(clerkError.errors?.[0]?.message || "Failed to sign in with Google");
-    } finally {
-      setGoogleLoading(false);
-    }
-  }, [startSSOFlow, router, redirectUrl]);
-
-  const handleAppleSignIn = useCallback(async () => {
-    setError("");
-    setAppleLoading(true);
-    try {
-      const { createdSessionId, setActive: setActiveSession } =
-        shouldUseNativeAppleAuth()
-          ? await startAppleAuthenticationFlow()
-          : await startSSOFlow({
-              strategy: "oauth_apple",
-              redirectUrl,
-            });
-
-      if (createdSessionId && setActiveSession) {
-        await setActiveSession({ session: createdSessionId });
-        router.replace("/(tabs)/lists");
-      }
-    } catch (err: unknown) {
-      const clerkError = err as { errors?: Array<{ message: string }>; message?: string };
-      if (__DEV__) {
-        console.log("Apple sign-in failed", { redirectUrl, clerkError });
-      }
-      setError(clerkError.errors?.[0]?.message || clerkError.message || "Failed to sign in with Apple");
-    } finally {
-      setAppleLoading(false);
-    }
-  }, [startAppleAuthenticationFlow, startSSOFlow, router, redirectUrl]);
-
-  const handleSignIn = async () => {
-    if (!isLoaded) return;
-
-    setError("");
-    setLoading(true);
-
-    try {
-      const result = await signIn.create({
-        identifier: email,
-        password,
-      });
-
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        router.replace("/(tabs)/lists");
-      }
-    } catch (err: unknown) {
-      const clerkError = err as { errors?: Array<{ message: string }> };
-      setError(clerkError.errors?.[0]?.message || "Failed to sign in");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const controller = useLoginController();
 
   return (
     <KeyboardAvoidingView
@@ -125,22 +22,44 @@ export default function LoginScreen() {
       style={{ flex: 1, backgroundColor: colors.background }}
     >
       <View style={{ flex: 1, justifyContent: "center", padding: 24 }}>
-        <Text style={{ fontSize: 32, fontWeight: "bold", color: colors.text, textAlign: "center", marginBottom: 8 }}>
+        <Text
+          style={{
+            fontSize: 32,
+            fontWeight: "bold",
+            color: colors.text,
+            textAlign: "center",
+            marginBottom: 8,
+          }}
+        >
           Listy Gifty
         </Text>
-        <Text style={{ fontSize: 16, color: colors.textTertiary, textAlign: "center", marginBottom: 32 }}>
+        <Text
+          style={{
+            fontSize: 16,
+            color: colors.textTertiary,
+            textAlign: "center",
+            marginBottom: 32,
+          }}
+        >
           Sign in to your account
         </Text>
 
-        {error ? (
-          <View style={{ backgroundColor: isDark ? "#7f1d1d" : "#fee2e2", padding: 12, borderRadius: 8, marginBottom: 16 }}>
-            <Text style={{ color: isDark ? "#fca5a5" : "#dc2626" }}>{error}</Text>
+        {controller.error ? (
+          <View
+            style={{
+              backgroundColor: isDark ? "#7f1d1d" : "#fee2e2",
+              padding: 12,
+              borderRadius: 8,
+              marginBottom: 16,
+            }}
+          >
+            <Text style={{ color: isDark ? "#fca5a5" : "#dc2626" }}>{controller.error}</Text>
           </View>
         ) : null}
 
         <TouchableOpacity
-          onPress={handleGoogleSignIn}
-          disabled={googleLoading || appleLoading}
+          onPress={controller.handleGoogleSignIn}
+          disabled={controller.googleLoading || controller.appleLoading}
           style={{
             backgroundColor: isDark ? "#fff" : "#f8fafc",
             padding: 16,
@@ -153,7 +72,7 @@ export default function LoginScreen() {
             borderColor: colors.border,
           }}
         >
-          {googleLoading ? (
+          {controller.googleLoading ? (
             <ActivityIndicator color="#1f2937" />
           ) : (
             <>
@@ -166,9 +85,9 @@ export default function LoginScreen() {
         </TouchableOpacity>
 
         <AppleAuthButton
-          onPress={handleAppleSignIn}
-          loading={appleLoading}
-          disabled={googleLoading}
+          onPress={controller.handleAppleSignIn}
+          loading={controller.appleLoading}
+          disabled={controller.googleLoading}
         />
 
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 24 }}>
@@ -180,8 +99,8 @@ export default function LoginScreen() {
         <TextInput
           placeholder="Email"
           placeholderTextColor={colors.muted}
-          value={email}
-          onChangeText={setEmail}
+          value={controller.email}
+          onChangeText={controller.setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
           style={{
@@ -199,8 +118,8 @@ export default function LoginScreen() {
         <TextInput
           placeholder="Password"
           placeholderTextColor={colors.muted}
-          value={password}
-          onChangeText={setPassword}
+          value={controller.password}
+          onChangeText={controller.setPassword}
           secureTextEntry
           style={{
             backgroundColor: colors.card,
@@ -215,8 +134,8 @@ export default function LoginScreen() {
         />
 
         <TouchableOpacity
-          onPress={handleSignIn}
-          disabled={loading}
+          onPress={controller.handlePasswordSignIn}
+          disabled={controller.loading}
           style={{
             backgroundColor: colors.primary,
             padding: 16,
@@ -224,7 +143,7 @@ export default function LoginScreen() {
             alignItems: "center",
           }}
         >
-          {loading ? (
+          {controller.loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>Sign In</Text>

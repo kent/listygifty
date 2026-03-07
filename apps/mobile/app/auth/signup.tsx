@@ -1,6 +1,4 @@
-import { useSignUp, useSSO, useSignInWithApple } from "@clerk/clerk-expo";
-import { Link, useRouter } from "expo-router";
-import { useState, useCallback, useEffect } from "react";
+import { Link } from "expo-router";
 import {
   View,
   Text,
@@ -10,159 +8,61 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
-import * as WebBrowser from "expo-web-browser";
-import { useTheme } from "@/lib/theme";
-import { getClerkRedirectUrl, shouldUseNativeAppleAuth } from "@/lib/clerk-sso";
 import { AppleAuthButton } from "@/components/AppleAuthButton";
-
-WebBrowser.maybeCompleteAuthSession();
+import { useTheme } from "@/lib/theme";
+import { useSignupController } from "@/lib/controllers";
 
 export default function SignUpScreen() {
-  const { signUp, setActive, isLoaded } = useSignUp();
-  const { startSSOFlow } = useSSO();
-  const { startAppleAuthenticationFlow } = useSignInWithApple();
-  const router = useRouter();
   const { colors, isDark } = useTheme();
+  const controller = useSignupController();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
-  const [pendingVerification, setPendingVerification] = useState(false);
-  const [code, setCode] = useState("");
-  const redirectUrl = getClerkRedirectUrl();
-
-  useEffect(() => {
-    void WebBrowser.warmUpAsync();
-    return () => {
-      void WebBrowser.coolDownAsync();
-    };
-  }, []);
-
-  const handleGoogleSignUp = useCallback(async () => {
-    setError("");
-    setGoogleLoading(true);
-    try {
-      if (__DEV__) {
-        console.log("Clerk Google sign-up redirect URL:", redirectUrl);
-      }
-      const { createdSessionId, setActive: setActiveSession } = await startSSOFlow({
-        strategy: "oauth_google",
-        redirectUrl,
-      });
-
-      if (createdSessionId && setActiveSession) {
-        await setActiveSession({ session: createdSessionId });
-        router.replace("/(tabs)/lists");
-      }
-    } catch (err: unknown) {
-      const clerkError = err as { errors?: Array<{ message: string }> };
-      if (__DEV__) {
-        console.log("Google sign-up failed", { redirectUrl, clerkError });
-      }
-      setError(clerkError.errors?.[0]?.message || "Failed to sign up with Google");
-    } finally {
-      setGoogleLoading(false);
-    }
-  }, [startSSOFlow, router, redirectUrl]);
-
-  const handleAppleSignUp = useCallback(async () => {
-    setError("");
-    setAppleLoading(true);
-    try {
-      const { createdSessionId, setActive: setActiveSession } =
-        shouldUseNativeAppleAuth()
-          ? await startAppleAuthenticationFlow()
-          : await startSSOFlow({
-              strategy: "oauth_apple",
-              redirectUrl,
-            });
-
-      if (createdSessionId && setActiveSession) {
-        await setActiveSession({ session: createdSessionId });
-        router.replace("/(tabs)/lists");
-      }
-    } catch (err: unknown) {
-      const clerkError = err as { errors?: Array<{ message: string }>; message?: string };
-      if (__DEV__) {
-        console.log("Apple sign-up failed", { redirectUrl, clerkError });
-      }
-      setError(clerkError.errors?.[0]?.message || clerkError.message || "Failed to sign up with Apple");
-    } finally {
-      setAppleLoading(false);
-    }
-  }, [startAppleAuthenticationFlow, startSSOFlow, router, redirectUrl]);
-
-  const handleSignUp = async () => {
-    if (!isLoaded) return;
-
-    setError("");
-    setLoading(true);
-
-    try {
-      await signUp.create({
-        emailAddress: email,
-        password,
-      });
-
-      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-      setPendingVerification(true);
-    } catch (err: unknown) {
-      const clerkError = err as { errors?: Array<{ message: string }> };
-      setError(clerkError.errors?.[0]?.message || "Failed to sign up");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerify = async () => {
-    if (!isLoaded) return;
-
-    setError("");
-    setLoading(true);
-
-    try {
-      const result = await signUp.attemptEmailAddressVerification({ code });
-
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        router.replace("/(tabs)/lists");
-      }
-    } catch (err: unknown) {
-      const clerkError = err as { errors?: Array<{ message: string }> };
-      setError(clerkError.errors?.[0]?.message || "Verification failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (pendingVerification) {
+  if (controller.pendingVerification) {
     return (
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1, backgroundColor: colors.background }}
       >
         <View style={{ flex: 1, justifyContent: "center", padding: 24 }}>
-          <Text style={{ fontSize: 24, fontWeight: "bold", color: colors.text, textAlign: "center", marginBottom: 8 }}>
+          <Text
+            style={{
+              fontSize: 24,
+              fontWeight: "bold",
+              color: colors.text,
+              textAlign: "center",
+              marginBottom: 8,
+            }}
+          >
             Verify Email
           </Text>
-          <Text style={{ fontSize: 16, color: colors.textTertiary, textAlign: "center", marginBottom: 32 }}>
-            We sent a code to {email}
+          <Text
+            style={{
+              fontSize: 16,
+              color: colors.textTertiary,
+              textAlign: "center",
+              marginBottom: 32,
+            }}
+          >
+            We sent a code to {controller.email}
           </Text>
 
-          {error ? (
-            <View style={{ backgroundColor: isDark ? "#7f1d1d" : "#fee2e2", padding: 12, borderRadius: 8, marginBottom: 16 }}>
-              <Text style={{ color: isDark ? "#fca5a5" : "#dc2626" }}>{error}</Text>
+          {controller.error ? (
+            <View
+              style={{
+                backgroundColor: isDark ? "#7f1d1d" : "#fee2e2",
+                padding: 12,
+                borderRadius: 8,
+                marginBottom: 16,
+              }}
+            >
+              <Text style={{ color: isDark ? "#fca5a5" : "#dc2626" }}>{controller.error}</Text>
             </View>
           ) : null}
 
           <TextInput
             placeholder="Verification code"
             placeholderTextColor={colors.muted}
-            value={code}
-            onChangeText={setCode}
+            value={controller.code}
+            onChangeText={controller.setCode}
             keyboardType="number-pad"
             style={{
               backgroundColor: colors.card,
@@ -179,8 +79,8 @@ export default function SignUpScreen() {
           />
 
           <TouchableOpacity
-            onPress={handleVerify}
-            disabled={loading}
+            onPress={controller.handleVerify}
+            disabled={controller.loading}
             style={{
               backgroundColor: colors.primary,
               padding: 16,
@@ -188,7 +88,7 @@ export default function SignUpScreen() {
               alignItems: "center",
             }}
           >
-            {loading ? (
+            {controller.loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>Verify</Text>
@@ -205,22 +105,44 @@ export default function SignUpScreen() {
       style={{ flex: 1, backgroundColor: colors.background }}
     >
       <View style={{ flex: 1, justifyContent: "center", padding: 24 }}>
-        <Text style={{ fontSize: 32, fontWeight: "bold", color: colors.text, textAlign: "center", marginBottom: 8 }}>
+        <Text
+          style={{
+            fontSize: 32,
+            fontWeight: "bold",
+            color: colors.text,
+            textAlign: "center",
+            marginBottom: 8,
+          }}
+        >
           Listy Gifty
         </Text>
-        <Text style={{ fontSize: 16, color: colors.textTertiary, textAlign: "center", marginBottom: 32 }}>
+        <Text
+          style={{
+            fontSize: 16,
+            color: colors.textTertiary,
+            textAlign: "center",
+            marginBottom: 32,
+          }}
+        >
           Create your account
         </Text>
 
-        {error ? (
-          <View style={{ backgroundColor: isDark ? "#7f1d1d" : "#fee2e2", padding: 12, borderRadius: 8, marginBottom: 16 }}>
-            <Text style={{ color: isDark ? "#fca5a5" : "#dc2626" }}>{error}</Text>
+        {controller.error ? (
+          <View
+            style={{
+              backgroundColor: isDark ? "#7f1d1d" : "#fee2e2",
+              padding: 12,
+              borderRadius: 8,
+              marginBottom: 16,
+            }}
+          >
+            <Text style={{ color: isDark ? "#fca5a5" : "#dc2626" }}>{controller.error}</Text>
           </View>
         ) : null}
 
         <TouchableOpacity
-          onPress={handleGoogleSignUp}
-          disabled={googleLoading || appleLoading}
+          onPress={controller.handleGoogleSignUp}
+          disabled={controller.googleLoading || controller.appleLoading}
           style={{
             backgroundColor: isDark ? "#fff" : "#f8fafc",
             padding: 16,
@@ -233,7 +155,7 @@ export default function SignUpScreen() {
             borderColor: colors.border,
           }}
         >
-          {googleLoading ? (
+          {controller.googleLoading ? (
             <ActivityIndicator color="#1f2937" />
           ) : (
             <>
@@ -246,9 +168,9 @@ export default function SignUpScreen() {
         </TouchableOpacity>
 
         <AppleAuthButton
-          onPress={handleAppleSignUp}
-          loading={appleLoading}
-          disabled={googleLoading}
+          onPress={controller.handleAppleSignUp}
+          loading={controller.appleLoading}
+          disabled={controller.googleLoading}
         />
 
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 24 }}>
@@ -260,8 +182,8 @@ export default function SignUpScreen() {
         <TextInput
           placeholder="Email"
           placeholderTextColor={colors.muted}
-          value={email}
-          onChangeText={setEmail}
+          value={controller.email}
+          onChangeText={controller.setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
           style={{
@@ -279,8 +201,8 @@ export default function SignUpScreen() {
         <TextInput
           placeholder="Password"
           placeholderTextColor={colors.muted}
-          value={password}
-          onChangeText={setPassword}
+          value={controller.password}
+          onChangeText={controller.setPassword}
           secureTextEntry
           style={{
             backgroundColor: colors.card,
@@ -295,8 +217,8 @@ export default function SignUpScreen() {
         />
 
         <TouchableOpacity
-          onPress={handleSignUp}
-          disabled={loading}
+          onPress={controller.handlePasswordSignUp}
+          disabled={controller.loading}
           style={{
             backgroundColor: colors.primary,
             padding: 16,
@@ -304,7 +226,7 @@ export default function SignUpScreen() {
             alignItems: "center",
           }}
         >
-          {loading ? (
+          {controller.loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>Sign Up</Text>

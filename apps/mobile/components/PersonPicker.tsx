@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,8 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/theme";
-import { useServices } from "@/lib/use-api";
-import type { Person } from "@niftygifty/types";
+import { usePersonPickerController } from "@/lib/controllers";
 
 interface PersonPickerProps {
   selectedIds: number[];
@@ -27,72 +25,14 @@ export function PersonPicker({
   placeholder = "Select people...",
 }: PersonPickerProps) {
   const { colors } = useTheme();
-  const { people: peopleService } = useServices();
-
-  const [modalVisible, setModalVisible] = useState(false);
-  const [people, setPeople] = useState<Person[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [newPersonName, setNewPersonName] = useState("");
-  const [creating, setCreating] = useState(false);
-
-  const fetchPeople = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await peopleService.getAll();
-      setPeople(data);
-    } catch (err) {
-      console.error("Failed to load people", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [peopleService]);
-
-  useEffect(() => {
-    if (modalVisible || (selectedIds.length > 0 && people.length === 0)) {
-      fetchPeople();
-    }
-  }, [modalVisible, selectedIds.length, people.length, fetchPeople]);
-
-  const handleTogglePerson = (personId: number) => {
-    if (selectedIds.includes(personId)) {
-      onSelectionChange(selectedIds.filter((id) => id !== personId));
-    } else {
-      onSelectionChange([...selectedIds, personId]);
-    }
-  };
-
-  const handleCreatePerson = async () => {
-    if (!newPersonName.trim()) return;
-
-    setCreating(true);
-    try {
-      const person = await peopleService.create({ name: newPersonName.trim() });
-      setPeople((prev) => [...prev, person]);
-      onSelectionChange([...selectedIds, person.id]);
-      setNewPersonName("");
-    } catch (err) {
-      console.error("Failed to create person", err);
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const filteredPeople = useMemo(
-    () => people.filter((person) => person.name.toLowerCase().includes(search.toLowerCase())),
-    [people, search]
-  );
-  const selectedPeople = useMemo(
-    () => people.filter((person) => selectedIds.includes(person.id)),
-    [people, selectedIds]
-  );
+  const controller = usePersonPickerController({ selectedIds, onSelectionChange });
 
   return (
     <View style={{ marginBottom: 16 }}>
       <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>{label}</Text>
 
       <TouchableOpacity
-        onPress={() => setModalVisible(true)}
+        onPress={controller.openModal}
         style={{
           backgroundColor: colors.input,
           borderRadius: 8,
@@ -105,9 +45,9 @@ export function PersonPicker({
           minHeight: 48,
         }}
       >
-        {selectedPeople.length > 0 ? (
+        {controller.selectedPeople.length > 0 ? (
           <View style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-            {selectedPeople.map((person) => (
+            {controller.selectedPeople.map((person) => (
               <View
                 key={person.id}
                 style={{
@@ -131,13 +71,12 @@ export function PersonPicker({
       </TouchableOpacity>
 
       <Modal
-        visible={modalVisible}
+        visible={controller.modalVisible}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={controller.closeModal}
       >
         <View style={{ flex: 1, backgroundColor: colors.background }}>
-          {/* Header */}
           <View
             style={{
               flexDirection: "row",
@@ -148,22 +87,21 @@ export function PersonPicker({
               borderBottomColor: colors.border,
             }}
           >
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
+            <TouchableOpacity onPress={controller.closeModal}>
               <Text style={{ color: colors.textTertiary, fontSize: 16 }}>Cancel</Text>
             </TouchableOpacity>
             <Text style={{ color: colors.text, fontSize: 17, fontWeight: "600" }}>{label}</Text>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
+            <TouchableOpacity onPress={controller.closeModal}>
               <Text style={{ color: colors.primary, fontSize: 16, fontWeight: "600" }}>Done</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Search */}
           <View style={{ padding: 16, gap: 12 }}>
             <TextInput
               placeholder="Search people..."
               placeholderTextColor={colors.placeholder}
-              value={search}
-              onChangeText={setSearch}
+              value={controller.search}
+              onChangeText={controller.setSearch}
               style={{
                 backgroundColor: colors.input,
                 color: colors.text,
@@ -175,13 +113,12 @@ export function PersonPicker({
               }}
             />
 
-            {/* Quick add */}
             <View style={{ flexDirection: "row", gap: 8 }}>
               <TextInput
                 placeholder="Add new person..."
                 placeholderTextColor={colors.placeholder}
-                value={newPersonName}
-                onChangeText={setNewPersonName}
+                value={controller.newPersonName}
+                onChangeText={controller.setNewPersonName}
                 style={{
                   flex: 1,
                   backgroundColor: colors.input,
@@ -194,38 +131,57 @@ export function PersonPicker({
                 }}
               />
               <TouchableOpacity
-                onPress={handleCreatePerson}
-                disabled={creating || !newPersonName.trim()}
+                onPress={controller.triggerCreatePerson}
+                disabled={controller.creating || !controller.newPersonName.trim()}
                 style={{
-                  backgroundColor: newPersonName.trim() ? colors.primary : colors.surfaceSecondary,
+                  backgroundColor: controller.newPersonName.trim()
+                    ? colors.primary
+                    : colors.surfaceSecondary,
                   paddingHorizontal: 16,
                   justifyContent: "center",
                   borderRadius: 8,
                 }}
               >
-                {creating ? (
+                {controller.creating ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Ionicons name="add" size={24} color={newPersonName.trim() ? "#fff" : colors.muted} />
+                  <Ionicons
+                    name="add"
+                    size={24}
+                    color={controller.newPersonName.trim() ? "#fff" : colors.muted}
+                  />
                 )}
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* People list */}
-          {loading ? (
+          {controller.loading ? (
             <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
               <ActivityIndicator size="large" color={colors.primary} />
             </View>
           ) : (
             <FlatList
-              data={filteredPeople}
+              data={controller.filteredPeople}
               keyExtractor={(item) => item.id.toString()}
               contentContainerStyle={{ padding: 16, paddingTop: 0 }}
+              ListHeaderComponent={
+                controller.error ? (
+                  <View
+                    style={{
+                      backgroundColor: colors.errorLight,
+                      borderRadius: 8,
+                      marginBottom: 12,
+                      padding: 12,
+                    }}
+                  >
+                    <Text style={{ color: colors.error, fontSize: 13 }}>{controller.error}</Text>
+                  </View>
+                ) : null
+              }
               ListEmptyComponent={
                 <View style={{ alignItems: "center", paddingVertical: 32 }}>
                   <Text style={{ color: colors.textTertiary }}>
-                    {search ? "No matches found" : "No people yet"}
+                    {controller.search ? "No matches found" : "No people yet"}
                   </Text>
                 </View>
               }
@@ -233,7 +189,7 @@ export function PersonPicker({
                 const isSelected = selectedIds.includes(item.id);
                 return (
                   <TouchableOpacity
-                    onPress={() => handleTogglePerson(item.id)}
+                    onPress={() => controller.togglePerson(item.id)}
                     style={{
                       flexDirection: "row",
                       alignItems: "center",

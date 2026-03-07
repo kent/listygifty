@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,98 +8,15 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import * as Haptics from "expo-haptics";
-import { useServices } from "@/lib/use-api";
 import { useTheme } from "@/lib/theme";
 import { PersonPicker } from "@/components/PersonPicker";
-import type { GiftStatus } from "@niftygifty/types";
-import { getGiftStatusColors } from "@/lib/gift-status-colors";
 import { InlineError } from "@/components/InlineError";
+import { useNewGiftController } from "@/lib/controllers";
+import { getGiftStatusColors } from "@/lib/gift-status-colors";
 
 export default function NewGiftScreen() {
-  const router = useRouter();
-  const { holiday_id } = useLocalSearchParams<{ holiday_id: string }>();
-  const { gifts, giftStatuses } = useServices();
   const { colors, isDark } = useTheme();
-
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [link, setLink] = useState("");
-  const [cost, setCost] = useState("");
-  const [statuses, setStatuses] = useState<GiftStatus[]>([]);
-  const [selectedStatusId, setSelectedStatusId] = useState<number | null>(null);
-  const [recipientIds, setRecipientIds] = useState<number[]>([]);
-  const [giverIds, setGiverIds] = useState<number[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [loadingStatuses, setLoadingStatuses] = useState(true);
-  const [error, setError] = useState("");
-
-  const holidayId = holiday_id ? parseInt(holiday_id, 10) : null;
-
-  const fetchStatuses = useCallback(async () => {
-    try {
-      const data = await giftStatuses.getAll();
-      setStatuses(data);
-      if (data.length > 0) {
-        setSelectedStatusId(data[0].id);
-      }
-    } catch (err) {
-      console.error("Failed to load statuses", err);
-    } finally {
-      setLoadingStatuses(false);
-    }
-  }, [giftStatuses]);
-
-  useEffect(() => {
-    fetchStatuses();
-  }, [fetchStatuses]);
-
-  const handleStatusChange = async (statusId: number) => {
-    setSelectedStatusId(statusId);
-    await Haptics.selectionAsync();
-  };
-
-  const handleCreate = async () => {
-    if (!name.trim()) {
-      setError("Name is required");
-      return;
-    }
-
-    if (!holidayId) {
-      setError("No list selected");
-      return;
-    }
-
-    if (!selectedStatusId) {
-      setError("Please select a status");
-      return;
-    }
-
-    setError("");
-    setLoading(true);
-
-    try {
-      await gifts.create({
-        name: name.trim(),
-        description: description.trim() || undefined,
-        link: link.trim() || undefined,
-        cost: cost ? parseFloat(cost) : undefined,
-        holiday_id: holidayId,
-        gift_status_id: selectedStatusId,
-        recipient_ids: recipientIds.length > 0 ? recipientIds : undefined,
-        giver_ids: giverIds.length > 0 ? giverIds : undefined,
-      });
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.back();
-    } catch (err) {
-      console.error(err);
-      setError("Failed to create gift");
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const controller = useNewGiftController();
 
   return (
     <KeyboardAvoidingView
@@ -108,16 +24,17 @@ export default function NewGiftScreen() {
       style={{ flex: 1, backgroundColor: colors.background }}
     >
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {error ? (
-          <InlineError message={error} margin={0} />
+        {controller.error ? <InlineError message={controller.error} margin={0} /> : null}
+        {controller.statusesError ? (
+          <InlineError message={controller.statusesError} onRetry={controller.retryStatuses} margin={16} />
         ) : null}
 
         <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Name *</Text>
         <TextInput
           placeholder="e.g., Nintendo Switch"
           placeholderTextColor={colors.placeholder}
-          value={name}
-          onChangeText={setName}
+          value={controller.form.name}
+          onChangeText={(value) => controller.updateField("name", value)}
           style={{
             backgroundColor: colors.input,
             color: colors.text,
@@ -130,12 +47,14 @@ export default function NewGiftScreen() {
           }}
         />
 
-        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Description</Text>
+        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
+          Description
+        </Text>
         <TextInput
           placeholder="Optional notes about the gift"
           placeholderTextColor={colors.placeholder}
-          value={description}
-          onChangeText={setDescription}
+          value={controller.form.description}
+          onChangeText={(value) => controller.updateField("description", value)}
           multiline
           numberOfLines={3}
           style={{
@@ -156,8 +75,8 @@ export default function NewGiftScreen() {
         <TextInput
           placeholder="https://..."
           placeholderTextColor={colors.placeholder}
-          value={link}
-          onChangeText={setLink}
+          value={controller.form.link}
+          onChangeText={(value) => controller.updateField("link", value)}
           keyboardType="url"
           autoCapitalize="none"
           style={{
@@ -176,8 +95,8 @@ export default function NewGiftScreen() {
         <TextInput
           placeholder="0.00"
           placeholderTextColor={colors.placeholder}
-          value={cost}
-          onChangeText={setCost}
+          value={controller.form.cost}
+          onChangeText={(value) => controller.updateField("cost", value)}
           keyboardType="decimal-pad"
           style={{
             backgroundColor: colors.input,
@@ -192,17 +111,17 @@ export default function NewGiftScreen() {
         />
 
         <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Status *</Text>
-        {loadingStatuses ? (
+        {controller.loadingStatuses ? (
           <ActivityIndicator color={colors.primary} style={{ marginBottom: 16 }} />
         ) : (
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
-            {statuses.map((status) => {
-              const isSelected = selectedStatusId === status.id;
+            {controller.statuses.map((status) => {
+              const isSelected = controller.selectedStatusId === status.id;
               const statusColor = getGiftStatusColors(status.name, colors, isDark);
               return (
                 <TouchableOpacity
                   key={status.id}
-                  onPress={() => handleStatusChange(status.id)}
+                  onPress={() => controller.handleStatusChange(status.id)}
                   style={{
                     backgroundColor: isSelected ? statusColor.backgroundColor : colors.input,
                     paddingHorizontal: 16,
@@ -226,25 +145,23 @@ export default function NewGiftScreen() {
           </View>
         )}
 
-        {/* Recipients */}
         <PersonPicker
           label="For (Recipients)"
-          selectedIds={recipientIds}
-          onSelectionChange={setRecipientIds}
+          selectedIds={controller.form.recipientIds}
+          onSelectionChange={controller.setRecipientIds}
           placeholder="Who is this gift for?"
         />
 
-        {/* Givers */}
         <PersonPicker
           label="From (Givers)"
-          selectedIds={giverIds}
-          onSelectionChange={setGiverIds}
+          selectedIds={controller.form.giverIds}
+          onSelectionChange={controller.setGiverIds}
           placeholder="Who is giving this gift?"
         />
 
         <TouchableOpacity
-          onPress={handleCreate}
-          disabled={loading}
+          onPress={controller.handleSubmit}
+          disabled={controller.saving}
           style={{
             backgroundColor: colors.primary,
             padding: 16,
@@ -253,15 +170,17 @@ export default function NewGiftScreen() {
             marginTop: 8,
           }}
         >
-          {loading ? (
+          {controller.saving ? (
             <ActivityIndicator color={colors.textInverse} />
           ) : (
-            <Text style={{ color: colors.textInverse, fontSize: 16, fontWeight: "600" }}>Add Gift</Text>
+            <Text style={{ color: colors.textInverse, fontSize: 16, fontWeight: "600" }}>
+              Add Gift
+            </Text>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={controller.handleCancel}
           style={{
             padding: 16,
             alignItems: "center",

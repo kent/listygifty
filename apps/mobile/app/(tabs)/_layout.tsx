@@ -6,6 +6,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { useTheme } from "@/lib/theme";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { prefetchAppShellData } from "@/lib/api";
+import { useSessionController } from "@/lib/controllers";
 import { useApiSetup } from "@/lib/use-api";
 
 const screenshotInitialRoute: "lists" | "exchanges" | "people/index" | "profile/index" = "exchanges";
@@ -78,14 +79,8 @@ function ScreenshotTabLayout() {
 }
 
 function AuthenticatedTabLayout() {
-  const { signOut } = useAuth();
-  const router = useRouter();
   const { colors } = useTheme();
-
-  const handleSignOut = async () => {
-    await signOut();
-    router.replace("/auth/login");
-  };
+  const { signOutAndRedirect } = useSessionController();
 
   return (
     <>
@@ -106,7 +101,7 @@ function AuthenticatedTabLayout() {
             fontWeight: "600",
           },
           headerRight: () => (
-            <TouchableOpacity onPress={handleSignOut} style={{ marginRight: 16 }}>
+            <TouchableOpacity onPress={signOutAndRedirect} style={{ marginRight: 16 }}>
               <Text style={{ color: colors.primary }}>Sign Out</Text>
             </TouchableOpacity>
           ),
