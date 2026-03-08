@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
@@ -28,7 +28,7 @@ const HOLIDAY_ICONS: Record<string, string> = {
 
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading, signOut } = useAuth();
-  const { currentWorkspace } = useWorkspace();
+  const { bootstrapData, refreshWorkspaces } = useWorkspace();
   const router = useRouter();
 
   const [templates, setTemplates] = useState<Holiday[]>([]);
@@ -44,35 +44,19 @@ export default function DashboardPage() {
     [userHolidays]
   );
 
-  const loadData = useCallback(async () => {
-    if (!currentWorkspace) return;
-
-    try {
-      const [templatesData, holidaysData, peopleData] = await Promise.all([
-        holidaysService.getTemplates(),
-        holidaysService.getAll(),
-        peopleService.getAll(),
-      ]);
-      setTemplates(templatesData);
-      setUserHolidays(holidaysData);
-      setPeople(peopleData);
-    } catch {
-      toast.error("Failed to load data");
-    }
-  }, [currentWorkspace]);
-
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push(AUTH_ROUTES.signIn);
     }
   }, [isLoading, isAuthenticated, router]);
 
-  // Reload data when workspace changes
   useEffect(() => {
-    if (isAuthenticated && currentWorkspace) {
-      loadData();
+    if (bootstrapData) {
+      setTemplates(bootstrapData.holiday_templates);
+      setUserHolidays(bootstrapData.holidays);
+      setPeople(bootstrapData.people);
     }
-  }, [isAuthenticated, currentWorkspace, loadData]);
+  }, [bootstrapData]);
 
   const handleStartPlanning = async (template: Holiday) => {
     setCreatingHolidayId(template.id);
@@ -84,6 +68,7 @@ export default function DashboardPage() {
         icon: template.icon || undefined,
       });
       setUserHolidays((prev) => [...prev, newHoliday]);
+      void refreshWorkspaces();
       toast.success(`Started planning ${template.name} ${currentYear}!`);
     } catch {
       toast.error("Failed to create gift list");
@@ -101,6 +86,7 @@ export default function DashboardPage() {
       const person = await peopleService.create({ name: newPersonName.trim() });
       setPeople((prev) => [...prev, person]);
       setNewPersonName("");
+      void refreshWorkspaces();
       toast.success(`Added ${person.name}`);
     } catch {
       toast.error("Failed to add person");

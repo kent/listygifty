@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { giftsService } from "@/services";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Package, Truck, MapPin, Lightbulb } from "lucide-react";
-import type { Gift } from "@niftygifty/types";
 
 const STATUS_CONFIG: Record<string, { icon: React.ReactNode; color: string }> = {
   Idea: { icon: <Lightbulb className="h-3 w-3" />, color: "bg-amber-500/20 text-amber-600 dark:text-amber-300 border-amber-500/30" },
@@ -17,26 +14,37 @@ const STATUS_CONFIG: Record<string, { icon: React.ReactNode; color: string }> = 
 };
 
 export function GiftTodoList() {
-  const { currentWorkspace } = useWorkspace();
-  const [gifts, setGifts] = useState<Gift[]>([]);
+  const { bootstrapData, isLoading } = useWorkspace();
+  const gifts = bootstrapData?.pending_gifts ?? [];
+  const pendingGiftTotal = bootstrapData?.pending_gift_total ?? gifts.length;
 
-  const loadGifts = useCallback(async () => {
-    if (!currentWorkspace) return;
+  if (isLoading) {
+    return (
+      <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+        <CardContent className="p-4">
+          <h2 className="font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-violet-500 dark:text-violet-400" />
+            To Do
+          </h2>
+          <p className="text-sm text-slate-500">Loading tasks...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
-    try {
-      const allGifts = await giftsService.getAll();
-      // Filter out completed gifts (status "Done")
-      const pendingGifts = allGifts.filter((g) => g.gift_status.name !== "Done");
-      setGifts(pendingGifts);
-    } catch {
-      // Silently fail - dashboard still works
-    }
-  }, [currentWorkspace]);
-
-  // Re-fetch when workspace changes
-  useEffect(() => {
-    loadGifts();
-  }, [loadGifts]);
+  if (!bootstrapData) {
+    return (
+      <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+        <CardContent className="p-4">
+          <h2 className="font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-slate-400" />
+            To Do
+          </h2>
+          <p className="text-sm text-slate-500">Tasks are temporarily unavailable.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (gifts.length === 0) {
     return (
@@ -59,7 +67,7 @@ export function GiftTodoList() {
           <CheckCircle2 className="h-4 w-4 text-violet-500 dark:text-violet-400" />
           To Do
           <Badge variant="secondary" className="ml-auto bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs">
-            {gifts.length}
+            {pendingGiftTotal}
           </Badge>
         </h2>
         <ul className="space-y-2">
@@ -90,9 +98,9 @@ export function GiftTodoList() {
             );
           })}
         </ul>
-        {gifts.length > 8 && (
+        {pendingGiftTotal > gifts.length && (
           <p className="text-xs text-slate-500 mt-3 text-center">
-            +{gifts.length - 8} more
+            +{pendingGiftTotal - gifts.length} more
           </p>
         )}
       </CardContent>

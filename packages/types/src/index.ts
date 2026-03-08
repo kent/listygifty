@@ -256,6 +256,27 @@ export interface UpdateGiftRecipientRequest {
   };
 }
 
+// =============================================================================
+// Bootstrap
+// =============================================================================
+
+export interface AppBootstrapData {
+  holiday_templates: Holiday[];
+  holidays: Holiday[];
+  people: Person[];
+  gift_statuses: GiftStatus[];
+  gift_exchanges: GiftExchange[];
+  pending_gifts: Gift[];
+  pending_gift_total: number;
+}
+
+export interface AppBootstrapResponse {
+  workspaces: Workspace[];
+  current_workspace_id: number | null;
+  billing_status: BillingStatus;
+  data: AppBootstrapData;
+}
+
 export interface HolidayUser extends BaseEntity {
   holiday_id: number;
   user_id: number;

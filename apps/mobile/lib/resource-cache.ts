@@ -48,6 +48,27 @@ export async function readCachedResource<T>(
   return inflight;
 }
 
+export function peekCachedResource<T>(key: string): T | undefined {
+  const existing = resourceCache.get(key) as CacheEntry<T> | undefined;
+
+  if (!existing || existing.value === undefined) {
+    return undefined;
+  }
+
+  if (existing.expiresAt <= Date.now()) {
+    return undefined;
+  }
+
+  return existing.value;
+}
+
+export function primeCachedResource<T>(key: string, value: T, ttlMs: number): void {
+  resourceCache.set(key, {
+    value,
+    expiresAt: Date.now() + ttlMs,
+  });
+}
+
 export function prefetchCachedResource<T>(
   key: string,
   ttlMs: number,

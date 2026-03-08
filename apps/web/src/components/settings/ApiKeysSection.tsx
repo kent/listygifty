@@ -41,7 +41,6 @@ import type { ApiKey } from "@niftygifty/types";
 
 export function ApiKeysSection() {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
-  const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -55,8 +54,6 @@ export function ApiKeysSection() {
       setApiKeys(keys);
     } catch {
       toast.error("Failed to load API keys");
-    } finally {
-      setLoading(false);
     }
   }, []);
 

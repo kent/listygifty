@@ -52,6 +52,7 @@ Rails.application.routes.draw do
   # Workspace invite acceptance (token-based, public for show)
   get "workspace_invite/:token" => "workspace_invites#show"
   post "workspace_invite/:token/accept" => "workspace_invites#accept"
+  get "bootstrap" => "bootstrap#show"
 
   resources :gifts do
     member do

@@ -30,19 +30,16 @@ export default function SettingsPage() {
   const { isAuthenticated, isLoading: authLoading, user, signOut } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab");
 
-  const [activeSection, setActiveSection] = useState<SettingsSection>("profile");
-  const [statuses, setStatuses] = useState<GiftStatus[]>([]);
-  const [dataLoading, setDataLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Handle tab URL parameter
-  useEffect(() => {
-    const tab = searchParams.get("tab");
-    if (tab && VALID_SECTIONS.includes(tab as SettingsSection)) {
-      setActiveSection(tab as SettingsSection);
+  const [activeSection, setActiveSection] = useState<SettingsSection>(() => {
+    if (initialTab && VALID_SECTIONS.includes(initialTab as SettingsSection)) {
+      return initialTab as SettingsSection;
     }
-  }, [searchParams]);
+    return "profile";
+  });
+  const [statuses, setStatuses] = useState<GiftStatus[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -59,8 +56,6 @@ export default function SettingsPage() {
         setStatuses(data);
       } catch {
         setError("Failed to load settings. Please try again.");
-      } finally {
-        setDataLoading(false);
       }
     }
 

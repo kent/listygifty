@@ -1,4 +1,5 @@
 export { authService, AUTH_ROUTES, PUBLIC_ROUTES, clerkAppearance, getClerkAppearance, mapClerkUser } from "./auth.service";
+export { bootstrapService } from "./bootstrap.service";
 export { peopleService } from "./people.service";
 export { holidaysService } from "./holidays.service";
 export { giftsService } from "./gifts.service";
@@ -17,4 +18,3 @@ export { workspacesService } from "./workspaces.service";
 export { importsService } from "./imports.service";
 export { exportsService } from "./exports.service";
 export { wishlistsService } from "./wishlists.service";
-

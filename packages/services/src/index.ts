@@ -1,5 +1,6 @@
 // Service factory functions
 export { createHolidaysService, type HolidaysService } from "./holidays.service";
+export { createBootstrapService, type BootstrapService } from "./bootstrap.service";
 export { createGiftsService, type GiftsService } from "./gifts.service";
 export { createGiftStatusesService, type GiftStatusesService } from "./gift-statuses.service";
 export { createPeopleService, type PeopleService } from "./people.service";

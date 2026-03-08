@@ -114,7 +114,6 @@ function WishlistCard({ wishlist }: { wishlist: Wishlist }) {
 export default function WishlistsPage() {
   const {
     data: wishlists,
-    isLoading,
     error,
     refetch,
     user,

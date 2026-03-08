@@ -1,5 +1,6 @@
 import { ApiClient } from "@niftygifty/api-client";
 import {
+  createBootstrapService,
   createHolidaysService,
   createGiftsService,
   createGiftStatusesService,
@@ -10,13 +11,15 @@ import {
 } from "@niftygifty/services";
 import { runtimeConfig } from "@/lib/runtime-config";
 import {
-  clearCachedResources,
+  clearCachedResources as clearResourceCache,
   invalidateCachedResources,
-  prefetchCachedResource,
+  peekCachedResource,
+  primeCachedResource,
   readCachedResource,
 } from "@/lib/resource-cache";
 
 const API_URL = runtimeConfig.apiUrl;
+const BOOTSTRAP_TTL_MS = 60_000;
 const CACHE_TTL_MS = {
   holidays: 60_000,
   holiday: 60_000,
@@ -39,10 +42,79 @@ const baseGiftsService = createGiftsService(apiClient);
 const baseGiftStatusesService = createGiftStatusesService(apiClient);
 const basePeopleService = createPeopleService(apiClient);
 const baseGiftExchangesService = createGiftExchangesService(apiClient);
+const baseBootstrapService = createBootstrapService(apiClient);
 export const wishlistItemsService = createWishlistItemsService(apiClient);
 export const exchangeInvitesService = createExchangeInvitesService(apiClient);
 
+let bootstrapPromise: Promise<void> | null = null;
+let bootstrapExpiresAt = 0;
+
+function resetBootstrapState() {
+  bootstrapPromise = null;
+  bootstrapExpiresAt = 0;
+}
+
+function seedShellCache(data: {
+  holidays: Awaited<ReturnType<typeof baseHolidaysService.getAll>>;
+  people: Awaited<ReturnType<typeof basePeopleService.getAll>>;
+  gift_statuses: Awaited<ReturnType<typeof baseGiftStatusesService.getAll>>;
+  gift_exchanges: Awaited<ReturnType<typeof baseGiftExchangesService.getAll>>;
+}) {
+  primeCachedResource("holidays:list", data.holidays, CACHE_TTL_MS.holidays);
+  primeCachedResource("people:list", data.people, CACHE_TTL_MS.people);
+  primeCachedResource("gift-statuses:list", data.gift_statuses, CACHE_TTL_MS.giftStatuses);
+  primeCachedResource("gift-exchanges:list", data.gift_exchanges, CACHE_TTL_MS.exchanges);
+}
+
+async function loadBootstrap(force = false) {
+  const now = Date.now();
+  if (!force && bootstrapExpiresAt > now) {
+    return;
+  }
+
+  if (bootstrapPromise) {
+    return bootstrapPromise;
+  }
+
+  bootstrapPromise = baseBootstrapService
+    .get()
+    .then((payload) => {
+      seedShellCache(payload.data);
+      bootstrapExpiresAt = Date.now() + BOOTSTRAP_TTL_MS;
+    })
+    .catch((error) => {
+      bootstrapExpiresAt = 0;
+      throw error;
+    })
+    .finally(() => {
+      bootstrapPromise = null;
+    });
+
+  return bootstrapPromise;
+}
+
+async function readAppShellResource<T>(
+  cacheKey: string,
+  ttlMs: number,
+  fetcher: () => Promise<T>
+) {
+  return readCachedResource(cacheKey, ttlMs, async () => {
+    try {
+      await loadBootstrap();
+      const seeded = peekCachedResource<T>(cacheKey);
+      if (seeded !== undefined) {
+        return seeded;
+      }
+    } catch {
+      // Fall back to the dedicated endpoint when bootstrap is unavailable.
+    }
+
+    return fetcher();
+  });
+}
+
 function invalidateGiftCaches(holidayId?: number | null) {
+  resetBootstrapState();
   invalidateCachedResources("gifts:");
   if (holidayId) {
     invalidateCachedResources(`holidays:${holidayId}`);
@@ -52,7 +124,7 @@ function invalidateGiftCaches(holidayId?: number | null) {
 
 export const holidaysService = {
   getAll() {
-    return readCachedResource("holidays:list", CACHE_TTL_MS.holidays, () =>
+    return readAppShellResource("holidays:list", CACHE_TTL_MS.holidays, () =>
       baseHolidaysService.getAll()
     );
   },
@@ -69,6 +141,7 @@ export const holidaysService = {
 
   async create(data: Parameters<typeof baseHolidaysService.create>[0]) {
     const holiday = await baseHolidaysService.create(data);
+    resetBootstrapState();
     invalidateCachedResources("holidays:");
     invalidateCachedResources("gifts:");
     return holiday;
@@ -76,6 +149,7 @@ export const holidaysService = {
 
   async update(id: number, data: Parameters<typeof baseHolidaysService.update>[1]) {
     const holiday = await baseHolidaysService.update(id, data);
+    resetBootstrapState();
     invalidateCachedResources("holidays:");
     invalidateCachedResources("gifts:");
     return holiday;
@@ -83,6 +157,7 @@ export const holidaysService = {
 
   async delete(id: number) {
     await baseHolidaysService.delete(id);
+    resetBootstrapState();
     invalidateCachedResources("holidays:");
     invalidateCachedResources("gifts:");
     invalidateCachedResources("people:");
@@ -98,6 +173,7 @@ export const holidaysService = {
 
   async join(shareToken: string) {
     const holiday = await baseHolidaysService.join(shareToken);
+    resetBootstrapState();
     invalidateCachedResources("holidays:");
     invalidateCachedResources("gifts:");
     return holiday;
@@ -105,6 +181,7 @@ export const holidaysService = {
 
   async leave(id: number) {
     await baseHolidaysService.leave(id);
+    resetBootstrapState();
     invalidateCachedResources("holidays:");
     invalidateCachedResources("gifts:");
     invalidateCachedResources("people:");
@@ -170,7 +247,7 @@ export const giftsService = {
 
 export const giftStatusesService = {
   getAll() {
-    return readCachedResource("gift-statuses:list", CACHE_TTL_MS.giftStatuses, () =>
+    return readAppShellResource("gift-statuses:list", CACHE_TTL_MS.giftStatuses, () =>
       baseGiftStatusesService.getAll()
     );
   },
@@ -178,7 +255,7 @@ export const giftStatusesService = {
 
 export const peopleService = {
   getAll() {
-    return readCachedResource("people:list", CACHE_TTL_MS.people, () => basePeopleService.getAll());
+    return readAppShellResource("people:list", CACHE_TTL_MS.people, () => basePeopleService.getAll());
   },
 
   getById(id: number) {
@@ -187,25 +264,28 @@ export const peopleService = {
 
   async create(data: Parameters<typeof basePeopleService.create>[0]) {
     const person = await basePeopleService.create(data);
+    resetBootstrapState();
     invalidateCachedResources("people:");
     return person;
   },
 
   async update(id: number, data: Parameters<typeof basePeopleService.update>[1]) {
     const person = await basePeopleService.update(id, data);
+    resetBootstrapState();
     invalidateCachedResources("people:");
     return person;
   },
 
   async delete(id: number) {
     await basePeopleService.delete(id);
+    resetBootstrapState();
     invalidateCachedResources("people:");
   },
 };
 
 export const giftExchangesService = {
   getAll() {
-    return readCachedResource("gift-exchanges:list", CACHE_TTL_MS.exchanges, () =>
+    return readAppShellResource("gift-exchanges:list", CACHE_TTL_MS.exchanges, () =>
       baseGiftExchangesService.getAll()
     );
   },
@@ -218,14 +298,10 @@ export const giftExchangesService = {
 };
 
 export function prefetchAppShellData() {
-  prefetchCachedResource("holidays:list", CACHE_TTL_MS.holidays, () => baseHolidaysService.getAll());
-  prefetchCachedResource("people:list", CACHE_TTL_MS.people, () => basePeopleService.getAll());
-  prefetchCachedResource("gift-statuses:list", CACHE_TTL_MS.giftStatuses, () =>
-    baseGiftStatusesService.getAll()
-  );
-  prefetchCachedResource("gift-exchanges:list", CACHE_TTL_MS.exchanges, () =>
-    baseGiftExchangesService.getAll()
-  );
+  void loadBootstrap().catch(() => undefined);
 }
 
-export { clearCachedResources };
+export function clearCachedResources() {
+  resetBootstrapState();
+  clearResourceCache();
+}

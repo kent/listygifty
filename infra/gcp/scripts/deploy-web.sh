@@ -12,17 +12,19 @@ ENV_SUFFIX="$(environment_suffix "${ENVIRONMENT}")"
 SECRET_PREFIX="${SECRET_PREFIX:-$(default_secret_prefix "${ENVIRONMENT}")}"
 
 if [[ "${ENVIRONMENT}" == "production" ]]; then
-  default_api_service="niftygifty-api"
-  default_web_service="niftygifty-web"
+  default_api_service="listygifty-api-prod"
+  default_web_service="listygifty-web-prod"
   default_runtime_sa_name="niftygifty-runner"
   default_app_url="https://listygifty.com"
   default_api_url="https://api.listygifty.com"
+  default_web_min_instances="1"
 else
-  default_api_service="niftygifty${ENV_SUFFIX}-api"
-  default_web_service="niftygifty${ENV_SUFFIX}-web"
+  default_api_service="listygifty-api-staging"
+  default_web_service="listygifty-web-staging"
   default_runtime_sa_name="niftygifty${ENV_SUFFIX}-runner"
   default_app_url="https://staging.listygifty.com"
-  default_api_url="https://api${ENV_SUFFIX}.listygifty.com"
+  default_api_url="https://staging.api.listygifty.com"
+  default_web_min_instances="0"
 fi
 
 PROJECT_ID="${PROJECT_ID:-listygifty}"
@@ -41,6 +43,7 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL="${NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL:-/das
 NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="${NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL:-/dashboard}"
 NEXT_PUBLIC_POSTHOG_KEY="${NEXT_PUBLIC_POSTHOG_KEY:-}"
 NEXT_PUBLIC_POSTHOG_HOST="${NEXT_PUBLIC_POSTHOG_HOST:-}"
+WEB_MIN_INSTANCES="${WEB_MIN_INSTANCES:-${default_web_min_instances}}"
 HEROKU_SECRET_BINDINGS_FILE="${HEROKU_SECRET_BINDINGS_FILE:-${ROOT_DIR}/.gcp/heroku-secret-bindings-${ENVIRONMENT}.env}"
 
 SECRET_CLERK_SECRET_KEY="${SECRET_CLERK_SECRET_KEY:-${SECRET_PREFIX}clerk-secret-key}"
@@ -194,7 +197,7 @@ gcloud run deploy "${WEB_SERVICE}" \
   --memory=512Mi \
   --concurrency=80 \
   --timeout=300 \
-  --min-instances="${WEB_MIN_INSTANCES:-0}" \
+  --min-instances="${WEB_MIN_INSTANCES}" \
   --max-instances="${WEB_MAX_INSTANCES:-20}" \
   --env-vars-file="${ENV_FILE}" \
   --set-secrets="${SECRET_BINDINGS}" >/dev/null

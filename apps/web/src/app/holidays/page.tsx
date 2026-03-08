@@ -774,7 +774,6 @@ export default function HolidaysPage() {
   const {
     data,
     setData,
-    isLoading,
     error,
     user,
     signOut,

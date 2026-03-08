@@ -16,9 +16,9 @@ run_seed_job() {
   local job_name
 
   if [[ "${environment}" == "production" ]]; then
-    job_name="niftygifty-api-migrate"
+    job_name="listygifty-migrate-prod"
   else
-    job_name="niftygifty-staging-api-migrate"
+    job_name="listygifty-migrate-staging"
   fi
 
   log "Seeding app review data for ${environment} via job ${job_name}"

@@ -116,19 +116,23 @@ smoke_environment() {
   local environment="$1"
   local api_service
   local web_service
-
-  if [[ "${environment}" == "production" ]]; then
-    api_service="niftygifty-api"
-    web_service="niftygifty-web"
-  else
-    api_service="niftygifty-staging-api"
-    web_service="niftygifty-staging-web"
-  fi
-
   local api_url
   local web_url
-  api_url="$(gcloud run services describe "${api_service}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)')"
-  web_url="$(gcloud run services describe "${web_service}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)')"
+
+  if [[ "${environment}" == "production" ]]; then
+    api_service="listygifty-api-prod"
+    web_service="listygifty-web-prod"
+    api_url="https://api.listygifty.com"
+    web_url="https://listygifty.com"
+  else
+    api_service="listygifty-api-staging"
+    web_service="listygifty-web-staging"
+    api_url="https://staging.api.listygifty.com"
+    web_url="https://staging.listygifty.com"
+  fi
+
+  gcloud run services describe "${api_service}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)' >/dev/null
+  gcloud run services describe "${web_service}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)' >/dev/null
 
   log "Running smoke checks (${environment})"
   check_http_status "${environment} API /up" "${api_url}/up" "200"

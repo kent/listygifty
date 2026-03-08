@@ -18,7 +18,7 @@ import {
   useUser as useClerkUser,
   useClerk,
 } from "@clerk/nextjs";
-import { billingService, usersService, mapClerkUser } from "@/services";
+import { billingService, mapClerkUser } from "@/services";
 import { apiClient } from "@/lib/api-client";
 
 interface AuthContextType {
@@ -27,6 +27,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   // Auth actions
   signOut: () => Promise<void>;
+  hydrateBillingStatus: (status: BillingStatus | null) => void;
   // Billing
   billingStatus: BillingStatus | null;
   isPremium: boolean;
@@ -72,6 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated]);
 
+  const hydrateBillingStatus = useCallback((status: BillingStatus | null) => {
+    setBillingStatus(status);
+  }, []);
+
   // Sign out via Clerk and redirect to homepage
   const signOut = useCallback(async () => {
     setBillingStatus(null);
@@ -80,47 +85,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/");
   }, [clerk, router]);
 
-  // Fetch billing status and sync profile when authenticated
-  // This is a valid data fetching pattern - setState in callback is intentional
-  useEffect(() => {
-    let cancelled = false;
-
-    if (isAuthenticated && clerkUser) {
-      // Sync profile to backend (fire-and-forget to ensure DB has latest Clerk data)
-      // Pass Clerk data as fallback in case backend can't reach Clerk API
-      usersService.syncProfile({
-        first_name: clerkUser.firstName,
-        last_name: clerkUser.lastName,
-        image_url: clerkUser.imageUrl,
-      }).catch(() => {
-        // Silently fail - sync will retry on next load
-      });
-      
-      billingService.getStatus().then((status) => {
-        if (!cancelled) {
-          setBillingStatus(status);
-        }
-      }).catch(() => {
-        // Silently fail - billing might not be set up yet
-      });
-    } else if (!isAuthenticated) {
-      // Reset billing when logged out - this is intentional
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setBillingStatus(null);
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isAuthenticated, clerkUser]);
-
   // Memoize derived billing values
   const billingValues = useMemo(() => {
-    const isPremium = billingStatus?.subscription_status === "active";
-    const canCreateGift = billingStatus?.can_create_gift ?? true;
-    const giftsRemaining = billingStatus?.gifts_remaining ?? FREE_GIFT_LIMIT;
+    const isPremium = isAuthenticated && billingStatus?.subscription_status === "active";
+    const canCreateGift = isAuthenticated ? (billingStatus?.can_create_gift ?? true) : false;
+    const giftsRemaining = isAuthenticated
+      ? (billingStatus?.gifts_remaining ?? FREE_GIFT_LIMIT)
+      : null;
     return { isPremium, canCreateGift, giftsRemaining };
-  }, [billingStatus]);
+  }, [billingStatus, isAuthenticated]);
 
   // Memoize the entire context value
   const contextValue = useMemo<AuthContextType>(
@@ -129,11 +102,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       isAuthenticated,
       signOut,
+      hydrateBillingStatus,
       billingStatus,
       ...billingValues,
       refreshBillingStatus,
     }),
-    [user, isLoading, isAuthenticated, signOut, billingStatus, billingValues, refreshBillingStatus]
+    [user, isLoading, isAuthenticated, signOut, hydrateBillingStatus, billingStatus, billingValues, refreshBillingStatus]
   );
 
   return (
@@ -161,6 +135,7 @@ export function NoopAuthProvider({ children }: { children: ReactNode }) {
     isLoading: true,
     isAuthenticated: false,
     signOut: async () => {},
+    hydrateBillingStatus: () => {},
     billingStatus: null,
     isPremium: false,
     canCreateGift: false,

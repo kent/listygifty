@@ -26,7 +26,6 @@ export default function PeoplePage() {
   const {
     data: people,
     setData: setPeople,
-    isLoading,
     error,
     user,
     signOut,

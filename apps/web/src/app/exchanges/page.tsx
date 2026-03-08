@@ -79,7 +79,6 @@ function ExchangeCard({ exchange }: { exchange: GiftExchange }) {
 export default function ExchangesPage() {
   const {
     data: exchanges,
-    isLoading,
     user,
     signOut,
   } = useWorkspaceData<GiftExchange[]>({

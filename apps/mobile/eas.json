@@ -54,7 +54,10 @@
       "ios": {
         "ascAppId": "6759929474",
         "appleId": "kent.fenwick@gmail.com",
-        "appleTeamId": "PS5W7BFTQ2"
+        "appleTeamId": "PS5W7BFTQ2",
+        "groups": [
+          "Staging"
+        ]
       }
     }
   }
