@@ -39,6 +39,19 @@ cd apps/mobile
 npm install --legacy-peer-deps
 ```
 
+For Listy Gifty TestFlight releases:
+
+```bash
+cd apps/mobile
+eas build --platform ios --profile production --auto-submit
+```
+
+Default App Store Connect internal testing group:
+- `Internal Testers`
+
+Default internal tester account:
+- `kent.fenwick@gmail.com`
+
 ## 3) Local development
 
 Run API:

@@ -73,6 +73,15 @@ npx expo build:ios
 npx expo build:android
 ```
 
+### TestFlight Default
+
+When the user asks for a Listy Gifty TestFlight release, default to the App Store Connect internal testing group `Internal Testers` for `kent.fenwick@gmail.com`.
+
+Rules:
+- Do not default production TestFlight releases to `Staging`.
+- Prefer the production iOS EAS submit path for TestFlight unless the user explicitly asks for a different profile.
+- Ensure production submits target the `Internal Testers` group unless the user explicitly asks for a different tester group.
+
 ### Before Building Mobile
 Ensure shared packages are built first:
 ```bash

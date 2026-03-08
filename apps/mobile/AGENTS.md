@@ -90,6 +90,14 @@ npm test -- --runInBand
 npx tsc --noEmit
 ```
 
+## TestFlight Releases
+
+When a user asks for a Listy Gifty TestFlight release:
+- Use the App Store Connect internal testing group `Internal Testers`.
+- Treat `kent.fenwick@gmail.com` as an internal tester for that group.
+- Use the production iOS EAS submit path unless the user explicitly asks for a different profile or group.
+- Do not default production TestFlight releases to `Staging`.
+
 ## Feature Workflow
 
 1. Confirm or add shared types in `packages/types`.
