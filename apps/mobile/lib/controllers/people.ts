@@ -1,6 +1,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
 import { haptics } from "@/lib/haptics";
+import { humanizeError } from "@/lib/error-message";
 import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
@@ -111,7 +112,7 @@ export function usePeopleController() {
       setEditorOpen(false);
     } catch (saveError) {
       console.error("Failed to save person", saveError);
-      setFormError("Failed to save person.");
+      setFormError(humanizeError(saveError, "Failed to save person."));
       await haptics.error();
     } finally {
       setSaving(false);
@@ -245,7 +246,7 @@ export function usePersonPickerController({
       } catch (loadError) {
         console.error("Failed to load people", loadError);
         if (!cancelled) {
-          setError("Failed to load people");
+          setError(humanizeError(loadError, "Failed to load people"));
         }
       } finally {
         if (!cancelled) {
@@ -299,7 +300,7 @@ export function usePersonPickerController({
       await haptics.success();
     } catch (createError) {
       console.error("Failed to create person", createError);
-      setError("Failed to create person");
+      setError(humanizeError(createError, "Failed to create person"));
       await haptics.error();
     } finally {
       setCreating(false);

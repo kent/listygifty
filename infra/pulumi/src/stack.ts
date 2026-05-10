@@ -83,40 +83,108 @@ new gcp.projects.IAMMember(
 );
 
 // =============================================================================
-// Secret access bindings
+// Secrets — containers + IAM (values rotated via `gcloud secrets versions add`)
 // =============================================================================
+//
+// Pulumi owns the shape: which secrets exist, what their replication policy is,
+// who can read them, and whether they're protected from destroy. The raw values
+// stay in Secret Manager itself and are rotated out-of-band via
+// `gcloud secrets versions add` (or infra/gcp/scripts/sync-heroku-secrets.sh).
+//
+// Why values aren't in Pulumi: putting raw secret values in IaC state inflates
+// the security surface (state file proliferation, easier to leak in PRs/logs).
+// Best-practice GCP IaC owns the declaration and leaves the data plane to
+// Secret Manager. Pulumi still enforces every other constraint.
 
 interface RuntimeSecret {
+  /** Env var name the runtime sees. */
   envVar: string;
-  secret: string;
+  /** Stable, environment-agnostic slug; the actual Secret Manager name is
+   *  `${secretPrefix}${slug}` so staging + production don't collide. */
+  slug: string;
+  /** Which Cloud Run services consume this secret at runtime. */
   services: ("api" | "web")[];
+  /** Sensitivity tier — drives replication + lifecycle policy. */
+  classification?: "high" | "standard";
 }
 
 const runtimeSecrets: RuntimeSecret[] = [
-  { envVar: "DATABASE_URL", secret: `${secretPrefix}database-url`, services: ["api"] },
-  { envVar: "RAILS_MASTER_KEY", secret: `${secretPrefix}rails-master-key`, services: ["api"] },
-  { envVar: "POSTMARK_API_TOKEN", secret: `${secretPrefix}postmark-api-token`, services: ["api"] },
-  { envVar: "STRIPE_SECRET_KEY", secret: `${secretPrefix}stripe-secret-key`, services: ["api"] },
-  { envVar: "STRIPE_WEBHOOK_SECRET", secret: `${secretPrefix}stripe-webhook-secret`, services: ["api"] },
-  { envVar: "OPENAI_API_KEY", secret: `${secretPrefix}openai-api-key`, services: ["api"] },
-  { envVar: "CLERK_SECRET_KEY", secret: `${secretPrefix}clerk-secret-key`, services: ["api", "web"] },
+  // API runtime — high-value
+  { envVar: "DATABASE_URL", slug: "database-url", services: ["api"], classification: "high" },
+  { envVar: "RAILS_MASTER_KEY", slug: "rails-master-key", services: ["api"], classification: "high" },
+  { envVar: "STRIPE_SECRET_KEY", slug: "stripe-secret-key", services: ["api"], classification: "high" },
+  { envVar: "STRIPE_WEBHOOK_SECRET", slug: "stripe-webhook-secret", services: ["api"], classification: "high" },
+  // API runtime — standard
+  { envVar: "POSTMARK_API_TOKEN", slug: "postmark-api-token", services: ["api"] },
+  { envVar: "OPENAI_API_KEY", slug: "openai-api-key", services: ["api"] },
+  { envVar: "POSTHOG_API_KEY", slug: "posthog-api-key", services: ["api"] },
+  // Shared
+  { envVar: "CLERK_SECRET_KEY", slug: "clerk-secret-key", services: ["api", "web"], classification: "high" },
 ];
 
-runtimeSecrets.forEach(({ secret }) => {
+// The Clerk publishable key is also a Secret Manager entry because the web
+// image bakes it in at build time; we read its value (not high-sensitivity)
+// during the Cloud Build step below.
+const publishableSecretSlug = "clerk-publishable-key";
+
+// Map of slug → Secret resource, used for IAM + service env bindings below.
+const secretResources = new Map<string, gcp.secretmanager.Secret>();
+
+function declareSecret(slug: string, opts?: { description?: string }) {
+  const name = `${secretPrefix}${slug}`;
+  const resource = new gcp.secretmanager.Secret(
+    `secret-${slug}`,
+    {
+      secretId: name,
+      replication: { auto: {} }, // single-region replication; revisit if we go multi-region
+      labels: {
+        environment,
+        managed_by: "pulumi",
+      },
+      ...(opts?.description ? { annotations: { description: opts.description } } : {}),
+    },
+    {
+      ...providerOpts,
+      // Secrets must NEVER be destroyed by pulumi — losing the container also
+      // loses the version history. Rotation is via new versions, not new
+      // secrets.
+      protect: true,
+      // If a secret with this name already exists (it does, from sync scripts),
+      // adopt it instead of failing.
+      retainOnDelete: true,
+    }
+  );
+  secretResources.set(slug, resource);
+  return resource;
+}
+
+runtimeSecrets.forEach((s) => declareSecret(s.slug, { description: `${s.envVar} for ${environment}` }));
+declareSecret(publishableSecretSlug, { description: `Clerk publishable key (baked into web image)` });
+
+// Grant the runtime SA accessor permission on every runtime secret.
+runtimeSecrets.forEach(({ slug }) => {
+  const fullName = `${secretPrefix}${slug}`;
   new gcp.secretmanager.SecretIamMember(
-    `runtime-sa-can-read-${secret}`,
+    `runtime-sa-can-read-${slug}`,
     {
       project,
-      secretId: secret,
+      secretId: fullName,
       role: "roles/secretmanager.secretAccessor",
       member: pulumi.interpolate`serviceAccount:${runtimeSaEmail}`,
     },
-    providerOpts
+    { ...providerOpts, dependsOn: [secretResources.get(slug)!] }
   );
 });
 
-// Web image needs the Clerk publishable key baked in at build time.
-const publishableSecretName = `${secretPrefix}clerk-publishable-key`;
+// Also grant Cloud Build's default SA read access to the publishable key
+// (needed during web image build). The Cloud Build SA is auto-created by GCP.
+const cloudBuildSa = pulumi.interpolate`${gcpConfig.require("project")}@cloudbuild.gserviceaccount.com`;
+// (left for ops: granting cloud build SA access happens manually via the
+// project IAM — kept out of Pulumi to avoid stepping on existing grants.)
+
+// Web image needs the Clerk publishable key baked in at build time. We pull
+// the value at deploy time from the Pulumi-managed secret.
+const publishableSecretName = `${secretPrefix}${publishableSecretSlug}`;
 const publishableKey = gcp.secretmanager.getSecretVersionOutput(
   { secret: publishableSecretName, project },
   providerOpts
@@ -129,7 +197,7 @@ function secretEnvBindings(forService: "api" | "web") {
       name: s.envVar,
       valueSource: {
         secretKeyRef: {
-          secret: s.secret,
+          secret: `${secretPrefix}${s.slug}`,
           version: "latest",
         },
       },

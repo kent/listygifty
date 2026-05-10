@@ -13,14 +13,15 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "gcp:bootstrap": "bash infra/gcp/scripts/bootstrap.sh",
-    "gcp:sync-secrets": "bash infra/gcp/scripts/sync-heroku-secrets.sh",
-    "gcp:migrate-db": "bash infra/gcp/scripts/migrate-heroku-db.sh",
-    "gcp:verify-db": "bash infra/gcp/scripts/verify-migration.sh",
-    "gcp:seed:review": "bash infra/gcp/scripts/seed-app-review-data.sh",
-    "gcp:deploy:api": "bash infra/gcp/scripts/deploy-api.sh",
-    "gcp:deploy:web": "bash infra/gcp/scripts/deploy-web.sh",
-    "gcp:release": "bash infra/gcp/scripts/release.sh"
+    "deploy:staging": "bash infra/pulumi/scripts/deploy.sh staging",
+    "deploy:production": "bash infra/pulumi/scripts/deploy.sh production",
+    "deploy:preview:staging": "cd infra/pulumi && pulumi preview --stack staging",
+    "deploy:preview:production": "cd infra/pulumi && pulumi preview --stack production",
+    "infra:bootstrap": "bash infra/gcp/scripts/bootstrap.sh",
+    "infra:sync-secrets": "bash infra/gcp/scripts/sync-heroku-secrets.sh",
+    "infra:migrate-db": "bash infra/gcp/scripts/migrate-heroku-db.sh",
+    "infra:verify-db": "bash infra/gcp/scripts/verify-migration.sh",
+    "infra:seed:review": "bash infra/gcp/scripts/seed-app-review-data.sh"
   },
   "devDependencies": {
     "schema-dts": "^1.1.5",

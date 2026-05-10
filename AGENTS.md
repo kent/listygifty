@@ -330,31 +330,31 @@ gcloud config configurations activate listygifty
 source .gcp/listygifty-deploy.env
 ```
 
-### Deploy commands (explicit staging/prod)
+### Deploy commands
 
-```bash
-# API
-ENVIRONMENT=staging HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.staging.env bash infra/gcp/scripts/deploy-api.sh
-ENVIRONMENT=production HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.production.env bash infra/gcp/scripts/deploy-api.sh
-
-# Web
-ENVIRONMENT=staging HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.staging.env bash infra/gcp/scripts/deploy-web.sh
-ENVIRONMENT=production HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.production.env bash infra/gcp/scripts/deploy-web.sh
-```
-
-### Standard release command (preferred)
+Everything ships through Pulumi (`infra/pulumi/`). One command per environment:
 
 ```bash
 source .gcp/listygifty-deploy.env
-npm run gcp:release
+npm run deploy:staging
+npm run deploy:production
 ```
 
-This runs local checks, deploys staging + production, and executes smoke tests for both.
+Each command runs (parallel where independent): API + web image builds via
+Cloud Build, Cloud Run rollout, db:migrate via Cloud Run job, smoke tests
+(`/up`, `/holidays` → 401, web `/`, `/login`), then fires the EAS mobile
+build (`--no-wait --auto-submit`). Same git SHA twice → no-op redeploy.
+
+Pulumi state lives in `gs://listygifty-pulumi-state` (self-hosted GCS
+backend). See `infra/pulumi/README.md` for bootstrap, import-existing,
+rollback, and expected timings.
 
 ### Branch deploy policy
 
-- Push to `staging` -> deploy staging
-- Push to `main` -> deploy production
+- Push to `staging` -> deploy staging (via GitHub Actions wrapping `pulumi up`)
+- Push to `main` -> deploy production (same)
+- Both flows ultimately invoke the same Pulumi program; the bash/GHA wrapper
+  exists only to compute the source SHA and gate by branch.
 
 ### If the deployer key is missing
 

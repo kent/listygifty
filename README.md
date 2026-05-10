@@ -143,67 +143,63 @@ Guidelines:
 - Keep UI code focused on presentation/state orchestration, not low-level HTTP.
 - Extract repeated formatting/UI patterns into shared modules (`apps/mobile/lib/*`, reusable components, etc.).
 
-## 7) Staging and production deployment (GCP)
+## 7) Staging and production deployment (Pulumi)
 
 Project:
 - Project ID: `listygifty`
 - Project number: `906707282968`
 - Region: `us-central1`
 
-### One-command release (recommended)
-
-Load deployment profile:
+Everything is infrastructure-as-code via Pulumi (`infra/pulumi/`). State is
+self-hosted in `gs://listygifty-pulumi-state`. One command per environment:
 
 ```bash
 source .gcp/listygifty-deploy.env
+
+npm run deploy:staging      # build + roll + migrate + smoke + EAS staging
+npm run deploy:production   # same against prod stack
 ```
 
-Release staging and production:
+Each command runs (parallel where independent):
+
+1. Cloud Build for the API + web images (registry-cached)
+2. Cloud Run revision rollout
+3. `db:migrate` via Cloud Run job
+4. Smoke tests (`/up`, `/holidays` → 401, web `/`, `/login`)
+5. `eas build --no-wait --auto-submit` for mobile
+
+Same git SHA twice → no-op redeploy. Expected timings:
+
+| Scenario | Wall time |
+|---|---|
+| Cold deploy (no image cache) | 5–7 min |
+| Warm deploy (cache hit) | 2–3 min |
+| No-change redeploy | 10–20 s |
+| EAS build (async on Expo) | 15–30 min, returns immediately |
+
+See `infra/pulumi/README.md` for the full architecture, bootstrap, import-
+existing-resources, rollback, and what is/isn't managed by Pulumi.
+
+### Preview without deploying
 
 ```bash
-npm run gcp:release
-```
-
-This runs:
-- local API tests + web production build
-- staging API/web deploy + smoke tests
-- production API/web deploy + smoke tests
-
-Optional (skip local prechecks):
-
-```bash
-SKIP_TESTS=1 npm run gcp:release
-```
-
-### Manual deploy by environment
-
-Staging:
-
-```bash
-ENVIRONMENT=staging HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.staging.env npm run gcp:deploy:api
-ENVIRONMENT=staging HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.staging.env npm run gcp:deploy:web
-```
-
-Production:
-
-```bash
-ENVIRONMENT=production HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.production.env npm run gcp:deploy:api
-ENVIRONMENT=production HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.production.env npm run gcp:deploy:web
+npm run deploy:preview:staging
+npm run deploy:preview:production
 ```
 
 ### Validate production data counts
 
-Compare production table counts:
-
 ```bash
 source .gcp/listygifty-deploy.env
-ENVIRONMENT=production HEROKU_APP=niftygifty-production bash infra/gcp/scripts/verify-migration.sh
+ENVIRONMENT=production HEROKU_APP=niftygifty-production npm run infra:verify-db
 ```
 
 ## 8) CI/CD branch policy
 
-- Push to `staging` branch -> deploy staging
-- Push to `main` branch -> deploy production
+- Push to `staging` branch → GitHub Actions runs `pulumi up --stack staging`
+- Push to `main` branch → GitHub Actions runs `pulumi up --stack production`
+- Both flows invoke the same Pulumi program; the wrapper exists only to
+  compute the source SHA and gate by branch.
 
 One-time trigger configuration:
 

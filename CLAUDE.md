@@ -11,7 +11,6 @@
 A named gcloud configuration `listygifty` is set up to avoid account/project switching issues:
 
 ```bash
-# Activate the listygifty profile before running gcloud commands
 gcloud config configurations activate listygifty
 ```
 
@@ -33,14 +32,29 @@ gcloud config configurations activate listygifty
 source .gcp/listygifty-deploy.env
 ```
 
-## Standard Deploy Commands
+## Deploys
+
+Everything ships through Pulumi. One command per environment:
 
 ```bash
-# API
-ENVIRONMENT=staging HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.staging.env bash infra/gcp/scripts/deploy-api.sh
-ENVIRONMENT=production HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.production.env bash infra/gcp/scripts/deploy-api.sh
-
-# Web
-ENVIRONMENT=staging HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.staging.env bash infra/gcp/scripts/deploy-web.sh
-ENVIRONMENT=production HEROKU_SECRET_BINDINGS_FILE=infra/gcp/secret-bindings.production.env bash infra/gcp/scripts/deploy-web.sh
+npm run deploy:staging      # build → roll → migrate → smoke → EAS staging
+npm run deploy:production   # same, against prod stack
 ```
+
+Pulumi state lives in `gs://listygifty-pulumi-state` (self-hosted GCS backend).
+The `infra/pulumi/` directory is the single source of truth for Cloud Run
+services, IAM, Secret Manager containers, the migration job, domain mappings,
+and EAS build orchestration.
+
+Operational utilities (one-time bootstrap, secret rotation, ad-hoc DB ops)
+remain in `infra/gcp/scripts/` and `npm run infra:*`:
+
+```bash
+npm run infra:bootstrap        # one-time GCP project bootstrap
+npm run infra:sync-secrets     # push secret values into Secret Manager
+npm run infra:migrate-db       # run DB migrations out of band
+npm run infra:verify-db        # validate prod DB counts
+```
+
+See `infra/pulumi/README.md` for the full deployment architecture, bootstrap
+steps, and rollback procedure.
