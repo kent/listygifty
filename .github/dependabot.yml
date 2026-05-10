@@ -1,12 +1,85 @@
 version: 2
 updates:
-- package-ecosystem: bundler
-  directory: "/"
-  schedule:
-    interval: weekly
-  open-pull-requests-limit: 10
-- package-ecosystem: github-actions
-  directory: "/"
-  schedule:
-    interval: weekly
-  open-pull-requests-limit: 10
+  # Ruby gems (Rails API)
+  - package-ecosystem: bundler
+    directory: /apps/api
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      rails:
+        patterns:
+          - "rails"
+          - "actionpack"
+          - "actionview"
+          - "activerecord"
+          - "activesupport"
+
+  # npm: root + web + mobile + each package
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: npm
+    directory: /apps/web
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      next:
+        patterns:
+          - "next"
+          - "@next/*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+  - package-ecosystem: npm
+    directory: /apps/mobile
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      expo:
+        patterns:
+          - "expo"
+          - "expo-*"
+          - "@expo/*"
+  - package-ecosystem: npm
+    directory: /packages/api-client
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: /packages/services
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: /packages/types
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: /packages/mcp-server
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: /infra/pulumi
+    schedule:
+      interval: weekly
+
+  # GitHub Actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+
+  # Docker base images for API + web
+  - package-ecosystem: docker
+    directory: /apps/api
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /apps/web
+    schedule:
+      interval: weekly

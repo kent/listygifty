@@ -61,7 +61,14 @@ const webSa = new gcp.serviceaccount.Account(
     accountId: webSaName,
     displayName: `niftygifty web Cloud Run runtime (${environment})`,
   },
-  { ...providerOpts, protect: true }
+  {
+    ...providerOpts,
+    protect: true,
+    // The deployer SA has create/get on IAM service accounts but not update.
+    // Ignore description / displayName drift so the program doesn't try to
+    // mutate metadata it can't write.
+    ignoreChanges: ["displayName", "description"],
+  }
 );
 
 const webSaEmail = webSa.email;
@@ -100,20 +107,22 @@ const allSlugs = Array.from(new Set([...apiSecretSlugs, ...webSecretSlugs]));
 
 const secretByFullName = new Map<string, gcp.secretmanager.Secret>();
 
-function declareSecret(fullName: string, description: string) {
+function declareSecret(fullName: string, _description: string) {
   const slug = fullName.replace(/[^a-z0-9]+/g, "-");
   const resource = new gcp.secretmanager.Secret(
     `secret-${slug}`,
     {
       secretId: fullName,
       replication: { auto: {} },
-      labels: { environment, managed_by: "pulumi" },
-      annotations: { description },
     },
     {
       ...providerOpts,
       protect: true,
       retainOnDelete: true,
+      // The deployer SA has secretAccessor + viewer, not admin. Ignore label
+      // / annotation drift so Pulumi doesn't try to mutate metadata it can't
+      // write. Secret values are still rotated out-of-band via gcloud.
+      ignoreChanges: ["labels", "annotations"],
     }
   );
   secretByFullName.set(fullName, resource);
@@ -123,31 +132,11 @@ function declareSecret(fullName: string, description: string) {
 allSlugs.forEach((slug) => declareSecret(`${secretPrefix}${slug}`, `${slug} for ${environment}`));
 declareSecret(railsKeySecretName, `Rails secret key base for ${environment}`);
 
-// Grant the relevant runtime SA accessor permission on each consumed secret.
-// API services use the default compute SA, web uses webSa.
-function grantSecretAccess(secretFullName: string, member: pulumi.Input<string>, suffix: string) {
-  const resource = secretByFullName.get(secretFullName);
-  new gcp.secretmanager.SecretIamMember(
-    `iam-${secretFullName}-${suffix}`,
-    {
-      project,
-      secretId: secretFullName,
-      role: "roles/secretmanager.secretAccessor",
-      member,
-    },
-    { ...providerOpts, dependsOn: resource ? [resource] : [] }
-  );
-}
-
-// API services consume:
-[...apiSecretSlugs.map((s) => `${secretPrefix}${s}`), railsKeySecretName].forEach((fullName) => {
-  grantSecretAccess(fullName, pulumi.interpolate`serviceAccount:${defaultComputeSa}`, "api");
-});
-
-// Web services consume:
-webSecretSlugs.map((s) => `${secretPrefix}${s}`).forEach((fullName) => {
-  grantSecretAccess(fullName, pulumi.interpolate`serviceAccount:${webSaEmail}`, "web");
-});
+// Per-secret IAM bindings are intentionally NOT managed by Pulumi. The
+// deployer SA has secretAccessor (read) but not secretAdmin (setIamPolicy),
+// and the existing bindings work (Cloud Run services successfully read every
+// secret today). If we ever need to grant new accessor permissions, do it
+// via gcloud or the GCP console.
 
 // =============================================================================
 // Cloud SQL — referenced read-only
@@ -369,41 +358,13 @@ const runMigrations = new command.local.Command(
 // =============================================================================
 // Domain mappings
 // =============================================================================
-
-new gcp.cloudrun.DomainMapping(
-  "api-domain",
-  {
-    location: region,
-    name: apiDomain,
-    metadata: { namespace: project },
-    spec: { routeName: apiServiceResource.name, certificateMode: "AUTOMATIC" },
-  },
-  { ...providerOpts, dependsOn: [apiServiceResource], protect: true }
-);
-
-new gcp.cloudrun.DomainMapping(
-  "web-domain",
-  {
-    location: region,
-    name: appDomain,
-    metadata: { namespace: project },
-    spec: { routeName: webServiceResource.name, certificateMode: "AUTOMATIC" },
-  },
-  { ...providerOpts, dependsOn: [webServiceResource], protect: true }
-);
-
-if (wwwDomain) {
-  new gcp.cloudrun.DomainMapping(
-    "web-domain-www",
-    {
-      location: region,
-      name: wwwDomain,
-      metadata: { namespace: project },
-      spec: { routeName: webServiceResource.name, certificateMode: "AUTOMATIC" },
-    },
-    { ...providerOpts, dependsOn: [webServiceResource], protect: true }
-  );
-}
+//
+// Domain mappings are explicitly NOT managed by Pulumi for now. They're
+// stable, set-and-forget, and Pulumi's `certificateMode` handling triggers
+// a destructive replace cycle on the existing imported resources. They were
+// created out-of-band and continue to be reviewed via gcloud. If they need
+// changes, prefer `gcloud beta run domain-mappings ...` over re-introducing
+// them here.
 
 // =============================================================================
 // Smoke tests — fail the rollout if the new revision can't serve traffic

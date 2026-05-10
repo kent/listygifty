@@ -1,0 +1,4 @@
+# Default reviewer for every change. Add specific owners under directories
+# as the project grows.
+
+*       @kent

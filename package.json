@@ -1,5 +1,16 @@
 {
   "name": "niftygifty",
+  "version": "1.0.0",
+  "description": "NiftyGifty (Listy Gifty) — gift planning across Rails API, Next.js web, and Expo mobile.",
+  "license": "MIT",
+  "homepage": "https://listygifty.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kent/niftygfity.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kent/niftygfity/issues"
+  },
   "private": true,
   "engines": {
     "node": ">=20 <24"
