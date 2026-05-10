@@ -3,7 +3,7 @@
 # Multi-stage build for production deployment on GCP Cloud Run
 
 # Stage 1: Build stage
-FROM ruby:3.4-slim AS builder
+FROM ruby:4.0-slim AS builder
 
 # Install build dependencies
 RUN apt-get update -qq && \
@@ -29,7 +29,7 @@ ENV RAILS_ENV=production
 RUN bundle exec bootsnap precompile --gemfile app/ lib/
 
 # Stage 2: Runtime stage
-FROM ruby:3.4-slim AS runtime
+FROM ruby:4.0-slim AS runtime
 
 # Install runtime dependencies
 RUN apt-get update -qq && \
