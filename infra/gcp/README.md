@@ -133,7 +133,7 @@ One-time setup:
 
 ```bash
 # 1) Create GitHub connection (prints OAuth/App setup URL)
-gcloud builds connections create github niftygfity-github \
+gcloud builds connections create github listygifty-github \
   --project=listygifty \
   --region=us-central1
 
@@ -144,8 +144,8 @@ bash infra/gcp/scripts/configure-github-triggers.sh
 ```
 
 This configures:
-- trigger `niftygfity-deploy-staging` for `^staging$`
-- trigger `niftygfity-deploy-production` for `^main$`
+- trigger `listygifty-deploy-staging` for `^staging$`
+- trigger `listygifty-deploy-production` for `^main$`
 
 Both triggers run `infra/gcp/cloudbuild.deploy.yaml`, which deploys API + web using:
 - production bindings: `infra/gcp/secret-bindings.production.env`

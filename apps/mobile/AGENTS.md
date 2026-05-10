@@ -62,7 +62,7 @@ Always prefer shared monorepo packages:
 Before mobile development when shared packages changed:
 
 ```bash
-cd /path/to/niftygfity
+cd /path/to/listygifty
 npm run build
 ```
 

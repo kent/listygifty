@@ -6,10 +6,10 @@
   "homepage": "https://listygifty.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kent/niftygfity.git"
+    "url": "git+https://github.com/kent/listygifty.git"
   },
   "bugs": {
-    "url": "https://github.com/kent/niftygfity/issues"
+    "url": "https://github.com/kent/listygifty/issues"
   },
   "private": true,
   "engines": {
