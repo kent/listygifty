@@ -1,19 +1,25 @@
 config:
   gcp:project: listygifty
-  gcp:region: us-east1
+  gcp:region: us-central1
   niftygifty:environment: staging
-  niftygifty:apiService: niftygifty-staging-api
-  niftygifty:webService: niftygifty-staging-web
-  niftygifty:migrationJob: niftygifty-staging-api-migrate
-  niftygifty:runtimeServiceAccountName: niftygifty-staging-runner
+  niftygifty:apiService: listygifty-api-staging
+  niftygifty:webService: listygifty-web-staging
+  niftygifty:migrationJob: listygifty-migrate-staging
+  niftygifty:webServiceAccountName: niftygifty-staging-runner
   niftygifty:secretPrefix: niftygifty-staging-
+  niftygifty:railsKeySecret: listygifty-rails-key-staging
   niftygifty:appDomain: staging.listygifty.com
-  niftygifty:apiDomain: api-staging.listygifty.com
-  niftygifty:frontendUrl: https://staging.listygifty.com
-  niftygifty:corsPublicOrigins: https://staging.listygifty.com
+  niftygifty:apiDomain: staging.api.listygifty.com
+  niftygifty:wwwDomain: ""
   niftygifty:apiMinInstances: "0"
-  niftygifty:apiMaxInstances: "3"
+  niftygifty:apiMaxInstances: "10"
   niftygifty:webMinInstances: "0"
-  niftygifty:webMaxInstances: "3"
-  niftygifty:sqlInstance: niftygifty-postgres
-  niftygifty:artifactRepository: niftygifty
+  niftygifty:webMaxInstances: "10"
+  niftygifty:apiPort: "3000"
+  niftygifty:webPort: "8080"
+  niftygifty:sqlInstance: niftygifty-postgres-central
+  niftygifty:imageRegistry: gcr.io/listygifty
+  niftygifty:apiImageRepo: niftygifty-api
+  niftygifty:webImageRepo: listygifty-web
+  niftygifty:sourceSha: 627c0aeb9380399f0fab3f748374f80f24022609
+encryptionsalt: v1:mwVPL/22fss=:v1:9cKfPHLxX1MV5Xoo:7G+do5Tg4eSkx/qMJmtqfVZyhPQaTw==
