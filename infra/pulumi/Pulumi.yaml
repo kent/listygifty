@@ -1,0 +1,16 @@
+name: niftygifty
+description: Pulumi-managed infrastructure for the listygifty.com (NiftyGifty) GCP project
+runtime:
+  name: nodejs
+  options:
+    packagemanager: npm
+backend:
+  url: gs://listygifty-pulumi-state
+template:
+  config:
+    gcp:project:
+      description: GCP project ID
+      default: listygifty
+    gcp:region:
+      description: GCP region for Cloud Run + Cloud SQL
+      default: us-east1

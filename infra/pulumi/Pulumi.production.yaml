@@ -1,0 +1,19 @@
+config:
+  gcp:project: listygifty
+  gcp:region: us-east1
+  niftygifty:environment: production
+  niftygifty:apiService: niftygifty-api
+  niftygifty:webService: niftygifty-web
+  niftygifty:migrationJob: niftygifty-api-migrate
+  niftygifty:runtimeServiceAccountName: niftygifty-runner
+  niftygifty:secretPrefix: niftygifty-
+  niftygifty:appDomain: listygifty.com
+  niftygifty:apiDomain: api.listygifty.com
+  niftygifty:frontendUrl: https://listygifty.com
+  niftygifty:corsPublicOrigins: https://listygifty.com,https://www.listygifty.com
+  niftygifty:apiMinInstances: "1"
+  niftygifty:apiMaxInstances: "10"
+  niftygifty:webMinInstances: "1"
+  niftygifty:webMaxInstances: "20"
+  niftygifty:sqlInstance: niftygifty-postgres
+  niftygifty:artifactRepository: niftygifty

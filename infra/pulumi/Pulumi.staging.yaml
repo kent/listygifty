@@ -1,0 +1,19 @@
+config:
+  gcp:project: listygifty
+  gcp:region: us-east1
+  niftygifty:environment: staging
+  niftygifty:apiService: niftygifty-staging-api
+  niftygifty:webService: niftygifty-staging-web
+  niftygifty:migrationJob: niftygifty-staging-api-migrate
+  niftygifty:runtimeServiceAccountName: niftygifty-staging-runner
+  niftygifty:secretPrefix: niftygifty-staging-
+  niftygifty:appDomain: staging.listygifty.com
+  niftygifty:apiDomain: api-staging.listygifty.com
+  niftygifty:frontendUrl: https://staging.listygifty.com
+  niftygifty:corsPublicOrigins: https://staging.listygifty.com
+  niftygifty:apiMinInstances: "0"
+  niftygifty:apiMaxInstances: "3"
+  niftygifty:webMinInstances: "0"
+  niftygifty:webMaxInstances: "3"
+  niftygifty:sqlInstance: niftygifty-postgres
+  niftygifty:artifactRepository: niftygifty

@@ -1,0 +1,20 @@
+{
+  "name": "@niftygifty/infra-pulumi",
+  "private": true,
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "preview": "pulumi preview",
+    "up": "pulumi up --yes",
+    "refresh": "pulumi refresh --yes"
+  },
+  "dependencies": {
+    "@pulumi/command": "^1.0.0",
+    "@pulumi/gcp": "^8.0.0",
+    "@pulumi/pulumi": "^3.130.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.7.2"
+  }
+}
