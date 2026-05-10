@@ -176,7 +176,9 @@ GEM
     mini_magick (5.3.1)
       logger
     mini_mime (1.1.5)
-    minitest (5.27.0)
+    minitest (6.0.6)
+      drb (~> 2.0)
+      prism (~> 1.5)
     msgpack (1.8.0)
     multipart-post (2.4.1)
     net-http (0.9.1)
@@ -386,7 +388,7 @@ DEPENDENCIES
   debug
   dotenv-rails
   image_processing (~> 1.2)
-  minitest (< 6.0)
+  minitest (< 7.0)
   oj
   pg (~> 1.5)
   posthog-ruby
