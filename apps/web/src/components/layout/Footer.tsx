@@ -9,6 +9,15 @@ export function Footer() {
       >
         ewakened.com
       </a>
+      {" · "}
+      <a
+        href="https://ewakened.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline hover:text-slate-700 dark:hover:text-slate-200"
+      >
+        Made by Kent Fenwick
+      </a>
     </footer>
   );
 }
