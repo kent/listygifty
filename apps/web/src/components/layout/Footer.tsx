@@ -1,7 +1,7 @@
 export function Footer() {
   return (
     <footer className="border-t border-slate-200 dark:border-white/10 py-6 text-center text-sm text-slate-500 dark:text-muted-foreground">
-      <span>© 2026 · </span>
+      <span>© 2026 • </span>
       <span>Crafted by </span>
       <a
         href="https://kentfenwick.com"
@@ -11,7 +11,7 @@ export function Footer() {
       >
         Kent Fenwick
       </a>
-      <span aria-hidden="true"> · </span>
+      <span aria-hidden="true"> • </span>
       <a
         href="https://ewakened.com"
         target="_blank"
@@ -20,7 +20,7 @@ export function Footer() {
       >
         ewakened.com
       </a>
-      <span aria-hidden="true"> · </span>
+      <span aria-hidden="true"> • </span>
       <span>made on the canvas</span>
     </footer>
   );
