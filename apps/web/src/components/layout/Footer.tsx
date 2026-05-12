@@ -20,6 +20,8 @@ export function Footer() {
       >
         ewakened.com
       </a>
+      <span aria-hidden="true"> · </span>
+      <span>made on the canvas</span>
     </footer>
   );
 }
