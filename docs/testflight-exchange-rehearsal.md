@@ -35,7 +35,7 @@ Use four real tester accounts or aliases that can receive invite links.
 ## Rehearsal Flow
 
 1. Owner invites Participant A, Participant B, and Participant C.
-2. Owner shares each participant invite link through the native share sheet.
+2. Owner shares each participant invite link through the native share sheet and copies one invite link as a fallback.
 3. Each participant opens their link on the TestFlight build and accepts.
 4. Each participant adds at least one wishlist item before matches are drawn.
 5. Owner adds one exclusion rule between two accepted participants.
@@ -50,14 +50,14 @@ Use four real tester accounts or aliases that can receive invite links.
 ## Exit Criteria
 
 - No participant needs a spreadsheet, group thread, or manual match assignment.
-- Invite links work from the native share sheet.
+- Invite links work from the native share sheet and the copied-link fallback.
 - Wishlist entry works before draw.
 - Exclusion rules affect the draw.
 - Match reveal works for every participant.
-- Analytics events appear for exchange creation, participant invite, invite share, wishlist item add, exclusion add, and draw.
+- Analytics events appear for exchange creation, participant invite, invite share, invite copy, wishlist item add, exclusion add, and draw.
 
 ## Follow-Ups
 
 - Capture App Store screenshots for lists, people, exchanges, match reveal, and profile settings after a clean rehearsal. Use `docs/app-store-screenshot-plan.md` for the screenshot-mode commands and review checklist.
 - Repeat the same flow once on a fresh install to catch cache, auth, and deep-link regressions.
-- If any tester misses an invite, verify fallback sharing with copied invite links before release.
+- If any tester misses an invite, use the copied invite-link fallback and verify the tester can still accept.

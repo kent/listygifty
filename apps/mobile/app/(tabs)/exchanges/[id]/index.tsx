@@ -333,6 +333,11 @@ export default function ExchangeDetailScreen() {
           <ParticipantListItem
             key={participant.id}
             participant={participant}
+            onCopyInvite={
+              exchange.is_owner && participant.invite_token
+                ? () => controller.copyParticipantInvite(participant)
+                : undefined
+            }
             onShareInvite={
               exchange.is_owner && participant.invite_token
                 ? () => controller.shareParticipantInvite(participant)

@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { Alert, Share } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
 import { useAnalytics } from "@/lib/analytics";
@@ -237,6 +238,33 @@ export function useExchangeDetailController() {
     [resource.data?.id, resource.data?.name, track]
   );
 
+  const copyParticipantInvite = useCallback(
+    async (participant: ExchangeParticipant) => {
+      if (!participant.invite_token) {
+        return;
+      }
+
+      const inviteUrl = buildExchangeInviteUrl(participant.invite_token);
+
+      try {
+        await Clipboard.setStringAsync(inviteUrl);
+        track("mobile_exchange_invite_copied", {
+          exchange_id: resource.data?.id,
+          participant_id: participant.id,
+          participant_status: participant.status,
+          source: "exchange_detail",
+        });
+        await haptics.selection();
+        Alert.alert("Invite Copied", "The participant invite link is ready to paste.");
+      } catch (copyError) {
+        console.error("Failed to copy exchange invite", copyError);
+        await haptics.error();
+        Alert.alert("Copy Failed", "Could not copy this invite link.");
+      }
+    },
+    [resource.data?.id, track]
+  );
+
   const canManageExclusions = Boolean(
     resource.data?.is_owner &&
       resource.data.status !== "active" &&
@@ -412,6 +440,7 @@ export function useExchangeDetailController() {
     removeExclusion,
     retryLoad: resource.reload,
     shareParticipantInvite,
+    copyParticipantInvite,
     savingExclusion,
     starting,
     startBlocker: resource.data ? getExchangeStartBlocker(resource.data) : null,

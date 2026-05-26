@@ -5,12 +5,14 @@ import { useTheme } from "@/lib/theme";
 
 interface ParticipantListItemProps {
   participant: ExchangeParticipant;
+  onCopyInvite?: () => void;
   onShareInvite?: () => void;
   showWishlistCount?: boolean;
 }
 
 export function ParticipantListItem({
   participant,
+  onCopyInvite,
   onShareInvite,
   showWishlistCount = false,
 }: ParticipantListItemProps) {
@@ -65,6 +67,28 @@ export function ParticipantListItem({
               {participant.wishlist_count} items
             </Text>
           </View>
+        ) : null}
+
+        {onCopyInvite ? (
+          <TouchableOpacity
+            onPress={onCopyInvite}
+            accessibilityRole="button"
+            accessibilityLabel={`Copy invite for ${participant.display_name || participant.name}`}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
+              borderRadius: 12,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              backgroundColor: colors.surfaceSecondary,
+            }}
+          >
+            <Ionicons name="copy-outline" size={14} color={colors.textTertiary} />
+            <Text style={{ color: colors.textTertiary, fontSize: 12, fontWeight: "700" }}>
+              Copy
+            </Text>
+          </TouchableOpacity>
         ) : null}
 
         {onShareInvite ? (
