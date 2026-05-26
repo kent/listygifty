@@ -65,6 +65,7 @@ First three offers:
 - Work anniversary and milestone gifting calendar.
 
 Reusable detail lives in `docs/business-gifting-playbooks.md`.
+Outbound, demo, and qualification detail lives in `docs/business-gifting-gtm-plan.md`.
 The homepage and business signup now route buyers into those three playbooks directly.
 
 Discovery script:
