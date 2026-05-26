@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { workspacesService, AUTH_ROUTES } from "@/services";
+import { captureWebEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,6 +74,11 @@ function BusinessSignupContent() {
   }, [selectedUseCase.workspaceName, showForm, workspaceName]);
 
   const handleStartSignup = () => {
+    captureWebEvent("business_signup_started", {
+      company_provided: Boolean(companyName.trim()),
+      use_case: selectedUseCaseId,
+    });
+
     const returnParams = new URLSearchParams({
       from: "signup",
       use_case: selectedUseCaseId,
@@ -100,6 +106,11 @@ function BusinessSignupContent() {
 
       await refreshWorkspaces();
       switchWorkspace(workspace.id);
+      captureWebEvent("business_workspace_created", {
+        company_provided: Boolean(companyName.trim()),
+        use_case: selectedUseCaseId,
+        workspace_id: workspace.id,
+      });
 
       toast.success(`Welcome! Your workspace "${workspace.name}" is ready.`);
       router.push("/dashboard");
