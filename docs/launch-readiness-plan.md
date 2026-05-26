@@ -45,6 +45,7 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
 4. App Store readiness
    - Maintain TestFlight default group: `Internal Testers`.
    - App review seed data now includes lists, people, gifts, and an active exchange with wishlists, matches, and an exclusion.
+   - App review seed data also includes a business holiday-box workspace with 20 recipients, milestone dates, default shipping addresses, 20 gifts, and one fulfillment address exception.
    - Capture screenshots that show lists, people, exchanges, and profile settings.
 
 5. Activation metric
@@ -166,4 +167,5 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Web gift CSV import now emits funnel events for business activation measurement.
 - Web people CSV import now emits funnel events for business activation measurement.
 - Web gift reports now surface fulfillment exceptions for business handoff.
+- App review seed data now includes a business workspace that mirrors the remote-team holiday box demo path.
 - Web and MCP dependencies were refreshed to reduce actionable high-severity advisories; the remaining root npm audit item is Next's exact nested PostCSS dependency, where npm currently suggests a breaking downgrade rather than a safe patch.

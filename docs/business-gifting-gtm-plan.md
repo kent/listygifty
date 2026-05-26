@@ -84,6 +84,7 @@ Use one business workspace and keep the demo operational:
 Demo success:
 - The buyer sees the current spreadsheet replaced by people, gifts, statuses, addresses, exceptions, and export.
 - The buyer can name the first workflow they would import.
+- App review seed data now includes a BrightWorks holiday-box workspace with 20 recipients, 20 gifts, milestone dates, default shipping addresses, and one missing-address fulfillment exception for this walkthrough.
 
 ## Follow-Up Template
 
@@ -113,12 +114,12 @@ Measurement:
 - `business_workspace_created`
 - `people_csv_import_completed`
 - `gift_csv_import_completed`
-- `gift_csv_exported` or equivalent export event when added
-- `fulfillment_report_viewed` when added
+- `gift_csv_exported`
+- `fulfillment_report_viewed`
 
 ## Next GTM Bets
 
 - Export and fulfillment report tracking are now in place; use them to find workspaces that reached handoff.
 - Business signup and import dialogs now include instrumented sample CSV downloads.
-- Add a short business demo dataset that mirrors the remote-team holiday box workflow.
+- The app review seed now includes a short business demo dataset that mirrors the remote-team holiday box workflow.
 - Build a lightweight company activation dashboard by use case.
