@@ -19,8 +19,12 @@ const SignIn = dynamic(
 export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-[50vh]">
-      <SignIn routing="path" path={AUTH_ROUTES.signIn} signUpUrl={AUTH_ROUTES.signUp} />
+      <SignIn
+        routing="path"
+        path={AUTH_ROUTES.signIn}
+        signUpUrl={AUTH_ROUTES.signUp}
+        fallbackRedirectUrl={AUTH_ROUTES.afterSignIn}
+      />
     </div>
   );
 }
-
