@@ -194,8 +194,18 @@ function BusinessSignupContent() {
 
           <Card className="border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl">
             <CardHeader className="text-center pb-2">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30">
-                <CheckCircle className="h-8 w-8 text-green-500" />
+              <div
+                className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border ${
+                  fromSignup
+                    ? "border-green-500/30 bg-gradient-to-br from-green-500/20 to-emerald-500/20"
+                    : "border-violet-500/30 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20"
+                }`}
+              >
+                {fromSignup ? (
+                  <CheckCircle className="h-8 w-8 text-green-500" />
+                ) : (
+                  <Building2 className="h-8 w-8 text-violet-500" />
+                )}
               </div>
               <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white">
                 {fromSignup ? "Account Created!" : "Set Up Business Gifting"}
