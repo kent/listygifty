@@ -227,4 +227,15 @@ describe("gift model helpers", () => {
 
     expect(getPurchasedGiftStatus(statuses)?.id).toBe(4);
   });
+
+  it("supports ordered and paid purchase-loop status names", () => {
+    const statuses = [
+      buildStatus({ id: 1, name: "Idea", position: 1 }),
+      buildStatus({ id: 5, name: "Ordered", position: 2 }),
+      buildStatus({ id: 6, name: "Paid by assistant", position: 3 }),
+    ];
+
+    expect(getPurchasedGiftStatus(statuses)?.id).toBe(5);
+    expect(getPurchasedGiftStatus(statuses.slice(0, 1).concat(statuses.slice(2)))?.id).toBe(6);
+  });
 });

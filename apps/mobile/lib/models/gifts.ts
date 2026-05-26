@@ -144,9 +144,16 @@ export function getPurchasedGiftStatus(statuses: GiftStatus[]): GiftStatus | nul
   const sortedStatuses = sortGiftStatuses(statuses);
   return (
     sortedStatuses.find((status) => status.name.trim().toLowerCase() === "purchased") ??
+    sortedStatuses.find((status) => status.name.trim().toLowerCase() === "ordered") ??
+    sortedStatuses.find((status) => status.name.trim().toLowerCase() === "paid") ??
     sortedStatuses.find((status) => {
       const normalizedName = status.name.trim().toLowerCase();
-      return normalizedName.includes("purchased") || normalizedName.includes("bought");
+      return (
+        normalizedName.includes("purchased") ||
+        normalizedName.includes("bought") ||
+        normalizedName.includes("ordered") ||
+        normalizedName.includes("paid")
+      );
     }) ??
     null
   );
