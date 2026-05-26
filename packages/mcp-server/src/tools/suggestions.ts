@@ -6,7 +6,7 @@ export const suggestionTools: Tool[] = [
   {
     name: "niftygifty_generate_gift_suggestions",
     description:
-      "Generate AI-powered gift suggestions for a person. Requires premium subscription.",
+      "Generate optional backup gift ideas for a person. Requires premium subscription.",
     inputSchema: {
       type: "object",
       properties: {

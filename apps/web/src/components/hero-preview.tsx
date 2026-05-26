@@ -68,7 +68,7 @@ export function HeroPreview() {
     <div className="w-full max-w-lg mx-auto">
       <div className="text-center mb-6">
         <h3 className="text-xl font-bold text-white mb-2">
-          🎄 Christmas 2024 Gift List
+          🎄 Christmas 2026 Gift List
         </h3>
         <div className="flex items-center justify-center gap-4 text-sm text-slate-400">
           <span>Total: ${demoData.reduce((sum, person) => sum + person.totalSpent, 0)}</span>

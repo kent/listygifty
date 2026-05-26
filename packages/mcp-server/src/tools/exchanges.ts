@@ -46,7 +46,7 @@ export const exchangeTools: Tool[] = [
       properties: {
         name: {
           type: "string",
-          description: "Exchange name (e.g., 'Family Secret Santa 2024')",
+          description: "Exchange name (e.g., 'Family Secret Santa 2026')",
         },
         exchange_date: {
           type: "string",

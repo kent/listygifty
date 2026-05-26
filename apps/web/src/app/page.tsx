@@ -520,13 +520,13 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* AI Integrations Section */}
+        {/* Assistant Integrations Section */}
         <section id="ai-integrations" className="container mx-auto px-4 py-20">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
               Connect Your{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 dark:from-cyan-400 to-blue-500 dark:to-blue-400">
-                AI Assistant
+                Assistant
               </span>
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
@@ -572,7 +572,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Any MCP Client</h3>
               <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                We support the open Model Context Protocol (MCP) standard. Connect any compatible AI tool to your Listy Gifty account.
+                We support the open Model Context Protocol (MCP) standard. Connect any compatible assistant to your Listy Gifty account.
               </p>
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
             </div>
@@ -588,7 +588,7 @@ export default function HomePage() {
 
               <div className="relative z-10">
                 <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-6 text-center">
-                  What Your AI Can Do
+                  What Your Assistant Can Do
                 </h3>
                 <div className="grid md:grid-cols-2 gap-6">
                   {[
@@ -718,19 +718,19 @@ export default function HomePage() {
 
             <div className="flex items-center gap-6">
               <Link href="/integrations" className="text-sm text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
-                AI Integrations
+                Assistant Integrations
               </Link>
-              <Link href="/giving-pledge" className="text-sm text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
-                Our Giving Pledge
+              <Link href="/support" className="text-sm text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+                Support
               </Link>
             </div>
 
             <div className="text-center md:text-right">
               <p className="text-slate-500 text-sm">
-                © {new Date().getFullYear()} Listy Gifty. Made with 💜 for gift givers everywhere
+                © {new Date().getFullYear()} Listy Gifty. Built for gift givers everywhere
               </p>
               <p className="text-slate-400 dark:text-slate-600 text-xs mt-1">
-                10% of profits support charity
+                Holiday planning, exchanges, and team gifting in one place
               </p>
             </div>
           </div>

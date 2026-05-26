@@ -49,7 +49,7 @@ export const holidayTools: Tool[] = [
       properties: {
         name: {
           type: "string",
-          description: "Name of the holiday (e.g., 'Christmas 2024')",
+          description: "Name of the holiday (e.g., 'Christmas 2026')",
         },
         date: {
           type: "string",

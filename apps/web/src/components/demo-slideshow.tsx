@@ -126,7 +126,7 @@ function BalanceMockup() {
     <div className="w-full max-w-sm mx-auto bg-slate-800 rounded-lg p-4 border border-slate-600">
       <div className="text-center mb-4">
         <div className="text-white text-lg font-bold mb-2">Spending Balance</div>
-        <div className="text-slate-400 text-sm">Christmas 2024</div>
+        <div className="text-slate-400 text-sm">Christmas 2026</div>
       </div>
       <div className="space-y-4">
         {people.map((person) => (

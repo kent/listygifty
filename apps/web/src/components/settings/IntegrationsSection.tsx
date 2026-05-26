@@ -58,10 +58,10 @@ export function IntegrationsSection() {
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-          AI Integrations
+          Assistant Integrations
         </h2>
         <p className="text-slate-600 dark:text-slate-400">
-          Connect your favorite AI assistants to help you plan perfect gifts.
+          Connect MCP-compatible assistants to help update lists, review budgets, and keep gift work moving.
         </p>
       </div>
 
@@ -76,7 +76,7 @@ export function IntegrationsSection() {
               Connect Your AI Assistant
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Use this MCP server URL to connect Claude, ChatGPT, or any MCP-compatible AI tool:
+              Use this MCP server URL to connect Claude, ChatGPT, or any MCP-compatible assistant:
             </p>
             <div className="flex items-center gap-3 mb-4">
               <code className="flex-1 px-4 py-2 rounded-lg bg-slate-900 dark:bg-slate-800 text-cyan-400 font-mono text-sm overflow-x-auto">
@@ -159,7 +159,7 @@ export function IntegrationsSection() {
             </div>
             <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Other MCP Client</h4>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-              Any MCP-compatible AI tool
+              Any MCP-compatible assistant
             </p>
             <Link
               href="/integrations"

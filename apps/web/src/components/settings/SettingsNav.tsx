@@ -29,7 +29,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "appearance", label: "Appearance", icon: Palette, color: "violet" },
   { id: "statuses", label: "Gift Statuses", icon: Tags, color: "violet" },
   { id: "api-keys", label: "API Keys", icon: Code2, color: "violet" },
-  { id: "integrations", label: "AI Integrations", icon: Plug, color: "cyan" },
+  { id: "integrations", label: "Assistant Integrations", icon: Plug, color: "cyan" },
   { id: "billing", label: "Billing", icon: CreditCard, disabled: true, color: "amber" },
 ];
 
