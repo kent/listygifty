@@ -2,6 +2,7 @@ import type { Gift, GiftStatus, Holiday, Person } from "@niftygifty/types";
 import {
   buildCreateGiftPayload,
   buildGiftFormValues,
+  buildRepeatGiftCaptureValues,
   filterGifts,
   giftFormHasChanges,
 } from "@/lib/models";
@@ -123,6 +124,28 @@ describe("gift model helpers", () => {
     form.giverIds = [4, 5];
 
     expect(giftFormHasChanges(gift, form)).toBe(false);
+  });
+
+  it("clears gift details but keeps capture context for repeat entry", () => {
+    const nextForm = buildRepeatGiftCaptureValues({
+      name: "Puzzle",
+      description: "1000 pieces",
+      link: "https://example.com/puzzle",
+      cost: "19.99",
+      giftStatusId: 3,
+      recipientIds: [10],
+      giverIds: [11],
+    });
+
+    expect(nextForm).toEqual({
+      name: "",
+      description: "",
+      link: "",
+      cost: "",
+      giftStatusId: 3,
+      recipientIds: [10],
+      giverIds: [11],
+    });
   });
 
   it("filters gifts by search text and selected statuses", () => {

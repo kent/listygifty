@@ -8,6 +8,7 @@ import {
   buildCreateHolidayPayload,
   buildCreateGiftPayload,
   buildGiftFormValues,
+  buildRepeatGiftCaptureValues,
   buildUpdateGiftPayload,
   EMPTY_GIFT_FORM_VALUES,
   EMPTY_HOLIDAY_FORM_VALUES,
@@ -34,6 +35,8 @@ type GiftListDetailState = {
   gifts: Gift[];
   statuses: GiftStatus[];
 };
+
+type NewGiftSaveMode = "done" | "another";
 
 export function useGiftListsController() {
   const router = useRouter();
@@ -417,8 +420,9 @@ export function useNewGiftController() {
   const [selectedHolidayId, setSelectedHolidayId] = useState<number | null>(
     hasPresetHoliday ? holidayIdParam : null
   );
-  const [saving, setSaving] = useState(false);
+  const [savingMode, setSavingMode] = useState<NewGiftSaveMode | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const saving = savingMode !== null;
 
   const listResource = useFocusResource({
     enabled: !hasPresetHoliday,
@@ -476,7 +480,7 @@ export function useNewGiftController() {
     await haptics.selection();
   }, []);
 
-  const handleSubmit = useCallback(async () => {
+  const submitGift = useCallback(async (mode: NewGiftSaveMode) => {
     if (!form.name.trim()) {
       setError("Name is required");
       return;
@@ -499,18 +503,22 @@ export function useNewGiftController() {
     }
 
     setError(null);
-    setSaving(true);
+    setSavingMode(mode);
 
     try {
       await gifts.create(buildCreateGiftPayload(selectedHolidayId, form, selectedStatusId));
       await haptics.success();
-      router.back();
+      if (mode === "another") {
+        setForm(buildRepeatGiftCaptureValues(form));
+      } else {
+        router.back();
+      }
     } catch (submitError) {
       console.error("Failed to create gift", submitError);
       setError("Failed to create gift");
       await haptics.error();
     } finally {
-      setSaving(false);
+      setSavingMode(null);
     }
   }, [form, gifts, router, selectedHolidayId, selectedStatusId]);
 
@@ -523,13 +531,15 @@ export function useNewGiftController() {
     handleCancel: () => router.back(),
     handleHolidayChange,
     handleStatusChange,
-    handleSubmit,
+    handleSubmit: () => submitGift("done"),
+    handleSubmitAndAddAnother: () => submitGift("another"),
     listsError: listResource.error,
     listsLoading: listResource.loading,
     loadingStatuses: statusResource.loading,
     openNewList: () => router.push("/(tabs)/lists/new"),
     retryLists: listResource.reload,
     saving,
+    savingMode,
     selectedHoliday,
     selectedHolidayId,
     selectedStatusId,

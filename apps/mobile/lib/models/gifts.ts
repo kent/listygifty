@@ -43,6 +43,15 @@ export function buildGiftFormValues(gift: Gift): GiftFormValues {
   };
 }
 
+export function buildRepeatGiftCaptureValues(values: GiftFormValues): GiftFormValues {
+  return {
+    ...EMPTY_GIFT_FORM_VALUES,
+    giftStatusId: values.giftStatusId,
+    recipientIds: values.recipientIds,
+    giverIds: values.giverIds,
+  };
+}
+
 export function getResolvedGiftStatusId(
   values: GiftFormValues,
   statuses: GiftStatus[]

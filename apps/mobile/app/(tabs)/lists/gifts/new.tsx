@@ -274,7 +274,7 @@ export default function NewGiftScreen() {
             marginTop: 8,
           }}
         >
-          {controller.saving ? (
+          {controller.savingMode === "done" ? (
             <ActivityIndicator color={colors.textInverse} />
           ) : (
             <Text
@@ -285,6 +285,34 @@ export default function NewGiftScreen() {
               }}
             >
               Add Gift
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={controller.handleSubmitAndAddAnother}
+          disabled={!controller.canSubmit}
+          style={{
+            backgroundColor: colors.input,
+            padding: 16,
+            borderRadius: 8,
+            alignItems: "center",
+            marginTop: 10,
+            borderWidth: 1,
+            borderColor: controller.canSubmit ? colors.primary : colors.inputBorder,
+          }}
+        >
+          {controller.savingMode === "another" ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : (
+            <Text
+              style={{
+                color: controller.canSubmit ? colors.primary : colors.muted,
+                fontSize: 16,
+                fontWeight: "600",
+              }}
+            >
+              Save & Add Another
             </Text>
           )}
         </TouchableOpacity>
