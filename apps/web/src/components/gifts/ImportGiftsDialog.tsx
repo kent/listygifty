@@ -73,7 +73,7 @@ export function ImportGiftsDialog({
     downloadCsvFile("gift_import_template.csv", [
       "name,description,cost,status,link,recipient_name,recipient_email,giver_name,giver_email",
       "Remote Holiday Box,Company hoodie and mug,75,Idea,https://example.com,Jamie Lee,jamie@example.com,,",
-      "Welcome Kit,Notebook and mug,35,Planned,,Alex Chen,alex@example.com,,",
+      "Welcome Kit,Notebook and mug,35,Purchased,,Alex Chen,alex@example.com,,",
     ]);
     captureWebEvent("gift_csv_template_downloaded", {
       holiday_id: holidayId,

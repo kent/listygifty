@@ -60,15 +60,15 @@ const PEOPLE_SAMPLE_ROWS: Record<BusinessUseCaseId, string[]> = {
 const GIFTS_SAMPLE_ROWS: Record<BusinessUseCaseId, string[]> = {
   "holiday-box": [
     "Remote Holiday Box,Company hoodie and mug,75,Idea,https://example.com,Jamie Lee,jamie@example.com,,",
-    "Welcome Kit,Notebook and mug,35,Planned,,Alex Chen,alex@example.com,,",
+    "Welcome Kit,Notebook and mug,35,Purchased,,Alex Chen,alex@example.com,,",
   ],
   "new-hire-kit": [
     "First-Day Welcome Kit,Notebook mug and desk plant,85,Idea,https://example.com,Taylor Morgan,taylor@example.com,,",
-    "Manager Welcome Note,Handwritten card and team sticker pack,25,Planned,,Priya Singh,priya@example.com,,",
+    "Manager Welcome Note,Handwritten card and team sticker pack,25,Purchased,,Priya Singh,priya@example.com,,",
   ],
   milestones: [
     "Anniversary Gift Box,Local treats and engraved tumbler,90,Idea,https://example.com,Riley Patel,riley@example.com,,",
-    "Promotion Flowers,Desk flowers and congratulations card,65,Planned,,Morgan Diaz,morgan@example.com,,",
+    "Promotion Flowers,Desk flowers and congratulations card,65,Purchased,,Morgan Diaz,morgan@example.com,,",
   ],
 };
 
