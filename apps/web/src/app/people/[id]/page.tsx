@@ -284,19 +284,21 @@ function AboutSection({
   onDelete,
 }: {
   person: PersonWithGifts;
-  onUpdate: (updates: { name?: string; age?: number | null; gender?: string | null }) => Promise<void>;
+  onUpdate: (updates: { name?: string; age?: number | null; gender?: string | null; birthday?: string | null }) => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
   const [name, setName] = useState(person.name);
   const [age, setAge] = useState(person.age?.toString() ?? "");
   const [gender, setGender] = useState(person.gender ?? "");
+  const [birthday, setBirthday] = useState(person.birthday ?? "");
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const hasChanges = name !== person.name || 
     age !== (person.age?.toString() ?? "") || 
-    gender !== (person.gender ?? "");
+    gender !== (person.gender ?? "") ||
+    birthday !== (person.birthday ?? "");
 
   const hasGifts = person.gifts_received.length > 0 || person.gifts_given.length > 0;
 
@@ -308,6 +310,7 @@ function AboutSection({
         name: name.trim() || person.name,
         age: age ? parseInt(age, 10) : null,
         gender: gender.trim() || null,
+        birthday: birthday || null,
       });
     } finally {
       setSaving(false);
@@ -360,6 +363,16 @@ function AboutSection({
               value={gender}
               onChange={(e) => setGender(e.target.value)}
               placeholder="Optional"
+              className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="birthday" className="text-slate-700 dark:text-slate-300">Birthday</Label>
+            <Input
+              id="birthday"
+              type="date"
+              value={birthday}
+              onChange={(e) => setBirthday(e.target.value)}
               className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
             />
           </div>
@@ -535,13 +548,13 @@ export default function PersonDetailPage() {
     }
   };
 
-  const handlePersonUpdate = async (updates: { name?: string; age?: number | null; gender?: string | null }) => {
+  const handlePersonUpdate = async (updates: { name?: string; age?: number | null; gender?: string | null; birthday?: string | null }) => {
     if (!person) return;
-    // Convert null to undefined for API compatibility
     const apiUpdates = {
       name: updates.name,
       age: updates.age ?? undefined,
       gender: updates.gender ?? undefined,
+      birthday: updates.birthday,
     };
     const updated = await peopleService.update(personId, apiUpdates);
     setPerson({ ...person, ...updated });
