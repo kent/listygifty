@@ -182,18 +182,6 @@ export default function HomePage() {
       <main className="relative flex-1 z-10">
         <section className="container mx-auto px-4 pt-12 pb-20 md:pt-20 md:pb-32">
           <div className="text-center max-w-4xl mx-auto">
-            {/* Giving Pledge Banner */}
-            <Link
-              href="/giving-pledge"
-              className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-300 text-sm font-medium hover:bg-rose-500/20 hover:border-rose-500/30 transition-colors"
-            >
-              <span>❤️</span>
-              <span>10% of profits go to SickKids Hospital</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-
             {/* Main headline */}
             <h1 className="text-5xl md:text-7xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">
               Never Stress About{" "}
@@ -253,7 +241,7 @@ export default function HomePage() {
               </div>
               <div className="hidden sm:block w-px h-4 bg-slate-300 dark:bg-slate-700" />
               <div className="text-sm">
-                <span className="text-violet-600 dark:text-violet-400 font-semibold">10%</span> of profits support charity
+                Built for Christmas 2026 planning
               </div>
             </div>
           </div>

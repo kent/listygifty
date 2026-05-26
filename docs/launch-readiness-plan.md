@@ -140,6 +140,7 @@ Business CTA:
 
 Do not lead with AI. AI is a helpful assistant layer after the core gift-planning loop works.
 Public demo and homepage copy now emphasize capture, budgets, deadlines, status, and gap review before AI assistance.
+Do not lead with charity or donation positioning; the homepage hero now stays focused on Christmas 2026 gift logistics.
 
 ## Recent Progress Notes
 
