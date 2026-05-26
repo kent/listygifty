@@ -7,6 +7,7 @@ import { AuthRedirect } from "@/components/auth-redirect";
 import { JsonLd } from "@/components/json-ld";
 // InteractiveDemo available for future use
 import { HeroPreview } from "@/components/hero-preview";
+import { BUSINESS_USE_CASES, DEFAULT_BUSINESS_USE_CASE } from "@/lib/business-use-cases";
 
 export const metadata: Metadata = {
   title: "Listy Gifty: Gift Planning for Families, Exchanges, and Teams",
@@ -80,24 +81,6 @@ const testimonials = [
     quote: "These are great reviews",
     author: "Kyle F.",
     rating: 5,
-  },
-];
-
-const businessPlaybooks = [
-  {
-    href: "/business/signup?use_case=holiday-box",
-    title: "Remote-team holiday box",
-    description: "Import recipients, attach shipping addresses, load gifts, and watch delivery exceptions.",
-  },
-  {
-    href: "/business/signup?use_case=new-hire-kit",
-    title: "New-hire onboarding kit",
-    description: "Give recruiting, HR, and managers one place to track welcome kits through delivery.",
-  },
-  {
-    href: "/business/signup?use_case=milestones",
-    title: "Work anniversaries",
-    description: "Keep birthdays, anniversaries, promotions, and leave gifts from getting missed.",
   },
 ];
 
@@ -473,7 +456,7 @@ export default function HomePage() {
                     size="lg"
                     className="bg-white text-slate-900 hover:bg-slate-100 shadow-xl shadow-white/10 font-semibold"
                   >
-                    <Link href="/business/signup?use_case=holiday-box">
+                    <Link href={DEFAULT_BUSINESS_USE_CASE.href}>
                       Choose a Business Workflow
                       <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -484,9 +467,9 @@ export default function HomePage() {
               </div>
 
               <div className="relative z-10 mt-10 grid gap-3 md:grid-cols-3">
-                {businessPlaybooks.map((playbook) => (
+                {BUSINESS_USE_CASES.map((playbook) => (
                   <Link
-                    key={playbook.href}
+                    key={playbook.id}
                     href={playbook.href}
                     className="rounded-lg border border-white/10 bg-white/5 p-4 text-left transition-colors hover:border-white/25 hover:bg-white/10"
                   >

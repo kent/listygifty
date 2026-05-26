@@ -28,6 +28,7 @@ import type { BillingStatus, BillingPlan } from "@niftygifty/types";
 import { BILLING_PLANS, FREE_GIFT_LIMIT } from "@niftygifty/types";
 import { ApiError } from "@/lib/api-client";
 import { captureWebEvent } from "@/lib/analytics";
+import { DEFAULT_BUSINESS_USE_CASE } from "@/lib/business-use-cases";
 
 // Christmas confetti colors
 const CHRISTMAS_COLORS = ["#ff0000", "#00ff00", "#ffffff", "#ffd700", "#ff6b6b", "#4ade80"];
@@ -576,7 +577,7 @@ function TeamsPlanCard() {
       </div>
 
       <Link
-        href="/business/signup?use_case=holiday-box"
+        href={DEFAULT_BUSINESS_USE_CASE.href}
         onClick={() =>
           captureWebEvent("teams_plan_started", {
             source: "billing",

@@ -10,13 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Building2, Gift, Globe, MapPin, Loader2, Check, X, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { AddressesSection } from "./AddressesSection";
+import { getBusinessUseCaseLabel } from "@/lib/business-use-cases";
 import type { CompanyProfile } from "@niftygifty/types";
-
-const BUSINESS_USE_CASE_LABELS: Record<string, string> = {
-  "holiday-box": "Remote-team holiday box",
-  "new-hire-kit": "New-hire onboarding kit",
-  milestones: "Work anniversaries and milestones",
-};
 
 function getInitialUseCase(profile: CompanyProfile | null): string | null {
   const useCase = profile?.tax_metadata?.initial_use_case;
@@ -24,7 +19,7 @@ function getInitialUseCase(profile: CompanyProfile | null): string | null {
     return null;
   }
 
-  return BUSINESS_USE_CASE_LABELS[useCase] || useCase;
+  return getBusinessUseCaseLabel(useCase);
 }
 
 export function CompanySection() {

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ArrowRight, Calendar, CheckCircle2, Circle, Gift as GiftIcon, Loader2, Plus, Users } from "lucide-react";
 import { GiftTodoList } from "@/components/gift-todo-list";
+import { getBusinessUseCaseLabel } from "@/lib/business-use-cases";
 import type { Holiday, Person } from "@niftygifty/types";
 
 const HOLIDAY_ICONS: Record<string, string> = {
@@ -33,22 +34,8 @@ interface ActivationStep {
   href: string;
 }
 
-const BUSINESS_USE_CASE_LABELS: Record<string, string> = {
-  "holiday-box": "Remote-team holiday box",
-  "new-hire-kit": "New-hire onboarding kit",
-  milestones: "Work anniversaries and milestones",
-};
-
 function formatProgress(current: number, target: number): string {
   return `${Math.min(current, target)}/${target}`;
-}
-
-function getBusinessUseCaseLabel(useCase: string | null | undefined): string | null {
-  if (!useCase) {
-    return null;
-  }
-
-  return BUSINESS_USE_CASE_LABELS[useCase] || useCase;
 }
 
 function ActivationChecklist({

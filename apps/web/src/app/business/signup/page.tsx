@@ -23,35 +23,19 @@ import {
   Loader2,
   Users,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
+import {
+  BUSINESS_USE_CASES,
+  getBusinessUseCase,
+  type BusinessUseCaseId,
+} from "@/lib/business-use-cases";
 
-const BUSINESS_USE_CASES = [
-  {
-    id: "holiday-box",
-    title: "Remote-team holiday box",
-    description: "Import employees, attach addresses, load gifts, and flag fulfillment gaps.",
-    workspaceName: "Holiday Gifting",
-    icon: Users,
-  },
-  {
-    id: "new-hire-kit",
-    title: "New-hire onboarding kit",
-    description: "Track welcome gifts from accepted offer through first-day delivery.",
-    workspaceName: "Onboarding Gifts",
-    icon: Gift,
-  },
-  {
-    id: "milestones",
-    title: "Work anniversaries",
-    description: "Plan birthdays, anniversaries, promotions, parental leave, and milestone gifts.",
-    workspaceName: "Milestone Gifts",
-    icon: Calendar,
-  },
-] as const;
-
-function getBusinessUseCase(useCaseId: string | null) {
-  return BUSINESS_USE_CASES.find((useCase) => useCase.id === useCaseId) ?? BUSINESS_USE_CASES[0];
-}
+const BUSINESS_USE_CASE_ICONS: Record<BusinessUseCaseId, LucideIcon> = {
+  "holiday-box": Users,
+  "new-hire-kit": Gift,
+  milestones: Calendar,
+};
 
 function downloadBusinessSampleCsv(sampleType: "people" | "gifts") {
   if (sampleType === "people") {
@@ -298,7 +282,7 @@ function BusinessSignupContent() {
             {/* First workflows */}
             <div className="space-y-4 mb-8">
               {BUSINESS_USE_CASES.map((useCase) => {
-                const UseCaseIcon = useCase.icon;
+                const UseCaseIcon = BUSINESS_USE_CASE_ICONS[useCase.id];
                 const isSelected = selectedUseCaseId === useCase.id;
 
                 return (
