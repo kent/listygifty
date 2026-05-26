@@ -1,17 +1,10 @@
 import { Redirect } from "expo-router";
 import { runtimeConfig } from "@/lib/runtime-config";
+import { getScreenshotRouteTarget } from "@/lib/screenshot-routes";
 
 export default function Index() {
   if (runtimeConfig.screenshotMode) {
-    const routeMap: Record<string, "/(tabs)/lists" | "/(tabs)/exchanges" | "/(tabs)/people/index" | "/(tabs)/profile/index"> =
-      {
-        lists: "/(tabs)/lists",
-        exchanges: "/(tabs)/exchanges",
-        people: "/(tabs)/people/index",
-        profile: "/(tabs)/profile/index",
-      };
-
-    return <Redirect href={routeMap[runtimeConfig.screenshotRoute] ?? "/(tabs)/lists"} />;
+    return <Redirect href={getScreenshotRouteTarget(runtimeConfig.screenshotRoute)} />;
   }
 
   // Redirect to auth - the AuthRouter in _layout will handle

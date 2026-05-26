@@ -10,6 +10,8 @@
     "dev": "expo start",
     "screenshots:lists": "EXPO_PUBLIC_SCREENSHOT_MODE=1 EXPO_PUBLIC_SCREENSHOT_ROUTE=lists expo start",
     "screenshots:exchanges": "EXPO_PUBLIC_SCREENSHOT_MODE=1 EXPO_PUBLIC_SCREENSHOT_ROUTE=exchanges expo start",
+    "screenshots:exchange-detail": "EXPO_PUBLIC_SCREENSHOT_MODE=1 EXPO_PUBLIC_SCREENSHOT_ROUTE=exchange-detail expo start",
+    "screenshots:match": "EXPO_PUBLIC_SCREENSHOT_MODE=1 EXPO_PUBLIC_SCREENSHOT_ROUTE=match expo start",
     "screenshots:people": "EXPO_PUBLIC_SCREENSHOT_MODE=1 EXPO_PUBLIC_SCREENSHOT_ROUTE=people expo start",
     "screenshots:profile": "EXPO_PUBLIC_SCREENSHOT_MODE=1 EXPO_PUBLIC_SCREENSHOT_ROUTE=profile expo start",
     "test": "jest",

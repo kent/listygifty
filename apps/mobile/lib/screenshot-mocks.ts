@@ -2,14 +2,15 @@ import type {
   ExchangeExclusion,
   ExchangeParticipant,
   GiftExchange,
+  GiftExchangeWithParticipants,
   Holiday,
   Person,
+  WishlistItem,
 } from "@niftygifty/types";
 import {
   exchangeInvitesService,
   giftStatusesService,
   giftsService,
-  wishlistItemsService,
 } from "@/lib/api";
 
 const nowIso = "2026-03-03T00:00:00.000Z";
@@ -181,7 +182,7 @@ let exchangesStore: GiftExchange[] = [
     is_owner: true,
     participant_count: 8,
     accepted_count: 7,
-    can_start: true,
+    can_start: false,
     my_participant: null,
     created_at: nowIso,
     updated_at: nowIso,
@@ -220,11 +221,400 @@ let exchangesStore: GiftExchange[] = [
   },
 ];
 
+let exchangeParticipantsStore: Record<number, ExchangeParticipant[]> = {
+  301: [
+    {
+      id: 401,
+      gift_exchange_id: 301,
+      user_id: 1,
+      name: "Marie Reviewer",
+      email: "marie@gifts.com",
+      status: "accepted",
+      display_name: "Marie",
+      has_user: true,
+      wishlist_count: 3,
+      invite_token: "review-marie-301",
+      matched_participant_id: 402,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 402,
+      gift_exchange_id: 301,
+      user_id: null,
+      name: "Sam Lee",
+      email: "sam.lee@gifts.com",
+      status: "accepted",
+      display_name: "Sam Lee",
+      has_user: true,
+      wishlist_count: 3,
+      invite_token: "review-sam-301",
+      matched_participant_id: 403,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 403,
+      gift_exchange_id: 301,
+      user_id: null,
+      name: "Nina Rivera",
+      email: "nina.rivera@gifts.com",
+      status: "accepted",
+      display_name: "Nina Rivera",
+      has_user: true,
+      wishlist_count: 2,
+      invite_token: "review-nina-301",
+      matched_participant_id: 404,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 404,
+      gift_exchange_id: 301,
+      user_id: null,
+      name: "Alex Parker",
+      email: "alex.parker@gifts.com",
+      status: "accepted",
+      display_name: "Alex Parker",
+      has_user: true,
+      wishlist_count: 2,
+      invite_token: "review-alex-301",
+      matched_participant_id: 405,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 405,
+      gift_exchange_id: 301,
+      user_id: null,
+      name: "Jordan Kim",
+      email: "jordan.kim@gifts.com",
+      status: "accepted",
+      display_name: "Jordan Kim",
+      has_user: true,
+      wishlist_count: 1,
+      invite_token: "review-jordan-301",
+      matched_participant_id: 406,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 406,
+      gift_exchange_id: 301,
+      user_id: null,
+      name: "Priya Shah",
+      email: "priya.shah@gifts.com",
+      status: "accepted",
+      display_name: "Priya Shah",
+      has_user: true,
+      wishlist_count: 2,
+      invite_token: "review-priya-301",
+      matched_participant_id: 407,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 407,
+      gift_exchange_id: 301,
+      user_id: null,
+      name: "Theo Morgan",
+      email: "theo.morgan@gifts.com",
+      status: "accepted",
+      display_name: "Theo Morgan",
+      has_user: true,
+      wishlist_count: 1,
+      invite_token: "review-theo-301",
+      matched_participant_id: 408,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 408,
+      gift_exchange_id: 301,
+      user_id: null,
+      name: "Riley Chen",
+      email: "riley.chen@gifts.com",
+      status: "invited",
+      display_name: "Riley Chen",
+      has_user: false,
+      wishlist_count: 0,
+      invite_token: "review-riley-301",
+      matched_participant_id: 401,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+  ],
+  302: [
+    {
+      id: 421,
+      gift_exchange_id: 302,
+      user_id: 1,
+      name: "Marie Reviewer",
+      email: "marie@gifts.com",
+      status: "accepted",
+      display_name: "Marie",
+      has_user: true,
+      wishlist_count: 2,
+      invite_token: "review-marie-302",
+      matched_participant_id: null,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 422,
+      gift_exchange_id: 302,
+      user_id: null,
+      name: "Chris Nolan",
+      email: "chris.nolan@studio.com",
+      status: "accepted",
+      display_name: "Chris Nolan",
+      has_user: true,
+      wishlist_count: 1,
+      invite_token: "review-chris-302",
+      matched_participant_id: null,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 423,
+      gift_exchange_id: 302,
+      user_id: null,
+      name: "Ava Brooks",
+      email: "ava.brooks@studio.com",
+      status: "accepted",
+      display_name: "Ava Brooks",
+      has_user: true,
+      wishlist_count: 1,
+      invite_token: "review-ava-302",
+      matched_participant_id: null,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 424,
+      gift_exchange_id: 302,
+      user_id: null,
+      name: "Morgan Hart",
+      email: "morgan.hart@studio.com",
+      status: "accepted",
+      display_name: "Morgan Hart",
+      has_user: true,
+      wishlist_count: 0,
+      invite_token: "review-morgan-302",
+      matched_participant_id: null,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 425,
+      gift_exchange_id: 302,
+      user_id: null,
+      name: "Luis Ortega",
+      email: "luis.ortega@studio.com",
+      status: "invited",
+      display_name: "Luis Ortega",
+      has_user: false,
+      wishlist_count: 0,
+      invite_token: "review-luis-302",
+      matched_participant_id: null,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 426,
+      gift_exchange_id: 302,
+      user_id: null,
+      name: "Eden Fox",
+      email: "eden.fox@studio.com",
+      status: "invited",
+      display_name: "Eden Fox",
+      has_user: false,
+      wishlist_count: 0,
+      invite_token: "review-eden-302",
+      matched_participant_id: null,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+  ],
+  303: [
+    {
+      id: 441,
+      gift_exchange_id: 303,
+      user_id: 1,
+      name: "Marie Reviewer",
+      email: "marie@gifts.com",
+      status: "accepted",
+      display_name: "Marie",
+      has_user: true,
+      wishlist_count: 2,
+      invite_token: "review-marie-303",
+      matched_participant_id: 442,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 442,
+      gift_exchange_id: 303,
+      user_id: null,
+      name: "Kai Bennett",
+      email: "kai.bennett@gifts.com",
+      status: "accepted",
+      display_name: "Kai Bennett",
+      has_user: true,
+      wishlist_count: 2,
+      invite_token: "review-kai-303",
+      matched_participant_id: 441,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+  ],
+};
+
+let wishlistItemsStore: Record<number, WishlistItem[]> = {
+  401: [
+    {
+      id: 701,
+      exchange_participant_id: 401,
+      name: "Travel coffee mug",
+      description: "Leakproof and easy to pack.",
+      link: "https://listygifty.com/example/travel-mug",
+      price: "32.00",
+      photo_url: null,
+      has_photo: false,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 702,
+      exchange_participant_id: 401,
+      name: "Weekend packing cubes",
+      description: "Neutral colors preferred.",
+      link: null,
+      price: "28.00",
+      photo_url: null,
+      has_photo: false,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 703,
+      exchange_participant_id: 401,
+      name: "Bookstore gift card",
+      description: "Any local bookstore works.",
+      link: null,
+      price: "25.00",
+      photo_url: null,
+      has_photo: false,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+  ],
+  402: [
+    {
+      id: 711,
+      exchange_participant_id: 402,
+      name: "Ceramic pour-over set",
+      description: "White or slate, no glass carafe.",
+      link: "https://listygifty.com/example/pour-over",
+      price: "48.00",
+      photo_url: null,
+      has_photo: false,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 712,
+      exchange_participant_id: 402,
+      name: "Home office plant",
+      description: "Low maintenance for indirect light.",
+      link: null,
+      price: "30.00",
+      photo_url: null,
+      has_photo: false,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    {
+      id: 713,
+      exchange_participant_id: 402,
+      name: "Wool desk mat",
+      description: "Warm gray if available.",
+      link: null,
+      price: "42.00",
+      photo_url: null,
+      has_photo: false,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+  ],
+};
+
 let nextPersonId = 200;
 let nextExchangeId = 400;
 let nextExchangeParticipantId = 500;
 let nextExchangeExclusionId = 600;
+let nextWishlistItemId = 800;
 let exchangeExclusionsStore: ExchangeExclusion[] = [];
+
+function getExchangeParticipants(exchangeId: number): ExchangeParticipant[] {
+  return exchangeParticipantsStore[exchangeId] ?? [];
+}
+
+function getParticipantWishlist(participantId: number): WishlistItem[] {
+  return wishlistItemsStore[participantId] ?? [];
+}
+
+function withMatchedParticipant(
+  participant: ExchangeParticipant,
+  participants: ExchangeParticipant[]
+): ExchangeParticipant {
+  const matchedParticipant = participants.find(
+    (item) => item.id === participant.matched_participant_id
+  );
+
+  if (!matchedParticipant) {
+    return participant;
+  }
+
+  return {
+    ...participant,
+    matched_participant: {
+      ...matchedParticipant,
+      wishlist_items: getParticipantWishlist(matchedParticipant.id),
+    },
+  };
+}
+
+function getExchangeParticipantsWithMatches(exchangeId: number): ExchangeParticipant[] {
+  const participants = getExchangeParticipants(exchangeId);
+  return participants.map((participant) => withMatchedParticipant(participant, participants));
+}
+
+function buildExchangeSummary(exchange: GiftExchange): GiftExchange {
+  const participants = getExchangeParticipantsWithMatches(exchange.id);
+  const myParticipant = participants.find((participant) => participant.user_id === 1) ?? null;
+
+  if (participants.length === 0) {
+    return exchange;
+  }
+
+  return {
+    ...exchange,
+    accepted_count: participants.filter((participant) => participant.status === "accepted").length,
+    my_participant: myParticipant,
+    participant_count: participants.length,
+  };
+}
+
+function buildExchangeWithParticipants(exchange: GiftExchange): GiftExchangeWithParticipants {
+  const summary = buildExchangeSummary(exchange);
+  const participants = getExchangeParticipantsWithMatches(exchange.id);
+
+  return {
+    ...summary,
+    exchange_participants: participants,
+  };
+}
 
 export const screenshotProfile = {
   firstName: "Marie",
@@ -296,7 +686,16 @@ export const screenshotServices = {
   },
   giftExchanges: {
     async getAll() {
-      return clone(exchangesStore);
+      return clone(exchangesStore.map(buildExchangeSummary));
+    },
+    async getById(id: number) {
+      const exchange = exchangesStore.find((item) => item.id === id);
+
+      if (!exchange) {
+        throw new Error("Exchange not found");
+      }
+
+      return clone(buildExchangeWithParticipants(exchange));
     },
     async create(data: Partial<GiftExchange>) {
       const exchange: GiftExchange = {
@@ -329,7 +728,13 @@ export const screenshotServices = {
             }
           : exchange
       );
-      return clone(exchangesStore.find((exchange) => exchange.id === id) as GiftExchange);
+      const exchange = exchangesStore.find((item) => item.id === id);
+
+      if (!exchange) {
+        throw new Error("Exchange not found");
+      }
+
+      return clone(buildExchangeWithParticipants(exchange));
     },
   },
   exchangeParticipants: {
@@ -348,6 +753,10 @@ export const screenshotServices = {
         matched_participant_id: null,
         created_at: nowIso,
         updated_at: nowIso,
+      };
+      exchangeParticipantsStore = {
+        ...exchangeParticipantsStore,
+        [exchangeId]: [...getExchangeParticipants(exchangeId), participant],
       };
       exchangesStore = exchangesStore.map((exchange) =>
         exchange.id === exchangeId
@@ -369,10 +778,7 @@ export const screenshotServices = {
       );
     },
     async create(exchangeId: number, data: Partial<ExchangeExclusion>) {
-      const exchange = exchangesStore.find((item) => item.id === exchangeId);
-      const participants =
-        (exchange as (GiftExchange & { exchange_participants?: ExchangeParticipant[] }) | undefined)
-          ?.exchange_participants ?? [];
+      const participants = getExchangeParticipants(exchangeId);
       const participantA = participants.find(
         (participant) => participant.id === data.participant_a_id
       );
@@ -406,6 +812,109 @@ export const screenshotServices = {
   },
   gifts: giftsService,
   giftStatuses: giftStatusesService,
-  wishlistItems: wishlistItemsService,
+  wishlistItems: {
+    async getAll(_exchangeId: number, participantId: number) {
+      return clone(getParticipantWishlist(participantId));
+    },
+    async getById(_exchangeId: number, participantId: number, itemId: number) {
+      const item = getParticipantWishlist(participantId).find(
+        (wishlistItem) => wishlistItem.id === itemId
+      );
+
+      if (!item) {
+        throw new Error("Wishlist item not found");
+      }
+
+      return clone(item);
+    },
+    async create(_exchangeId: number, participantId: number, data: Partial<WishlistItem>) {
+      const item: WishlistItem = {
+        id: nextWishlistItemId++,
+        exchange_participant_id: participantId,
+        name: data.name || "New wish",
+        description: data.description ?? null,
+        link: data.link ?? null,
+        price: data.price ?? null,
+        photo_url: data.photo_url ?? null,
+        has_photo: data.has_photo ?? Boolean(data.photo_url),
+        created_at: nowIso,
+        updated_at: nowIso,
+      };
+      wishlistItemsStore = {
+        ...wishlistItemsStore,
+        [participantId]: [item, ...getParticipantWishlist(participantId)],
+      };
+      exchangeParticipantsStore = {
+        ...exchangeParticipantsStore,
+        ...Object.fromEntries(
+          Object.entries(exchangeParticipantsStore).map(([exchangeId, participants]) => [
+            exchangeId,
+            participants.map((participant) =>
+              participant.id === participantId
+                ? {
+                    ...participant,
+                    wishlist_count: getParticipantWishlist(participantId).length,
+                    updated_at: nowIso,
+                  }
+                : participant
+            ),
+          ])
+        ),
+      };
+      return clone(item);
+    },
+    async update(
+      _exchangeId: number,
+      participantId: number,
+      itemId: number,
+      data: Partial<WishlistItem>
+    ) {
+      wishlistItemsStore = {
+        ...wishlistItemsStore,
+        [participantId]: getParticipantWishlist(participantId).map((item) =>
+          item.id === itemId ? { ...item, ...data, updated_at: nowIso } : item
+        ),
+      };
+      const item = getParticipantWishlist(participantId).find(
+        (wishlistItem) => wishlistItem.id === itemId
+      );
+
+      if (!item) {
+        throw new Error("Wishlist item not found");
+      }
+
+      return clone(item);
+    },
+    async delete(_exchangeId: number, participantId: number, itemId: number) {
+      wishlistItemsStore = {
+        ...wishlistItemsStore,
+        [participantId]: getParticipantWishlist(participantId).filter((item) => item.id !== itemId),
+      };
+    },
+    async uploadPhoto(_exchangeId: number, participantId: number, itemId: number, _formData: FormData) {
+      wishlistItemsStore = {
+        ...wishlistItemsStore,
+        [participantId]: getParticipantWishlist(participantId).map((item) =>
+          item.id === itemId
+            ? {
+                ...item,
+                has_photo: true,
+                photo_url: "screenshot-photo",
+                updated_at: nowIso,
+              }
+            : item
+        ),
+      };
+      const item = getParticipantWishlist(participantId).find(
+        (wishlistItem) => wishlistItem.id === itemId
+      );
+
+      if (!item) {
+        throw new Error("Wishlist item not found");
+      }
+
+      return clone(item);
+    },
+  },
   exchangeInvites: exchangeInvitesService,
 } as const;

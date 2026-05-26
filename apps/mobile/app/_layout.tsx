@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Slot, useRouter, useSegments } from "expo-router";
+import { Slot, usePathname, useRouter, useSegments } from "expo-router";
 import { ClerkProvider, ClerkLoaded, useAuth } from "@clerk/clerk-expo";
 import { PostHogProvider } from "posthog-react-native";
 import { LogBox } from "react-native";
@@ -9,6 +9,7 @@ import { ThemeProvider, useTheme } from "@/lib/theme";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { clearCachedResources } from "@/lib/api";
+import { getScreenshotRouteTarget, getScreenshotTargetPath } from "@/lib/screenshot-routes";
 
 const publishableKey = runtimeConfig.clerkPublishableKey;
 const posthogApiKey = runtimeConfig.posthogApiKey;
@@ -21,26 +22,18 @@ if (runtimeConfig.screenshotMode) {
 
 function ScreenshotRouter() {
   const router = useRouter();
-  const segments = useSegments();
+  const pathname = usePathname();
   const { isDark } = useTheme();
 
   useEffect(() => {
-    const routeMap: Record<string, "/(tabs)/lists" | "/(tabs)/exchanges" | "/(tabs)/people/index" | "/(tabs)/profile/index"> =
-      {
-        lists: "/(tabs)/lists",
-        exchanges: "/(tabs)/exchanges",
-        people: "/(tabs)/people/index",
-        profile: "/(tabs)/profile/index",
-      };
-
-    const targetRoute = routeMap[runtimeConfig.screenshotRoute] ?? "/(tabs)/lists";
-    const currentRoute = segments.join("/");
-    const normalizedTarget = targetRoute.replace(/^\//, "");
+    const targetRoute = getScreenshotRouteTarget(runtimeConfig.screenshotRoute);
+    const currentRoute = pathname.replace(/^\//, "");
+    const normalizedTarget = getScreenshotTargetPath(targetRoute);
 
     if (currentRoute !== normalizedTarget) {
       router.replace(targetRoute);
     }
-  }, [router, segments, runtimeConfig.screenshotRoute]);
+  }, [pathname, router, runtimeConfig.screenshotRoute]);
 
   return (
     <>

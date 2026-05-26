@@ -10,6 +10,8 @@ Run these from `apps/mobile` with a simulator open:
 npm run screenshots:lists
 npm run screenshots:people
 npm run screenshots:exchanges
+npm run screenshots:exchange-detail
+npm run screenshots:match
 npm run screenshots:profile
 ```
 
@@ -20,6 +22,8 @@ Each command enables `EXPO_PUBLIC_SCREENSHOT_MODE=1`, uses mock app data, skips 
 - Lists: show active 2026 lists, deadline reminders, and quick gift planning state.
 - People: show birthdays, milestone reminders, and the schedule-reminder actions.
 - Exchanges: show exchange readiness and participant progress.
+- Exchange detail: show invite sharing, copyable participant links, and draw status.
+- Match: show the active Secret Santa match and wishlist gift ideas.
 - Profile: show the signed-in reviewer profile and release-ready settings surface.
 
 ## Review Checklist
