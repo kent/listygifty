@@ -83,6 +83,24 @@ const testimonials = [
   },
 ];
 
+const businessPlaybooks = [
+  {
+    href: "/business/signup?use_case=holiday-box",
+    title: "Remote-team holiday box",
+    description: "Recipients, budgets, gift options, and delivery status in one workflow.",
+  },
+  {
+    href: "/business/signup?use_case=new-hire-kit",
+    title: "New-hire onboarding kit",
+    description: "Track welcome gifts from accepted offer through first-day delivery.",
+  },
+  {
+    href: "/business/signup?use_case=milestones",
+    title: "Work anniversaries",
+    description: "Plan anniversary, promotion, parental leave, and milestone gifts.",
+  },
+];
+
 function StarRating({ rating }: { rating: number }) {
   return (
     <div className="flex gap-1">
@@ -429,15 +447,15 @@ export default function HomePage() {
                     </span>
                   </h2>
                   <p className="text-slate-300 mb-6 leading-relaxed max-w-xl">
-                    Manage corporate gifting, coordinate team holiday parties, and run Secret Santa exchanges across your entire organization. Perfect for HR teams and office managers.
+                    Run employee gifting without the spreadsheet. Start with a repeatable workflow for holiday boxes, onboarding kits, or work anniversaries, then track every recipient, budget, and status.
                   </p>
 
                   <ul className="space-y-3 mb-8 text-left max-w-md mx-auto lg:mx-0">
                     {[
-                      "Create multiple workspaces for different teams",
-                      "Invite colleagues with role-based permissions",
-                      "Track company-wide gifting and budgets",
-                      "Run Secret Santa with automatic matching",
+                      "Create a business workspace for your first gifting workflow",
+                      "Add employees as recipients and track owner, budget, and status",
+                      "Move gifts from idea to delivered without a handoff spreadsheet",
+                      "Run team exchanges with invites, wishlists, and automatic matching",
                     ].map((item, i) => (
                       <li key={i} className="flex items-start gap-3 text-slate-200">
                         <svg className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -453,14 +471,29 @@ export default function HomePage() {
                     size="lg"
                     className="bg-white text-slate-900 hover:bg-slate-100 shadow-xl shadow-white/10 font-semibold"
                   >
-                    <Link href="/business/signup">
-                      Get Started for Business
+                    <Link href="/business/signup?use_case=holiday-box">
+                      Choose a Business Workflow
                       <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                       </svg>
                     </Link>
                   </Button>
                 </div>
+              </div>
+
+              <div className="relative z-10 mt-10 grid gap-3 md:grid-cols-3">
+                {businessPlaybooks.map((playbook) => (
+                  <Link
+                    key={playbook.href}
+                    href={playbook.href}
+                    className="rounded-lg border border-white/10 bg-white/5 p-4 text-left transition-colors hover:border-white/25 hover:bg-white/10"
+                  >
+                    <p className="text-sm font-semibold text-white">{playbook.title}</p>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                      {playbook.description}
+                    </p>
+                  </Link>
+                ))}
               </div>
             </div>
           </div>
