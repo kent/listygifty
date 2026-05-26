@@ -29,7 +29,7 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
 
 2. Household readiness
    - Search for a recipient and create that person directly from the no-match state.
-   - Seed templates for Christmas, birthdays, teachers, and in-laws.
+   - Mobile new-list templates now cover Christmas, birthdays, teachers, and in-laws.
    - Make sharing a list obvious from list detail.
    - Keep invite links revocable and visible to owners.
 
@@ -112,5 +112,6 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile exchange participants can now build their wishlist during the inviting phase, before matches are drawn.
 - Mobile exchange owners can now add and remove exclusion rules before drawing matches.
 - Mobile list cards now surface date-based deadline reminders, and date-only formatting is normalized to local calendar days.
+- Mobile list creation now offers Christmas, birthdays, teachers, and in-laws templates; undated lists no longer get forced to today.
 - Mobile now tracks core activation, gift status-change, and exchange-funnel events through PostHog when analytics is configured.
 - Web and MCP dependencies were refreshed to reduce actionable high-severity advisories; the remaining root npm audit item is Next's exact nested PostCSS dependency, where npm currently suggests a breaking downgrade rather than a safe patch.
