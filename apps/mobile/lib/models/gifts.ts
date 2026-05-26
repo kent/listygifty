@@ -119,6 +119,27 @@ export function giftFormHasChanges(gift: Gift | null, values: GiftFormValues): b
   );
 }
 
+export function sortGiftStatuses(statuses: GiftStatus[]): GiftStatus[] {
+  return [...statuses].sort((left, right) => {
+    const positionDifference = left.position - right.position;
+    if (positionDifference !== 0) {
+      return positionDifference;
+    }
+
+    return left.name.localeCompare(right.name);
+  });
+}
+
+export function getNextGiftStatus(gift: Gift, statuses: GiftStatus[]): GiftStatus | null {
+  const sortedStatuses = sortGiftStatuses(statuses);
+  const currentIndex = sortedStatuses.findIndex((status) => status.id === gift.gift_status_id);
+  if (currentIndex < 0) {
+    return sortedStatuses[0] ?? null;
+  }
+
+  return sortedStatuses[currentIndex + 1] ?? null;
+}
+
 export function filterGifts(gifts: Gift[], filters: GiftFilterValues): Gift[] {
   const normalizedSearch = filters.search.trim().toLowerCase();
 

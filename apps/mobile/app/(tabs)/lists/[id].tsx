@@ -209,13 +209,20 @@ export default function GiftsScreen() {
             tintColor={colors.primary}
           />
         }
-        renderItem={({ item }) => (
-          <GiftItem
-            item={item}
-            onPress={() => controller.handleGiftPress(item.id)}
-            onDelete={() => controller.handleDeleteGift(item.id)}
-          />
-        )}
+        renderItem={({ item }) => {
+          const nextStatus = controller.getNextStatusForGift(item);
+          return (
+            <GiftItem
+              item={item}
+              nextStatusName={nextStatus?.name}
+              onAdvanceStatus={
+                nextStatus ? () => controller.handleAdvanceGiftStatus(item.id) : undefined
+              }
+              onPress={() => controller.handleGiftPress(item.id)}
+              onDelete={() => controller.handleDeleteGift(item.id)}
+            />
+          );
+        }}
         ListEmptyComponent={
           <View style={{ alignItems: "center", paddingVertical: 48 }}>
             <Text style={{ fontSize: 48, marginBottom: 16 }}>🎁</Text>

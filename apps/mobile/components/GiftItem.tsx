@@ -19,10 +19,18 @@ import { getMerchantLabel } from "@/lib/url";
 interface GiftItemProps {
   item: Gift;
   onPress?: () => void;
+  onAdvanceStatus?: () => void;
   onDelete?: () => void;
+  nextStatusName?: string | null;
 }
 
-export function GiftItem({ item, onPress, onDelete }: GiftItemProps) {
+export function GiftItem({
+  item,
+  onPress,
+  onAdvanceStatus,
+  onDelete,
+  nextStatusName,
+}: GiftItemProps) {
   const { colors, isDark } = useTheme();
   const swipeableRef = useRef<Swipeable>(null);
 
@@ -58,6 +66,12 @@ export function GiftItem({ item, onPress, onDelete }: GiftItemProps) {
     );
   };
 
+  const handleAdvanceStatus = async () => {
+    await haptics.medium();
+    swipeableRef.current?.close();
+    onAdvanceStatus?.();
+  };
+
   const renderRightActions = (
     progress: Animated.AnimatedInterpolation<number>,
     dragX: Animated.AnimatedInterpolation<number>
@@ -69,25 +83,49 @@ export function GiftItem({ item, onPress, onDelete }: GiftItemProps) {
     });
 
     return (
-      <HapticPressable
-        onPress={handleDelete}
-        haptic="medium"
-        accessibilityRole="button"
-        accessibilityLabel={`Delete ${item.name}`}
-        style={{
-          backgroundColor: colors.error,
-          justifyContent: "center",
-          alignItems: "center",
-          width: 80,
-          borderTopRightRadius: 12,
-          borderBottomRightRadius: 12,
-        }}
-      >
-        <Animated.View style={{ transform: [{ scale }] }}>
-          <Ionicons name="trash-outline" size={24} color="#fff" />
-          <Text style={{ color: "#fff", fontSize: 12, marginTop: 4 }}>Delete</Text>
-        </Animated.View>
-      </HapticPressable>
+      <View style={{ flexDirection: "row" }}>
+        {onAdvanceStatus && nextStatusName ? (
+          <HapticPressable
+            onPress={handleAdvanceStatus}
+            haptic="medium"
+            accessibilityRole="button"
+            accessibilityLabel={`Move ${item.name} to ${nextStatusName}`}
+            style={{
+              backgroundColor: colors.info,
+              justifyContent: "center",
+              alignItems: "center",
+              width: 88,
+            }}
+          >
+            <Animated.View style={{ transform: [{ scale }], alignItems: "center" }}>
+              <Ionicons name="arrow-forward-circle" size={24} color="#fff" />
+              <Text style={{ color: "#fff", fontSize: 12, marginTop: 4 }}>Next</Text>
+            </Animated.View>
+          </HapticPressable>
+        ) : null}
+
+        {onDelete ? (
+          <HapticPressable
+            onPress={handleDelete}
+            haptic="medium"
+            accessibilityRole="button"
+            accessibilityLabel={`Delete ${item.name}`}
+            style={{
+              backgroundColor: colors.error,
+              justifyContent: "center",
+              alignItems: "center",
+              width: 80,
+              borderTopRightRadius: 12,
+              borderBottomRightRadius: 12,
+            }}
+          >
+            <Animated.View style={{ transform: [{ scale }], alignItems: "center" }}>
+              <Ionicons name="trash-outline" size={24} color="#fff" />
+              <Text style={{ color: "#fff", fontSize: 12, marginTop: 4 }}>Delete</Text>
+            </Animated.View>
+          </HapticPressable>
+        ) : null}
+      </View>
     );
   };
 
@@ -170,8 +208,8 @@ export function GiftItem({ item, onPress, onDelete }: GiftItemProps) {
     </View>
   );
 
-  // If we have delete capability, wrap in Swipeable
-  if (onDelete) {
+  // If we have swipe actions, wrap in Swipeable
+  if (onDelete || onAdvanceStatus) {
     return (
       <Swipeable
         ref={swipeableRef}

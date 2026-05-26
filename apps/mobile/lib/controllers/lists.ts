@@ -18,6 +18,7 @@ import {
   filterListsBySection,
   getDefaultGiftCaptureList,
   getListSectionCounts,
+  getNextGiftStatus,
   getResolvedGiftStatusId,
   sortGiftCaptureLists,
   giftFormHasChanges,
@@ -113,6 +114,7 @@ export function useGiftListDetailController() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { holidays, gifts, giftStatuses } = useServices();
+  const track = useAnalytics();
   const holidayId = Number.parseInt(id ?? "", 10);
   const isValidHolidayId = Number.isFinite(holidayId);
 
@@ -229,6 +231,45 @@ export function useGiftListDetailController() {
     [gifts, resource]
   );
 
+  const getNextStatusForGift = useCallback(
+    (gift: Gift) => getNextGiftStatus(gift, resource.data.statuses),
+    [resource.data.statuses]
+  );
+
+  const advanceGiftStatus = useCallback(
+    async (giftId: number) => {
+      const gift = resource.data.gifts.find((item) => item.id === giftId);
+      if (!gift) {
+        return;
+      }
+
+      const nextStatus = getNextGiftStatus(gift, resource.data.statuses);
+      if (!nextStatus) {
+        return;
+      }
+
+      try {
+        const updatedGift = await gifts.update(giftId, { gift_status_id: nextStatus.id });
+        resource.setData((current) => ({
+          ...current,
+          gifts: current.gifts.map((item) => (item.id === giftId ? updatedGift : item)),
+        }));
+        track("mobile_gift_status_changed", {
+          from_status_id: gift.gift_status_id,
+          gift_id: updatedGift.id,
+          list_id: updatedGift.holiday_id,
+          source: "list_detail_quick_action",
+          to_status_id: nextStatus.id,
+        });
+        await haptics.success();
+      } catch (statusError) {
+        console.error("Failed to advance gift status", statusError);
+        await haptics.error();
+      }
+    },
+    [gifts, resource, track]
+  );
+
   const openShareModal = useCallback(() => {
     setShareModalVisible(true);
     void loadShareData();
@@ -330,6 +371,8 @@ export function useGiftListDetailController() {
     collaborators,
     error,
     filteredGifts,
+    getNextStatusForGift,
+    handleAdvanceGiftStatus: advanceGiftStatus,
     handleDeleteGift: deleteGift,
     handleGiftPress: openGift,
     handleNativeShare,

@@ -4,7 +4,9 @@ import {
   buildGiftFormValues,
   buildRepeatGiftCaptureValues,
   filterGifts,
+  getNextGiftStatus,
   giftFormHasChanges,
+  sortGiftStatuses,
 } from "@/lib/models";
 
 function buildHoliday(overrides: Partial<Holiday> = {}): Holiday {
@@ -172,5 +174,32 @@ describe("gift model helpers", () => {
         statusIds: [9],
       }).map((gift) => gift.id)
     ).toEqual([2]);
+  });
+
+  it("sorts gift statuses by position and name", () => {
+    const statuses = [
+      buildStatus({ id: 2, name: "Wrapped", position: 3 }),
+      buildStatus({ id: 1, name: "Purchased", position: 2 }),
+      buildStatus({ id: 3, name: "Idea", position: 1 }),
+    ];
+
+    expect(sortGiftStatuses(statuses).map((status) => status.name)).toEqual([
+      "Idea",
+      "Purchased",
+      "Wrapped",
+    ]);
+  });
+
+  it("finds the next gift status for quick status changes", () => {
+    const statuses = [
+      buildStatus({ id: 1, name: "Idea", position: 1 }),
+      buildStatus({ id: 2, name: "Purchased", position: 2 }),
+      buildStatus({ id: 3, name: "Wrapped", position: 3 }),
+    ];
+
+    expect(getNextGiftStatus(buildGift({ gift_status_id: 1 }), statuses)?.name).toBe(
+      "Purchased"
+    );
+    expect(getNextGiftStatus(buildGift({ gift_status_id: 3 }), statuses)).toBeNull();
   });
 });
