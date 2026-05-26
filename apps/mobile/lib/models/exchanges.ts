@@ -1,4 +1,8 @@
-import type { CreateGiftExchangeRequest, GiftExchange } from "@niftygifty/types";
+import type {
+  CreateExchangeParticipantRequest,
+  CreateGiftExchangeRequest,
+  GiftExchange,
+} from "@niftygifty/types";
 import { parseOptionalDecimal, trim, trimOrUndefined } from "./inputs";
 
 export type ExchangeSection = {
@@ -19,6 +23,16 @@ export const EMPTY_EXCHANGE_FORM_VALUES: ExchangeFormValues = {
   exchangeDate: "",
   budgetMin: "",
   budgetMax: "",
+};
+
+export interface ExchangeParticipantFormValues {
+  name: string;
+  email: string;
+}
+
+export const EMPTY_EXCHANGE_PARTICIPANT_FORM_VALUES: ExchangeParticipantFormValues = {
+  name: "",
+  email: "",
 };
 
 export function buildExchangeSections(exchanges: GiftExchange[]): ExchangeSection[] {
@@ -45,5 +59,14 @@ export function buildCreateExchangePayload(
     exchange_date: trimOrUndefined(values.exchangeDate),
     budget_min: parseOptionalDecimal(values.budgetMin),
     budget_max: parseOptionalDecimal(values.budgetMax),
+  };
+}
+
+export function buildCreateExchangeParticipantPayload(
+  values: ExchangeParticipantFormValues
+): CreateExchangeParticipantRequest["exchange_participant"] {
+  return {
+    name: trim(values.name),
+    email: trim(values.email),
   };
 }

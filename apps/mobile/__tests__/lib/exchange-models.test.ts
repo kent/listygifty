@@ -1,5 +1,9 @@
 import type { GiftExchange } from "@niftygifty/types";
-import { buildCreateExchangePayload, buildExchangeSections } from "@/lib/models";
+import {
+  buildCreateExchangeParticipantPayload,
+  buildCreateExchangePayload,
+  buildExchangeSections,
+} from "@/lib/models";
 
 function buildExchange(overrides: Partial<GiftExchange> = {}): GiftExchange {
   return {
@@ -67,6 +71,18 @@ describe("exchange model helpers", () => {
       exchange_date: undefined,
       budget_min: undefined,
       budget_max: undefined,
+    });
+  });
+
+  it("builds a trimmed participant invite payload", () => {
+    expect(
+      buildCreateExchangeParticipantPayload({
+        name: "  Alex Parker  ",
+        email: "  alex@example.com  ",
+      })
+    ).toEqual({
+      name: "Alex Parker",
+      email: "alex@example.com",
     });
   });
 });

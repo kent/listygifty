@@ -6,12 +6,15 @@ import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
   buildCreateExchangePayload,
+  buildCreateExchangeParticipantPayload,
   buildCreateWishlistItemPayload,
+  EMPTY_EXCHANGE_PARTICIPANT_FORM_VALUES,
   buildExchangeSections,
   EMPTY_EXCHANGE_FORM_VALUES,
   EMPTY_WISHLIST_ITEM_FORM_VALUES,
   isValidIsoDate,
   parseOptionalDecimal,
+  type ExchangeParticipantFormValues,
   type ExchangeFormValues,
   type ExchangeInviteDetails,
   type GiftExchange,
@@ -135,11 +138,73 @@ export function useExchangeDetailController() {
     error: !isValidExchangeId ? "Invalid exchange ID" : resource.error,
     exchange: resource.data,
     goToMatch: () => router.push(`/(tabs)/exchanges/${exchangeId}/my-match`),
+    goToNewParticipant: () =>
+      router.push(`/(tabs)/exchanges/${exchangeId}/participants/new`),
     goToWishlist: () => router.push(`/(tabs)/exchanges/${exchangeId}/my-wishlist`),
     loading: isValidExchangeId && resource.loading,
     refreshing: resource.refreshing,
     retryLoad: resource.reload,
     triggerRefresh: resource.refresh,
+  };
+}
+
+export function useNewExchangeParticipantController() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const { exchangeParticipants } = useServices();
+  const exchangeId = Number.parseInt(id ?? "", 10);
+  const isValidExchangeId = Number.isFinite(exchangeId);
+
+  const [form, setForm] = useState<ExchangeParticipantFormValues>(
+    EMPTY_EXCHANGE_PARTICIPANT_FORM_VALUES
+  );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const updateField = useCallback((field: keyof ExchangeParticipantFormValues, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  }, []);
+
+  const handleSubmit = useCallback(async () => {
+    if (!isValidExchangeId) {
+      setError("Invalid exchange ID");
+      return;
+    }
+
+    if (!form.name.trim()) {
+      setError("Name is required");
+      return;
+    }
+
+    if (!form.email.trim() || !form.email.includes("@")) {
+      setError("Valid email is required");
+      return;
+    }
+
+    setError(null);
+    setSaving(true);
+
+    try {
+      await exchangeParticipants.create(
+        exchangeId,
+        buildCreateExchangeParticipantPayload(form)
+      );
+      router.back();
+    } catch (submitError) {
+      console.error("Failed to add participant", submitError);
+      setError("Failed to add participant");
+    } finally {
+      setSaving(false);
+    }
+  }, [exchangeId, exchangeParticipants, form, isValidExchangeId, router]);
+
+  return {
+    error,
+    form,
+    handleCancel: () => router.back(),
+    handleSubmit,
+    saving,
+    updateField,
   };
 }
 

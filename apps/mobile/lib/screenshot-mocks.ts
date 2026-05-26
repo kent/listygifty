@@ -1,4 +1,4 @@
-import type { GiftExchange, Holiday, Person } from "@niftygifty/types";
+import type { ExchangeParticipant, GiftExchange, Holiday, Person } from "@niftygifty/types";
 import {
   exchangeInvitesService,
   giftStatusesService,
@@ -138,7 +138,7 @@ let holidaysStore: Holiday[] = [
   },
 ];
 
-const exchangesStore: GiftExchange[] = [
+let exchangesStore: GiftExchange[] = [
   {
     id: 301,
     name: "Family Secret Santa",
@@ -190,6 +190,8 @@ const exchangesStore: GiftExchange[] = [
 ];
 
 let nextPersonId = 200;
+let nextExchangeId = 400;
+let nextExchangeParticipantId = 500;
 
 export const screenshotProfile = {
   firstName: "Marie",
@@ -257,6 +259,56 @@ export const screenshotServices = {
   giftExchanges: {
     async getAll() {
       return clone(exchangesStore);
+    },
+    async create(data: Partial<GiftExchange>) {
+      const exchange: GiftExchange = {
+        id: nextExchangeId++,
+        name: data.name || "New Exchange",
+        exchange_date: data.exchange_date ?? null,
+        status: "draft",
+        budget_min: data.budget_min ?? null,
+        budget_max: data.budget_max ?? null,
+        user_id: 1,
+        is_owner: true,
+        participant_count: 0,
+        accepted_count: 0,
+        can_start: false,
+        my_participant: null,
+        created_at: nowIso,
+        updated_at: nowIso,
+      };
+      exchangesStore = [exchange, ...exchangesStore];
+      return clone(exchange);
+    },
+  },
+  exchangeParticipants: {
+    async create(exchangeId: number, data: Partial<ExchangeParticipant>) {
+      const participant: ExchangeParticipant = {
+        id: nextExchangeParticipantId++,
+        gift_exchange_id: exchangeId,
+        user_id: null,
+        name: data.name || "New Participant",
+        email: data.email || "participant@example.com",
+        status: "invited",
+        display_name: data.name || "New Participant",
+        has_user: false,
+        wishlist_count: 0,
+        invite_token: "review-invite-token",
+        matched_participant_id: null,
+        created_at: nowIso,
+        updated_at: nowIso,
+      };
+      exchangesStore = exchangesStore.map((exchange) =>
+        exchange.id === exchangeId
+          ? {
+              ...exchange,
+              status: exchange.status === "draft" ? "inviting" : exchange.status,
+              participant_count: exchange.participant_count + 1,
+              updated_at: nowIso,
+            }
+          : exchange
+      );
+      return clone(participant);
     },
   },
   gifts: giftsService,

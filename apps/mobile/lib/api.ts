@@ -6,6 +6,7 @@ import {
   createGiftStatusesService,
   createPeopleService,
   createGiftExchangesService,
+  createExchangeParticipantsService,
   createWishlistItemsService,
   createExchangeInvitesService,
 } from "@niftygifty/services";
@@ -42,6 +43,7 @@ const baseGiftsService = createGiftsService(apiClient);
 const baseGiftStatusesService = createGiftStatusesService(apiClient);
 const basePeopleService = createPeopleService(apiClient);
 const baseGiftExchangesService = createGiftExchangesService(apiClient);
+const baseExchangeParticipantsService = createExchangeParticipantsService(apiClient);
 const baseBootstrapService = createBootstrapService(apiClient);
 export const wishlistItemsService = createWishlistItemsService(apiClient);
 export const exchangeInvitesService = createExchangeInvitesService(apiClient);
@@ -301,6 +303,15 @@ export const giftExchangesService = {
     resetBootstrapState();
     invalidateCachedResources("gift-exchanges:");
     return exchange;
+  },
+};
+
+export const exchangeParticipantsService = {
+  async create(exchangeId: number, data: Parameters<typeof baseExchangeParticipantsService.create>[1]) {
+    const participant = await baseExchangeParticipantsService.create(exchangeId, data);
+    resetBootstrapState();
+    invalidateCachedResources("gift-exchanges:");
+    return participant;
   },
 };
 

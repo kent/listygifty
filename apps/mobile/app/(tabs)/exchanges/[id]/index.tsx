@@ -39,6 +39,8 @@ export default function ExchangeDetailScreen() {
   const formattedBudgetRange = formatBudgetRange(exchange.budget_min, exchange.budget_max);
   const myParticipant = exchange.my_participant;
   const isActive = exchange.status === "active";
+  const canAddParticipants =
+    exchange.is_owner && exchange.status !== "active" && exchange.status !== "completed";
   const hasMatch = myParticipant?.matched_participant_id != null;
 
   return (
@@ -164,6 +166,31 @@ export default function ExchangeDetailScreen() {
         <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600", marginBottom: 8 }}>
           Participants
         </Text>
+
+        {canAddParticipants ? (
+          <TouchableOpacity
+            onPress={controller.goToNewParticipant}
+            style={{
+              backgroundColor: colors.primarySurface,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: colors.primary,
+              padding: 12,
+              marginBottom: 8,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Ionicons name="person-add-outline" size={18} color={colors.primary} />
+              <Text style={{ color: colors.primary, fontSize: 15, fontWeight: "700" }}>
+                Add Participant
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.primary} />
+          </TouchableOpacity>
+        ) : null}
 
         {exchange.exchange_participants.map((participant) => (
           <ParticipantListItem

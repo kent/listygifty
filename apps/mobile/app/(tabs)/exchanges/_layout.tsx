@@ -30,6 +30,10 @@ export default function ExchangesLayout() {
         options={{ title: "Your Match" }}
       />
       <Stack.Screen
+        name="[id]/participants/new"
+        options={{ title: "Add Participant", presentation: "modal" }}
+      />
+      <Stack.Screen
         name="new"
         options={{ title: "New Exchange", presentation: "modal" }}
       />

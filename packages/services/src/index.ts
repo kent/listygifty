@@ -7,6 +7,10 @@ export { createPeopleService, type PeopleService } from "./people.service";
 
 // Exchange services
 export { createGiftExchangesService, type GiftExchangesService } from "./gift-exchanges.service";
+export {
+  createExchangeParticipantsService,
+  type ExchangeParticipantsService,
+} from "./exchange-participants.service";
 export { createWishlistItemsService, type WishlistItemsService } from "./wishlist-items.service";
 export { createExchangeInvitesService, type ExchangeInvitesService } from "./exchange-invites.service";
 
