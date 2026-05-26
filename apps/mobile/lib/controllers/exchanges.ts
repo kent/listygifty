@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Alert, Share } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
+import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
 import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
@@ -73,6 +74,7 @@ export function useExchangesController() {
 export function useNewExchangeController() {
   const router = useRouter();
   const { giftExchanges } = useServices();
+  const track = useAnalytics();
   const [form, setForm] = useState<ExchangeFormValues>(EMPTY_EXCHANGE_FORM_VALUES);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,6 +115,11 @@ export function useNewExchangeController() {
 
     try {
       const exchange = await giftExchanges.create(buildCreateExchangePayload(form));
+      track("mobile_exchange_created", {
+        exchange_id: exchange.id,
+        has_budget: Boolean(form.budgetMin.trim() || form.budgetMax.trim()),
+        has_date: Boolean(form.exchangeDate.trim()),
+      });
       router.replace(`/(tabs)/exchanges/${exchange.id}`);
     } catch (submitError) {
       console.error("Failed to create exchange", submitError);
@@ -120,7 +127,7 @@ export function useNewExchangeController() {
     } finally {
       setSaving(false);
     }
-  }, [form, giftExchanges, router]);
+  }, [form, giftExchanges, router, track]);
 
   return {
     error,
@@ -136,6 +143,7 @@ export function useExchangeDetailController() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { giftExchanges, exchangeExclusions } = useServices();
+  const track = useAnalytics();
   const exchangeId = Number.parseInt(id ?? "", 10);
   const isValidExchangeId = Number.isFinite(exchangeId);
   const [starting, setStarting] = useState(false);
@@ -180,6 +188,12 @@ export function useExchangeDetailController() {
             try {
               const exchange = await giftExchanges.start(exchangeId);
               resource.setData(exchange);
+              track("mobile_exchange_drawn", {
+                accepted_count: exchange.accepted_count,
+                exchange_id: exchange.id,
+                exclusion_count: exclusionsResource.data.length,
+                participant_count: exchange.participant_count,
+              });
               await haptics.success();
             } catch (startError) {
               console.error("Failed to start exchange", startError);
@@ -192,7 +206,7 @@ export function useExchangeDetailController() {
         },
       ]
     );
-  }, [exchangeId, giftExchanges, resource]);
+  }, [exchangeId, exclusionsResource.data.length, giftExchanges, resource, track]);
 
   const shareParticipantInvite = useCallback(
     async (participant: ExchangeParticipant) => {
@@ -299,6 +313,10 @@ export function useExchangeDetailController() {
         buildCreateExchangeExclusionPayload(exclusionForm)
       );
       exclusionsResource.setData((current) => [...current, exclusion]);
+      track("mobile_exchange_exclusion_added", {
+        exchange_id: exchangeId,
+        exclusion_id: exclusion.id,
+      });
       setExclusionForm(EMPTY_EXCHANGE_EXCLUSION_FORM_VALUES);
       setExclusionModalVisible(false);
       await haptics.success();
@@ -315,6 +333,7 @@ export function useExchangeDetailController() {
     exchangeId,
     exclusionForm,
     exclusionsResource,
+    track,
   ]);
 
   const removeExclusion = useCallback(
@@ -333,6 +352,10 @@ export function useExchangeDetailController() {
                 exclusionsResource.setData((current) =>
                   current.filter((item) => item.id !== exclusion.id)
                 );
+                track("mobile_exchange_exclusion_removed", {
+                  exchange_id: exchangeId,
+                  exclusion_id: exclusion.id,
+                });
                 await haptics.selection();
               } catch (removeError) {
                 console.error("Failed to remove exclusion rule", removeError);
@@ -344,7 +367,7 @@ export function useExchangeDetailController() {
         ]
       );
     },
-    [exchangeExclusions, exchangeId, exclusionsResource]
+    [exchangeExclusions, exchangeId, exclusionsResource, track]
   );
 
   const triggerRefresh = useCallback(() => {
@@ -391,6 +414,7 @@ export function useNewExchangeParticipantController() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { exchangeParticipants } = useServices();
+  const track = useAnalytics();
   const exchangeId = Number.parseInt(id ?? "", 10);
   const isValidExchangeId = Number.isFinite(exchangeId);
 
@@ -424,10 +448,14 @@ export function useNewExchangeParticipantController() {
     setSaving(true);
 
     try {
-      await exchangeParticipants.create(
+      const participant = await exchangeParticipants.create(
         exchangeId,
         buildCreateExchangeParticipantPayload(form)
       );
+      track("mobile_exchange_participant_invited", {
+        exchange_id: exchangeId,
+        participant_id: participant.id,
+      });
       router.back();
     } catch (submitError) {
       console.error("Failed to add participant", submitError);
@@ -435,7 +463,7 @@ export function useNewExchangeParticipantController() {
     } finally {
       setSaving(false);
     }
-  }, [exchangeId, exchangeParticipants, form, isValidExchangeId, router]);
+  }, [exchangeId, exchangeParticipants, form, isValidExchangeId, router, track]);
 
   return {
     error,
@@ -569,6 +597,7 @@ export function useNewWishlistItemController() {
     participant_id: string;
   }>();
   const { wishlistItems } = useServices();
+  const track = useAnalytics();
   const exchangeId = exchange_id ? Number.parseInt(exchange_id, 10) : Number.NaN;
   const participantId = participant_id ? Number.parseInt(participant_id, 10) : Number.NaN;
 
@@ -602,11 +631,17 @@ export function useNewWishlistItemController() {
     setSavingMode(mode);
 
     try {
-      await wishlistItems.create(
+      const item = await wishlistItems.create(
         exchangeId,
         participantId,
         buildCreateWishlistItemPayload(form)
       );
+      track("mobile_exchange_wishlist_item_added", {
+        exchange_id: exchangeId,
+        item_id: item.id,
+        participant_id: participantId,
+        save_mode: mode,
+      });
       if (mode === "another") {
         setForm(buildRepeatWishlistItemFormValues());
       } else {
@@ -618,7 +653,7 @@ export function useNewWishlistItemController() {
     } finally {
       setSavingMode(null);
     }
-  }, [exchangeId, form, participantId, router, wishlistItems]);
+  }, [exchangeId, form, participantId, router, track, wishlistItems]);
 
   return {
     error,

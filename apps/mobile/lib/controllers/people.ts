@@ -1,5 +1,6 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
+import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
 import { humanizeError } from "@/lib/error-message";
 import { useServices } from "@/lib/use-api";
@@ -24,6 +25,7 @@ import {
 
 export function usePeopleController() {
   const { people: peopleService } = useServices();
+  const track = useAnalytics();
   const resource = useFocusResource({
     errorMessage: "Failed to load people",
     initialValue: [] as Person[],
@@ -111,6 +113,12 @@ export function usePeopleController() {
       } else {
         const created = await peopleService.create(buildCreatePersonPayload(form));
         resource.setData((current) => sortPeopleByName([...current, created]));
+        track("mobile_person_created", {
+          has_email: Boolean(form.email.trim()),
+          has_relationship: Boolean(form.relationship.trim()),
+          person_id: created.id,
+          source: "people_form",
+        });
       }
 
       await haptics.success();
@@ -122,7 +130,7 @@ export function usePeopleController() {
     } finally {
       setSaving(false);
     }
-  }, [editingPerson, form, peopleService, resource]);
+  }, [editingPerson, form, peopleService, resource, track]);
 
   const deletePerson = useCallback(
     (person: Person) => {
@@ -222,6 +230,7 @@ export function usePersonPickerController({
   selectedIds,
 }: UsePersonPickerControllerOptions) {
   const { people: peopleService } = useServices();
+  const track = useAnalytics();
   const [modalVisible, setModalVisible] = useState(false);
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(false);
@@ -303,6 +312,12 @@ export function usePersonPickerController({
       setPeople((current) => sortPeopleByName([...current, person]));
       onSelectionChange([...selectedIds, person.id]);
       setNewPersonName("");
+      track("mobile_person_created", {
+        has_email: false,
+        has_relationship: false,
+        person_id: person.id,
+        source: "picker_search",
+      });
       await haptics.success();
     } catch (createError) {
       console.error("Failed to create person", createError);
@@ -311,7 +326,7 @@ export function usePersonPickerController({
     } finally {
       setCreating(false);
     }
-  }, [newPersonName, onSelectionChange, peopleService, selectedIds]);
+  }, [newPersonName, onSelectionChange, peopleService, selectedIds, track]);
 
   return {
     closeModal: () => setModalVisible(false),

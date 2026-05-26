@@ -1,6 +1,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Alert, Share } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
 import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
@@ -362,6 +363,7 @@ export function useGiftListDetailController() {
 export function useNewListController() {
   const router = useRouter();
   const { holidays } = useServices();
+  const track = useAnalytics();
   const [form, setForm] = useState<HolidayFormValues>(EMPTY_HOLIDAY_FORM_VALUES);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -385,9 +387,14 @@ export function useNewListController() {
     setLoading(true);
 
     try {
-      await holidays.create(
+      const list = await holidays.create(
         buildCreateHolidayPayload(form, new Date().toISOString().split("T")[0] || "")
       );
+      track("mobile_list_created", {
+        has_date: Boolean(form.date.trim()),
+        list_id: list.id,
+        source: "manual",
+      });
       await haptics.success();
       router.back();
     } catch (submitError) {
@@ -397,7 +404,7 @@ export function useNewListController() {
     } finally {
       setLoading(false);
     }
-  }, [form, holidays, router]);
+  }, [form, holidays, router, track]);
 
   return {
     error,
@@ -413,6 +420,7 @@ export function useNewGiftController() {
   const router = useRouter();
   const { holiday_id } = useLocalSearchParams<{ holiday_id: string }>();
   const { gifts, giftStatuses, holidays } = useServices();
+  const track = useAnalytics();
   const holidayIdParam = holiday_id ? Number.parseInt(holiday_id, 10) : Number.NaN;
   const hasPresetHoliday = Number.isFinite(holidayIdParam);
 
@@ -506,7 +514,20 @@ export function useNewGiftController() {
     setSavingMode(mode);
 
     try {
-      await gifts.create(buildCreateGiftPayload(selectedHolidayId, form, selectedStatusId));
+      const gift = await gifts.create(
+        buildCreateGiftPayload(selectedHolidayId, form, selectedStatusId)
+      );
+      track("mobile_gift_idea_captured", {
+        gift_id: gift.id,
+        has_cost: Boolean(form.cost.trim()),
+        has_giver: form.giverIds.length > 0,
+        has_link: Boolean(form.link.trim()),
+        has_recipient: form.recipientIds.length > 0,
+        list_id: selectedHolidayId,
+        save_mode: mode,
+        source: hasPresetHoliday ? "list_detail" : "quick_capture",
+        status_id: selectedStatusId,
+      });
       await haptics.success();
       if (mode === "another") {
         setForm(buildRepeatGiftCaptureValues(form));
@@ -520,7 +541,7 @@ export function useNewGiftController() {
     } finally {
       setSavingMode(null);
     }
-  }, [form, gifts, router, selectedHolidayId, selectedStatusId]);
+  }, [form, gifts, hasPresetHoliday, router, selectedHolidayId, selectedStatusId, track]);
 
   return {
     canChooseList: !hasPresetHoliday,
