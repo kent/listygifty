@@ -58,6 +58,6 @@ Use four real tester accounts or aliases that can receive invite links.
 
 ## Follow-Ups
 
-- Capture App Store screenshots for lists, people, exchanges, match reveal, and profile settings after a clean rehearsal.
+- Capture App Store screenshots for lists, people, exchanges, match reveal, and profile settings after a clean rehearsal. Use `docs/app-store-screenshot-plan.md` for the screenshot-mode commands and review checklist.
 - Repeat the same flow once on a fresh install to catch cache, auth, and deep-link regressions.
 - If any tester misses an invite, verify fallback sharing with copied invite links before release.

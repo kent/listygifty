@@ -46,7 +46,7 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
    - Maintain TestFlight default group: `Internal Testers`.
    - App review seed data now includes lists, people, gifts, and an active exchange with wishlists, matches, and an exclusion.
    - App review seed data also includes a business holiday-box workspace with 20 recipients, milestone dates, default shipping addresses, 20 gifts, and one fulfillment address exception.
-   - Capture screenshots that show lists, people, exchanges, and profile settings.
+   - Capture screenshots that show lists, people, exchanges, and profile settings using `docs/app-store-screenshot-plan.md`.
 
 5. Activation metric
    - A household is activated when it has at least one list, three people, and five gifts.
@@ -141,6 +141,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile exchange participants can now build their wishlist during the inviting phase, before matches are drawn.
 - Mobile exchange owners can now add and remove exclusion rules before drawing matches.
 - Mobile exchange owners now see draw readiness checklist items before matching.
+- Mobile screenshot-mode scripts now cover lists, people, exchanges, and profile routes for App Store capture.
 - Mobile list cards now surface date-based deadline reminders, and date-only formatting is normalized to local calendar days.
 - Mobile people now support birthday entry and upcoming birthday reminders.
 - Web people now support birthday display and editing.

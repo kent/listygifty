@@ -8,6 +8,10 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "dev": "expo start",
+    "screenshots:lists": "EXPO_PUBLIC_SCREENSHOT_MODE=1 EXPO_PUBLIC_SCREENSHOT_ROUTE=lists expo start",
+    "screenshots:exchanges": "EXPO_PUBLIC_SCREENSHOT_MODE=1 EXPO_PUBLIC_SCREENSHOT_ROUTE=exchanges expo start",
+    "screenshots:people": "EXPO_PUBLIC_SCREENSHOT_MODE=1 EXPO_PUBLIC_SCREENSHOT_ROUTE=people expo start",
+    "screenshots:profile": "EXPO_PUBLIC_SCREENSHOT_MODE=1 EXPO_PUBLIC_SCREENSHOT_ROUTE=profile expo start",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
