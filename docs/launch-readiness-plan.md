@@ -62,6 +62,7 @@ First three offers:
 - Work anniversary and milestone gifting calendar.
 
 Reusable detail lives in `docs/business-gifting-playbooks.md`.
+The homepage and business signup now route buyers into those three playbooks directly.
 
 Discovery script:
 - How do you track gift recipients today?
@@ -116,4 +117,5 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile gift links now normalize missing URL schemes and show merchant/domain labels on gift cards.
 - Mobile list-detail gift cards now support quick status advancement and reuse the status-change analytics event.
 - Mobile now tracks core activation, gift status-change, and exchange-funnel events through PostHog when analytics is configured.
+- Web homepage and business signup now present the first three business gifting playbooks as concrete entry points.
 - Web and MCP dependencies were refreshed to reduce actionable high-severity advisories; the remaining root npm audit item is Next's exact nested PostCSS dependency, where npm currently suggests a breaking downgrade rather than a safe patch.
