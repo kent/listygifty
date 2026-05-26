@@ -7,18 +7,23 @@ import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
   buildCreateExchangePayload,
+  buildCreateExchangeExclusionPayload,
   buildCreateExchangeParticipantPayload,
   buildExchangeInviteUrl,
   buildCreateWishlistItemPayload,
   buildRepeatWishlistItemFormValues,
   canStartExchange,
+  EMPTY_EXCHANGE_EXCLUSION_FORM_VALUES,
   EMPTY_EXCHANGE_PARTICIPANT_FORM_VALUES,
   buildExchangeSections,
   EMPTY_EXCHANGE_FORM_VALUES,
   EMPTY_WISHLIST_ITEM_FORM_VALUES,
   getExchangeStartBlocker,
+  hasExchangeExclusionBetween,
   isValidIsoDate,
   parseOptionalDecimal,
+  type ExchangeExclusion,
+  type ExchangeExclusionFormValues,
   type ExchangeParticipantFormValues,
   type ExchangeFormValues,
   type ExchangeInviteDetails,
@@ -130,10 +135,16 @@ export function useNewExchangeController() {
 export function useExchangeDetailController() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { giftExchanges } = useServices();
+  const { giftExchanges, exchangeExclusions } = useServices();
   const exchangeId = Number.parseInt(id ?? "", 10);
   const isValidExchangeId = Number.isFinite(exchangeId);
   const [starting, setStarting] = useState(false);
+  const [exclusionModalVisible, setExclusionModalVisible] = useState(false);
+  const [exclusionForm, setExclusionForm] = useState<ExchangeExclusionFormValues>(
+    EMPTY_EXCHANGE_EXCLUSION_FORM_VALUES
+  );
+  const [savingExclusion, setSavingExclusion] = useState(false);
+  const [exclusionFormError, setExclusionFormError] = useState<string | null>(null);
 
   const resource = useFocusResource<GiftExchangeWithParticipants | null>({
     enabled: isValidExchangeId,
@@ -141,6 +152,14 @@ export function useExchangeDetailController() {
     initialValue: null as GiftExchangeWithParticipants | null,
     key: exchangeId,
     load: () => giftExchanges.getById(exchangeId),
+  });
+
+  const exclusionsResource = useFocusResource<ExchangeExclusion[]>({
+    enabled: isValidExchangeId && resource.data?.is_owner === true,
+    errorMessage: "Failed to load exclusion rules",
+    initialValue: [] as ExchangeExclusion[],
+    key: resource.data?.updated_at ?? exchangeId,
+    load: () => exchangeExclusions.getAll(exchangeId),
   });
 
   const startExchange = useCallback(() => {
@@ -197,9 +216,157 @@ export function useExchangeDetailController() {
     [resource.data?.name]
   );
 
+  const canManageExclusions = Boolean(
+    resource.data?.is_owner &&
+      resource.data.status !== "active" &&
+      resource.data.status !== "completed" &&
+      resource.data.exchange_participants.length >= 2
+  );
+
+  const canSaveExclusion =
+    canManageExclusions &&
+    Boolean(exclusionForm.participantAId) &&
+    Boolean(exclusionForm.participantBId) &&
+    exclusionForm.participantAId !== exclusionForm.participantBId &&
+    !hasExchangeExclusionBetween(
+      exclusionsResource.data,
+      exclusionForm.participantAId,
+      exclusionForm.participantBId
+    );
+
+  const openExclusionModal = useCallback(() => {
+    setExclusionForm(EMPTY_EXCHANGE_EXCLUSION_FORM_VALUES);
+    setExclusionFormError(null);
+    setExclusionModalVisible(true);
+  }, []);
+
+  const closeExclusionModal = useCallback(() => {
+    setExclusionModalVisible(false);
+    setExclusionFormError(null);
+  }, []);
+
+  const updateExclusionParticipant = useCallback(
+    (field: keyof ExchangeExclusionFormValues, participantId: number) => {
+      setExclusionForm((current) => {
+        if (field === "participantAId" && current.participantBId === participantId) {
+          return { participantAId: participantId, participantBId: null };
+        }
+
+        if (field === "participantBId" && current.participantAId === participantId) {
+          return { participantAId: null, participantBId: participantId };
+        }
+
+        return { ...current, [field]: participantId };
+      });
+      setExclusionFormError(null);
+    },
+    []
+  );
+
+  const createExclusion = useCallback(async () => {
+    if (!canManageExclusions) {
+      setExclusionFormError("Add at least two participants before creating an exclusion.");
+      return;
+    }
+
+    if (!exclusionForm.participantAId || !exclusionForm.participantBId) {
+      setExclusionFormError("Choose two participants.");
+      return;
+    }
+
+    if (exclusionForm.participantAId === exclusionForm.participantBId) {
+      setExclusionFormError("Choose two different participants.");
+      return;
+    }
+
+    if (
+      hasExchangeExclusionBetween(
+        exclusionsResource.data,
+        exclusionForm.participantAId,
+        exclusionForm.participantBId
+      )
+    ) {
+      setExclusionFormError("That exclusion already exists.");
+      return;
+    }
+
+    setSavingExclusion(true);
+    setExclusionFormError(null);
+
+    try {
+      const exclusion = await exchangeExclusions.create(
+        exchangeId,
+        buildCreateExchangeExclusionPayload(exclusionForm)
+      );
+      exclusionsResource.setData((current) => [...current, exclusion]);
+      setExclusionForm(EMPTY_EXCHANGE_EXCLUSION_FORM_VALUES);
+      setExclusionModalVisible(false);
+      await haptics.success();
+    } catch (createError) {
+      console.error("Failed to add exclusion rule", createError);
+      await haptics.error();
+      setExclusionFormError("Failed to add exclusion rule.");
+    } finally {
+      setSavingExclusion(false);
+    }
+  }, [
+    canManageExclusions,
+    exchangeExclusions,
+    exchangeId,
+    exclusionForm,
+    exclusionsResource,
+  ]);
+
+  const removeExclusion = useCallback(
+    (exclusion: ExchangeExclusion) => {
+      Alert.alert(
+        "Remove Exclusion",
+        `Allow ${exclusion.participant_a.name} and ${exclusion.participant_b.name} to match?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Remove",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await exchangeExclusions.delete(exchangeId, exclusion.id);
+                exclusionsResource.setData((current) =>
+                  current.filter((item) => item.id !== exclusion.id)
+                );
+                await haptics.selection();
+              } catch (removeError) {
+                console.error("Failed to remove exclusion rule", removeError);
+                await haptics.error();
+                Alert.alert("Could Not Remove Rule", "Check the exchange and try again.");
+              }
+            },
+          },
+        ]
+      );
+    },
+    [exchangeExclusions, exchangeId, exclusionsResource]
+  );
+
+  const triggerRefresh = useCallback(() => {
+    resource.refresh();
+    if (resource.data?.is_owner) {
+      exclusionsResource.refresh();
+    }
+  }, [exclusionsResource, resource]);
+
   return {
     canStartExchange: resource.data ? canStartExchange(resource.data) : false,
+    canManageExclusions,
+    canSaveExclusion,
+    closeExclusionModal,
+    createExclusion,
     error: !isValidExchangeId ? "Invalid exchange ID" : resource.error,
+    exclusionForm,
+    exclusionFormError,
+    exclusionModalVisible,
+    exclusions: exclusionsResource.data,
+    exclusionsError: exclusionsResource.error,
+    exclusionsLoading: exclusionsResource.loading,
     exchange: resource.data,
     goToMatch: () => router.push(`/(tabs)/exchanges/${exchangeId}/my-match`),
     goToNewParticipant: () =>
@@ -207,12 +374,16 @@ export function useExchangeDetailController() {
     goToWishlist: () => router.push(`/(tabs)/exchanges/${exchangeId}/my-wishlist`),
     handleStartExchange: startExchange,
     loading: isValidExchangeId && resource.loading,
+    openExclusionModal,
     refreshing: resource.refreshing,
+    removeExclusion,
     retryLoad: resource.reload,
     shareParticipantInvite,
+    savingExclusion,
     starting,
     startBlocker: resource.data ? getExchangeStartBlocker(resource.data) : null,
-    triggerRefresh: resource.refresh,
+    triggerRefresh,
+    updateExclusionParticipant,
   };
 }
 

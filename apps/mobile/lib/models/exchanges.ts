@@ -1,5 +1,7 @@
 import type {
   CreateExchangeParticipantRequest,
+  CreateExchangeExclusionRequest,
+  ExchangeExclusion,
   CreateGiftExchangeRequest,
   GiftExchange,
 } from "@niftygifty/types";
@@ -35,6 +37,16 @@ export interface ExchangeParticipantFormValues {
 export const EMPTY_EXCHANGE_PARTICIPANT_FORM_VALUES: ExchangeParticipantFormValues = {
   name: "",
   email: "",
+};
+
+export interface ExchangeExclusionFormValues {
+  participantAId: number | null;
+  participantBId: number | null;
+}
+
+export const EMPTY_EXCHANGE_EXCLUSION_FORM_VALUES: ExchangeExclusionFormValues = {
+  participantAId: null,
+  participantBId: null,
 };
 
 export function buildExchangeSections(exchanges: GiftExchange[]): ExchangeSection[] {
@@ -124,6 +136,37 @@ export function buildCreateExchangeParticipantPayload(
     name: trim(values.name),
     email: trim(values.email),
   };
+}
+
+export function buildCreateExchangeExclusionPayload(
+  values: ExchangeExclusionFormValues
+): CreateExchangeExclusionRequest["exchange_exclusion"] {
+  if (!values.participantAId || !values.participantBId) {
+    throw new Error("Both participants are required");
+  }
+
+  return {
+    participant_a_id: values.participantAId,
+    participant_b_id: values.participantBId,
+  };
+}
+
+export function hasExchangeExclusionBetween(
+  exclusions: ExchangeExclusion[],
+  participantAId: number | null,
+  participantBId: number | null
+): boolean {
+  if (!participantAId || !participantBId) {
+    return false;
+  }
+
+  return exclusions.some(
+    (exclusion) =>
+      (exclusion.participant_a_id === participantAId &&
+        exclusion.participant_b_id === participantBId) ||
+      (exclusion.participant_a_id === participantBId &&
+        exclusion.participant_b_id === participantAId)
+  );
 }
 
 export function buildExchangeInviteUrl(inviteToken: string): string {

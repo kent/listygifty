@@ -10,6 +10,7 @@ import { Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ParticipantListItem } from "@/components/ParticipantListItem";
+import { ExchangeExclusionsSection } from "@/components/ExchangeExclusionsSection";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { formatBudgetRange, formatLongDate } from "@/lib/formatters";
 import { canManageExchangeWishlist, getExchangeWishlistSubtitle } from "@/lib/models";
@@ -224,6 +225,26 @@ export default function ExchangeDetailScreen() {
             <Ionicons name="chevron-forward" size={20} color={colors.success} />
           )}
         </TouchableOpacity>
+      ) : null}
+
+      {exchange.is_owner ? (
+        <ExchangeExclusionsSection
+          canManage={controller.canManageExclusions}
+          canSave={controller.canSaveExclusion}
+          error={controller.exclusionsError}
+          exclusions={controller.exclusions}
+          form={controller.exclusionForm}
+          formError={controller.exclusionFormError}
+          loading={controller.exclusionsLoading}
+          modalVisible={controller.exclusionModalVisible}
+          onCloseModal={controller.closeExclusionModal}
+          onCreate={controller.createExclusion}
+          onOpenModal={controller.openExclusionModal}
+          onRemove={controller.removeExclusion}
+          onSelectParticipant={controller.updateExclusionParticipant}
+          participants={exchange.exchange_participants}
+          saving={controller.savingExclusion}
+        />
       ) : null}
 
       <View

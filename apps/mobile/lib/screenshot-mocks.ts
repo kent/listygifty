@@ -1,4 +1,10 @@
-import type { ExchangeParticipant, GiftExchange, Holiday, Person } from "@niftygifty/types";
+import type {
+  ExchangeExclusion,
+  ExchangeParticipant,
+  GiftExchange,
+  Holiday,
+  Person,
+} from "@niftygifty/types";
 import {
   exchangeInvitesService,
   giftStatusesService,
@@ -192,6 +198,8 @@ let exchangesStore: GiftExchange[] = [
 let nextPersonId = 200;
 let nextExchangeId = 400;
 let nextExchangeParticipantId = 500;
+let nextExchangeExclusionId = 600;
+let exchangeExclusionsStore: ExchangeExclusion[] = [];
 
 export const screenshotProfile = {
   firstName: "Marie",
@@ -322,6 +330,48 @@ export const screenshotServices = {
           : exchange
       );
       return clone(participant);
+    },
+  },
+  exchangeExclusions: {
+    async getAll(exchangeId: number) {
+      return clone(
+        exchangeExclusionsStore.filter((exclusion) => exclusion.gift_exchange_id === exchangeId)
+      );
+    },
+    async create(exchangeId: number, data: Partial<ExchangeExclusion>) {
+      const exchange = exchangesStore.find((item) => item.id === exchangeId);
+      const participants =
+        (exchange as (GiftExchange & { exchange_participants?: ExchangeParticipant[] }) | undefined)
+          ?.exchange_participants ?? [];
+      const participantA = participants.find(
+        (participant) => participant.id === data.participant_a_id
+      );
+      const participantB = participants.find(
+        (participant) => participant.id === data.participant_b_id
+      );
+      const exclusion: ExchangeExclusion = {
+        id: nextExchangeExclusionId++,
+        gift_exchange_id: exchangeId,
+        participant_a_id: data.participant_a_id || 0,
+        participant_b_id: data.participant_b_id || 0,
+        participant_a: {
+          id: data.participant_a_id || 0,
+          name: participantA?.display_name || participantA?.name || "Participant 1",
+        },
+        participant_b: {
+          id: data.participant_b_id || 0,
+          name: participantB?.display_name || participantB?.name || "Participant 2",
+        },
+        created_at: nowIso,
+        updated_at: nowIso,
+      };
+      exchangeExclusionsStore = [...exchangeExclusionsStore, exclusion];
+      return clone(exclusion);
+    },
+    async delete(_exchangeId: number, exclusionId: number) {
+      exchangeExclusionsStore = exchangeExclusionsStore.filter(
+        (exclusion) => exclusion.id !== exclusionId
+      );
     },
   },
   gifts: giftsService,

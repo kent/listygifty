@@ -11,6 +11,10 @@ export {
   createExchangeParticipantsService,
   type ExchangeParticipantsService,
 } from "./exchange-participants.service";
+export {
+  createExchangeExclusionsService,
+  type ExchangeExclusionsService,
+} from "./exchange-exclusions.service";
 export { createWishlistItemsService, type WishlistItemsService } from "./wishlist-items.service";
 export { createExchangeInvitesService, type ExchangeInvitesService } from "./exchange-invites.service";
 

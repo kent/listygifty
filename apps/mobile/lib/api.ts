@@ -7,6 +7,7 @@ import {
   createPeopleService,
   createGiftExchangesService,
   createExchangeParticipantsService,
+  createExchangeExclusionsService,
   createWishlistItemsService,
   createExchangeInvitesService,
 } from "@niftygifty/services";
@@ -44,6 +45,7 @@ const baseGiftStatusesService = createGiftStatusesService(apiClient);
 const basePeopleService = createPeopleService(apiClient);
 const baseGiftExchangesService = createGiftExchangesService(apiClient);
 const baseExchangeParticipantsService = createExchangeParticipantsService(apiClient);
+const baseExchangeExclusionsService = createExchangeExclusionsService(apiClient);
 const baseBootstrapService = createBootstrapService(apiClient);
 export const wishlistItemsService = createWishlistItemsService(apiClient);
 export const exchangeInvitesService = createExchangeInvitesService(apiClient);
@@ -320,6 +322,27 @@ export const exchangeParticipantsService = {
     resetBootstrapState();
     invalidateCachedResources("gift-exchanges:");
     return participant;
+  },
+};
+
+export const exchangeExclusionsService = {
+  getAll(exchangeId: number) {
+    return baseExchangeExclusionsService.getAll(exchangeId);
+  },
+
+  async create(exchangeId: number, data: Parameters<typeof baseExchangeExclusionsService.create>[1]) {
+    const exclusion = await baseExchangeExclusionsService.create(exchangeId, data);
+    resetBootstrapState();
+    invalidateCachedResources("gift-exchanges:");
+    invalidateCachedResources(`gift-exchanges:${exchangeId}`);
+    return exclusion;
+  },
+
+  async delete(exchangeId: number, exclusionId: number) {
+    await baseExchangeExclusionsService.delete(exchangeId, exclusionId);
+    resetBootstrapState();
+    invalidateCachedResources("gift-exchanges:");
+    invalidateCachedResources(`gift-exchanges:${exchangeId}`);
   },
 };
 

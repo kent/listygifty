@@ -8,6 +8,7 @@ import {
   peopleService,
   giftExchangesService,
   exchangeParticipantsService,
+  exchangeExclusionsService,
   wishlistItemsService,
   exchangeInvitesService,
 } from "./api";
@@ -40,6 +41,7 @@ export function useServices() {
       people: typeof peopleService;
       giftExchanges: typeof giftExchangesService;
       exchangeParticipants: typeof exchangeParticipantsService;
+      exchangeExclusions: typeof exchangeExclusionsService;
       wishlistItems: typeof wishlistItemsService;
       exchangeInvites: typeof exchangeInvitesService;
     };
@@ -54,6 +56,7 @@ export function useServices() {
     people: peopleService,
     giftExchanges: giftExchangesService,
     exchangeParticipants: exchangeParticipantsService,
+    exchangeExclusions: exchangeExclusionsService,
     wishlistItems: wishlistItemsService,
     exchangeInvites: exchangeInvitesService,
   };

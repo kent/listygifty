@@ -1,6 +1,7 @@
-import type { ExchangeParticipant, GiftExchange } from "@niftygifty/types";
+import type { ExchangeExclusion, ExchangeParticipant, GiftExchange } from "@niftygifty/types";
 import {
   canManageExchangeWishlist,
+  buildCreateExchangeExclusionPayload,
   buildCreateExchangeParticipantPayload,
   buildCreateExchangePayload,
   buildExchangeSections,
@@ -8,6 +9,7 @@ import {
   canStartExchange,
   getExchangeStartBlocker,
   getExchangeWishlistSubtitle,
+  hasExchangeExclusionBetween,
 } from "@/lib/models";
 
 function buildExchange(overrides: Partial<GiftExchange> = {}): GiftExchange {
@@ -41,6 +43,20 @@ function buildParticipant(overrides: Partial<ExchangeParticipant> = {}): Exchang
     display_name: overrides.display_name || "Alex Parker",
     has_user: overrides.has_user ?? true,
     wishlist_count: overrides.wishlist_count ?? 0,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+    ...overrides,
+  };
+}
+
+function buildExclusion(overrides: Partial<ExchangeExclusion> = {}): ExchangeExclusion {
+  return {
+    id: overrides.id || 20,
+    gift_exchange_id: overrides.gift_exchange_id || 1,
+    participant_a_id: overrides.participant_a_id || 10,
+    participant_b_id: overrides.participant_b_id || 11,
+    participant_a: overrides.participant_a || { id: 10, name: "Alex Parker" },
+    participant_b: overrides.participant_b || { id: 11, name: "Sam Lee" },
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
     ...overrides,
@@ -106,6 +122,26 @@ describe("exchange model helpers", () => {
       name: "Alex Parker",
       email: "alex@example.com",
     });
+  });
+
+  it("builds an exclusion payload", () => {
+    expect(
+      buildCreateExchangeExclusionPayload({
+        participantAId: 10,
+        participantBId: 11,
+      })
+    ).toEqual({
+      participant_a_id: 10,
+      participant_b_id: 11,
+    });
+  });
+
+  it("detects existing exclusion rules in either direction", () => {
+    const exclusions = [buildExclusion({ participant_a_id: 10, participant_b_id: 11 })];
+
+    expect(hasExchangeExclusionBetween(exclusions, 10, 11)).toBe(true);
+    expect(hasExchangeExclusionBetween(exclusions, 11, 10)).toBe(true);
+    expect(hasExchangeExclusionBetween(exclusions, 10, 12)).toBe(false);
   });
 
   it("builds a public exchange invite URL", () => {
