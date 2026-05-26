@@ -92,7 +92,7 @@ Business success metric:
 
 4. Purchase loop
    - Mobile now normalizes gift links and surfaces merchant/domain labels on gift cards.
-   - Track purchase status before attempting direct checkout.
+   - Mobile gift cards now support swipe-to-advance status from the list detail view.
 
 ## Messaging
 
@@ -114,5 +114,6 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile list cards now surface date-based deadline reminders, and date-only formatting is normalized to local calendar days.
 - Mobile list creation now offers Christmas, birthdays, teachers, and in-laws templates; undated lists no longer get forced to today.
 - Mobile gift links now normalize missing URL schemes and show merchant/domain labels on gift cards.
+- Mobile list-detail gift cards now support quick status advancement and reuse the status-change analytics event.
 - Mobile now tracks core activation, gift status-change, and exchange-funnel events through PostHog when analytics is configured.
 - Web and MCP dependencies were refreshed to reduce actionable high-severity advisories; the remaining root npm audit item is Next's exact nested PostCSS dependency, where npm currently suggests a breaking downgrade rather than a safe patch.
