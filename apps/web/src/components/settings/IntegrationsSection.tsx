@@ -73,7 +73,7 @@ export function IntegrationsSection() {
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-              Connect Your AI Assistant
+              Connect Your Assistant
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
               Use this MCP server URL to connect Claude, ChatGPT, or any MCP-compatible assistant:

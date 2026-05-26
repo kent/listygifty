@@ -1,5 +1,5 @@
 // =============================================================================
-// Types for NiftyGifty MCP Server
+// Types for Listy Gifty MCP Server
 // Inlined from @niftygifty/types for npm publishing
 // =============================================================================
 
