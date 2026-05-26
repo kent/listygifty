@@ -1,7 +1,7 @@
 {
   "name": "@niftygifty/mcp-server",
   "version": "1.0.0",
-  "description": "MCP server for NiftyGifty - manage gifts, holidays, wishlists, and more via AI assistants like Claude, ChatGPT, and other MCP-compatible tools",
+  "description": "MCP server for Listy Gifty - manage gifts, holidays, wishlists, exchanges, and budgets through MCP-compatible assistants",
   "type": "module",
   "bin": {
     "niftygifty-mcp": "./dist/index.js"
@@ -48,7 +48,7 @@
     "wishlists",
     "secret-santa"
   ],
-  "author": "NiftyGifty <hello@niftygifty.com>",
+  "author": "Listy Gifty <hello@listygifty.com>",
   "license": "MIT",
   "repository": {
     "type": "git",

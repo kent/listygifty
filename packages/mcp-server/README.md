@@ -1,6 +1,6 @@
 # @niftygifty/mcp-server
 
-MCP (Model Context Protocol) server for NiftyGifty - manage gifts, holidays, wishlists, and more via AI assistants like Claude, ChatGPT, and other MCP-compatible tools.
+MCP (Model Context Protocol) server for Listy Gifty - manage gifts, holidays, wishlists, exchanges, and budgets through MCP-compatible assistants and automations.
 
 ## Features
 
@@ -11,7 +11,7 @@ MCP (Model Context Protocol) server for NiftyGifty - manage gifts, holidays, wis
   - People: Manage contacts for gift giving
   - Wishlists: Create and share wishlists with claim tracking
   - Gift Exchanges: Run Secret Santa with smart matching
-  - AI Suggestions: Get AI-powered gift ideas
+  - Suggestions: Generate optional gift ideas when the core list data needs a backup
   - Exports: Export data as CSV
 
 - **5 resources** for quick data access:
@@ -25,7 +25,7 @@ MCP (Model Context Protocol) server for NiftyGifty - manage gifts, holidays, wis
 
 ### 1. Get an API Key
 
-1. Log into NiftyGifty
+1. Log into Listy Gifty
 2. Go to Settings > API Keys
 3. Create a new API key
 4. Copy the key (it's only shown once!)
@@ -54,9 +54,9 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 Restart Claude Desktop and start asking about your gifts:
 
 - "What holidays do I have coming up?"
-- "Create a Christmas 2024 gift list"
+- "Create a Christmas 2026 gift list"
 - "Add Mom, Dad, and Sister to my contacts"
-- "Generate gift ideas for Mom"
+- "Add two backup gift ideas for Mom"
 - "Set up a Secret Santa for my family"
 
 ## Available Tools
@@ -92,7 +92,7 @@ Restart Claude Desktop and start asking about your gifts:
 - `niftygifty_delete_person` - Delete contact
 - `niftygifty_import_people_csv` - Import from CSV
 
-### AI Suggestions (Premium)
+### Suggestions (Premium)
 - `niftygifty_generate_gift_suggestions` - Generate ideas
 - `niftygifty_list_suggestions` - List suggestions
 - `niftygifty_refine_suggestions` - Refine for holiday
@@ -156,4 +156,4 @@ NIFTYGIFTY_API_KEY=ng_xxx npm start
 
 ## License
 
-Private - NiftyGifty
+Private - Listy Gifty

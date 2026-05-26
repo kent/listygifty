@@ -12,7 +12,7 @@ async function main() {
     console.error("Error: NIFTYGIFTY_API_KEY environment variable is required");
     console.error("");
     console.error("To get an API key:");
-    console.error("1. Log into NiftyGifty");
+    console.error("1. Log into Listy Gifty");
     console.error("2. Go to Settings > API Keys");
     console.error("3. Create a new API key");
     console.error("");
@@ -26,7 +26,7 @@ async function main() {
   const transport = new StdioServerTransport();
 
   await server.connect(transport);
-  console.error("NiftyGifty MCP Server running on stdio");
+  console.error("Listy Gifty MCP Server running on stdio");
   console.error(`API URL: ${apiUrl}`);
 }
 

@@ -1,8 +1,8 @@
 # Listy Gifty
 
-> Gift planning made simple. Track gift ideas, manage budgets, and never forget a special occasion.
+> Gift logistics made simple. Capture ideas, coordinate exchanges, track budgets, and remember every deadline.
 
-Listy Gifty is a web application that helps users organize thoughtful gifts for everyone they love. The app provides tools for tracking gift ideas, managing budgets, and remembering special occasions like birthdays, holidays, and anniversaries.
+Listy Gifty is a web and mobile application for keeping the gift side of life organized across families, friend groups, and teams. It helps people capture ideas year-round, coordinate recipients and gift exchanges, manage budgets, and track gifts from idea to purchase to delivery.
 
 ## Key Features
 
@@ -10,15 +10,9 @@ Listy Gifty is a web application that helps users organize thoughtful gifts for 
 - **Budget Management**: Set and track budgets for different occasions and recipients
 - **Occasion Reminders**: Never miss a birthday, holiday, or special event
 - **Gift Status Tracking**: Track whether gifts are ideas, purchased, wrapped, or given
-- **AI Gift Suggestions**: Get personalized gift recommendations based on recipient interests
-
-## The Giving Pledge
-
-Listy Gifty pledges to donate 10% of all gross revenue to charitable causes, forever. We believe that success is meaningless unless it's shared. Every subscription helps someone in need, extending the chain of generosity far beyond our user base.
-
-- Transparent giving with quarterly donation receipts
-- Sustainable impact through recurring monthly donations
-- Community-driven cause selection with annual subscriber votes
+- **Gift Exchanges**: Run Secret Santa, Yankee Swap, and other draw-name exchanges without spreadsheets
+- **Team Gift Workflows**: Plan onboarding kits, holiday boxes, milestone gifts, and client gifts with shared owners
+- **MCP Integrations**: Connect compatible assistants to query, create, and update gift data with scoped OAuth access
 
 ## Getting Started
 
@@ -29,9 +23,8 @@ Visit [listygifty.com](https://listygifty.com) to create a free account and star
 - Homepage: https://listygifty.com
 - Sign Up: https://listygifty.com/signup
 - Sign In: https://listygifty.com/login
-- Giving Pledge: https://listygifty.com/giving-pledge
+- Integrations: https://listygifty.com/integrations
 
 ## Contact
 
 For support or inquiries, visit our website at https://listygifty.com
-

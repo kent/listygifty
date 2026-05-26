@@ -1,22 +1,22 @@
-# ListyGifty MCP Server with OAuth 2.1 Integration
+# Listy Gifty MCP Server with OAuth 2.1 Integration
 
-This document describes the hosted MCP (Model Context Protocol) server and OAuth 2.1 authorization system that allows users to connect their ListyGifty account to AI tools like Claude, ChatGPT, and other MCP-compatible clients.
+This document describes the hosted MCP (Model Context Protocol) server and OAuth 2.1 authorization system that allows users to connect their Listy Gifty account to assistants and other MCP-compatible clients.
 
 ## Overview
 
-ListyGifty provides two ways to connect AI tools:
+Listy Gifty provides two ways to connect external tools:
 
 1. **API Keys** (existing) - Manual key management for developers
-2. **OAuth 2.1** (new) - Automatic authorization for AI assistants
+2. **OAuth 2.1** (new) - Automatic authorization for MCP-compatible assistants
 
-The OAuth flow allows users to authorize Claude or other AI tools to access their ListyGifty data without sharing passwords or managing API keys manually.
+The OAuth flow allows users to authorize Claude or other MCP-compatible clients to access their Listy Gifty data without sharing passwords or managing API keys manually.
 
 ## Architecture
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   AI Client     │     │   ListyGifty    │     │   ListyGifty    │
-│  (Claude, etc)  │────▶│   OAuth Server  │────▶│   MCP Server    │
+│   MCP Client    │     │  Listy Gifty    │     │  Listy Gifty    │
+│ (Claude, etc.)  │────▶│   OAuth Server  │────▶│   MCP Server    │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
         │                       │                       │
         │ 1. Auth Request       │                       │
@@ -249,7 +249,7 @@ The MCP server provides tools for managing gifts:
 
 1. In Claude, add a new MCP server connection
 2. Enter the server URL: `https://api.listygifty.com/mcp`
-3. Click "Connect" - you'll be redirected to ListyGifty
+3. Click "Connect" - you'll be redirected to Listy Gifty
 4. Log in and authorize Claude to access your account
 5. Start using Claude to manage your gifts!
 
@@ -257,7 +257,7 @@ Example conversation with Claude after connecting:
 
 > **You**: Show me my upcoming holidays
 >
-> **Claude**: Let me check your ListyGifty account...
+> **Claude**: Let me check your Listy Gifty account...
 >
 > Here are your upcoming holidays:
 > - Christmas 2026 (December 25)

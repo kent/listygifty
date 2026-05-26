@@ -1,6 +1,6 @@
-# ListyGifty MCP Quick Start Guide
+# Listy Gifty MCP Quick Start Guide
 
-Connect your AI assistant to ListyGifty in minutes!
+Connect an MCP-compatible assistant to Listy Gifty in minutes.
 
 ## For Claude Users
 
@@ -33,14 +33,14 @@ Add to your `claude_desktop_config.json`:
 ```
 
 To get an API key:
-1. Log in to [ListyGifty](https://listygifty.com)
+1. Log in to [Listy Gifty](https://listygifty.com)
 2. Go to Settings > API Keys
 3. Create a new key with "read" and "write" scopes
 
 ### Option 3: Claude Code CLI
 
 ```bash
-# Add ListyGifty as an MCP server
+# Add Listy Gifty as an MCP server
 claude mcp add listygifty https://api.listygifty.com/mcp
 
 # Authorize (opens browser)
@@ -61,14 +61,15 @@ Once connected, try these prompts:
 - "Create a gift idea: cozy blanket for Sarah"
 - "Add John to my contacts"
 
-### Get suggestions
-- "What should I get for my tech-savvy dad?"
-- "Suggest some gift ideas for a 10-year-old who likes dinosaurs"
+### Review planning gaps
+- "Which gifts still need a recipient?"
+- "Which Christmas gifts are over budget?"
+- "Add a few backup ideas for my dad"
 
 ## Troubleshooting
 
 ### "Authorization failed"
-- Make sure you're logged into ListyGifty
+- Make sure you're logged into Listy Gifty
 - Try clearing cookies and reconnecting
 
 ### "Insufficient permissions"

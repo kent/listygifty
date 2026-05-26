@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { AUTH_ROUTES } from "@/services";
 
 export const metadata: Metadata = {
-  title: "AI Integrations | Listy Gifty",
+  title: "Assistant Integrations | Listy Gifty",
   description:
-    "Connect Listy Gifty to Claude, ChatGPT, and other AI assistants. Use the Model Context Protocol (MCP) to let AI help you plan perfect gifts.",
+    "Connect Listy Gifty to Claude, ChatGPT, and other MCP-compatible assistants so they can help manage your gift lists with scoped OAuth access.",
   alternates: {
     canonical: "/integrations",
   },
@@ -66,7 +66,7 @@ const aiClients = [
       </svg>
     ),
     gradient: "from-orange-400 to-orange-600",
-    description: "Anthropic's AI assistant with advanced reasoning capabilities",
+    description: "Ask Claude to review lists, add gift ideas, and check what still needs attention.",
     steps: [
       "Open Claude and go to MCP connections",
       "Add a new remote MCP server",
@@ -98,7 +98,7 @@ const aiClients = [
       </svg>
     ),
     gradient: "from-emerald-500 to-teal-600",
-    description: "OpenAI's conversational AI with plugin support",
+    description: "Use ChatGPT to organize your gift data and answer planning questions.",
     steps: [
       "Go to ChatGPT plugins/actions settings",
       "Add Listy Gifty as a connected service",
@@ -162,14 +162,14 @@ export default function IntegrationsPage() {
             </div>
 
             <h1 className="text-5xl md:text-7xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">
-              AI-Powered{" "}
+              Assistant-Ready{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 dark:from-cyan-400 via-blue-500 dark:via-blue-400 to-violet-500 dark:to-violet-400">
                 Gift Planning
               </span>
             </h1>
 
             <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Connect your favorite AI assistant to Listy Gifty. Let Claude, ChatGPT, or any MCP-compatible tool help you plan perfect gifts through natural conversation.
+              Connect Claude, ChatGPT, or any MCP-compatible tool to help update lists, review budgets, and find the gifts that still need a next step.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -203,11 +203,11 @@ export default function IntegrationsPage() {
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
               Connect Your{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-500">
-                AI Assistant
+                Assistant
               </span>
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Listy Gifty works with any AI that supports the Model Context Protocol. Here&apos;s how to connect the most popular ones.
+              Listy Gifty works with any assistant that supports the Model Context Protocol. Here&apos;s how to connect the most popular ones.
             </p>
           </div>
 
@@ -281,7 +281,7 @@ export default function IntegrationsPage() {
               </span>
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Your AI assistant can use these tools to interact with your Listy Gifty data.
+              Connected assistants can use these tools to interact with your Listy Gifty data.
             </p>
           </div>
 
@@ -335,9 +335,9 @@ export default function IntegrationsPage() {
                 <div className="grid md:grid-cols-2 gap-6">
                   {[
                     { title: "OAuth 2.1 Standard", desc: "Industry-standard authorization with PKCE protection against code interception" },
-                    { title: "Scoped Access", desc: "Grant read-only or read-write access. AI only sees what you allow" },
+                    { title: "Scoped Access", desc: "Grant read-only or read-write access. Connected tools only see what you allow" },
                     { title: "Revoke Anytime", desc: "Disconnect any AI assistant instantly from your settings" },
-                    { title: "No Password Sharing", desc: "AI tools never see your password. Only secure tokens" },
+                    { title: "No Password Sharing", desc: "Connected tools never see your password. Only secure tokens" },
                   ].map((item, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -365,7 +365,7 @@ export default function IntegrationsPage() {
               </span>
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Building your own AI tool or integration? Use our API or MCP server directly.
+              Building your own assistant or workflow integration? Use our API or MCP server directly.
             </p>
           </div>
 
@@ -407,10 +407,10 @@ export default function IntegrationsPage() {
 
             <div className="relative z-10">
               <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
-                Ready to Connect Your AI?
+                Ready to Connect an Assistant?
               </h2>
               <p className="text-lg text-slate-600 dark:text-slate-300 mb-8 max-w-xl mx-auto">
-                Sign up for free and start using AI to plan your perfect gifts today.
+                Sign up for free and start connecting your gift planning workflows today.
               </p>
               <Button
                 asChild
@@ -448,8 +448,8 @@ export default function IntegrationsPage() {
               <Link href="/" className="text-sm text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
                 Home
               </Link>
-              <Link href="/giving-pledge" className="text-sm text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
-                Our Giving Pledge
+              <Link href="/support" className="text-sm text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
+                Support
               </Link>
             </div>
 
