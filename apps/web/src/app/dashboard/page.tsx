@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ArrowRight, Calendar, CheckCircle2, Circle, Gift as GiftIcon, Loader2, Plus, Users } from "lucide-react";
 import { GiftTodoList } from "@/components/gift-todo-list";
-import { getBusinessUseCaseLabel } from "@/lib/business-use-cases";
+import { getBusinessUseCase } from "@/lib/business-use-cases";
 import { captureWebEvent } from "@/lib/analytics";
 import type { Holiday, Person } from "@niftygifty/types";
 
@@ -159,10 +159,12 @@ function buildUpcomingDates(holidays: Holiday[], people: Person[]): UpcomingDate
 function ActivationChecklist({
   steps,
   isBusiness,
+  goalLabel,
   workflowLabel,
 }: {
   steps: ActivationStep[];
   isBusiness: boolean;
+  goalLabel: string | null;
   workflowLabel: string | null;
 }) {
   const completedCount = steps.filter((step) => step.complete).length;
@@ -218,7 +220,7 @@ function ActivationChecklist({
           {isBusiness ? (
             <>
               <Users className="h-3.5 w-3.5" />
-              <span>Business goal: 20 people and 20 gifts in one workflow.</span>
+              <span>{goalLabel || "Business goal: one repeatable workflow with people and gifts loaded."}</span>
             </>
           ) : (
             <>
@@ -320,13 +322,17 @@ export default function DashboardPage() {
   const exchangeCount = bootstrapData?.gift_exchanges.length ?? 0;
   const sharedListCount = userHolidays.filter((holiday) => holiday.collaborator_count > 1).length;
   const isBusinessWorkspace = currentWorkspace?.workspace_type === "business";
-  const businessWorkflowLabel = getBusinessUseCaseLabel(currentWorkspace?.business_initial_use_case);
+  const businessUseCase = getBusinessUseCase(currentWorkspace?.business_initial_use_case);
+  const businessWorkflowLabel = currentWorkspace?.business_initial_use_case
+    ? businessUseCase.title
+    : null;
   const upcomingDates = useMemo(
     () => buildUpcomingDates(activeHolidays, people),
     [activeHolidays, people]
   );
   const activationSteps = useMemo<ActivationStep[]>(() => {
     if (isBusinessWorkspace) {
+      const activation = businessUseCase.activation;
       return [
         {
           label: "Business workspace",
@@ -335,22 +341,24 @@ export default function DashboardPage() {
           href: "/settings",
         },
         {
-          label: "People added",
-          countLabel: formatProgress(people.length, 20),
-          complete: people.length >= 20,
+          label: activation.peopleLabel,
+          countLabel: formatProgress(people.length, activation.peopleTarget),
+          complete: people.length >= activation.peopleTarget,
           href: "/people",
         },
         {
-          label: "Gifts tracked",
-          countLabel: formatProgress(giftTotal, 20),
-          complete: giftTotal >= 20,
+          label: activation.giftsLabel,
+          countLabel: formatProgress(giftTotal, activation.giftTarget),
+          complete: giftTotal >= activation.giftTarget,
           href: activeHolidays[0] ? `/holidays/${activeHolidays[0].id}` : "/holidays",
         },
         {
-          label: "Workflow started",
+          label: activation.workflowLabel,
           countLabel: exchangeCount > 0 || activeHolidays.length > 0 ? "1/1" : "0/1",
           complete: exchangeCount > 0 || activeHolidays.length > 0,
-          href: activeHolidays[0] ? `/holidays/${activeHolidays[0].id}` : "/exchanges",
+          href: activeHolidays[0]
+            ? `/holidays/${activeHolidays[0].id}`
+            : activation.workflowHref,
         },
       ];
     }
@@ -383,6 +391,7 @@ export default function DashboardPage() {
     ];
   }, [
     activeHolidays,
+    businessUseCase,
     currentWorkspace,
     exchangeCount,
     giftTotal,
@@ -493,6 +502,7 @@ export default function DashboardPage() {
           <ActivationChecklist
             steps={activationSteps}
             isBusiness={isBusinessWorkspace}
+            goalLabel={isBusinessWorkspace ? businessUseCase.activation.goalLabel : null}
             workflowLabel={businessWorkflowLabel}
           />
         </section>

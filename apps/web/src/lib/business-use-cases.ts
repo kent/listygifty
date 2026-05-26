@@ -5,6 +5,15 @@ export const BUSINESS_USE_CASES = [
     description: "Import recipients, attach shipping addresses, load gifts, and flag fulfillment gaps.",
     workspaceName: "Holiday Gifting",
     href: "/business/signup?use_case=holiday-box",
+    activation: {
+      peopleLabel: "Recipients imported",
+      peopleTarget: 20,
+      giftsLabel: "Holiday gifts loaded",
+      giftTarget: 20,
+      workflowLabel: "Holiday gift list started",
+      workflowHref: "/holidays",
+      goalLabel: "Holiday box goal: 20 recipients and 20 gifts ready before the cutoff.",
+    },
   },
   {
     id: "new-hire-kit",
@@ -12,6 +21,15 @@ export const BUSINESS_USE_CASES = [
     description: "Track welcome gifts from accepted offer through first-day delivery.",
     workspaceName: "Onboarding Gifts",
     href: "/business/signup?use_case=new-hire-kit",
+    activation: {
+      peopleLabel: "New hires added",
+      peopleTarget: 10,
+      giftsLabel: "Kit items tracked",
+      giftTarget: 10,
+      workflowLabel: "Onboarding workflow started",
+      workflowHref: "/holidays",
+      goalLabel: "Onboarding goal: 10 new hires with kit gifts ready for first-day delivery.",
+    },
   },
   {
     id: "milestones",
@@ -19,6 +37,15 @@ export const BUSINESS_USE_CASES = [
     description: "Plan birthdays, anniversaries, promotions, parental leave, and milestone gifts.",
     workspaceName: "Milestone Gifts",
     href: "/business/signup?use_case=milestones",
+    activation: {
+      peopleLabel: "Employees added",
+      peopleTarget: 20,
+      giftsLabel: "Milestone gifts planned",
+      giftTarget: 10,
+      workflowLabel: "Milestone calendar started",
+      workflowHref: "/people",
+      goalLabel: "Milestone goal: 20 employees and 10 upcoming gifts tied to dates.",
+    },
   },
 ] as const;
 
