@@ -33,27 +33,51 @@ interface ActivationStep {
   href: string;
 }
 
+const BUSINESS_USE_CASE_LABELS: Record<string, string> = {
+  "holiday-box": "Remote-team holiday box",
+  "new-hire-kit": "New-hire onboarding kit",
+  milestones: "Work anniversaries and milestones",
+};
+
 function formatProgress(current: number, target: number): string {
   return `${Math.min(current, target)}/${target}`;
+}
+
+function getBusinessUseCaseLabel(useCase: string | null | undefined): string | null {
+  if (!useCase) {
+    return null;
+  }
+
+  return BUSINESS_USE_CASE_LABELS[useCase] || useCase;
 }
 
 function ActivationChecklist({
   steps,
   isBusiness,
+  workflowLabel,
 }: {
   steps: ActivationStep[];
   isBusiness: boolean;
+  workflowLabel: string | null;
 }) {
   const completedCount = steps.filter((step) => step.complete).length;
+  const nextStep = steps.find((step) => !step.complete);
 
   return (
     <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
       <CardContent className="p-4">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
-            Activation
-          </h2>
+          <div>
+            <h2 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
+              {isBusiness ? "Business Activation" : "Activation"}
+            </h2>
+            {isBusiness && (
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Workflow: {workflowLabel || "Not selected"}
+              </p>
+            )}
+          </div>
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
             {completedCount}/{steps.length}
           </span>
@@ -98,6 +122,17 @@ function ActivationChecklist({
             </>
           )}
         </div>
+        {nextStep && (
+          <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-800">
+            <Link
+              href={nextStep.href}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-500 dark:text-violet-300 dark:hover:text-violet-200"
+            >
+              Continue setup: {nextStep.label}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -124,6 +159,7 @@ export default function DashboardPage() {
   const exchangeCount = bootstrapData?.gift_exchanges.length ?? 0;
   const sharedListCount = userHolidays.filter((holiday) => holiday.collaborator_count > 1).length;
   const isBusinessWorkspace = currentWorkspace?.workspace_type === "business";
+  const businessWorkflowLabel = getBusinessUseCaseLabel(currentWorkspace?.business_initial_use_case);
   const activationSteps = useMemo<ActivationStep[]>(() => {
     if (isBusinessWorkspace) {
       return [
@@ -292,6 +328,7 @@ export default function DashboardPage() {
           <ActivationChecklist
             steps={activationSteps}
             isBusiness={isBusinessWorkspace}
+            workflowLabel={businessWorkflowLabel}
           />
         </section>
 

@@ -788,6 +788,7 @@ export interface Workspace extends BaseEntity {
   role: WorkspaceRole | null;
   member_count: number;
   has_company_profile: boolean;
+  business_initial_use_case: string | null;
 }
 
 export interface WorkspaceWithMembers extends Workspace {

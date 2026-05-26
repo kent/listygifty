@@ -54,6 +54,7 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
 - Track the funnel as list created -> people added -> gift ideas captured -> gift status changed.
 - Mobile now emits activation events for list creation, person creation, gift capture, gift status changes, exchange creation, participant invites, wishlist additions, exclusions, and match draw.
 - Web dashboard now shows household activation progress against the first-list, three-people, five-gifts, and collaboration/exchange milestones.
+- Business dashboards now show activation progress with the selected signup workflow label.
 
 ## Business GTM Checklist
 
@@ -157,6 +158,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile now tracks core activation, gift status-change, and exchange-funnel events through PostHog when analytics is configured.
 - Web homepage and business signup now present the first three business gifting playbooks as concrete entry points.
 - Web business signup now tracks playbook-specific start and workspace-created events.
+- Web business dashboards now display the stored signup workflow beside the business activation checklist.
 - Business people import now supports optional shipping-address columns for fulfillment setup.
 - New gift recipients inherit their default shipping address, reducing manual fulfillment setup after import.
 - App review seed data now covers gift exchange screens in addition to lists, people, and gifts.

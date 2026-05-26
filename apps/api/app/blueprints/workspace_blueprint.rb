@@ -24,6 +24,12 @@ class WorkspaceBlueprint < ApplicationBlueprint
     workspace.business? && workspace.company_profile.present?
   end
 
+  field :business_initial_use_case do |workspace|
+    next unless workspace.business?
+
+    workspace.company_profile&.tax_metadata&.dig("initial_use_case")
+  end
+
   view :with_members do
     association :workspace_memberships, blueprint: WorkspaceMembershipBlueprint, name: :members
   end

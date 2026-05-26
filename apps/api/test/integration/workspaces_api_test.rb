@@ -51,6 +51,7 @@ class WorkspacesApiTest < ActionDispatch::IntegrationTest
     profile = Workspace.last.company_profile
     assert_equal "Acme Gifts", profile.name
     assert_equal "holiday-box", profile.tax_metadata["initial_use_case"]
+    assert_equal "holiday-box", json_response["business_initial_use_case"]
   end
 
   test "update modifies a workspace" do

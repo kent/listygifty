@@ -84,6 +84,7 @@ Use one business workspace and keep the demo operational:
 Demo success:
 - The buyer sees the current spreadsheet replaced by people, gifts, statuses, addresses, exceptions, and export.
 - The buyer can name the first workflow they would import.
+- The business dashboard shows the selected signup workflow beside the activation checklist.
 - App review seed data now includes a BrightWorks holiday-box workspace with 20 recipients, 20 gifts, milestone dates, default shipping addresses, and one missing-address fulfillment exception for this walkthrough.
 
 ## Follow-Up Template
@@ -122,4 +123,4 @@ Measurement:
 - Export and fulfillment report tracking are now in place; use them to find workspaces that reached handoff.
 - Business signup and import dialogs now include instrumented sample CSV downloads.
 - The app review seed now includes a short business demo dataset that mirrors the remote-team holiday box workflow.
-- Build a lightweight company activation dashboard by use case.
+- Business dashboards now surface the selected signup use case beside activation progress; the next dashboard step is grouping activation metrics by use case across companies.
