@@ -114,6 +114,9 @@ Events:
 - `gift_csv_export_failed`
   - Fires when a gift CSV export request fails.
   - Key properties: `holiday_id`, `source`.
+- `gift_bulk_status_updated`
+  - Fires when a web user updates the status for all currently visible gifts in a list.
+  - Key properties: `holiday_id`, `status_id`, `gift_count`, `source`.
 - `fulfillment_report_viewed`
   - Fires when the fulfillment report view opens.
   - Key properties: `holiday_id`, `workspace_type`.

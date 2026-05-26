@@ -117,12 +117,14 @@ Measurement:
 - `people_csv_exported`
 - `gift_csv_import_completed`
 - `gift_csv_exported`
+- `gift_bulk_status_updated`
 - `fulfillment_report_viewed`
 
 ## Next GTM Bets
 
 - Export and fulfillment report tracking are now in place; use them to find workspaces that reached handoff.
 - People CSV export is now available from the People page and tracked for recipient handoff.
+- Visible gift bulk status updates are now available and tracked for handoff progress.
 - Business signup and import dialogs now include instrumented sample CSV downloads.
 - The app review seed now includes a short business demo dataset that mirrors the remote-team holiday box workflow.
 - Business dashboards now surface the selected signup use case beside activation progress; the next dashboard step is grouping activation metrics by use case across companies.

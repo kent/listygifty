@@ -98,5 +98,5 @@ Sales message:
 - Business import now creates people and optional shipping addresses from one CSV, and imported addresses become recipient defaults for new gifts.
 - Calendar/deadline fields for people and lists. People now have birthdays plus generic milestone labels and dates for work anniversaries, promotions, and onboarding moments.
 - Fulfillment handoff view is now available in gift list reports, with recipient rows, shipping-address readiness, exception counts, and direct gift CSV export.
-- Bulk gift creation is now available from gift CSV import; bulk status updates are still needed.
+- Bulk gift creation is now available from gift CSV import, and web gift lists can bulk-update the status of currently visible gifts.
 - Simple team-level reporting now covers count, spend, status, and fulfillment exceptions from the gift list reports tab.

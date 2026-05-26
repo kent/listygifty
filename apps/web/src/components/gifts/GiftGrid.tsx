@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useTransition, useRef, useMemo } from "react";
-import { Plus, Loader2, Crown } from "lucide-react";
+import { Plus, Loader2, Crown, ListChecks } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -26,6 +26,12 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -41,6 +47,7 @@ import { UpgradePrompt } from "@/components/upgrade-prompt";
 import { useAuth } from "@/contexts/auth-context";
 import { giftsService } from "@/services";
 import { ApiError } from "@/lib/api-client";
+import { captureWebEvent } from "@/lib/analytics";
 import { toast } from "sonner";
 import type { Gift, Person, GiftStatus, Holiday, CreateGiftRequest, Address } from "@niftygifty/types";
 
@@ -78,6 +85,7 @@ export function GiftGrid({
   const [isPending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [pendingDeleteGift, setPendingDeleteGift] = useState<Gift | null>(null);
+  const [isBulkUpdatingStatus, setIsBulkUpdatingStatus] = useState(false);
   const { canCreateGift, giftsRemaining, isPremium, refreshBillingStatus } = useAuth();
   
   const onGiftsChangeRef = useRef(onGiftsChange);
@@ -152,6 +160,58 @@ export function GiftGrid({
       });
     },
     [statuses, defaultHolidayId, holidays]
+  );
+
+  const updateVisibleStatuses = useCallback(
+    async (statusId: number) => {
+      const targetStatus = statuses.find((status) => status.id === statusId);
+      const targetGifts = gifts.filter((gift) => gift.gift_status_id !== statusId);
+      if (!targetStatus || targetGifts.length === 0) {
+        toast("Visible gifts already use that status");
+        return;
+      }
+
+      setIsBulkUpdatingStatus(true);
+
+      const targetGiftIds = new Set(targetGifts.map((gift) => gift.id));
+      const optimisticGifts = allGiftsRef.current.map((gift) =>
+        targetGiftIds.has(gift.id)
+          ? {
+              ...gift,
+              gift_status_id: statusId,
+              gift_status: targetStatus,
+            }
+          : gift
+      );
+      onGiftsChangeRef.current(optimisticGifts);
+
+      try {
+        const updatedGifts = await Promise.all(
+          targetGifts.map((gift) => giftsService.update(gift.id, { gift_status_id: statusId }))
+        );
+        const updatedById = new Map(updatedGifts.map((gift) => [gift.id, gift]));
+        onGiftsChangeRef.current(
+          optimisticGifts.map((gift) => updatedById.get(gift.id) || gift)
+        );
+        captureWebEvent("gift_bulk_status_updated", {
+          gift_count: targetGifts.length,
+          holiday_id: defaultHolidayId,
+          status_id: statusId,
+          source: "visible_gifts",
+        });
+        toast.success(
+          `Updated ${targetGifts.length} visible gift${targetGifts.length === 1 ? "" : "s"}`
+        );
+      } catch {
+        const refreshed = await giftsService.getAll();
+        const holidayId = defaultHolidayId || holidays[0]?.id;
+        onGiftsChangeRef.current(refreshed.filter((gift) => gift.holiday_id === holidayId));
+        toast.error("Failed to update visible gifts");
+      } finally {
+        setIsBulkUpdatingStatus(false);
+      }
+    },
+    [defaultHolidayId, gifts, holidays, statuses]
   );
 
   const updateRecipients = useCallback(
@@ -366,7 +426,7 @@ export function GiftGrid({
     <div className="w-full space-y-4">
       <UpgradePrompt variant="banner" />
       
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {atLimit ? (
           <Button
             variant="outline"
@@ -392,6 +452,35 @@ export function GiftGrid({
             Add Gift
           </Button>
         )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={gifts.length === 0 || isBulkUpdatingStatus}
+              className="gap-2"
+            >
+              {isBulkUpdatingStatus ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ListChecks className="h-4 w-4" />
+              )}
+              Set Visible Status
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {statuses.map((status) => (
+              <DropdownMenuItem
+                key={status.id}
+                onClick={() => {
+                  void updateVisibleStatuses(status.id);
+                }}
+              >
+                {status.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
         {isPending && (
           <span className="text-xs text-muted-foreground">Saving...</span>
         )}
