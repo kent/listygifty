@@ -223,7 +223,7 @@ export function GiftSuggestionsTab({
       {/* Generate Button */}
       <Card className="border-slate-800 bg-slate-900/30">
         <CardContent className="p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="font-medium text-white">Idea Generator</h3>
               <p className="text-sm text-slate-400">
@@ -234,7 +234,7 @@ export function GiftSuggestionsTab({
             <Button
               onClick={handleGenerate}
               disabled={generating}
-              className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
+              className="w-full justify-center bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 sm:w-auto"
             >
               {generating ? (
                 <>
