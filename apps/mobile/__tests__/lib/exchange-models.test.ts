@@ -4,6 +4,7 @@ import {
   buildCreateExchangePayload,
   buildExchangeSections,
   canStartExchange,
+  getExchangeStartBlocker,
 } from "@/lib/models";
 
 function buildExchange(overrides: Partial<GiftExchange> = {}): GiftExchange {
@@ -94,5 +95,52 @@ describe("exchange model helpers", () => {
     expect(
       canStartExchange(buildExchange({ is_owner: true, can_start: true, status: "active" }))
     ).toBe(false);
+  });
+
+  it("explains why an owner cannot draw matches yet", () => {
+    expect(
+      getExchangeStartBlocker(
+        buildExchange({
+          status: "draft",
+          participant_count: 0,
+          accepted_count: 0,
+          can_start: false,
+        })
+      )
+    ).toBe("Add at least 3 participants to send invites before drawing matches.");
+
+    expect(
+      getExchangeStartBlocker(
+        buildExchange({
+          status: "inviting",
+          participant_count: 2,
+          accepted_count: 2,
+          can_start: false,
+        })
+      )
+    ).toBe("Add 1 more participant before drawing matches.");
+
+    expect(
+      getExchangeStartBlocker(
+        buildExchange({
+          status: "inviting",
+          participant_count: 4,
+          accepted_count: 2,
+          can_start: false,
+        })
+      )
+    ).toBe("2 participants still need to accept.");
+
+    expect(
+      getExchangeStartBlocker(
+        buildExchange({
+          is_owner: true,
+          status: "inviting",
+          participant_count: 3,
+          accepted_count: 3,
+          can_start: true,
+        })
+      )
+    ).toBeNull();
   });
 });

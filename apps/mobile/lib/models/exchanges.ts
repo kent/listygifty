@@ -60,6 +60,32 @@ export function canStartExchange(exchange: GiftExchange): boolean {
   );
 }
 
+export function getExchangeStartBlocker(exchange: GiftExchange): string | null {
+  if (!exchange.is_owner || exchange.status === "active" || exchange.status === "completed") {
+    return null;
+  }
+
+  if (exchange.can_start) {
+    return null;
+  }
+
+  if (exchange.status === "draft") {
+    return "Add at least 3 participants to send invites before drawing matches.";
+  }
+
+  if (exchange.participant_count < 3) {
+    const remaining = 3 - exchange.participant_count;
+    return `Add ${remaining} more participant${remaining === 1 ? "" : "s"} before drawing matches.`;
+  }
+
+  if (exchange.accepted_count < exchange.participant_count) {
+    const pending = exchange.participant_count - exchange.accepted_count;
+    return `${pending} participant${pending === 1 ? "" : "s"} still need to accept.`;
+  }
+
+  return "Review participants before drawing matches.";
+}
+
 export function buildCreateExchangePayload(
   values: ExchangeFormValues
 ): CreateGiftExchangeRequest["gift_exchange"] {

@@ -14,6 +14,7 @@ import {
   buildExchangeSections,
   EMPTY_EXCHANGE_FORM_VALUES,
   EMPTY_WISHLIST_ITEM_FORM_VALUES,
+  getExchangeStartBlocker,
   isValidIsoDate,
   parseOptionalDecimal,
   type ExchangeParticipantFormValues,
@@ -182,6 +183,7 @@ export function useExchangeDetailController() {
     refreshing: resource.refreshing,
     retryLoad: resource.reload,
     starting,
+    startBlocker: resource.data ? getExchangeStartBlocker(resource.data) : null,
     triggerRefresh: resource.refresh,
   };
 }

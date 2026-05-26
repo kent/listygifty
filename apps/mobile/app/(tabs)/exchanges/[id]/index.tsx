@@ -163,6 +163,31 @@ export default function ExchangeDetailScreen() {
         </View>
       ) : null}
 
+      {controller.startBlocker ? (
+        <View
+          style={{
+            backgroundColor: colors.card,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+            padding: 14,
+            marginBottom: 16,
+            flexDirection: "row",
+            gap: 10,
+          }}
+        >
+          <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.text, fontSize: 15, fontWeight: "700", marginBottom: 4 }}>
+              Match Drawing Not Ready
+            </Text>
+            <Text style={{ color: colors.textTertiary, fontSize: 13, lineHeight: 18 }}>
+              {controller.startBlocker}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+
       {controller.canStartExchange ? (
         <TouchableOpacity
           onPress={controller.handleStartExchange}
