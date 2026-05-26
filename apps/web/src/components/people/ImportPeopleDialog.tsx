@@ -25,6 +25,7 @@ import {
   AlertCircle,
   Download,
 } from "lucide-react";
+import { captureWebEvent } from "@/lib/analytics";
 import { importsService } from "@/services";
 import type { ImportPeopleResult, WorkspaceMember } from "@niftygifty/types";
 
@@ -80,6 +81,9 @@ export function ImportPeopleDialog({
 
     setIsImporting(true);
     setError(null);
+    captureWebEvent("people_csv_import_started", {
+      owner_assigned: Boolean(ownerId),
+    });
 
     try {
       const importResult = await importsService.importPeople(
@@ -87,12 +91,23 @@ export function ImportPeopleDialog({
         ownerId ? parseInt(ownerId, 10) : undefined
       );
       setResult(importResult);
+      captureWebEvent("people_csv_import_completed", {
+        addresses_created: importResult.addresses_created,
+        addresses_skipped: importResult.addresses_skipped,
+        created: importResult.created,
+        errors: importResult.errors.length,
+        owner_assigned: Boolean(ownerId),
+        skipped: importResult.skipped,
+      });
 
       if (importResult.created > 0 && onSuccess) {
         onSuccess();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed");
+      captureWebEvent("people_csv_import_failed", {
+        owner_assigned: Boolean(ownerId),
+      });
     } finally {
       setIsImporting(false);
     }
