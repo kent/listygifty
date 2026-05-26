@@ -13,6 +13,7 @@ Trigger:
 Workflow:
 1. Create a business workspace.
 2. Add employees as people with email, relationship/category, notes, and shipping metadata when available.
+   - People import can set default shipping addresses, and new gifts inherit those addresses for fulfillment.
 3. Create a holiday gift list for the current season.
 4. Add one or more gift options per employee or cohort.
 5. Track status from idea to delivered.
@@ -89,7 +90,7 @@ Sales message:
 
 ## Product Gaps to Close
 
-- Business import now creates people and optional shipping addresses from one CSV; next step is assigning imported addresses automatically when gifts are created.
+- Business import now creates people and optional shipping addresses from one CSV, and imported addresses become recipient defaults for new gifts.
 - Calendar/deadline fields for people and lists.
 - Export view for purchase and fulfillment handoff. Gift exports now include recipient emails and shipping addresses; next step is a dedicated business fulfillment view.
 - Bulk gift creation and status updates.

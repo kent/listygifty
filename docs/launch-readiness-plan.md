@@ -75,6 +75,7 @@ Business success metric:
 - A company is activated when it imports or creates 20 people, creates one business workspace, and tracks 20 gifts or one exchange.
 - Web now tracks `business_signup_started` and `business_workspace_created` with the selected playbook use case, so the homepage-to-workspace funnel is measurable.
 - People CSV import now accepts optional business shipping-address columns and reports created/skipped address counts.
+- Imported business addresses can now become each recipient's default shipping address and apply automatically to new gifts.
 
 ## Next Engineering Bets
 
@@ -124,6 +125,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Web homepage and business signup now present the first three business gifting playbooks as concrete entry points.
 - Web business signup now tracks playbook-specific start and workspace-created events.
 - Business people import now supports optional shipping-address columns for fulfillment setup.
+- New gift recipients inherit their default shipping address, reducing manual fulfillment setup after import.
 - App review seed data now covers gift exchange screens in addition to lists, people, and gifts.
 - Mobile dependency audit was refreshed; remaining mobile npm audit items require a breaking Expo 56 SDK upgrade.
 - Gift CSV exports now include recipient emails and shipping addresses for fulfillment handoff.
