@@ -40,6 +40,10 @@
   },
   "packageManager": "npm@10.2.0",
   "overrides": {
+    "@hono/node-server": "1.19.14",
+    "express-rate-limit": "8.5.2",
+    "hono": "4.12.23",
+    "ip-address": "10.2.0",
     "react-test-renderer": "19.2.0"
   }
 }
