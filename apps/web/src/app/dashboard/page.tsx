@@ -201,6 +201,7 @@ function ActivationChecklist({
                   captureWebEvent("dashboard_activation_step_opened", {
                     complete: step.complete,
                     is_business: isBusiness,
+                    source: "checklist",
                     step: step.label,
                     workflow: workflowLabel,
                   })
@@ -241,6 +242,15 @@ function ActivationChecklist({
           <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-800">
             <Link
               href={nextStep.href}
+              onClick={() =>
+                captureWebEvent("dashboard_activation_step_opened", {
+                  complete: nextStep.complete,
+                  is_business: isBusiness,
+                  source: "continue_setup",
+                  step: nextStep.label,
+                  workflow: workflowLabel,
+                })
+              }
               className="inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-500 dark:text-violet-300 dark:hover:text-violet-200"
             >
               Continue setup: {nextStep.label}

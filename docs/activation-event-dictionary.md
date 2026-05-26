@@ -102,7 +102,7 @@ Events:
   - Key properties: `sample_type`, `use_case`.
 - `dashboard_activation_step_opened`
   - Fires when a dashboard user clicks an activation checklist step.
-  - Key properties: `complete`, `is_business`, `step`, `workflow`.
+  - Key properties: `complete`, `is_business`, `source`, `step`, `workflow`.
 - `teams_plan_started`
   - Fires when a billing-page visitor starts the Teams setup path.
   - Key properties: `source`.
