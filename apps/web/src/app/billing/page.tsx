@@ -19,7 +19,6 @@ import {
   Calendar,
   Infinity,
   Ticket,
-  Heart,
   Building2,
   Users,
 } from "lucide-react";
@@ -436,16 +435,8 @@ export default function BillingPage() {
               </div>
             )}
 
-            {/* Charity notice */}
-            <div className="mt-12 flex items-center justify-center gap-2 text-rose-400">
-              <Heart className="w-4 h-4 fill-current" />
-              <span className="text-sm font-medium">
-                10% of all proceeds go to Sick Kids Hospital
-              </span>
-            </div>
-
             {/* FAQ */}
-            <div className="mt-6 text-center text-sm text-muted-foreground">
+            <div className="mt-12 text-center text-sm text-muted-foreground">
               <p>
                 Questions? Contact us at{" "}
                 <a

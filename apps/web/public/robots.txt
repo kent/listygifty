@@ -11,9 +11,10 @@ Disallow: /gifts
 # AI Crawlers - explicitly allow public pages for AI search
 User-agent: GPTBot
 Allow: /
-Allow: /giving-pledge
+Allow: /integrations
 Allow: /login
 Allow: /signup
+Allow: /support
 Disallow: /api/
 Disallow: /dashboard
 Disallow: /holidays
@@ -24,9 +25,10 @@ Disallow: /gifts
 
 User-agent: ChatGPT-User
 Allow: /
-Allow: /giving-pledge
+Allow: /integrations
 Allow: /login
 Allow: /signup
+Allow: /support
 Disallow: /api/
 Disallow: /dashboard
 Disallow: /holidays
@@ -37,9 +39,10 @@ Disallow: /gifts
 
 User-agent: Claude-Web
 Allow: /
-Allow: /giving-pledge
+Allow: /integrations
 Allow: /login
 Allow: /signup
+Allow: /support
 Disallow: /api/
 Disallow: /dashboard
 Disallow: /holidays
@@ -50,9 +53,10 @@ Disallow: /gifts
 
 User-agent: Anthropic-AI
 Allow: /
-Allow: /giving-pledge
+Allow: /integrations
 Allow: /login
 Allow: /signup
+Allow: /support
 Disallow: /api/
 Disallow: /dashboard
 Disallow: /holidays
@@ -63,9 +67,10 @@ Disallow: /gifts
 
 User-agent: PerplexityBot
 Allow: /
-Allow: /giving-pledge
+Allow: /integrations
 Allow: /login
 Allow: /signup
+Allow: /support
 Disallow: /api/
 Disallow: /dashboard
 Disallow: /holidays
@@ -76,9 +81,10 @@ Disallow: /gifts
 
 User-agent: Google-Extended
 Allow: /
-Allow: /giving-pledge
+Allow: /integrations
 Allow: /login
 Allow: /signup
+Allow: /support
 Disallow: /api/
 Disallow: /dashboard
 Disallow: /holidays
@@ -92,4 +98,3 @@ Sitemap: https://listygifty.com/sitemap.xml
 # LLMs.txt - AI-readable site information
 # See: https://llmstxt.org/
 # This file provides context for AI systems about Listy Gifty
-

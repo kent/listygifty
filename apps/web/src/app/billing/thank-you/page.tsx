@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import confetti from "canvas-confetti";
-import { Crown, Sparkles, Gift, ArrowRight, Heart } from "lucide-react";
+import { Crown, Sparkles, Gift, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const CELEBRATION_COLORS = ["#a855f7", "#d946ef", "#ec4899", "#fbbf24", "#34d399"];
@@ -122,15 +122,10 @@ export default function ThankYouPage() {
           </Link>
         </Button>
 
-        {/* Charity notice */}
-        <div className="mt-12 flex items-center justify-center gap-2 text-rose-400 animate-in fade-in duration-700 delay-700">
-          <Heart className="w-4 h-4 fill-current" />
-          <span className="text-sm font-medium">
-            10% of your purchase goes to Sick Kids Hospital
-          </span>
+        <div className="mt-12 text-sm font-medium text-slate-500 dark:text-slate-400 animate-in fade-in duration-700 delay-700">
+          Use Premium across every list, exchange, and gift budget.
         </div>
       </div>
     </div>
   );
 }
-
