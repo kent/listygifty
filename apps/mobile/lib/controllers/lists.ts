@@ -577,6 +577,7 @@ export function useGiftDetailController() {
   const { giftId } = useLocalSearchParams<{ giftId: string }>();
   const router = useRouter();
   const { gifts, giftStatuses } = useServices();
+  const track = useAnalytics();
   const id = Number.parseInt(giftId ?? "", 10);
   const isValidGiftId = Number.isFinite(id);
 
@@ -649,7 +650,16 @@ export function useGiftDetailController() {
     setSaving(true);
 
     try {
-      await gifts.update(id, buildUpdateGiftPayload(form, selectedStatusId));
+      const previousStatusId = resource.data.gift.gift_status_id;
+      const gift = await gifts.update(id, buildUpdateGiftPayload(form, selectedStatusId));
+      if (previousStatusId !== selectedStatusId) {
+        track("mobile_gift_status_changed", {
+          from_status_id: previousStatusId,
+          gift_id: gift.id,
+          list_id: gift.holiday_id,
+          to_status_id: selectedStatusId,
+        });
+      }
       await haptics.success();
       router.back();
     } catch (saveError) {
@@ -659,7 +669,7 @@ export function useGiftDetailController() {
     } finally {
       setSaving(false);
     }
-  }, [form, gifts, id, resource.data.gift, router, selectedStatusId]);
+  }, [form, gifts, id, resource.data.gift, router, selectedStatusId, track]);
 
   const promptDelete = useCallback(() => {
     Alert.alert(
