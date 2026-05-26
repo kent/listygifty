@@ -106,24 +106,14 @@ function BusinessSignupContent() {
   );
   const [workspaceName, setWorkspaceName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const fromSignup = searchParams.get("from") === "signup";
   const selectedUseCase = getBusinessUseCase(selectedUseCaseId);
 
-  // If user is authenticated and came back from signup, show the workspace creation form
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      const fromSignup = searchParams.get("from") === "signup";
-      if (fromSignup) {
-        setShowForm(true);
-      }
-    }
-  }, [authLoading, isAuthenticated, searchParams]);
-
-  useEffect(() => {
-    if (showForm && !workspaceName.trim()) {
+    if (isAuthenticated && !workspaceName.trim()) {
       setWorkspaceName(selectedUseCase.workspaceName);
     }
-  }, [selectedUseCase.workspaceName, showForm, workspaceName]);
+  }, [isAuthenticated, selectedUseCase.workspaceName, workspaceName]);
 
   const handleStartSignup = () => {
     captureWebEvent("business_signup_started", {
@@ -184,7 +174,7 @@ function BusinessSignupContent() {
   }
 
   // Already authenticated - show workspace creation form
-  if (isAuthenticated && showForm) {
+  if (isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <div className="fixed inset-0 pointer-events-none">
@@ -208,10 +198,12 @@ function BusinessSignupContent() {
                 <CheckCircle className="h-8 w-8 text-green-500" />
               </div>
               <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white">
-                Account Created!
+                {fromSignup ? "Account Created!" : "Set Up Business Gifting"}
               </CardTitle>
               <CardDescription className="text-slate-600 dark:text-slate-400">
-                Now let&apos;s set up your business workspace
+                {fromSignup
+                  ? "Now let's set up your business workspace"
+                  : "Create a business workspace for the workflow you selected"}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
@@ -276,12 +268,6 @@ function BusinessSignupContent() {
         </div>
       </div>
     );
-  }
-
-  // Already authenticated but didn't come from signup - redirect to create workspace
-  if (isAuthenticated) {
-    router.push("/workspaces/new");
-    return null;
   }
 
   // Not authenticated - show business signup landing
