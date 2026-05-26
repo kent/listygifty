@@ -1,6 +1,6 @@
-# NiftyGifty Monorepo
+# Listy Gifty Monorepo
 
-NiftyGifty (Listy Gifty) is a monorepo with:
+Listy Gifty is a monorepo with:
 - `apps/api`: Rails API
 - `apps/web`: Next.js web app
 - `apps/mobile`: Expo/React Native mobile app

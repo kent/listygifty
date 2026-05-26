@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { BRAND_NAME } from '@/lib/brand';
 
 interface Slide {
   id: number;
@@ -218,7 +219,7 @@ export function DemoSlideshow({ onClose }: DemoSlideshowProps) {
     <div className="fixed inset-0 z-50 bg-slate-950">
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-4">
-          <span className="text-white font-semibold">ListyGifty Interactive Demo</span>
+          <span className="text-white font-semibold">{BRAND_NAME} Interactive Demo</span>
           <Button
             size="sm"
             variant="ghost"

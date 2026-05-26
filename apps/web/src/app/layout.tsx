@@ -6,6 +6,7 @@ import { Analytics } from "@/components/analytics";
 import { Providers } from "@/components/providers";
 import { JsonLd } from "@/components/json-ld";
 import { Footer } from "@/components/layout";
+import { BRAND_NAME, BRAND_TEAM_NAME } from "@/lib/brand";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-sans",
@@ -24,13 +25,13 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.length ? process.env.NEXT_PUBLI
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "Listy Gifty: Manage and Share Gift Lists",
-    template: "%s | Listy Gifty",
+    default: `${BRAND_NAME}: Manage and Share Gift Lists`,
+    template: `%s | ${BRAND_NAME}`,
   },
   description:
-    "Track gift ideas, manage budgets, and never forget a special occasion. Listy Gifty helps you organize thoughtful gifts for everyone you love.",
-  applicationName: "Listy Gifty",
-  authors: [{ name: "Listy Gifty Team" }],
+    `Track gift ideas, manage budgets, and never forget a special occasion. ${BRAND_NAME} helps you organize thoughtful gifts for everyone you love.`,
+  applicationName: BRAND_NAME,
+  authors: [{ name: BRAND_TEAM_NAME }],
   generator: "Next.js",
   keywords: [
     "gift planning",
@@ -45,8 +46,8 @@ export const metadata: Metadata = {
     "christmas gift list",
   ],
   referrer: "origin-when-cross-origin",
-  creator: "Listy Gifty",
-  publisher: "Listy Gifty",
+  creator: BRAND_NAME,
+  publisher: BRAND_NAME,
   formatDetection: {
     email: false,
     address: false,
@@ -60,8 +61,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: baseUrl,
-    siteName: "Listy Gifty",
-    title: "Listy Gifty - Gift Planning Made Simple",
+    siteName: BRAND_NAME,
+    title: `${BRAND_NAME} - Gift Planning Made Simple`,
     description:
       "Track gift ideas, manage budgets, and never forget a special occasion.",
     images: [
@@ -69,13 +70,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Listy Gifty - Gift Planning Made Simple",
+        alt: `${BRAND_NAME} - Gift Planning Made Simple`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Listy Gifty - Gift Planning Made Simple",
+    title: `${BRAND_NAME} - Gift Planning Made Simple`,
     description:
       "Track gift ideas, manage budgets, and never forget a special occasion.",
     images: ["/og-image.png"],
@@ -123,7 +124,7 @@ export default function RootLayout({
           data={{
             "@context": "https://schema.org",
             "@type": "Organization",
-            name: "Listy Gifty",
+            name: BRAND_NAME,
             url: baseUrl,
             logo: `${baseUrl}/icon-512.png`,
             sameAs: [
@@ -131,7 +132,7 @@ export default function RootLayout({
               "https://github.com/listygifty", // Placeholder
             ],
             description:
-              "Listy Gifty helps you organize thoughtful gifts for everyone you love.",
+              `${BRAND_NAME} helps you organize thoughtful gifts for everyone you love.`,
           }}
         />
         <Providers>

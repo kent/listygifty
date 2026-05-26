@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { ApiKey } from "@niftygifty/types";
+import { BRAND_NAME } from "@/lib/brand";
 
 export function ApiKeysSection() {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
@@ -171,7 +172,7 @@ export function ApiKeysSection() {
                     <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm">
                       <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                       <p className="text-amber-800 dark:text-amber-200">
-                        Store this key securely. It provides full access to your NiftyGifty account.
+                        Store this key securely. It provides full access to your {BRAND_NAME} account.
                       </p>
                     </div>
                   </div>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { DemoSlideshow } from './demo-slideshow';
+import { BRAND_NAME } from '@/lib/brand';
 
 const demoSteps = [
   {
@@ -33,7 +34,7 @@ export function InteractiveDemo() {
       <section className="container mx-auto px-4 py-20">
         <div className="text-center max-w-4xl mx-auto">
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
-            Try ListyGifty in{" "}
+            Try {BRAND_NAME} in{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">
               60 Seconds
             </span>

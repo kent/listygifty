@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { WishlistWithItems, StandaloneWishlistItem, GuestClaimRequest } from "@niftygifty/types";
+import { BRAND_NAME } from "@/lib/brand";
 
 function PriorityBadge({ priority }: { priority: number }) {
   if (priority === 2) {
@@ -250,7 +251,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-2">
             <Gift className="h-6 w-6 text-violet-600 dark:text-violet-400" />
-            <span className="font-semibold text-slate-900 dark:text-white">NiftyGifty</span>
+            <span className="font-semibold text-slate-900 dark:text-white">{BRAND_NAME}</span>
           </div>
         </div>
       </header>
