@@ -48,6 +48,7 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
    - A household is activated when it has at least one list, three people, and five gifts.
    - Secondary activation: at least one shared collaborator or one gift exchange participant.
    - Track the funnel as list created -> people added -> gift ideas captured -> gift status changed.
+   - Mobile now emits activation events for list creation, person creation, gift capture, exchange creation, participant invites, wishlist additions, exclusions, and match draw.
 
 ## Business GTM Checklist
 
@@ -109,4 +110,5 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 
 - Mobile exchange participants can now build their wishlist during the inviting phase, before matches are drawn.
 - Mobile exchange owners can now add and remove exclusion rules before drawing matches.
+- Mobile now tracks core activation and exchange-funnel events through PostHog when analytics is configured.
 - Web and MCP dependencies were refreshed to reduce actionable high-severity advisories; the remaining root npm audit item is Next's exact nested PostCSS dependency, where npm currently suggests a breaking downgrade rather than a safe patch.
