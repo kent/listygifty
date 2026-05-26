@@ -84,7 +84,8 @@ Business success metric:
 
 1. Quick capture persistence
    - Save the minimum idea first, then encourage adding details.
-   - Consider a default "Ideas" status and default active list.
+   - Mobile quick capture now remembers the last selected list and falls back to the highest-priority active list.
+   - Consider a default "Ideas" status when custom statuses are empty or confusing.
 
 2. Exchange completion
    - Make invite, wishlist, draw, and match visibility testable end to end on mobile.
@@ -128,6 +129,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile list-detail gift cards now support quick status advancement and reuse the status-change analytics event.
 - Mobile quick gift capture now exposes save actions before optional details.
 - Mobile quick gift capture now tracks time-to-save for the core capture event.
+- Mobile quick gift capture now remembers the last selected list for repeat idea entry.
 - Mobile now tracks core activation, gift status-change, and exchange-funnel events through PostHog when analytics is configured.
 - Web homepage and business signup now present the first three business gifting playbooks as concrete entry points.
 - Web business signup now tracks playbook-specific start and workspace-created events.
