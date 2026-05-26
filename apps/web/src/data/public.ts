@@ -53,6 +53,5 @@ export const DEFAULT_CHARITY_STATS: CharityStats = {
   goal_amount: 1000,
   premium_count: 0,
   currency: "CAD",
-  year: 2025,
+  year: 2026,
 };
-

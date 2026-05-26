@@ -89,7 +89,7 @@ export default function NewListScreen() {
 
         <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Name *</Text>
         <TextInput
-          placeholder="e.g., Christmas 2025"
+          placeholder="e.g., Christmas 2026"
           placeholderTextColor={colors.placeholder}
           value={controller.form.name}
           onChangeText={(value) => controller.updateField("name", value)}
@@ -109,7 +109,7 @@ export default function NewListScreen() {
           Date (YYYY-MM-DD)
         </Text>
         <TextInput
-          placeholder="e.g., 2025-12-25"
+          placeholder="e.g., 2026-12-25"
           placeholderTextColor={colors.placeholder}
           value={controller.form.date}
           onChangeText={(value) => controller.updateField("date", value)}

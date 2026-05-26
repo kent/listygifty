@@ -84,7 +84,7 @@ export default function NewExchangePage() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Family Christmas 2025"
+                  placeholder="e.g., Family Christmas 2026"
                   className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                   required
                 />
