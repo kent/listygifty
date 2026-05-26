@@ -1,4 +1,5 @@
 require "test_helper"
+require "csv"
 
 class ImportsExportsApiTest < ActionDispatch::IntegrationTest
   setup do
@@ -59,11 +60,31 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
   # ============================================================================
 
   test "exports gifts returns CSV" do
+    people(:mom).update!(email: "mom@example.com")
+    @workspace.update!(workspace_type: "business")
+    company_profile = CompanyProfile.create!(workspace: @workspace, name: "Acme Gifts")
+    address = company_profile.addresses.create!(
+      label: "Mom Home",
+      street_line_1: "123 Maple Street",
+      city: "Toronto",
+      state: "ON",
+      postal_code: "M5V 2T6",
+      country: "CA"
+    )
+    GiftRecipient.find_by!(gift: gifts(:sweater), person: people(:mom)).update!(
+      shipping_address: address
+    )
+
     get "/exports/gifts",
       headers: @auth_headers,
       params: { holiday_id: @holiday.id }
     assert_response :success
     assert_match "text/csv", response.content_type
+
+    csv = CSV.parse(response.body, headers: true)
+    sweater = csv.find { |row| row["Name"] == "Wool Sweater" }
+    assert_equal "mom@example.com", sweater["Recipient Emails"]
+    assert_includes sweater["Shipping Addresses"], "123 Maple Street"
   end
 
   test "exports gifts returns 404 without holiday_id" do
