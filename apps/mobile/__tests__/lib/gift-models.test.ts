@@ -92,7 +92,7 @@ describe("gift model helpers", () => {
       {
         name: "  Nintendo Switch  ",
         description: "  OLED model  ",
-        link: "  https://example.com/switch  ",
+        link: "  example.com/switch  ",
         cost: " 299.99 ",
         giftStatusId: 3,
         recipientIds: [10],

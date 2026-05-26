@@ -14,6 +14,7 @@ import { useTheme } from "@/lib/theme";
 import { getGiftStatusColors } from "@/lib/gift-status-colors";
 import { formatCurrency } from "@/lib/formatters";
 import { openExternalUrl } from "@/lib/linking";
+import { getMerchantLabel } from "@/lib/url";
 
 interface GiftItemProps {
   item: Gift;
@@ -32,6 +33,7 @@ export function GiftItem({ item, onPress, onDelete }: GiftItemProps) {
   };
 
   const statusColors = getGiftStatusColors(item.gift_status?.name || "", colors, isDark);
+  const linkLabel = getMerchantLabel(item.link) ?? "Link";
 
   const handleDelete = async () => {
     await haptics.medium();
@@ -154,7 +156,7 @@ export function GiftItem({ item, onPress, onDelete }: GiftItemProps) {
             style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
           >
             <Ionicons name="link-outline" size={14} color={colors.primary} />
-            <Text style={{ color: colors.primary, fontSize: 13 }}>Link</Text>
+            <Text style={{ color: colors.primary, fontSize: 13 }}>{linkLabel}</Text>
           </HapticPressable>
         ) : null}
 

@@ -73,7 +73,13 @@ describe("GiftItem", () => {
 
   it("renders link button when link is present", () => {
     render(<GiftItem item={mockGift} />);
-    expect(screen.getByText("Link")).toBeTruthy();
+    expect(screen.getByText("nintendo.com")).toBeTruthy();
+  });
+
+  it("renders known merchant labels for gift links", () => {
+    const giftWithAmazonLink = { ...mockGift, link: "amazon.com/dp/example" };
+    render(<GiftItem item={giftWithAmazonLink} />);
+    expect(screen.getByText("Amazon")).toBeTruthy();
   });
 
   it("does not show link button when no link", () => {

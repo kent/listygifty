@@ -1,7 +1,8 @@
 import { Alert, Linking } from "react-native";
+import { normalizeExternalUrl } from "@/lib/url";
 
 export async function openExternalUrl(rawUrl: string): Promise<void> {
-  const url = rawUrl.trim();
+  const url = normalizeExternalUrl(rawUrl);
   if (!url) {
     return;
   }

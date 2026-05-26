@@ -5,6 +5,7 @@ import type {
   UpdateGiftRequest,
 } from "@niftygifty/types";
 import { parseOptionalDecimal, trim, trimOrUndefined } from "./inputs";
+import { normalizeExternalUrl } from "@/lib/url";
 
 export interface GiftFormValues {
   name: string;
@@ -66,7 +67,7 @@ function buildSharedGiftPayload(
   return {
     name: trim(values.name),
     description: trimOrUndefined(values.description),
-    link: trimOrUndefined(values.link),
+    link: trimOrUndefined(normalizeExternalUrl(values.link)),
     cost: parseOptionalDecimal(values.cost),
     gift_status_id: giftStatusId,
     recipient_ids: values.recipientIds.length > 0 ? values.recipientIds : undefined,
