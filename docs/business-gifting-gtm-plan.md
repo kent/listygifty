@@ -130,3 +130,4 @@ Measurement:
 - Business signup and import dialogs now include instrumented sample CSV downloads, with business signup downloads tagged by selected use case, tailored to the selected playbook, and using seeded gift statuses.
 - The app review seed now includes a short business demo dataset that mirrors the remote-team holiday box workflow.
 - Business dashboards now surface the selected signup use case and tailor activation targets by workflow: holiday boxes, new-hire kits, or milestones.
+- Dashboard activation-step clicks now track completion status and workflow so onboarding drop-off can be segmented by playbook.

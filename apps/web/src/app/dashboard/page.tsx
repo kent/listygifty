@@ -197,6 +197,14 @@ function ActivationChecklist({
               <Link
                 key={step.label}
                 href={step.href}
+                onClick={() =>
+                  captureWebEvent("dashboard_activation_step_opened", {
+                    complete: step.complete,
+                    is_business: isBusiness,
+                    step: step.label,
+                    workflow: workflowLabel,
+                  })
+                }
                 className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-slate-700 dark:hover:bg-slate-900"
               >
                 <StatusIcon
