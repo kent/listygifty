@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { ArrowRight, Calendar, CheckCircle2, Circle, Gift as GiftIcon, Loader2, Plus, Users } from "lucide-react";
 import { GiftTodoList } from "@/components/gift-todo-list";
 import { getBusinessUseCaseLabel } from "@/lib/business-use-cases";
+import { captureWebEvent } from "@/lib/analytics";
 import type { Holiday, Person } from "@niftygifty/types";
 
 const HOLIDAY_ICONS: Record<string, string> = {
@@ -265,6 +266,13 @@ function UpcomingDatesCard({ dates }: { dates: UpcomingDate[] }) {
             <Link
               key={item.id}
               href={item.href}
+              onClick={() =>
+                captureWebEvent("dashboard_upcoming_date_opened", {
+                  days_until: item.daysUntil,
+                  kind: item.kind,
+                  source: "dashboard",
+                })
+              }
               className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-slate-700 dark:hover:bg-slate-900"
             >
               <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">

@@ -42,6 +42,9 @@ Events:
 - `person_calendar_exported`
   - Fires when a web user downloads an `.ics` calendar event for a person birthday or milestone.
   - Key properties: `person_id`, `kind`.
+- `dashboard_upcoming_date_opened`
+  - Fires when a web user opens a list, birthday, or milestone from the dashboard upcoming-dates card.
+  - Key properties: `kind`, `days_until`, `source`.
 
 ## Exchange Funnel
 
