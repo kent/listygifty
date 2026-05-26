@@ -169,6 +169,52 @@ export default function ExchangeDetailScreen() {
         </View>
       ) : null}
 
+      {controller.readinessItems.length > 0 ? (
+        <View
+          style={{
+            backgroundColor: colors.card,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+            padding: 14,
+            marginBottom: 16,
+            gap: 10,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Ionicons name="checkmark-done-outline" size={20} color={colors.primary} />
+            <Text style={{ color: colors.text, fontSize: 15, fontWeight: "700" }}>
+              Draw Readiness
+            </Text>
+          </View>
+          {controller.readinessItems.map((item) => (
+            <View
+              key={item.key}
+              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+            >
+              <Ionicons
+                name={item.complete ? "checkmark-circle" : "ellipse-outline"}
+                size={18}
+                color={item.complete ? colors.success : colors.muted}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.text, fontSize: 14, fontWeight: "600" }}>
+                  {item.label}
+                </Text>
+                <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
+                  {item.detail}
+                </Text>
+              </View>
+              {!item.required ? (
+                <Text style={{ color: colors.muted, fontSize: 11, fontWeight: "600" }}>
+                  Optional
+                </Text>
+              ) : null}
+            </View>
+          ))}
+        </View>
+      ) : null}
+
       {controller.startBlocker ? (
         <View
           style={{

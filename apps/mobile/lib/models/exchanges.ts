@@ -4,6 +4,7 @@ import type {
   ExchangeExclusion,
   CreateGiftExchangeRequest,
   GiftExchange,
+  GiftExchangeWithParticipants,
 } from "@niftygifty/types";
 import { parseOptionalDecimal, trim, trimOrUndefined } from "./inputs";
 
@@ -48,6 +49,14 @@ export const EMPTY_EXCHANGE_EXCLUSION_FORM_VALUES: ExchangeExclusionFormValues =
   participantAId: null,
   participantBId: null,
 };
+
+export interface ExchangeReadinessItem {
+  key: "participants" | "acceptances" | "wishlists" | "exclusions";
+  label: string;
+  detail: string;
+  complete: boolean;
+  required: boolean;
+}
 
 export function buildExchangeSections(exchanges: GiftExchange[]): ExchangeSection[] {
   const owned = exchanges.filter((exchange) => exchange.is_owner);
@@ -116,6 +125,59 @@ export function getExchangeStartBlocker(exchange: GiftExchange): string | null {
   }
 
   return "Review participants before drawing matches.";
+}
+
+export function getExchangeReadinessItems(
+  exchange: GiftExchangeWithParticipants,
+  exclusionCount = 0
+): ExchangeReadinessItem[] {
+  if (!exchange.is_owner || exchange.status === "active" || exchange.status === "completed") {
+    return [];
+  }
+
+  const participantCount = exchange.exchange_participants.length || exchange.participant_count;
+  const acceptedParticipants = exchange.exchange_participants.filter(
+    (participant) => participant.status === "accepted"
+  );
+  const participantsReady = participantCount >= 3;
+  const acceptancesReady = participantsReady && acceptedParticipants.length === participantCount;
+  const acceptedWishlists = acceptedParticipants.filter(
+    (participant) => participant.wishlist_count > 0
+  ).length;
+  const wishlistsReady =
+    acceptedParticipants.length > 0 &&
+    acceptedParticipants.every((participant) => participant.wishlist_count > 0);
+
+  return [
+    {
+      key: "participants",
+      label: "Participants",
+      detail: `${Math.min(participantCount, 3)}/3 minimum`,
+      complete: participantsReady,
+      required: true,
+    },
+    {
+      key: "acceptances",
+      label: "Accepted invites",
+      detail: `${acceptedParticipants.length}/${participantCount || 0} accepted`,
+      complete: acceptancesReady,
+      required: true,
+    },
+    {
+      key: "wishlists",
+      label: "Wishlists started",
+      detail: `${acceptedWishlists}/${acceptedParticipants.length || 0} accepted participants`,
+      complete: wishlistsReady,
+      required: false,
+    },
+    {
+      key: "exclusions",
+      label: "Exclusion rules",
+      detail: `${exclusionCount} rule${exclusionCount === 1 ? "" : "s"}`,
+      complete: true,
+      required: false,
+    },
+  ];
 }
 
 export function buildCreateExchangePayload(

@@ -38,6 +38,7 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
 3. Gift exchange readiness
    - Mobile users can create an exchange with name, date, and budget range.
    - Owners can add participants, send invites, add exclusion rules, verify accepted count, and draw matches.
+   - Mobile exchange detail now shows an owner-facing draw readiness checklist for participant count, accepted invites, wishlists, and exclusion rules.
    - Participants can accept invites, add wishlist items before the draw, and view their match after the draw.
    - Before launch, complete the rehearsal in `docs/testflight-exchange-rehearsal.md`.
 
@@ -133,6 +134,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 
 - Mobile exchange participants can now build their wishlist during the inviting phase, before matches are drawn.
 - Mobile exchange owners can now add and remove exclusion rules before drawing matches.
+- Mobile exchange owners now see draw readiness checklist items before matching.
 - Mobile list cards now surface date-based deadline reminders, and date-only formatting is normalized to local calendar days.
 - Mobile people now support birthday entry and upcoming birthday reminders.
 - Web people now support birthday display and editing.

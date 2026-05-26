@@ -8,6 +8,7 @@ import {
   buildExchangeInviteUrl,
   canStartExchange,
   getExchangeStartBlocker,
+  getExchangeReadinessItems,
   getExchangeWishlistSubtitle,
   hasExchangeExclusionBetween,
 } from "@/lib/models";
@@ -234,5 +235,45 @@ describe("exchange model helpers", () => {
         })
       )
     ).toBeNull();
+  });
+
+  it("builds exchange readiness items for owners before drawing", () => {
+    const exchange = buildExchange({
+      status: "inviting",
+      participant_count: 3,
+      accepted_count: 2,
+    }) as GiftExchange & { exchange_participants: ExchangeParticipant[] };
+    exchange.exchange_participants = [
+      buildParticipant({ id: 1, status: "accepted", wishlist_count: 1 }),
+      buildParticipant({ id: 2, status: "accepted", wishlist_count: 0 }),
+      buildParticipant({ id: 3, status: "invited", wishlist_count: 0 }),
+    ];
+
+    expect(getExchangeReadinessItems(exchange, 1)).toEqual([
+      expect.objectContaining({
+        complete: true,
+        detail: "3/3 minimum",
+        key: "participants",
+        required: true,
+      }),
+      expect.objectContaining({
+        complete: false,
+        detail: "2/3 accepted",
+        key: "acceptances",
+        required: true,
+      }),
+      expect.objectContaining({
+        complete: false,
+        detail: "1/2 accepted participants",
+        key: "wishlists",
+        required: false,
+      }),
+      expect.objectContaining({
+        complete: true,
+        detail: "1 rule",
+        key: "exclusions",
+        required: false,
+      }),
+    ]);
   });
 });

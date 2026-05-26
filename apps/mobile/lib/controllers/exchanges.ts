@@ -19,6 +19,7 @@ import {
   buildExchangeSections,
   EMPTY_EXCHANGE_FORM_VALUES,
   EMPTY_WISHLIST_ITEM_FORM_VALUES,
+  getExchangeReadinessItems,
   getExchangeStartBlocker,
   hasExchangeExclusionBetween,
   isValidIsoDate,
@@ -399,6 +400,9 @@ export function useExchangeDetailController() {
     loading: isValidExchangeId && resource.loading,
     openExclusionModal,
     refreshing: resource.refreshing,
+    readinessItems: resource.data
+      ? getExchangeReadinessItems(resource.data, exclusionsResource.data.length)
+      : [],
     removeExclusion,
     retryLoad: resource.reload,
     shareParticipantInvite,
