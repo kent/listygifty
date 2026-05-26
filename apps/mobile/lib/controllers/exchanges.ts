@@ -10,6 +10,7 @@ import {
   buildCreateExchangeParticipantPayload,
   buildExchangeInviteUrl,
   buildCreateWishlistItemPayload,
+  buildRepeatWishlistItemFormValues,
   canStartExchange,
   EMPTY_EXCHANGE_PARTICIPANT_FORM_VALUES,
   buildExchangeSections,
@@ -37,6 +38,8 @@ type ExchangeMatchState = {
   exchange: GiftExchangeWithParticipants | null;
   matchWishlist: WishlistItem[];
 };
+
+type WishlistItemSaveMode = "done" | "another";
 
 export function useExchangesController() {
   const router = useRouter();
@@ -399,14 +402,15 @@ export function useNewWishlistItemController() {
   const participantId = participant_id ? Number.parseInt(participant_id, 10) : Number.NaN;
 
   const [form, setForm] = useState<WishlistItemFormValues>(EMPTY_WISHLIST_ITEM_FORM_VALUES);
-  const [loading, setLoading] = useState(false);
+  const [savingMode, setSavingMode] = useState<WishlistItemSaveMode | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const loading = savingMode !== null;
 
   const updateField = useCallback((field: keyof WishlistItemFormValues, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
   }, []);
 
-  const handleSubmit = useCallback(async () => {
+  const submitItem = useCallback(async (mode: WishlistItemSaveMode) => {
     if (!form.name.trim()) {
       setError("Name is required");
       return;
@@ -424,7 +428,7 @@ export function useNewWishlistItemController() {
     }
 
     setError(null);
-    setLoading(true);
+    setSavingMode(mode);
 
     try {
       await wishlistItems.create(
@@ -432,12 +436,16 @@ export function useNewWishlistItemController() {
         participantId,
         buildCreateWishlistItemPayload(form)
       );
-      router.back();
+      if (mode === "another") {
+        setForm(buildRepeatWishlistItemFormValues());
+      } else {
+        router.back();
+      }
     } catch (submitError) {
       console.error("Failed to add wishlist item", submitError);
       setError("Failed to add item");
     } finally {
-      setLoading(false);
+      setSavingMode(null);
     }
   }, [exchangeId, form, participantId, router, wishlistItems]);
 
@@ -445,8 +453,10 @@ export function useNewWishlistItemController() {
     error,
     form,
     handleCancel: () => router.back(),
-    handleSubmit,
+    handleSubmit: () => submitItem("done"),
+    handleSubmitAndAddAnother: () => submitItem("another"),
     loading,
+    savingMode,
     updateField,
   };
 }

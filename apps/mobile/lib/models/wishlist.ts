@@ -25,3 +25,7 @@ export function buildCreateWishlistItemPayload(
     price: parseOptionalDecimal(values.price),
   };
 }
+
+export function buildRepeatWishlistItemFormValues(): WishlistItemFormValues {
+  return EMPTY_WISHLIST_ITEM_FORM_VALUES;
+}

@@ -135,11 +135,33 @@ export default function NewWishlistItemScreen() {
             alignItems: "center",
           }}
         >
-          {controller.loading ? (
+          {controller.savingMode === "done" ? (
             <ActivityIndicator color={colors.textInverse} />
           ) : (
             <Text style={{ color: colors.textInverse, fontSize: 16, fontWeight: "600" }}>
               Add to Wishlist
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={controller.handleSubmitAndAddAnother}
+          disabled={controller.loading}
+          style={{
+            backgroundColor: colors.input,
+            padding: 16,
+            borderRadius: 8,
+            alignItems: "center",
+            marginTop: 10,
+            borderWidth: 1,
+            borderColor: colors.primary,
+          }}
+        >
+          {controller.savingMode === "another" ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : (
+            <Text style={{ color: colors.primary, fontSize: 16, fontWeight: "600" }}>
+              Save & Add Another
             </Text>
           )}
         </TouchableOpacity>
