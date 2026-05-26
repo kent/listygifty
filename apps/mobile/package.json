@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.28.4",
-    "@clerk/clerk-expo": "^2.10.1",
+    "@clerk/clerk-expo": "^2.19.36",
     "@niftygifty/api-client": "file:../../packages/api-client",
     "@niftygifty/services": "file:../../packages/services",
     "@niftygifty/types": "file:../../packages/types",
