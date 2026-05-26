@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Alert } from "react-native";
+import { Alert, Share } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
 import { haptics } from "@/lib/haptics";
@@ -8,6 +8,7 @@ import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
   buildCreateExchangePayload,
   buildCreateExchangeParticipantPayload,
+  buildExchangeInviteUrl,
   buildCreateWishlistItemPayload,
   canStartExchange,
   EMPTY_EXCHANGE_PARTICIPANT_FORM_VALUES,
@@ -20,6 +21,7 @@ import {
   type ExchangeParticipantFormValues,
   type ExchangeFormValues,
   type ExchangeInviteDetails,
+  type ExchangeParticipant,
   type GiftExchange,
   type GiftExchangeWithParticipants,
   type WishlistItem,
@@ -170,6 +172,28 @@ export function useExchangeDetailController() {
     );
   }, [exchangeId, giftExchanges, resource]);
 
+  const shareParticipantInvite = useCallback(
+    async (participant: ExchangeParticipant) => {
+      if (!participant.invite_token) {
+        return;
+      }
+
+      const inviteUrl = buildExchangeInviteUrl(participant.invite_token);
+      const exchangeName = resource.data?.name || "my gift exchange";
+
+      try {
+        await Share.share({
+          message: `Join "${exchangeName}" on Listy Gifty: ${inviteUrl}`,
+          url: inviteUrl,
+        });
+        await haptics.selection();
+      } catch (shareError) {
+        console.error("Failed to share exchange invite", shareError);
+      }
+    },
+    [resource.data?.name]
+  );
+
   return {
     canStartExchange: resource.data ? canStartExchange(resource.data) : false,
     error: !isValidExchangeId ? "Invalid exchange ID" : resource.error,
@@ -182,6 +206,7 @@ export function useExchangeDetailController() {
     loading: isValidExchangeId && resource.loading,
     refreshing: resource.refreshing,
     retryLoad: resource.reload,
+    shareParticipantInvite,
     starting,
     startBlocker: resource.data ? getExchangeStartBlocker(resource.data) : null,
     triggerRefresh: resource.refresh,

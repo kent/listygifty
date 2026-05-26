@@ -261,6 +261,11 @@ export default function ExchangeDetailScreen() {
           <ParticipantListItem
             key={participant.id}
             participant={participant}
+            onShareInvite={
+              exchange.is_owner && participant.invite_token
+                ? () => controller.shareParticipantInvite(participant)
+                : undefined
+            }
             showWishlistCount={isActive}
           />
         ))}

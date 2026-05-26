@@ -1,14 +1,19 @@
-import { View, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { ExchangeParticipant } from "@niftygifty/types";
 import { useTheme } from "@/lib/theme";
 
 interface ParticipantListItemProps {
   participant: ExchangeParticipant;
+  onShareInvite?: () => void;
   showWishlistCount?: boolean;
 }
 
-export function ParticipantListItem({ participant, showWishlistCount = false }: ParticipantListItemProps) {
+export function ParticipantListItem({
+  participant,
+  onShareInvite,
+  showWishlistCount = false,
+}: ParticipantListItemProps) {
   const { colors, isDark } = useTheme();
 
   const statusIcons: Record<string, { name: keyof typeof Ionicons.glyphMap; color: string }> = {
@@ -40,20 +45,50 @@ export function ParticipantListItem({ participant, showWishlistCount = false }: 
         </Text>
       </View>
 
-      {showWishlistCount && participant.wishlist_count > 0 ? (
-        <View
-          style={{
-            backgroundColor: isDark ? "#4c1d95" : "#f3e8ff",
-            borderRadius: 12,
-            paddingHorizontal: 8,
-            paddingVertical: 2,
-          }}
-        >
-          <Text style={{ color: isDark ? "#a78bfa" : "#7c3aed", fontSize: 12, fontWeight: "600" }}>
-            {participant.wishlist_count} items
-          </Text>
-        </View>
-      ) : null}
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        {showWishlistCount && participant.wishlist_count > 0 ? (
+          <View
+            style={{
+              backgroundColor: isDark ? "#4c1d95" : "#f3e8ff",
+              borderRadius: 12,
+              paddingHorizontal: 8,
+              paddingVertical: 2,
+            }}
+          >
+            <Text
+              style={{
+                color: isDark ? "#a78bfa" : "#7c3aed",
+                fontSize: 12,
+                fontWeight: "600",
+              }}
+            >
+              {participant.wishlist_count} items
+            </Text>
+          </View>
+        ) : null}
+
+        {onShareInvite ? (
+          <TouchableOpacity
+            onPress={onShareInvite}
+            accessibilityRole="button"
+            accessibilityLabel={`Share invite for ${participant.display_name || participant.name}`}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
+              borderRadius: 12,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              backgroundColor: colors.primarySurface,
+            }}
+          >
+            <Ionicons name="share-outline" size={14} color={colors.primary} />
+            <Text style={{ color: colors.primary, fontSize: 12, fontWeight: "700" }}>
+              Share
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
     </View>
   );
 }

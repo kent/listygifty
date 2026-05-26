@@ -5,6 +5,8 @@ import type {
 } from "@niftygifty/types";
 import { parseOptionalDecimal, trim, trimOrUndefined } from "./inputs";
 
+const EXCHANGE_INVITE_BASE_URL = "https://listygifty.com/join/exchange";
+
 export type ExchangeSection = {
   key: "owned" | "participating";
   title: string;
@@ -104,4 +106,8 @@ export function buildCreateExchangeParticipantPayload(
     name: trim(values.name),
     email: trim(values.email),
   };
+}
+
+export function buildExchangeInviteUrl(inviteToken: string): string {
+  return `${EXCHANGE_INVITE_BASE_URL}/${encodeURIComponent(trim(inviteToken))}`;
 }

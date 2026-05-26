@@ -3,6 +3,7 @@ import {
   buildCreateExchangeParticipantPayload,
   buildCreateExchangePayload,
   buildExchangeSections,
+  buildExchangeInviteUrl,
   canStartExchange,
   getExchangeStartBlocker,
 } from "@/lib/models";
@@ -86,6 +87,12 @@ describe("exchange model helpers", () => {
       name: "Alex Parker",
       email: "alex@example.com",
     });
+  });
+
+  it("builds a public exchange invite URL", () => {
+    expect(buildExchangeInviteUrl(" invite token ")).toBe(
+      "https://listygifty.com/join/exchange/invite%20token"
+    );
   });
 
   it("shows the start action only for ready owned exchanges", () => {
