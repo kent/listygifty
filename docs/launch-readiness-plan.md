@@ -36,7 +36,7 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
 3. Gift exchange readiness
    - Mobile users can create an exchange with name, date, and budget range.
    - Owners can add participants, send invites, verify accepted count, and draw matches.
-   - Participants can accept invites, add wishlist items, and view their match after the draw.
+   - Participants can accept invites, add wishlist items before the draw, and view their match after the draw.
    - Before launch, test one complete exchange with at least four participants and one exclusion.
 
 4. App Store readiness
@@ -82,6 +82,7 @@ Business success metric:
    - Make invite, wishlist, draw, and match visibility testable end to end on mobile.
    - Add owner-facing readiness states that explain why an exchange cannot be drawn yet.
    - Add copy/share controls for participant invite links for cases where email delivery fails.
+   - Add mobile exclusion management before promising family Secret Santa parity.
 
 3. Calendar and reminders
    - Surface upcoming birthdays and gift deadlines before purchase windows close.
@@ -103,3 +104,8 @@ Business CTA:
 > Run employee gifting without the spreadsheet.
 
 Do not lead with AI. AI is a helpful assistant layer after the core gift-planning loop works.
+
+## Recent Progress Notes
+
+- Mobile exchange participants can now build their wishlist during the inviting phase, before matches are drawn.
+- Web and MCP dependencies were refreshed to reduce actionable high-severity advisories; the remaining root npm audit item is Next's exact nested PostCSS dependency, where npm currently suggests a breaking downgrade rather than a safe patch.
