@@ -10,6 +10,7 @@
       "env": {
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
         "EXPO_PUBLIC_API_URL": "https://staging.api.listygifty.com",
+        "EXPO_PUBLIC_WEB_APP_URL": "https://staging.listygifty.com",
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsubGlzdHlnaWZ0eS5jb20k"
       }
     },
@@ -18,6 +19,7 @@
       "env": {
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
         "EXPO_PUBLIC_API_URL": "https://staging.api.listygifty.com",
+        "EXPO_PUBLIC_WEB_APP_URL": "https://staging.listygifty.com",
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsubGlzdHlnaWZ0eS5jb20k"
       }
     },
@@ -27,6 +29,7 @@
       "env": {
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
         "EXPO_PUBLIC_API_URL": "https://staging.api.listygifty.com",
+        "EXPO_PUBLIC_WEB_APP_URL": "https://staging.listygifty.com",
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsubGlzdHlnaWZ0eS5jb20k"
       }
     },
@@ -35,6 +38,7 @@
       "env": {
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
         "EXPO_PUBLIC_API_URL": "https://api.listygifty.com",
+        "EXPO_PUBLIC_WEB_APP_URL": "https://listygifty.com",
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsubGlzdHlnaWZ0eS5jb20k"
       }
     }

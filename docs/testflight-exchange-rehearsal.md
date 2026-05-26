@@ -8,6 +8,7 @@ This script validates the first public promise for gift exchanges: create an exc
 - EAS submit profile: `production`
 - App Store Connect group: `Internal Testers`
 - Internal tester: `kent.fenwick@gmail.com`
+- Invite link base URL: `EXPO_PUBLIC_WEB_APP_URL` from the selected EAS profile.
 
 Command from `apps/mobile`:
 
@@ -50,7 +51,7 @@ Use four real tester accounts or aliases that can receive invite links.
 ## Exit Criteria
 
 - No participant needs a spreadsheet, group thread, or manual match assignment.
-- Invite links work from the native share sheet and the copied-link fallback.
+- Invite links use the selected build profile's web app URL and work from the native share sheet and the copied-link fallback.
 - Wishlist entry works before draw.
 - Exclusion rules affect the draw.
 - Match reveal works for every participant.

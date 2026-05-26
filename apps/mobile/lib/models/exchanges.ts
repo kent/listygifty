@@ -7,8 +7,9 @@ import type {
   GiftExchangeWithParticipants,
 } from "@niftygifty/types";
 import { parseOptionalDecimal, trim, trimOrUndefined } from "./inputs";
+import { runtimeConfig } from "@/lib/runtime-config";
 
-const EXCHANGE_INVITE_BASE_URL = "https://listygifty.com/join/exchange";
+const EXCHANGE_INVITE_PATH = "/join/exchange";
 
 export type ExchangeSection = {
   key: "owned" | "participating";
@@ -232,5 +233,6 @@ export function hasExchangeExclusionBetween(
 }
 
 export function buildExchangeInviteUrl(inviteToken: string): string {
-  return `${EXCHANGE_INVITE_BASE_URL}/${encodeURIComponent(trim(inviteToken))}`;
+  const baseUrl = runtimeConfig.webAppUrl.replace(/\/+$/, "");
+  return `${baseUrl}${EXCHANGE_INVITE_PATH}/${encodeURIComponent(trim(inviteToken))}`;
 }
