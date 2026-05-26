@@ -81,6 +81,12 @@ Sales message:
 - What happens when someone declines, moves, or joins late?
 - What would make this worth paying for before the next gifting season?
 
+## Funnel Measurement
+
+- Homepage playbook CTAs route into business signup with a `use_case` value for each offer.
+- Business signup tracks when a buyer starts the flow and when a workspace is created, including the selected use case.
+- The next GTM dashboard should segment workspace starts by remote holiday boxes, onboarding kits, and milestone gifting.
+
 ## Product Gaps to Close
 
 - Business import for people and addresses.
