@@ -9,6 +9,7 @@ This script validates the first public promise for gift exchanges: create an exc
 - App Store Connect group: `Internal Testers`
 - Internal tester: `kent.fenwick@gmail.com`
 - Invite link base URL: `EXPO_PUBLIC_WEB_APP_URL` from the selected EAS profile.
+- iOS universal links: `listygifty.com` and `staging.listygifty.com` serve Apple App Site Association for `/join/exchange/*`.
 
 Command from `apps/mobile`:
 

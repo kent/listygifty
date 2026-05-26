@@ -168,6 +168,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile exchange draw analytics now use the documented draw-completed event, and invite sharing is tracked from the native share sheet.
 - Mobile exchange owners can now copy participant invite links as a fallback for TestFlight rehearsal invites.
 - Mobile exchange invite links now use the EAS profile web app URL so staging and production builds share the matching web domain.
+- Web now serves Apple App Site Association for exchange invite universal links.
 - Web homepage and business signup now present the first three business gifting playbooks as concrete entry points.
 - Web business signup now tracks playbook-specific start and workspace-created events.
 - Web business dashboards now display the stored signup workflow beside the business activation checklist.

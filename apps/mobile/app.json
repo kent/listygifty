@@ -18,7 +18,8 @@
       "bundleIdentifier": "com.ewakened.niftygifty",
       "usesAppleSignIn": true,
       "associatedDomains": [
-        "applinks:app.listygifty.com"
+        "applinks:listygifty.com",
+        "applinks:staging.listygifty.com"
       ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -38,7 +39,12 @@
           "data": [
             {
               "scheme": "https",
-              "host": "app.listygifty.com",
+              "host": "listygifty.com",
+              "pathPrefix": "/join/exchange"
+            },
+            {
+              "scheme": "https",
+              "host": "staging.listygifty.com",
               "pathPrefix": "/join/exchange"
             }
           ],
