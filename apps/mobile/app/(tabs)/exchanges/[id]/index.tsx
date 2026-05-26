@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { ParticipantListItem } from "@/components/ParticipantListItem";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { formatBudgetRange, formatLongDate } from "@/lib/formatters";
+import { canManageExchangeWishlist, getExchangeWishlistSubtitle } from "@/lib/models";
 import { useTheme } from "@/lib/theme";
 import { useExchangeDetailController } from "@/lib/controllers";
 
@@ -49,6 +50,8 @@ export default function ExchangeDetailScreen() {
   const canAddParticipants =
     exchange.is_owner && exchange.status !== "active" && exchange.status !== "completed";
   const hasMatch = myParticipant?.matched_participant_id != null;
+  const canManageWishlist = canManageExchangeWishlist(exchange);
+  const shouldShowParticipantActions = canManageWishlist || (isActive && hasMatch);
 
   return (
     <ScrollView
@@ -107,34 +110,36 @@ export default function ExchangeDetailScreen() {
         ) : null}
       </View>
 
-      {isActive && myParticipant ? (
+      {shouldShowParticipantActions ? (
         <View style={{ gap: 12, marginBottom: 24 }}>
-          <TouchableOpacity
-            onPress={controller.goToWishlist}
-            style={{
-              backgroundColor: colors.primary,
-              padding: 16,
-              borderRadius: 12,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              <Ionicons name="list-outline" size={24} color={colors.textInverse} />
-              <View>
-                <Text style={{ color: colors.textInverse, fontSize: 16, fontWeight: "600" }}>
-                  My Wishlist
-                </Text>
-                <Text style={{ color: colors.primaryLight, fontSize: 12 }}>
-                  {myParticipant.wishlist_count} items
-                </Text>
+          {canManageWishlist ? (
+            <TouchableOpacity
+              onPress={controller.goToWishlist}
+              style={{
+                backgroundColor: colors.primary,
+                padding: 16,
+                borderRadius: 12,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                <Ionicons name="list-outline" size={24} color={colors.textInverse} />
+                <View>
+                  <Text style={{ color: colors.textInverse, fontSize: 16, fontWeight: "600" }}>
+                    My Wishlist
+                  </Text>
+                  <Text style={{ color: colors.primaryLight, fontSize: 12 }}>
+                    {getExchangeWishlistSubtitle(exchange)}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textInverse} />
-          </TouchableOpacity>
+              <Ionicons name="chevron-forward" size={20} color={colors.textInverse} />
+            </TouchableOpacity>
+          ) : null}
 
-          {hasMatch ? (
+          {isActive && hasMatch ? (
             <TouchableOpacity
               onPress={controller.goToMatch}
               style={{

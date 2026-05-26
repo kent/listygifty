@@ -62,6 +62,24 @@ export function canStartExchange(exchange: GiftExchange): boolean {
   );
 }
 
+export function canManageExchangeWishlist(exchange: GiftExchange): boolean {
+  return (
+    exchange.my_participant?.status === "accepted" &&
+    exchange.status !== "completed"
+  );
+}
+
+export function getExchangeWishlistSubtitle(exchange: GiftExchange): string {
+  const count = exchange.my_participant?.wishlist_count ?? 0;
+  const itemLabel = `${count} item${count === 1 ? "" : "s"}`;
+
+  if (exchange.status === "active") {
+    return itemLabel;
+  }
+
+  return `${itemLabel} before matches are drawn`;
+}
+
 export function getExchangeStartBlocker(exchange: GiftExchange): string | null {
   if (!exchange.is_owner || exchange.status === "active" || exchange.status === "completed") {
     return null;

@@ -1,11 +1,13 @@
-import type { GiftExchange } from "@niftygifty/types";
+import type { ExchangeParticipant, GiftExchange } from "@niftygifty/types";
 import {
+  canManageExchangeWishlist,
   buildCreateExchangeParticipantPayload,
   buildCreateExchangePayload,
   buildExchangeSections,
   buildExchangeInviteUrl,
   canStartExchange,
   getExchangeStartBlocker,
+  getExchangeWishlistSubtitle,
 } from "@/lib/models";
 
 function buildExchange(overrides: Partial<GiftExchange> = {}): GiftExchange {
@@ -22,6 +24,23 @@ function buildExchange(overrides: Partial<GiftExchange> = {}): GiftExchange {
     accepted_count: overrides.accepted_count || 0,
     can_start: overrides.can_start ?? false,
     my_participant: overrides.my_participant ?? null,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+    ...overrides,
+  };
+}
+
+function buildParticipant(overrides: Partial<ExchangeParticipant> = {}): ExchangeParticipant {
+  return {
+    id: overrides.id || 10,
+    gift_exchange_id: overrides.gift_exchange_id || 1,
+    user_id: overrides.user_id ?? 2,
+    name: overrides.name || "Alex Parker",
+    email: overrides.email || "alex@example.com",
+    status: overrides.status || "accepted",
+    display_name: overrides.display_name || "Alex Parker",
+    has_user: overrides.has_user ?? true,
+    wishlist_count: overrides.wishlist_count ?? 0,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
     ...overrides,
@@ -102,6 +121,36 @@ describe("exchange model helpers", () => {
     expect(
       canStartExchange(buildExchange({ is_owner: true, can_start: true, status: "active" }))
     ).toBe(false);
+  });
+
+  it("allows accepted participants to manage wishlists before matches are drawn", () => {
+    expect(
+      canManageExchangeWishlist(
+        buildExchange({
+          status: "inviting",
+          my_participant: buildParticipant({ wishlist_count: 2 }),
+        })
+      )
+    ).toBe(true);
+
+    expect(
+      canManageExchangeWishlist(
+        buildExchange({
+          status: "inviting",
+          my_participant: buildParticipant({ status: "invited" }),
+        })
+      )
+    ).toBe(false);
+  });
+
+  it("explains when wishlist items should be added", () => {
+    const exchange = buildExchange({
+      status: "inviting",
+      my_participant: buildParticipant({ wishlist_count: 1 }),
+    });
+
+    expect(getExchangeWishlistSubtitle(exchange)).toBe("1 item before matches are drawn");
+    expect(getExchangeWishlistSubtitle({ ...exchange, status: "active" })).toBe("1 item");
   });
 
   it("explains why an owner cannot draw matches yet", () => {
