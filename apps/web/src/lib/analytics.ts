@@ -1,4 +1,4 @@
-type AnalyticsProperties = Record<string, boolean | number | string | null | undefined>;
+export type AnalyticsProperties = Record<string, boolean | number | string | null | undefined>;
 
 declare global {
   interface Window {

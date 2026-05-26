@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { TrackedLink } from "@/components/tracked-link";
 import { AUTH_ROUTES } from "@/services";
 
 export const metadata: Metadata = {
@@ -144,7 +145,13 @@ export default function IntegrationsPage() {
               asChild
               className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/25"
             >
-              <Link href={AUTH_ROUTES.signUp}>Get Started Free</Link>
+              <TrackedLink
+                href={AUTH_ROUTES.signUp}
+                analyticsEvent="integration_cta_clicked"
+                analyticsProperties={{ location: "header", destination: "signup" }}
+              >
+                Get Started Free
+              </TrackedLink>
             </Button>
           </div>
         </nav>
@@ -178,12 +185,16 @@ export default function IntegrationsPage() {
                 size="lg"
                 className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-lg px-8 py-6 h-auto shadow-xl shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300"
               >
-                <Link href={AUTH_ROUTES.signUp}>
+                <TrackedLink
+                  href={AUTH_ROUTES.signUp}
+                  analyticsEvent="integration_cta_clicked"
+                  analyticsProperties={{ location: "hero", destination: "signup" }}
+                >
                   Get Started Free
                   <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
-                </Link>
+                </TrackedLink>
               </Button>
               <Button
                 variant="outline"
@@ -191,7 +202,13 @@ export default function IntegrationsPage() {
                 asChild
                 className="border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-lg px-8 py-6 h-auto"
               >
-                <Link href="#connect">How to Connect</Link>
+                <TrackedLink
+                  href="#connect"
+                  analyticsEvent="integration_how_to_connect_clicked"
+                  analyticsProperties={{ location: "hero", destination: "connect_section" }}
+                >
+                  How to Connect
+                </TrackedLink>
               </Button>
             </div>
           </div>
@@ -417,12 +434,16 @@ export default function IntegrationsPage() {
                 size="lg"
                 className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-lg px-8 py-6 h-auto shadow-xl"
               >
-                <Link href={AUTH_ROUTES.signUp}>
+                <TrackedLink
+                  href={AUTH_ROUTES.signUp}
+                  analyticsEvent="integration_cta_clicked"
+                  analyticsProperties={{ location: "final_cta", destination: "signup" }}
+                >
                   Get Started Free
                   <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
-                </Link>
+                </TrackedLink>
               </Button>
             </div>
           </div>

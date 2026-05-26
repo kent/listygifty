@@ -120,6 +120,8 @@ Measurement:
 - `gift_csv_exported`
 - `gift_bulk_status_updated`
 - `fulfillment_report_viewed`
+- `integration_cta_clicked`
+- `integration_how_to_connect_clicked`
 
 ## Next GTM Bets
 
@@ -131,3 +133,4 @@ Measurement:
 - The app review seed now includes a short business demo dataset that mirrors the remote-team holiday box workflow.
 - Business dashboards now surface the selected signup use case and tailor activation targets by workflow: holiday boxes, new-hire kits, or milestones.
 - Dashboard activation-step clicks now track completion status and workflow so onboarding drop-off can be segmented by playbook.
+- Integration-page signup and connect-section clicks are now tracked so MCP interest can be segmented from ordinary signup demand.
