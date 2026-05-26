@@ -17,13 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LayoutList, User, Scale, Plus, X } from "lucide-react";
+import { AlertTriangle, ExternalLink, LayoutList, User, Scale, Plus, X } from "lucide-react";
 import type { Gift, Person, GiftStatus } from "@niftygifty/types";
 
 interface HolidayReportsProps {
   gifts: Gift[];
   people: Person[];
   statuses: GiftStatus[];
+  showAddresses?: boolean;
 }
 
 interface StatusSummary {
@@ -35,6 +36,11 @@ interface PersonStats {
   summaryByStatus: Map<number, StatusSummary>;
   totalCount: number;
   totalCost: number;
+}
+
+interface GiftException {
+  gift: Gift;
+  issues: string[];
 }
 
 function formatCurrency(amount: number): string {
@@ -71,6 +77,33 @@ function calculatePersonStats(
   );
 
   return { summaryByStatus, totalCount, totalCost };
+}
+
+function getGiftExceptions(gifts: Gift[], showAddresses: boolean): GiftException[] {
+  return gifts
+    .map((gift) => {
+      const issues: string[] = [];
+
+      if (gift.recipients.length === 0) {
+        issues.push("No recipient");
+      }
+      if (!gift.cost) {
+        issues.push("Missing cost");
+      }
+      if (!gift.link) {
+        issues.push("Missing link");
+      }
+      if (
+        showAddresses &&
+        gift.gift_recipients.length > 0 &&
+        gift.gift_recipients.some((recipient) => !recipient.shipping_address_id)
+      ) {
+        issues.push("Missing shipping address");
+      }
+
+      return { gift, issues };
+    })
+    .filter((exception) => exception.issues.length > 0);
 }
 
 function PersonSummaryTable({
@@ -431,12 +464,78 @@ function CompareView({
   );
 }
 
-type ViewType = "summary" | "person" | "compare";
+function ExceptionsView({
+  gifts,
+  showAddresses,
+}: {
+  gifts: Gift[];
+  showAddresses: boolean;
+}) {
+  const exceptions = useMemo(
+    () => getGiftExceptions(gifts, showAddresses),
+    [gifts, showAddresses]
+  );
+
+  if (exceptions.length === 0) {
+    return (
+      <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-12 text-center">
+        <AlertTriangle className="h-12 w-12 mx-auto text-emerald-500 mb-4" />
+        <p className="text-muted-foreground">
+          No fulfillment exceptions found for this gift list.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/30 hover:bg-muted/30">
+            <TableHead className="font-semibold">Gift</TableHead>
+            <TableHead className="font-semibold">Recipients</TableHead>
+            <TableHead className="font-semibold">Status</TableHead>
+            <TableHead className="font-semibold">Issues</TableHead>
+            <TableHead className="w-[80px] text-right font-semibold">Link</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {exceptions.map(({ gift, issues }) => (
+            <TableRow key={gift.id}>
+              <TableCell className="font-medium">{gift.name}</TableCell>
+              <TableCell>
+                {gift.recipients.map((recipient) => recipient.name).join(", ") || "None"}
+              </TableCell>
+              <TableCell>{gift.gift_status.name}</TableCell>
+              <TableCell>{issues.join(", ")}</TableCell>
+              <TableCell className="text-right">
+                {gift.link ? (
+                  <a
+                    href={gift.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex text-violet-500 hover:text-violet-400"
+                    aria-label={`Open ${gift.name} link`}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                ) : null}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+type ViewType = "summary" | "person" | "compare" | "exceptions";
 
 export function HolidayReports({
   gifts,
   people,
   statuses,
+  showAddresses = false,
 }: HolidayReportsProps) {
   const [currentView, setCurrentView] = useState<ViewType>("summary");
 
@@ -474,6 +573,14 @@ export function HolidayReports({
           <Scale className="h-4 w-4" />
           Compare
         </Button>
+        <Button
+          variant={currentView === "exceptions" ? "secondary" : "ghost"}
+          className="w-full justify-start gap-2"
+          onClick={() => setCurrentView("exceptions")}
+        >
+          <AlertTriangle className="h-4 w-4" />
+          Exceptions
+        </Button>
       </div>
 
       {/* Main Content */}
@@ -499,9 +606,11 @@ export function HolidayReports({
             statuses={sortedStatuses}
           />
         )}
+        {currentView === "exceptions" && (
+          <ExceptionsView gifts={gifts} showAddresses={showAddresses} />
+        )}
       </div>
     </div>
   );
 }
-
 
