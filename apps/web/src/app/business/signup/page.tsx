@@ -37,7 +37,10 @@ const BUSINESS_USE_CASE_ICONS: Record<BusinessUseCaseId, LucideIcon> = {
   milestones: Calendar,
 };
 
-function downloadBusinessSampleCsv(sampleType: "people" | "gifts") {
+function downloadBusinessSampleCsv(
+  sampleType: "people" | "gifts",
+  useCaseId: BusinessUseCaseId
+) {
   if (sampleType === "people") {
     downloadCsvFile("listy_gifty_people_sample.csv", [
       "name,email,relationship,age,gender,birthday,milestone_label,milestone_date,notes,address_label,street_line_1,street_line_2,city,state,postal_code,country,is_default",
@@ -54,6 +57,7 @@ function downloadBusinessSampleCsv(sampleType: "people" | "gifts") {
 
   captureWebEvent("business_sample_csv_downloaded", {
     sample_type: sampleType,
+    use_case: useCaseId,
   });
 }
 
@@ -328,7 +332,7 @@ function BusinessSignupContent() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => downloadBusinessSampleCsv("people")}
+                  onClick={() => downloadBusinessSampleCsv("people", selectedUseCaseId)}
                   className="gap-2 border-slate-200 dark:border-slate-700"
                 >
                   <Download className="h-4 w-4" />
@@ -338,7 +342,7 @@ function BusinessSignupContent() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => downloadBusinessSampleCsv("gifts")}
+                  onClick={() => downloadBusinessSampleCsv("gifts", selectedUseCaseId)}
                   className="gap-2 border-slate-200 dark:border-slate-700"
                 >
                   <Download className="h-4 w-4" />
