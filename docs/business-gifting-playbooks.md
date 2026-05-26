@@ -62,7 +62,7 @@ Trigger:
 - Anniversaries, promotions, parental leave, and major milestones are easy to miss until it is too late.
 
 Workflow:
-1. Add employees as people with key dates in notes until calendar fields exist.
+1. Add employees as people with birthdays, milestone labels, and milestone dates.
 2. Create quarterly milestone gift lists.
 3. Assign gifts to recipients and owners.
 4. Review upcoming milestone lists monthly.
@@ -95,7 +95,7 @@ Sales message:
 ## Product Gaps to Close
 
 - Business import now creates people and optional shipping addresses from one CSV, and imported addresses become recipient defaults for new gifts.
-- Calendar/deadline fields for people and lists. People now have birthday dates; business-specific milestone dates are still needed.
+- Calendar/deadline fields for people and lists. People now have birthdays plus generic milestone labels and dates for work anniversaries, promotions, and onboarding moments.
 - Fulfillment handoff view is now available in gift list reports, with recipient rows, shipping-address readiness, exception counts, and direct gift CSV export.
 - Bulk gift creation is now available from gift CSV import; bulk status updates are still needed.
 - Simple team-level reporting now covers count, spend, status, and fulfillment exceptions from the gift list reports tab.

@@ -52,6 +52,14 @@ import { RELATIONSHIP_CATEGORIES } from "@niftygifty/types";
 import { cn } from "@/lib/utils";
 
 type NavTab = "received" | "giving" | "holidays" | "suggestions" | "stats" | "about";
+type PersonUpdateInput = {
+  name?: string;
+  age?: number | null;
+  gender?: string | null;
+  birthday?: string | null;
+  milestone_label?: string | null;
+  milestone_date?: string | null;
+};
 
 function getHolidayIcon(icon?: string | null) {
   const icons: Record<string, string> = {
@@ -284,13 +292,15 @@ function AboutSection({
   onDelete,
 }: {
   person: PersonWithGifts;
-  onUpdate: (updates: { name?: string; age?: number | null; gender?: string | null; birthday?: string | null }) => Promise<void>;
+  onUpdate: (updates: PersonUpdateInput) => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
   const [name, setName] = useState(person.name);
   const [age, setAge] = useState(person.age?.toString() ?? "");
   const [gender, setGender] = useState(person.gender ?? "");
   const [birthday, setBirthday] = useState(person.birthday ?? "");
+  const [milestoneLabel, setMilestoneLabel] = useState(person.milestone_label ?? "");
+  const [milestoneDate, setMilestoneDate] = useState(person.milestone_date ?? "");
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -298,7 +308,9 @@ function AboutSection({
   const hasChanges = name !== person.name || 
     age !== (person.age?.toString() ?? "") || 
     gender !== (person.gender ?? "") ||
-    birthday !== (person.birthday ?? "");
+    birthday !== (person.birthday ?? "") ||
+    milestoneLabel !== (person.milestone_label ?? "") ||
+    milestoneDate !== (person.milestone_date ?? "");
 
   const hasGifts = person.gifts_received.length > 0 || person.gifts_given.length > 0;
 
@@ -311,6 +323,8 @@ function AboutSection({
         age: age ? parseInt(age, 10) : null,
         gender: gender.trim() || null,
         birthday: birthday || null,
+        milestone_label: milestoneLabel.trim() || null,
+        milestone_date: milestoneDate || null,
       });
     } finally {
       setSaving(false);
@@ -375,6 +389,28 @@ function AboutSection({
               onChange={(e) => setBirthday(e.target.value)}
               className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
             />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="milestone-label" className="text-slate-700 dark:text-slate-300">Milestone Label</Label>
+              <Input
+                id="milestone-label"
+                value={milestoneLabel}
+                onChange={(e) => setMilestoneLabel(e.target.value)}
+                placeholder="Work anniversary"
+                className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="milestone-date" className="text-slate-700 dark:text-slate-300">Milestone Date</Label>
+              <Input
+                id="milestone-date"
+                type="date"
+                value={milestoneDate}
+                onChange={(e) => setMilestoneDate(e.target.value)}
+                className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+              />
+            </div>
           </div>
           <Button
             onClick={handleSave}
@@ -548,13 +584,15 @@ export default function PersonDetailPage() {
     }
   };
 
-  const handlePersonUpdate = async (updates: { name?: string; age?: number | null; gender?: string | null; birthday?: string | null }) => {
+  const handlePersonUpdate = async (updates: PersonUpdateInput) => {
     if (!person) return;
     const apiUpdates = {
       name: updates.name,
       age: updates.age ?? undefined,
       gender: updates.gender ?? undefined,
       birthday: updates.birthday,
+      milestone_label: updates.milestone_label,
+      milestone_date: updates.milestone_date,
     };
     const updated = await peopleService.update(personId, apiUpdates);
     setPerson({ ...person, ...updated });

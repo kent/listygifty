@@ -7,6 +7,8 @@ export interface PersonFormValues {
   relationship: string;
   email: string;
   birthday: string;
+  milestoneLabel: string;
+  milestoneDate: string;
   notes: string;
 }
 
@@ -96,6 +98,8 @@ export const EMPTY_PERSON_FORM_VALUES: PersonFormValues = {
   relationship: "",
   email: "",
   birthday: "",
+  milestoneLabel: "",
+  milestoneDate: "",
   notes: "",
 };
 
@@ -265,6 +269,45 @@ export function getBirthdayReminder(
   return null;
 }
 
+export function getMilestoneReminder(
+  person: Pick<Person, "milestone_date" | "milestone_label">,
+  now: Date = new Date()
+): string | null {
+  const milestoneParts = parseBirthdayParts(person.milestone_date);
+  if (!milestoneParts) {
+    return null;
+  }
+
+  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  let milestoneUtc = Date.UTC(
+    now.getFullYear(),
+    milestoneParts.monthIndex,
+    milestoneParts.day
+  );
+
+  if (milestoneUtc < todayUtc) {
+    milestoneUtc = Date.UTC(
+      now.getFullYear() + 1,
+      milestoneParts.monthIndex,
+      milestoneParts.day
+    );
+  }
+
+  const daysAway = Math.round((milestoneUtc - todayUtc) / 86_400_000);
+  const label = person.milestone_label || "Milestone";
+  if (daysAway === 0) {
+    return `${label} today`;
+  }
+  if (daysAway === 1) {
+    return `${label} tomorrow`;
+  }
+  if (daysAway <= 30) {
+    return `${label} in ${daysAway} days`;
+  }
+
+  return null;
+}
+
 export function getBirthdayReminderSchedule(
   person: Pick<Person, "birthday">,
   hour = DEFAULT_BIRTHDAY_REMINDER_HOUR
@@ -300,6 +343,8 @@ export function buildPersonFormValues(person?: Person | null): PersonFormValues 
       : (person.relationship || "").trim(),
     email: person.email || "",
     birthday: person.birthday || "",
+    milestoneLabel: person.milestone_label || "",
+    milestoneDate: person.milestone_date || "",
     notes: person.notes || "",
   };
 }
@@ -319,6 +364,8 @@ export function buildCreatePersonPayload(
     relationship: trimOrUndefined(values.relationship),
     email: trimOrUndefined(values.email),
     birthday: trimOrUndefined(values.birthday),
+    milestone_label: trimOrUndefined(values.milestoneLabel),
+    milestone_date: trimOrUndefined(values.milestoneDate),
     notes: trimOrUndefined(values.notes),
   };
 }
@@ -331,6 +378,8 @@ export function buildUpdatePersonPayload(
     relationship: trim(values.relationship),
     email: trim(values.email),
     birthday: trim(values.birthday) || null,
+    milestone_label: trim(values.milestoneLabel) || null,
+    milestone_date: trim(values.milestoneDate) || null,
     notes: trim(values.notes),
   };
 }

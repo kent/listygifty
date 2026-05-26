@@ -10,6 +10,8 @@ describe("people-form helpers", () => {
       relationship: "  ",
       email: " marie@gifts.com ",
       birthday: " ",
+      milestoneLabel: " ",
+      milestoneDate: " ",
       notes: "",
     });
 
@@ -18,6 +20,8 @@ describe("people-form helpers", () => {
       email: "marie@gifts.com",
       relationship: undefined,
       birthday: undefined,
+      milestone_label: undefined,
+      milestone_date: undefined,
       notes: undefined,
     });
   });
@@ -28,6 +32,8 @@ describe("people-form helpers", () => {
       relationship: "   ",
       email: "",
       birthday: "1991-03-14",
+      milestoneLabel: " Work anniversary ",
+      milestoneDate: "2026-09-01",
       notes: "  updated note  ",
     });
 
@@ -36,6 +42,8 @@ describe("people-form helpers", () => {
       relationship: "",
       email: "",
       birthday: "1991-03-14",
+      milestone_label: "Work anniversary",
+      milestone_date: "2026-09-01",
       notes: "updated note",
     });
   });

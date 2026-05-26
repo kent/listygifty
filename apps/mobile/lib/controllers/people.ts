@@ -119,6 +119,7 @@ export function usePeopleController() {
         track("mobile_person_created", {
           has_email: Boolean(form.email.trim()),
           has_birthday: Boolean(form.birthday.trim()),
+          has_milestone: Boolean(form.milestoneDate.trim()),
           has_relationship: Boolean(form.relationship.trim()),
           person_id: created.id,
           source: "people_form",

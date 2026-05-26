@@ -16,7 +16,7 @@ Events:
   - Key properties: `list_id`, `has_date`, `source`, `template_key`.
 - `mobile_person_created`
   - Fires when a mobile person is created.
-  - Key properties: `person_id`, `has_email`, `has_birthday`, `has_relationship`, `source`.
+  - Key properties: `person_id`, `has_email`, `has_birthday`, `has_milestone`, `has_relationship`, `source`.
 - `mobile_gift_idea_captured`
   - Fires when a mobile gift is created from quick capture or list detail.
   - Key properties: `gift_id`, `list_id`, `status_id`, `source`, `save_mode`, `time_to_save_ms`, `has_recipient`, `has_giver`, `has_link`, `has_cost`.

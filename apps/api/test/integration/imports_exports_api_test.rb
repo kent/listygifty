@@ -14,7 +14,7 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
   # ============================================================================
 
   test "imports people processes CSV" do
-    csv_content = "name,email,birthday\nJohn Doe,john@example.com,1990-01-15\nJane Smith,jane@example.com,1985-06-20"
+    csv_content = "name,email,birthday,milestone_label,milestone_date\nJohn Doe,john@example.com,1990-01-15,Work anniversary,2026-09-01\nJane Smith,jane@example.com,1985-06-20,,"
     file = Rack::Test::UploadedFile.new(
       StringIO.new(csv_content),
       "text/csv",
@@ -28,6 +28,8 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
     assert_response :success
     john = @workspace.people.find_by!(email: "john@example.com")
     assert_equal Date.new(1990, 1, 15), john.birthday
+    assert_equal "Work anniversary", john.milestone_label
+    assert_equal Date.new(2026, 9, 1), john.milestone_date
   end
 
   test "imports people creates business addresses from CSV" do
@@ -177,6 +179,8 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
       email: "jamie@example.com",
       relationship: "co-worker",
       birthday: Date.new(1991, 3, 14),
+      milestone_label: "Work anniversary",
+      milestone_date: Date.new(2026, 9, 1),
       user: @user,
       default_shipping_address: address
     )
@@ -188,6 +192,8 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
     jamie = csv.find { |row| row["Email"] == "jamie@example.com" }
     assert_equal "Jamie Home", jamie["Address Label"]
     assert_equal "1991-03-14", jamie["Birthday"]
+    assert_equal "Work anniversary", jamie["Milestone Label"]
+    assert_equal "2026-09-01", jamie["Milestone Date"]
     assert_equal "123 Maple Street", jamie["Street Line 1"]
     assert_equal "Unit 4", jamie["Street Line 2"]
     assert_equal "Toronto", jamie["City"]

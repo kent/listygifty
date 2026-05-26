@@ -1,5 +1,16 @@
 class PersonBlueprint < ApplicationBlueprint
-  fields :name, :email, :relationship, :age, :gender, :birthday, :notes, :default_shipping_address_id, :created_at, :updated_at
+  fields :name,
+         :email,
+         :relationship,
+         :age,
+         :gender,
+         :birthday,
+         :milestone_label,
+         :milestone_date,
+         :notes,
+         :default_shipping_address_id,
+         :created_at,
+         :updated_at
 
   field :default_shipping_address do |person, options|
     next unless person.default_shipping_address

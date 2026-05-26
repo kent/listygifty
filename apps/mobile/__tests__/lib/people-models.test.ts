@@ -5,6 +5,7 @@ import {
   filterPeople,
   getBirthdayReminder,
   getBirthdayReminderSchedule,
+  getMilestoneReminder,
   getPeopleGroupCounts,
   type PeopleGroupFilter,
 } from "@/lib/models";
@@ -18,6 +19,8 @@ function buildPerson(overrides: Partial<Person> = {}): Person {
     age: null,
     gender: null,
     birthday: overrides.birthday || null,
+    milestone_label: overrides.milestone_label || null,
+    milestone_date: overrides.milestone_date || null,
     notes: overrides.notes || null,
     default_shipping_address_id: null,
     default_shipping_address: null,
@@ -65,6 +68,8 @@ describe("people model helpers", () => {
         relationship: " Partner ",
         email: "partner@example.com",
         birthday: "1991-03-14",
+        milestone_label: "Work anniversary",
+        milestone_date: "2026-09-01",
         notes: "  note  ",
       })
     );
@@ -74,6 +79,8 @@ describe("people model helpers", () => {
       relationship: "partner",
       email: "partner@example.com",
       birthday: "1991-03-14",
+      milestoneLabel: "Work anniversary",
+      milestoneDate: "2026-09-01",
       notes: "  note  ",
     });
   });
@@ -84,6 +91,8 @@ describe("people model helpers", () => {
       relationship: "",
       email: "",
       birthday: "",
+      milestoneLabel: "",
+      milestoneDate: "",
       notes: "",
     });
   });
@@ -111,5 +120,22 @@ describe("people model helpers", () => {
       minute: 0,
       monthIndex: 2,
     });
+  });
+
+  it.each([
+    ["2026-05-26", "Work anniversary today"],
+    ["2021-05-27", "Work anniversary tomorrow"],
+    ["2021-06-10", "Work anniversary in 15 days"],
+    ["2021-07-01", null],
+  ])("returns milestone reminder for %s", (milestoneDate, expected) => {
+    expect(
+      getMilestoneReminder(
+        buildPerson({
+          milestone_label: "Work anniversary",
+          milestone_date: milestoneDate,
+        }),
+        new Date("2026-05-26T12:00:00Z")
+      )
+    ).toBe(expected);
   });
 });

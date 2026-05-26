@@ -105,7 +105,9 @@ Business success metric:
    - Surface upcoming birthdays and gift deadlines before purchase windows close.
    - Mobile list cards now show overdue, due today, due tomorrow, and due-within-30-days reminders.
    - Mobile people now support recipient birthdays and show upcoming birthday reminders.
+   - Mobile people now support recipient milestone labels and dates, with upcoming milestone reminders.
    - Web people cards and detail pages now display and edit birthdays.
+   - Web people cards and detail pages now display and edit milestone labels and dates.
    - Mobile list detail now schedules native local notifications for dated gift lists.
    - Mobile people can now schedule native yearly birthday reminders.
    - Next reminder step: external calendar sync.

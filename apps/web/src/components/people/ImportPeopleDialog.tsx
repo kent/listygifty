@@ -116,9 +116,9 @@ export function ImportPeopleDialog({
 
   const handleDownloadTemplate = () => {
     downloadCsvFile("people_import_template.csv", [
-      "name,email,relationship,age,gender,birthday,notes,address_label,street_line_1,street_line_2,city,state,postal_code,country,is_default",
-      "Jamie Lee,jamie@example.com,coworker,,female,1991-03-14,Remote holiday box recipient,Jamie home,123 Main Street,,Toronto,ON,M5V 2T6,CA,true",
-      "Alex Chen,alex@example.com,coworker,,male,,,,,,,,",
+      "name,email,relationship,age,gender,birthday,milestone_label,milestone_date,notes,address_label,street_line_1,street_line_2,city,state,postal_code,country,is_default",
+      "Jamie Lee,jamie@example.com,coworker,,female,1991-03-14,Work anniversary,2026-09-01,Remote holiday box recipient,Jamie home,123 Main Street,,Toronto,ON,M5V 2T6,CA,true",
+      "Alex Chen,alex@example.com,coworker,,male,,,,,,,,,,,,",
     ]);
     captureWebEvent("people_csv_template_downloaded", {
       owner_assigned: Boolean(ownerId),

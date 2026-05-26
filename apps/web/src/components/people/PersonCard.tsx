@@ -9,9 +9,9 @@ interface PersonCardProps {
   person: Person;
 }
 
-function formatBirthday(birthday: string | null) {
-  if (!birthday) return null;
-  const [year, month, day] = birthday.split("-").map(Number);
+function formatMonthDay(date: string | null) {
+  if (!date) return null;
+  const [year, month, day] = date.split("-").map(Number);
   if (!year || !month || !day) return null;
 
   return new Date(year, month - 1, day).toLocaleDateString("en-US", {
@@ -21,7 +21,8 @@ function formatBirthday(birthday: string | null) {
 }
 
 export function PersonCard({ person }: PersonCardProps) {
-  const birthday = formatBirthday(person.birthday);
+  const birthday = formatMonthDay(person.birthday);
+  const milestone = formatMonthDay(person.milestone_date);
 
   return (
     <Link href={`/people/${person.id}`}>
@@ -37,7 +38,7 @@ export function PersonCard({ person }: PersonCardProps) {
                 <Users className="h-3.5 w-3.5 text-slate-500" />
               )}
             </div>
-            <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
               {person.relationship && (
                 <span className="capitalize">{person.relationship}</span>
               )}
@@ -51,6 +52,12 @@ export function PersonCard({ person }: PersonCardProps) {
                 <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
                   <Calendar className="h-3 w-3" />
                   {birthday}
+                </span>
+              )}
+              {milestone && (
+                <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                  <Calendar className="h-3 w-3" />
+                  {person.milestone_label || "Milestone"}: {milestone}
                 </span>
               )}
             </div>

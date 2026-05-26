@@ -3,7 +3,7 @@
 require "csv"
 
 class CsvImportService
-  PEOPLE_HEADERS = %w[name email relationship age gender birthday notes].freeze
+  PEOPLE_HEADERS = %w[name email relationship age gender birthday milestone_label milestone_date notes].freeze
   ADDRESS_HEADERS = %w[address_label street_line_1 street_line_2 city state postal_code country is_default].freeze
   ADDRESS_REQUIRED_HEADERS = %w[street_line_1 city postal_code].freeze
   VALID_HEADERS = (PEOPLE_HEADERS + ADDRESS_HEADERS).freeze
@@ -88,7 +88,9 @@ class CsvImportService
       relationship: row["relationship"]&.strip.presence,
       age: parse_age(row["age"]),
       gender: row["gender"]&.strip.presence,
-      birthday: parse_birthday(row["birthday"], index),
+      birthday: parse_date(row["birthday"], index, "Birthday"),
+      milestone_label: row["milestone_label"]&.strip.presence,
+      milestone_date: parse_date(row["milestone_date"], index, "Milestone date"),
       notes: row["notes"]&.strip.presence,
       user: @created_by
     )
@@ -157,12 +159,12 @@ class CsvImportService
     nil
   end
 
-  def parse_birthday(value, index)
+  def parse_date(value, index, label)
     return nil if value.blank?
 
     Date.iso8601(value.to_s.strip)
   rescue Date::Error
-    @errors << "Row #{index + 2}: Birthday must use YYYY-MM-DD"
+    @errors << "Row #{index + 2}: #{label} must use YYYY-MM-DD"
     nil
   end
 

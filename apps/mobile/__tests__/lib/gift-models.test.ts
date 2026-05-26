@@ -49,6 +49,8 @@ function buildPerson(overrides: Partial<Person> = {}): Person {
     age: null,
     gender: null,
     birthday: null,
+    milestone_label: null,
+    milestone_date: null,
     notes: overrides.notes || null,
     default_shipping_address_id: null,
     default_shipping_address: null,
