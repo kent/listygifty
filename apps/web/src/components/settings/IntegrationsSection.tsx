@@ -8,6 +8,18 @@ import { Plug, ExternalLink, Trash2, RefreshCw } from "lucide-react";
 import type { OAuthConnection } from "@niftygifty/types";
 import { oauthConnectionsService } from "@/services";
 
+function formatConnectionDate(value: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export function IntegrationsSection() {
   const [connectedApps, setConnectedApps] = useState<OAuthConnection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -186,36 +198,44 @@ export function IntegrationsSection() {
           </div>
         ) : (
           <div className="space-y-3">
-            {connectedApps.map((app) => (
-              <div
-                key={app.id}
-                className="p-4 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 flex items-center justify-between"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-                    <Plug className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-slate-900 dark:text-white">
-                      {app.client_name}
-                    </h4>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Scopes: {app.scopes.join(", ")} •{" "}
-                      Connected {new Date(app.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => revokeAccess(app.client_id)}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+            {connectedApps.map((app) => {
+              const connectedAt = formatConnectionDate(app.created_at);
+              const lastUsedAt = formatConnectionDate(app.last_used_at);
+              const expiresAt = formatConnectionDate(app.expires_at);
+
+              return (
+                <div
+                  key={app.id}
+                  className="p-4 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 flex items-center justify-between"
                 >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Revoke
-                </Button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                      <Plug className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-slate-900 dark:text-white">
+                        {app.client_name}
+                      </h4>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Scopes: {app.scopes.join(", ")}
+                        {connectedAt ? ` • Connected ${connectedAt}` : ""}
+                        {lastUsedAt ? ` • Last used ${lastUsedAt}` : ""}
+                        {expiresAt ? ` • Access until ${expiresAt}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => revokeAccess(app.client_id)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Revoke
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
