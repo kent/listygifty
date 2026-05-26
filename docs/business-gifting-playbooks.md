@@ -17,6 +17,7 @@ Workflow:
 4. Add one or more gift options per employee or cohort.
 5. Track status from idea to delivered.
 6. Export or hand off final shipping/purchase data.
+   - Gift CSV exports include recipient emails and shipping addresses when available.
 
 Activation:
 - 20 employees added.
@@ -84,6 +85,6 @@ Sales message:
 
 - Business import for people and addresses.
 - Calendar/deadline fields for people and lists.
-- Export view for purchase and fulfillment handoff.
+- Export view for purchase and fulfillment handoff. Gift exports now include recipient emails and shipping addresses; next step is a dedicated business fulfillment view.
 - Bulk gift creation and status updates.
 - Simple team-level reporting: count, spend, status, and exceptions.
