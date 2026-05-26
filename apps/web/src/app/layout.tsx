@@ -80,7 +80,6 @@ export const metadata: Metadata = {
     description:
       "Track gift ideas, manage budgets, and never forget a special occasion.",
     images: ["/og-image.png"],
-    creator: "@listygifty", // Placeholder, update if real handle exists
   },
   robots: {
     index: true,
@@ -127,10 +126,6 @@ export default function RootLayout({
             name: BRAND_NAME,
             url: baseUrl,
             logo: `${baseUrl}/icon-512.png`,
-            sameAs: [
-              "https://twitter.com/listygifty", // Placeholder
-              "https://github.com/listygifty", // Placeholder
-            ],
             description:
               `${BRAND_NAME} helps you organize thoughtful gifts for everyone you love.`,
           }}
