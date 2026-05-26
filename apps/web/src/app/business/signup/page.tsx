@@ -37,21 +37,54 @@ const BUSINESS_USE_CASE_ICONS: Record<BusinessUseCaseId, LucideIcon> = {
   milestones: Calendar,
 };
 
+const PEOPLE_SAMPLE_HEADER =
+  "name,email,relationship,age,gender,birthday,milestone_label,milestone_date,notes,address_label,street_line_1,street_line_2,city,state,postal_code,country,is_default";
+const GIFTS_SAMPLE_HEADER =
+  "name,description,cost,status,link,recipient_name,recipient_email,giver_name,giver_email";
+
+const PEOPLE_SAMPLE_ROWS: Record<BusinessUseCaseId, string[]> = {
+  "holiday-box": [
+    "Jamie Lee,jamie@example.com,coworker,,female,1991-03-14,Work anniversary,2026-09-01,Remote holiday box recipient,Jamie home,123 Main Street,,Toronto,ON,M5V 2T6,CA,true",
+    "Alex Chen,alex@example.com,coworker,,male,,,,,,,,,,,,",
+  ],
+  "new-hire-kit": [
+    "Taylor Morgan,taylor@example.com,coworker,,nonbinary,,Start date,2026-06-08,New engineering hire,Taylor home,44 Market Street,Apt 8,Chicago,IL,60607,US,true",
+    "Priya Singh,priya@example.com,coworker,,female,,Start date,2026-06-15,New sales hire,Priya home,8 King Street,,Toronto,ON,M5H 1A1,CA,true",
+  ],
+  milestones: [
+    "Riley Patel,riley@example.com,coworker,,female,1989-08-12,Work anniversary,2026-08-01,Five-year anniversary,Riley home,700 Pine Avenue,,Seattle,WA,98101,US,true",
+    "Morgan Diaz,morgan@example.com,coworker,,male,1993-11-03,Promotion,2026-07-10,Promotion gift,Morgan home,22 Queen Street,,Toronto,ON,M5V 1Z4,CA,true",
+  ],
+};
+
+const GIFTS_SAMPLE_ROWS: Record<BusinessUseCaseId, string[]> = {
+  "holiday-box": [
+    "Remote Holiday Box,Company hoodie and mug,75,Idea,https://example.com,Jamie Lee,jamie@example.com,,",
+    "Welcome Kit,Notebook and mug,35,Planned,,Alex Chen,alex@example.com,,",
+  ],
+  "new-hire-kit": [
+    "First-Day Welcome Kit,Notebook mug and desk plant,85,Idea,https://example.com,Taylor Morgan,taylor@example.com,,",
+    "Manager Welcome Note,Handwritten card and team sticker pack,25,Planned,,Priya Singh,priya@example.com,,",
+  ],
+  milestones: [
+    "Anniversary Gift Box,Local treats and engraved tumbler,90,Idea,https://example.com,Riley Patel,riley@example.com,,",
+    "Promotion Flowers,Desk flowers and congratulations card,65,Planned,,Morgan Diaz,morgan@example.com,,",
+  ],
+};
+
 function downloadBusinessSampleCsv(
   sampleType: "people" | "gifts",
   useCaseId: BusinessUseCaseId
 ) {
   if (sampleType === "people") {
     downloadCsvFile("listy_gifty_people_sample.csv", [
-      "name,email,relationship,age,gender,birthday,milestone_label,milestone_date,notes,address_label,street_line_1,street_line_2,city,state,postal_code,country,is_default",
-      "Jamie Lee,jamie@example.com,coworker,,female,1991-03-14,Work anniversary,2026-09-01,Remote holiday box recipient,Jamie home,123 Main Street,,Toronto,ON,M5V 2T6,CA,true",
-      "Alex Chen,alex@example.com,coworker,,male,,,,,,,,,,,,",
+      PEOPLE_SAMPLE_HEADER,
+      ...PEOPLE_SAMPLE_ROWS[useCaseId],
     ]);
   } else {
     downloadCsvFile("listy_gifty_gifts_sample.csv", [
-      "name,description,cost,status,link,recipient_name,recipient_email,giver_name,giver_email",
-      "Remote Holiday Box,Company hoodie and mug,75,Idea,https://example.com,Jamie Lee,jamie@example.com,,",
-      "Welcome Kit,Notebook and mug,35,Planned,,Alex Chen,alex@example.com,,",
+      GIFTS_SAMPLE_HEADER,
+      ...GIFTS_SAMPLE_ROWS[useCaseId],
     ]);
   }
 
