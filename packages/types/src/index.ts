@@ -1203,3 +1203,26 @@ export const API_KEY_ENDPOINTS = {
   apiKeys: "/api_keys",
   apiKey: (id: number) => `/api_keys/${id}`,
 } as const;
+
+// =============================================================================
+// OAuth Connections (for connected AI assistants and MCP clients)
+// =============================================================================
+
+export interface OAuthConnection {
+  id: number;
+  client_name: string;
+  client_id: string;
+  client_uri: string | null;
+  logo_uri: string | null;
+  scopes: ApiKeyScope[];
+  created_at: string;
+  last_used_at: string | null;
+  expires_at: string | null;
+}
+
+export type OAuthConnectionsResponse = OAuthConnection[];
+
+export const OAUTH_CONNECTION_ENDPOINTS = {
+  oauthConnections: "/oauth/connections",
+  oauthConnection: (clientId: string) => `/oauth/connections/${clientId}`,
+} as const;

@@ -15,6 +15,8 @@ Rails.application.routes.draw do
     post "token", to: "oauth#token"
     post "register", to: "oauth#register"
     post "revoke", to: "oauth#revoke"
+    get "connections", to: "oauth_connections#index"
+    delete "connections/:client_id", to: "oauth_connections#destroy"
   end
 
   # =============================================================================

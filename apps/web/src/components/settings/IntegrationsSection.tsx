@@ -1,46 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Plug, ExternalLink, Trash2, RefreshCw } from "lucide-react";
-
-interface OAuthClient {
-  id: string;
-  client_name: string;
-  client_id: string;
-  scopes: string[];
-  created_at: string;
-  last_used_at: string | null;
-}
+import type { OAuthConnection } from "@niftygifty/types";
+import { oauthConnectionsService } from "@/services";
 
 export function IntegrationsSection() {
-  const [connectedApps, setConnectedApps] = useState<OAuthClient[]>([]);
+  const [connectedApps, setConnectedApps] = useState<OAuthConnection[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchConnectedApps();
-  }, []);
-
-  const fetchConnectedApps = async () => {
+  const fetchConnectedApps = useCallback(async () => {
+    setLoading(true);
     try {
-      // TODO: Implement API call to fetch connected OAuth apps
-      // const response = await fetch("/api/oauth/connections");
-      // const data = await response.json();
-      // setConnectedApps(data);
-      setConnectedApps([]);
+      setConnectedApps(await oauthConnectionsService.getAll());
     } catch {
       toast.error("Failed to load connected apps");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void fetchConnectedApps();
+  }, [fetchConnectedApps]);
 
   const revokeAccess = async (clientId: string) => {
     try {
-      // TODO: Implement API call to revoke OAuth access
-      // await fetch(`/api/oauth/connections/${clientId}`, { method: "DELETE" });
+      await oauthConnectionsService.revoke(clientId);
       setConnectedApps((prev) => prev.filter((app) => app.client_id !== clientId));
       toast.success("Access revoked successfully");
     } catch {

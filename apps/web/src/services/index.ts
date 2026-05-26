@@ -9,6 +9,7 @@ export { giftSuggestionsService } from "./gift-suggestions.service";
 export { usersService } from "./users.service";
 export { matchArrangementsService } from "./match-arrangements.service";
 export { notificationPreferencesService } from "./notification-preferences.service";
+export { oauthConnectionsService } from "./oauth-connections.service";
 export { giftExchangesService } from "./gift-exchanges.service";
 export { exchangeParticipantsService } from "./exchange-participants.service";
 export { wishlistItemsService } from "./wishlist-items.service";

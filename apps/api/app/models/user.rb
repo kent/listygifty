@@ -16,6 +16,7 @@ class User < ApplicationRecord
   has_many :wishlists, dependent: :destroy
   has_many :wishlist_item_claims, dependent: :nullify
   has_many :api_keys, dependent: :destroy
+  has_many :oauth_access_tokens, dependent: :destroy
 
   # Workspace associations
   has_many :workspace_memberships, dependent: :destroy
