@@ -111,7 +111,8 @@ Business success metric:
    - Web people cards and detail pages now display and edit milestone labels and dates.
    - Mobile list detail now schedules native local notifications for dated gift lists.
    - Mobile people can now schedule native yearly birthday reminders.
-   - Next reminder step: external calendar sync.
+   - Web gift list detail can now download `.ics` calendar events for dated gift lists.
+   - Next reminder step: external calendar subscription sync.
 
 4. Purchase loop
    - Mobile now normalizes gift links and surfaces merchant/domain labels on gift cards.
@@ -141,6 +142,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Web people now support birthday display and editing.
 - Mobile gift list detail can schedule native local reminder notifications for dated lists.
 - Mobile people can schedule recurring local birthday reminders.
+- Web gift lists can download `.ics` calendar events for list deadlines.
 - Mobile list creation now offers Christmas, birthdays, teachers, and in-laws templates; undated lists no longer get forced to today.
 - Mobile gift links now normalize missing URL schemes and show merchant/domain labels on gift cards.
 - Web gift links now normalize missing URL schemes and show merchant/domain labels in gift rows.

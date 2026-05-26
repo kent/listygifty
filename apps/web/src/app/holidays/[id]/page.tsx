@@ -8,6 +8,7 @@ import { useWorkspace } from "@/contexts/workspace-context";
 import { useGiftFilters } from "@/hooks";
 import { holidaysService, giftsService, peopleService, giftStatusesService, workspacesService, exportsService, AUTH_ROUTES } from "@/services";
 import { captureWebEvent } from "@/lib/analytics";
+import { downloadIcsEvent } from "@/lib/calendar-download";
 import { AppHeader } from "@/components/layout";
 import { GiftFilters } from "@/components/filters";
 import { GiftGrid, HolidayReports, ImportGiftsDialog } from "@/components/gifts";
@@ -188,6 +189,24 @@ export default function HolidayDetailPage() {
     });
   }, [currentWorkspace?.workspace_type, holidayId]);
 
+  const handleDownloadCalendarEvent = useCallback(() => {
+    if (!holiday?.date) {
+      toast.error("This gift list needs a date before it can be added to a calendar");
+      return;
+    }
+
+    downloadIcsEvent({
+      date: holiday.date,
+      description: "Review gift ideas, purchases, and delivery details in Listy Gifty.",
+      filename: `${holiday.name} gift deadline`,
+      title: `${holiday.name} gift deadline`,
+      uid: `gift-list-${holiday.id}@listygifty.com`,
+    });
+    captureWebEvent("gift_list_calendar_exported", {
+      holiday_id: holiday.id,
+    });
+  }, [holiday]);
+
   const handleGiftsImported = useCallback(async (result: ImportGiftsResult) => {
     if (result.created > 0) {
       setGifts((current) => [...result.gifts, ...current]);
@@ -346,6 +365,16 @@ export default function HolidayDetailPage() {
                   )}
                 </Button>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadCalendarEvent}
+                disabled={!holiday.date}
+                className="gap-1.5 md:gap-2 flex-1 md:flex-none"
+              >
+                <Calendar className="h-4 w-4" />
+                <span className="hidden sm:inline">Calendar</span>
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

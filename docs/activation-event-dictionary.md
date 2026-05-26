@@ -26,6 +26,9 @@ Events:
 - `mobile_list_reminder_scheduled`
   - Fires when a mobile user schedules a local notification for a dated list.
   - Key properties: `list_id`, `source`.
+- `gift_list_calendar_exported`
+  - Fires when a web user downloads an `.ics` calendar event for a dated gift list.
+  - Key properties: `holiday_id`.
 
 ## Exchange Funnel
 
