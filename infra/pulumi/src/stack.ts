@@ -32,6 +32,8 @@ const sqlInstanceName = nfg.require("sqlInstance");
 const imageRegistry = nfg.require("imageRegistry");
 const apiImageRepo = nfg.require("apiImageRepo");
 const webImageRepo = nfg.require("webImageRepo");
+const androidAppLinkSha256CertFingerprints =
+  nfg.get("androidAppLinkSha256CertFingerprints") ?? "";
 
 // Source SHA — set by the deploy wrapper. Drives image tags; same SHA twice
 // is a no-op redeploy. Required so the program is honest about which commit
@@ -257,6 +259,7 @@ const webEnv: pulumi.Input<pulumi.Input<gcp.types.input.cloudrunv2.ServiceTempla
   plainEnv("NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL", "/dashboard"),
   plainEnv("NEXT_PUBLIC_POSTHOG_KEY", ""),
   plainEnv("NEXT_PUBLIC_POSTHOG_HOST", ""),
+  plainEnv("ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS", androidAppLinkSha256CertFingerprints),
   secretEnv("CLERK_SECRET_KEY", `${secretPrefix}clerk-secret-key`),
   secretEnv("APP_BASE", `${secretPrefix}app-base`),
   secretEnv("STRIPE_PUBLIC_KEY", `${secretPrefix}stripe-public-key`),

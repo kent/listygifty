@@ -159,6 +159,19 @@ npm run deploy:staging
 npm run deploy:production
 ```
 
+## Android App Links
+
+The web service exposes `/.well-known/assetlinks.json` for exchange invite
+links. Set the Android signing certificate fingerprint per stack before
+production App Links verification:
+
+```bash
+pulumi config set niftygifty:androidAppLinkSha256CertFingerprints "AA:BB:..."
+```
+
+Use comma-separated or newline-separated values when staging and production
+need multiple fingerprints.
+
 Both do (in this order, with the build steps running concurrently):
 
 1. Compute git SHA → feed it as `niftygifty:sourceSha` config
