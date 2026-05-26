@@ -2,12 +2,14 @@ import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
+import { haptics } from "@/lib/haptics";
 import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
   buildCreateExchangePayload,
   buildCreateExchangeParticipantPayload,
   buildCreateWishlistItemPayload,
+  canStartExchange,
   EMPTY_EXCHANGE_PARTICIPANT_FORM_VALUES,
   buildExchangeSections,
   EMPTY_EXCHANGE_FORM_VALUES,
@@ -125,6 +127,7 @@ export function useExchangeDetailController() {
   const { giftExchanges } = useServices();
   const exchangeId = Number.parseInt(id ?? "", 10);
   const isValidExchangeId = Number.isFinite(exchangeId);
+  const [starting, setStarting] = useState(false);
 
   const resource = useFocusResource<GiftExchangeWithParticipants | null>({
     enabled: isValidExchangeId,
@@ -134,16 +137,51 @@ export function useExchangeDetailController() {
     load: () => giftExchanges.getById(exchangeId),
   });
 
+  const startExchange = useCallback(() => {
+    if (!resource.data || !canStartExchange(resource.data)) {
+      return;
+    }
+
+    Alert.alert(
+      "Draw Matches",
+      "This will assign each participant a match and send match emails.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Draw Matches",
+          onPress: async () => {
+            setStarting(true);
+
+            try {
+              const exchange = await giftExchanges.start(exchangeId);
+              resource.setData(exchange);
+              await haptics.success();
+            } catch (startError) {
+              console.error("Failed to start exchange", startError);
+              await haptics.error();
+              Alert.alert("Could Not Draw Matches", "Check participants and try again.");
+            } finally {
+              setStarting(false);
+            }
+          },
+        },
+      ]
+    );
+  }, [exchangeId, giftExchanges, resource]);
+
   return {
+    canStartExchange: resource.data ? canStartExchange(resource.data) : false,
     error: !isValidExchangeId ? "Invalid exchange ID" : resource.error,
     exchange: resource.data,
     goToMatch: () => router.push(`/(tabs)/exchanges/${exchangeId}/my-match`),
     goToNewParticipant: () =>
       router.push(`/(tabs)/exchanges/${exchangeId}/participants/new`),
     goToWishlist: () => router.push(`/(tabs)/exchanges/${exchangeId}/my-wishlist`),
+    handleStartExchange: startExchange,
     loading: isValidExchangeId && resource.loading,
     refreshing: resource.refreshing,
     retryLoad: resource.reload,
+    starting,
     triggerRefresh: resource.refresh,
   };
 }

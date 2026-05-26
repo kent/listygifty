@@ -1,4 +1,11 @@
-import { View, Text, ScrollView, RefreshControl, TouchableOpacity } from "react-native";
+import {
+  ActivityIndicator,
+  View,
+  Text,
+  ScrollView,
+  RefreshControl,
+  TouchableOpacity,
+} from "react-native";
 import { Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -154,6 +161,39 @@ export default function ExchangeDetailScreen() {
             </TouchableOpacity>
           ) : null}
         </View>
+      ) : null}
+
+      {controller.canStartExchange ? (
+        <TouchableOpacity
+          onPress={controller.handleStartExchange}
+          disabled={controller.starting}
+          style={{
+            backgroundColor: colors.successLight,
+            padding: 16,
+            borderRadius: 12,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 24,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+            <Ionicons name="shuffle-outline" size={24} color={colors.success} />
+            <View>
+              <Text style={{ color: colors.success, fontSize: 16, fontWeight: "600" }}>
+                Draw Matches
+              </Text>
+              <Text style={{ color: colors.successDark, fontSize: 12 }}>
+                Assign participants and send match emails
+              </Text>
+            </View>
+          </View>
+          {controller.starting ? (
+            <ActivityIndicator size="small" color={colors.success} />
+          ) : (
+            <Ionicons name="chevron-forward" size={20} color={colors.success} />
+          )}
+        </TouchableOpacity>
       ) : null}
 
       <View

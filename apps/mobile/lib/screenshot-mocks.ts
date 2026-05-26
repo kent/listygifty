@@ -280,6 +280,19 @@ export const screenshotServices = {
       exchangesStore = [exchange, ...exchangesStore];
       return clone(exchange);
     },
+    async start(id: number) {
+      exchangesStore = exchangesStore.map((exchange) =>
+        exchange.id === id
+          ? {
+              ...exchange,
+              status: "active",
+              can_start: false,
+              updated_at: nowIso,
+            }
+          : exchange
+      );
+      return clone(exchangesStore.find((exchange) => exchange.id === id) as GiftExchange);
+    },
   },
   exchangeParticipants: {
     async create(exchangeId: number, data: Partial<ExchangeParticipant>) {

@@ -3,6 +3,7 @@ import {
   buildCreateExchangeParticipantPayload,
   buildCreateExchangePayload,
   buildExchangeSections,
+  canStartExchange,
 } from "@/lib/models";
 
 function buildExchange(overrides: Partial<GiftExchange> = {}): GiftExchange {
@@ -84,5 +85,14 @@ describe("exchange model helpers", () => {
       name: "Alex Parker",
       email: "alex@example.com",
     });
+  });
+
+  it("shows the start action only for ready owned exchanges", () => {
+    expect(canStartExchange(buildExchange({ is_owner: true, can_start: true }))).toBe(true);
+    expect(canStartExchange(buildExchange({ is_owner: false, can_start: true }))).toBe(false);
+    expect(canStartExchange(buildExchange({ is_owner: true, can_start: false }))).toBe(false);
+    expect(
+      canStartExchange(buildExchange({ is_owner: true, can_start: true, status: "active" }))
+    ).toBe(false);
   });
 });

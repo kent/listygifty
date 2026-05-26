@@ -51,6 +51,15 @@ export function buildExchangeSections(exchanges: GiftExchange[]): ExchangeSectio
   return sections;
 }
 
+export function canStartExchange(exchange: GiftExchange): boolean {
+  return (
+    exchange.is_owner &&
+    exchange.can_start &&
+    exchange.status !== "active" &&
+    exchange.status !== "completed"
+  );
+}
+
 export function buildCreateExchangePayload(
   values: ExchangeFormValues
 ): CreateGiftExchangeRequest["gift_exchange"] {

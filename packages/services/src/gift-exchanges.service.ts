@@ -9,6 +9,7 @@ export interface GiftExchangesService {
   getAll(): Promise<GiftExchange[]>;
   getById(id: number): Promise<GiftExchangeWithParticipants>;
   create(data: CreateGiftExchangeRequest["gift_exchange"]): Promise<GiftExchange>;
+  start(id: number): Promise<GiftExchangeWithParticipants>;
 }
 
 export function createGiftExchangesService(client: ApiClient): GiftExchangesService {
@@ -23,6 +24,10 @@ export function createGiftExchangesService(client: ApiClient): GiftExchangesServ
 
     create(data: CreateGiftExchangeRequest["gift_exchange"]) {
       return client.post<GiftExchange>("/gift_exchanges", { gift_exchange: data });
+    },
+
+    start(id: number) {
+      return client.post<GiftExchangeWithParticipants>(`/gift_exchanges/${id}/start`);
     },
   };
 }

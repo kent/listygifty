@@ -304,6 +304,14 @@ export const giftExchangesService = {
     invalidateCachedResources("gift-exchanges:");
     return exchange;
   },
+
+  async start(id: number) {
+    const exchange = await baseGiftExchangesService.start(id);
+    resetBootstrapState();
+    invalidateCachedResources("gift-exchanges:");
+    invalidateCachedResources(`gift-exchanges:${id}`);
+    return exchange;
+  },
 };
 
 export const exchangeParticipantsService = {
