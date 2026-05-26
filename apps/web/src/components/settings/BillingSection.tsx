@@ -46,7 +46,7 @@ export function BillingSection() {
             <div className="grid gap-3 text-left mb-8">
               {[
                 "Unlimited gift lists & recipients",
-                "AI-powered gift suggestions",
+                "Advanced gift idea organization",
                 "Budget tracking & analytics",
                 "Collaborative planning",
               ].map((feature, i) => (

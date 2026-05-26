@@ -139,6 +139,7 @@ Business CTA:
 > Run employee gifting without the spreadsheet.
 
 Do not lead with AI. AI is a helpful assistant layer after the core gift-planning loop works.
+Public demo and homepage copy now emphasize capture, budgets, deadlines, status, and gap review before AI assistance.
 
 ## Recent Progress Notes
 

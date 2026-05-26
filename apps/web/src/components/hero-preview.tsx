@@ -118,7 +118,7 @@ export function HeroPreview() {
                         <div>
                           <div className="text-white text-sm font-medium">{gift.name}</div>
                           <div className={`text-xs ${getStatusColor(gift.status)}`}>
-                            {gift.status === "suggestion" ? "AI suggested" : gift.status}
+                            {gift.status === "suggestion" ? "idea" : gift.status}
                           </div>
                         </div>
                       </div>

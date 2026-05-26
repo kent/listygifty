@@ -92,7 +92,7 @@ function GiftsMockup() {
               </div>
             </div>
             <div className={`text-xs ${gift.statusColor}`}>
-              {gift.status === 'suggestion' && '💡 AI suggested based on interests'}
+              {gift.status === 'suggestion' && '💡 Idea based on interests'}
               {gift.status === 'ordered' && '✅ Ordered from Amazon'}
               {gift.status === 'considering' && '🤔 Added to wishlist'}
             </div>
@@ -101,7 +101,7 @@ function GiftsMockup() {
         
         <div className="p-3 bg-slate-600/50 rounded-lg hover:bg-slate-600 transition-all duration-300 cursor-pointer opacity-75 hover:opacity-100">
           <div className="text-slate-300 text-sm">+ Add gift idea...</div>
-          <div className="text-slate-400 text-xs">Get AI suggestions or add your own</div>
+          <div className="text-slate-400 text-xs">Capture ideas as they come up</div>
         </div>
       </div>
     </div>
@@ -169,7 +169,7 @@ const slides: Slide[] = [
   {
     id: 2,
     title: "Plan Your Gifts", 
-    description: "Add gift ideas, set budgets, and get AI-powered suggestions based on their interests and your past gifts.",
+    description: "Add gift ideas, set budgets, and keep options tied to each person's interests and past gifts.",
     gradient: "from-amber-500 to-orange-500",
     mockup: <GiftsMockup />
   },

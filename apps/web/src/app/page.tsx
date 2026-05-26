@@ -542,7 +542,7 @@ export default function HomePage() {
               </span>
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Let Claude, ChatGPT, or your favorite AI help you plan the perfect gifts. Connect once, and your AI can access your lists, suggest gifts, and help you stay organized.
+              After your gift logistics are organized, connect Claude, ChatGPT, or any MCP-compatible assistant to review lists, spot gaps, and help keep planning moving.
             </p>
           </div>
 
@@ -556,7 +556,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Claude</h3>
               <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                Connect Claude to browse your gift lists, get personalized suggestions, and manage your holiday planning through natural conversation.
+                Connect Claude to browse your gift lists, review missing details, and manage holiday planning through natural conversation.
               </p>
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
             </div>
@@ -570,7 +570,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">ChatGPT</h3>
               <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                Use ChatGPT to interact with your Listy Gifty data, create new gift ideas, and get help balancing your holiday budget.
+                Use ChatGPT to interact with your Listy Gifty data, create new gift records, and get help balancing your holiday budget.
               </p>
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
             </div>
@@ -605,7 +605,7 @@ export default function HomePage() {
                 <div className="grid md:grid-cols-2 gap-6">
                   {[
                     { icon: "📋", title: "View Your Lists", desc: "Browse holidays, people, and gifts across all your workspaces" },
-                    { icon: "🎁", title: "Suggest Gifts", desc: "Get AI-powered gift ideas based on interests and budget" },
+                    { icon: "🧩", title: "Spot Gaps", desc: "Find missing links, budgets, recipients, and purchase statuses before deadlines" },
                     { icon: "➕", title: "Add Items", desc: "Create new gifts, people, or holidays through conversation" },
                     { icon: "📊", title: "Track Spending", desc: "Check budgets and balance spending across recipients" },
                     { icon: "🔔", title: "Check Status", desc: "See what's purchased, wrapped, or still needed" },

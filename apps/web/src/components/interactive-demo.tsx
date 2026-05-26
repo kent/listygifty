@@ -15,7 +15,7 @@ const demoSteps = [
   {
     number: 2, 
     title: "Plan Gifts",
-    description: "Track ideas, set budgets, get AI suggestions",
+    description: "Track ideas, set budgets, compare options",
     icon: "🎁"
   },
   {
