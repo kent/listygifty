@@ -88,6 +88,7 @@ Sales message:
 
 - Homepage playbook CTAs route into business signup with a `use_case` value for each offer.
 - Business signup tracks when a buyer starts the flow and when a workspace is created, including the selected use case.
+- Gift CSV import tracks start, completion counts, created people, and failed attempts.
 - The next GTM dashboard should segment workspace starts by remote holiday boxes, onboarding kits, and milestone gifting.
 
 ## Product Gaps to Close

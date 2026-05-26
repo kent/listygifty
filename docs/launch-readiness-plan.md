@@ -74,6 +74,7 @@ Discovery script:
 Business success metric:
 - A company is activated when it imports or creates 20 people, creates one business workspace, and tracks 20 gifts or one exchange.
 - Web now tracks `business_signup_started` and `business_workspace_created` with the selected playbook use case, so the homepage-to-workspace funnel is measurable.
+- Web gift CSV import now tracks start, completion, created-gift count, created-person count, and failed attempts.
 - People CSV import now accepts optional business shipping-address columns and reports created/skipped address counts.
 - Imported business addresses can now become each recipient's default shipping address and apply automatically to new gifts.
 - People CSV export now includes default shipping-address columns for round-trip fulfillment ops.
@@ -142,5 +143,6 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Gift CSV exports now include recipient emails and shipping addresses for fulfillment handoff.
 - People CSV exports now include each person's default shipping address fields.
 - Web gift lists now support CSV gift import for bulk business setup.
+- Web gift CSV import now emits funnel events for business activation measurement.
 - Web gift reports now surface fulfillment exceptions for business handoff.
 - Web and MCP dependencies were refreshed to reduce actionable high-severity advisories; the remaining root npm audit item is Next's exact nested PostCSS dependency, where npm currently suggests a breaking downgrade rather than a safe patch.
