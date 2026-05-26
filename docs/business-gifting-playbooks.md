@@ -16,6 +16,7 @@ Workflow:
    - People import can set default shipping addresses, and new gifts inherit those addresses for fulfillment.
 3. Create a holiday gift list for the current season.
 4. Add one or more gift options per employee or cohort.
+   - Gift CSV import can bulk-create gifts, match recipients by name or email, and create missing people.
 5. Track status from idea to delivered.
 6. Export or hand off final shipping/purchase data.
    - Gift CSV exports include recipient emails and shipping addresses when available.
@@ -94,5 +95,5 @@ Sales message:
 - Business import now creates people and optional shipping addresses from one CSV, and imported addresses become recipient defaults for new gifts.
 - Calendar/deadline fields for people and lists. People now have birthday dates; business-specific milestone dates are still needed.
 - Export view for purchase and fulfillment handoff. Gift and people exports now include fulfillment address data; next step is a dedicated business fulfillment view.
-- Bulk gift creation and status updates.
+- Bulk gift creation is now available from gift CSV import; bulk status updates are still needed.
 - Simple team-level reporting: count, spend, status, and exceptions.
