@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/theme";
 import { useNewListController } from "@/lib/controllers";
 
@@ -24,6 +25,54 @@ export default function NewListScreen() {
         <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 24 }}>
           Create a new gift list to organize gifts for an occasion.
         </Text>
+
+        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
+          Templates
+        </Text>
+        <View
+          style={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            gap: 8,
+            marginBottom: 20,
+          }}
+        >
+          {controller.templates.map((template) => {
+            const isSelected = controller.selectedTemplateKey === template.key;
+            return (
+              <TouchableOpacity
+                key={template.key}
+                onPress={() => {
+                  void controller.applyTemplate(template.key);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Use ${template.label} template`}
+                style={{
+                  width: "48%",
+                  backgroundColor: isSelected ? colors.primarySurface : colors.card,
+                  borderColor: isSelected ? colors.primary : colors.border,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  padding: 12,
+                  gap: 6,
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <Ionicons name="sparkles-outline" size={15} color={colors.primary} />
+                  <Text
+                    numberOfLines={1}
+                    style={{ color: colors.text, flexShrink: 1, fontSize: 14, fontWeight: "700" }}
+                  >
+                    {template.label}
+                  </Text>
+                </View>
+                <Text numberOfLines={2} style={{ color: colors.textTertiary, fontSize: 12 }}>
+                  {template.description}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
         {controller.error ? (
           <View

@@ -148,7 +148,7 @@ export interface HolidayWithCollaborators extends Holiday {
 export interface CreateHolidayRequest {
   holiday: {
     name: string;
-    date: string;
+    date?: string | null;
     icon?: string;
     completed?: boolean;
     archived?: boolean;

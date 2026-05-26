@@ -7,6 +7,7 @@ import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
   buildCreateHolidayPayload,
+  buildHolidayTemplateFormValues,
   buildCreateGiftPayload,
   buildGiftFormValues,
   buildRepeatGiftCaptureValues,
@@ -21,8 +22,10 @@ import {
   sortGiftCaptureLists,
   giftFormHasChanges,
   isValidIsoDate,
+  HOLIDAY_LIST_TEMPLATES,
   ListSection,
   parseOptionalDecimal,
+  type HolidayListTemplateKey,
   type Gift,
   type GiftStatus,
   type Holiday,
@@ -365,11 +368,21 @@ export function useNewListController() {
   const { holidays } = useServices();
   const track = useAnalytics();
   const [form, setForm] = useState<HolidayFormValues>(EMPTY_HOLIDAY_FORM_VALUES);
+  const [selectedTemplateKey, setSelectedTemplateKey] =
+    useState<HolidayListTemplateKey | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const updateField = useCallback((field: keyof HolidayFormValues, value: string) => {
+    setSelectedTemplateKey(null);
     setForm((current) => ({ ...current, [field]: value }));
+  }, []);
+
+  const applyTemplate = useCallback(async (key: HolidayListTemplateKey) => {
+    setSelectedTemplateKey(key);
+    setForm(buildHolidayTemplateFormValues(key));
+    setError(null);
+    await haptics.selection();
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -387,13 +400,12 @@ export function useNewListController() {
     setLoading(true);
 
     try {
-      const list = await holidays.create(
-        buildCreateHolidayPayload(form, new Date().toISOString().split("T")[0] || "")
-      );
+      const list = await holidays.create(buildCreateHolidayPayload(form));
       track("mobile_list_created", {
         has_date: Boolean(form.date.trim()),
         list_id: list.id,
-        source: "manual",
+        source: selectedTemplateKey ? "template" : "manual",
+        template_key: selectedTemplateKey,
       });
       await haptics.success();
       router.back();
@@ -404,14 +416,17 @@ export function useNewListController() {
     } finally {
       setLoading(false);
     }
-  }, [form, holidays, router, track]);
+  }, [form, holidays, router, selectedTemplateKey, track]);
 
   return {
+    applyTemplate,
     error,
     form,
     handleCancel: () => router.back(),
     handleSubmit,
     loading,
+    selectedTemplateKey,
+    templates: HOLIDAY_LIST_TEMPLATES,
     updateField,
   };
 }
