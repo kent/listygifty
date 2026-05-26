@@ -7,19 +7,37 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Building2, Gift, Globe, MapPin, Loader2, Check, X, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { AddressesSection } from "./AddressesSection";
-import { getBusinessUseCaseLabel } from "@/lib/business-use-cases";
+import { captureWebEvent } from "@/lib/analytics";
+import {
+  BUSINESS_USE_CASES,
+  DEFAULT_BUSINESS_USE_CASE,
+  getBusinessUseCase,
+  getBusinessUseCaseLabel,
+  type BusinessUseCaseId,
+} from "@/lib/business-use-cases";
 import type { CompanyProfile } from "@niftygifty/types";
 
-function getInitialUseCase(profile: CompanyProfile | null): string | null {
+function getProfileUseCaseId(profile: CompanyProfile | null): string | null {
   const useCase = profile?.tax_metadata?.initial_use_case;
   if (typeof useCase !== "string") {
     return null;
   }
 
-  return getBusinessUseCaseLabel(useCase);
+  return useCase;
+}
+
+function getInitialUseCase(profile: CompanyProfile | null): string | null {
+  return getBusinessUseCaseLabel(getProfileUseCaseId(profile));
 }
 
 export function CompanySection() {
@@ -32,6 +50,7 @@ export function CompanySection() {
   const [name, setName] = useState("");
   const [website, setWebsite] = useState("");
   const [address, setAddress] = useState("");
+  const [useCaseId, setUseCaseId] = useState<BusinessUseCaseId>(DEFAULT_BUSINESS_USE_CASE.id);
 
   const isOwner = currentWorkspace?.is_owner;
   const isAdmin = currentWorkspace?.is_admin;
@@ -49,6 +68,7 @@ export function CompanySection() {
       setName(data.name || "");
       setWebsite(data.website || "");
       setAddress(data.address || "");
+      setUseCaseId(getBusinessUseCase(getProfileUseCaseId(data)).id);
     } catch {
       // Profile might not exist yet for new workspaces
       setProfile(null);
@@ -67,14 +87,26 @@ export function CompanySection() {
 
     setIsSaving(true);
     try {
+      const previousUseCase = getProfileUseCaseId(profile);
       const updatedProfile = await workspacesService.updateCompanyProfile(currentWorkspace.id, {
         company_profile: {
           name: name.trim() || undefined,
           website: website.trim() || undefined,
           address: address.trim() || undefined,
+          tax_metadata: {
+            ...(profile?.tax_metadata || {}),
+            initial_use_case: useCaseId,
+          },
         },
       });
       setProfile(updatedProfile);
+      if (previousUseCase !== useCaseId) {
+        captureWebEvent("business_workflow_updated", {
+          previous_use_case: previousUseCase,
+          use_case: useCaseId,
+          workspace_id: currentWorkspace.id,
+        });
+      }
       toast.success("Company profile updated");
       setIsEditing(false);
     } catch {
@@ -88,6 +120,7 @@ export function CompanySection() {
     setName(profile?.name || "");
     setWebsite(profile?.website || "");
     setAddress(profile?.address || "");
+    setUseCaseId(getBusinessUseCase(getProfileUseCaseId(profile)).id);
     setIsEditing(false);
   };
 
@@ -289,6 +322,31 @@ export function CompanySection() {
                     placeholder="123 Main St&#10;San Francisco, CA 94102"
                     rows={3}
                   />
+                </div>
+
+                {/* Initial Workflow */}
+                <div className="space-y-2">
+                  <Label htmlFor="company-use-case" className="text-slate-700 dark:text-slate-300 text-sm">
+                    Initial Workflow
+                  </Label>
+                  <Select
+                    value={useCaseId}
+                    onValueChange={(value) => setUseCaseId(value as BusinessUseCaseId)}
+                  >
+                    <SelectTrigger
+                      id="company-use-case"
+                      className="w-full bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                      {BUSINESS_USE_CASES.map((useCase) => (
+                        <SelectItem key={useCase.id} value={useCase.id}>
+                          {useCase.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex gap-3 pt-2">

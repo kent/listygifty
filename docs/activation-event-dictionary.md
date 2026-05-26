@@ -79,6 +79,9 @@ Events:
 - `business_workspace_created`
   - Fires when a business workspace is created.
   - Key properties: `workspace_id`, `use_case`, `company_provided`.
+- `business_workflow_updated`
+  - Fires when a business admin changes the company profile workflow.
+  - Key properties: `workspace_id`, `previous_use_case`, `use_case`.
 - `business_sample_csv_downloaded`
   - Fires when a business signup visitor downloads a people or gifts sample CSV.
   - Key properties: `sample_type`.

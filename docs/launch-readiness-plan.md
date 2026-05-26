@@ -166,6 +166,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Web business signup now tracks playbook-specific start and workspace-created events.
 - Web business dashboards now display the stored signup workflow beside the business activation checklist.
 - Web business workflow labels now come from one shared source across homepage, signup, dashboard, and company settings.
+- Web company settings now let admins correct the selected business workflow and track workflow changes.
 - Billing now includes a Teams pilot card that routes business buyers into the company gifting setup path.
 - Business people import now supports optional shipping-address columns for fulfillment setup.
 - New gift recipients inherit their default shipping address, reducing manual fulfillment setup after import.
