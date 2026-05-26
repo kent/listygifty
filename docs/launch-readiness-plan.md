@@ -103,6 +103,8 @@ Business success metric:
    - Make invite, wishlist, draw, and match visibility testable end to end on mobile.
    - Add owner-facing readiness states that explain why an exchange cannot be drawn yet.
    - Add copy/share controls for participant invite links for cases where email delivery fails.
+   - Web now serves iOS universal-link association and Android app-link association for exchange invite links.
+   - Android production signing fingerprints are configured with `ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS`.
    - Test mobile exclusion management with one four-person family exchange before promising Secret Santa parity.
 
 3. Calendar and reminders

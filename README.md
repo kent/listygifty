@@ -83,6 +83,7 @@ Web (`apps/web/.env.local`):
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
+ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS=AA:BB:... # optional, comma/newline separated
 ```
 
 Mobile (`apps/mobile/.env`):
