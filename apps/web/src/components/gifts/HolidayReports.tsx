@@ -17,14 +17,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, ExternalLink, LayoutList, User, Scale, Plus, X } from "lucide-react";
-import type { Gift, Person, GiftStatus } from "@niftygifty/types";
+import {
+  AlertTriangle,
+  Download,
+  ExternalLink,
+  LayoutList,
+  Plus,
+  Scale,
+  Truck,
+  User,
+  X,
+} from "lucide-react";
+import type { Address, Gift, Person, GiftStatus } from "@niftygifty/types";
 
 interface HolidayReportsProps {
   gifts: Gift[];
   people: Person[];
   statuses: GiftStatus[];
   showAddresses?: boolean;
+  onExportGifts?: () => void;
 }
 
 interface StatusSummary {
@@ -40,6 +51,15 @@ interface PersonStats {
 
 interface GiftException {
   gift: Gift;
+  issues: string[];
+}
+
+interface FulfillmentRow {
+  id: string;
+  gift: Gift;
+  recipientName: string;
+  recipientEmail: string | null;
+  shippingAddress: Address | null;
   issues: string[];
 }
 
@@ -104,6 +124,61 @@ function getGiftExceptions(gifts: Gift[], showAddresses: boolean): GiftException
       return { gift, issues };
     })
     .filter((exception) => exception.issues.length > 0);
+}
+
+function getFulfillmentRows(gifts: Gift[], showAddresses: boolean): FulfillmentRow[] {
+  return gifts.flatMap((gift) => {
+    const baseIssues: string[] = [];
+
+    if (!gift.cost) {
+      baseIssues.push("Missing cost");
+    }
+    if (!gift.link) {
+      baseIssues.push("Missing link");
+    }
+
+    if (gift.gift_recipients.length === 0) {
+      return [
+        {
+          id: `${gift.id}:unassigned`,
+          gift,
+          recipientName: "Unassigned",
+          recipientEmail: null,
+          shippingAddress: null,
+          issues: ["No recipient", ...baseIssues],
+        },
+      ];
+    }
+
+    return gift.gift_recipients.map((giftRecipient) => {
+      const issues = [...baseIssues];
+
+      if (showAddresses && !giftRecipient.shipping_address_id) {
+        issues.push("Missing shipping address");
+      }
+
+      return {
+        id: `${gift.id}:${giftRecipient.person_id}`,
+        gift,
+        recipientName: giftRecipient.person.name,
+        recipientEmail: giftRecipient.person.email,
+        shippingAddress: giftRecipient.shipping_address,
+        issues,
+      };
+    });
+  });
+}
+
+function getAddressLabel(address: Address | null, showAddresses: boolean): string {
+  if (!showAddresses) {
+    return "Hidden";
+  }
+
+  if (!address) {
+    return "Missing";
+  }
+
+  return address.formatted_address_single_line;
 }
 
 function PersonSummaryTable({
@@ -464,6 +539,104 @@ function CompareView({
   );
 }
 
+function FulfillmentView({
+  gifts,
+  showAddresses,
+  onExportGifts,
+}: {
+  gifts: Gift[];
+  showAddresses: boolean;
+  onExportGifts?: () => void;
+}) {
+  const rows = useMemo(
+    () => getFulfillmentRows(gifts, showAddresses),
+    [gifts, showAddresses]
+  );
+  const rowCountWithIssues = rows.filter((row) => row.issues.length > 0).length;
+
+  if (gifts.length === 0) {
+    return (
+      <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-12 text-center">
+        <Truck className="h-12 w-12 mx-auto text-slate-600 mb-4" />
+        <p className="text-muted-foreground">
+          No gifts are ready for fulfillment yet.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 rounded-lg border border-border/50 bg-card/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-foreground">Fulfillment handoff</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {rows.length} recipient row{rows.length === 1 ? "" : "s"} - {rowCountWithIssues} exception{rowCountWithIssues === 1 ? "" : "s"}
+          </p>
+        </div>
+        {onExportGifts ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 self-start sm:self-center"
+            onClick={onExportGifts}
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        ) : null}
+      </div>
+
+      <div className="rounded-lg border border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
+              <TableHead className="font-semibold">Gift</TableHead>
+              <TableHead className="font-semibold">Recipient</TableHead>
+              <TableHead className="font-semibold">Email</TableHead>
+              <TableHead className="font-semibold">Status</TableHead>
+              <TableHead className="font-semibold">Cost</TableHead>
+              <TableHead className="font-semibold">Shipping Address</TableHead>
+              <TableHead className="font-semibold">Issues</TableHead>
+              <TableHead className="w-[80px] text-right font-semibold">Link</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell className="font-medium">{row.gift.name}</TableCell>
+                <TableCell>{row.recipientName}</TableCell>
+                <TableCell>{row.recipientEmail || "Missing"}</TableCell>
+                <TableCell>{row.gift.gift_status.name}</TableCell>
+                <TableCell>
+                  {row.gift.cost ? formatCurrency(parseFloat(row.gift.cost)) : "Missing"}
+                </TableCell>
+                <TableCell>
+                  {getAddressLabel(row.shippingAddress, showAddresses)}
+                </TableCell>
+                <TableCell>{row.issues.join(", ") || "Ready"}</TableCell>
+                <TableCell className="text-right">
+                  {row.gift.link ? (
+                    <a
+                      href={row.gift.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex text-violet-500 hover:text-violet-400"
+                      aria-label={`Open ${row.gift.name} link`}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  ) : null}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
 function ExceptionsView({
   gifts,
   showAddresses,
@@ -529,13 +702,14 @@ function ExceptionsView({
   );
 }
 
-type ViewType = "summary" | "person" | "compare" | "exceptions";
+type ViewType = "summary" | "person" | "compare" | "fulfillment" | "exceptions";
 
 export function HolidayReports({
   gifts,
   people,
   statuses,
   showAddresses = false,
+  onExportGifts,
 }: HolidayReportsProps) {
   const [currentView, setCurrentView] = useState<ViewType>("summary");
 
@@ -574,6 +748,14 @@ export function HolidayReports({
           Compare
         </Button>
         <Button
+          variant={currentView === "fulfillment" ? "secondary" : "ghost"}
+          className="w-full justify-start gap-2"
+          onClick={() => setCurrentView("fulfillment")}
+        >
+          <Truck className="h-4 w-4" />
+          Fulfillment
+        </Button>
+        <Button
           variant={currentView === "exceptions" ? "secondary" : "ghost"}
           className="w-full justify-start gap-2"
           onClick={() => setCurrentView("exceptions")}
@@ -606,6 +788,13 @@ export function HolidayReports({
             statuses={sortedStatuses}
           />
         )}
+        {currentView === "fulfillment" && (
+          <FulfillmentView
+            gifts={gifts}
+            showAddresses={showAddresses}
+            onExportGifts={onExportGifts}
+          />
+        )}
         {currentView === "exceptions" && (
           <ExceptionsView gifts={gifts} showAddresses={showAddresses} />
         )}
@@ -613,4 +802,3 @@ export function HolidayReports({
     </div>
   );
 }
-

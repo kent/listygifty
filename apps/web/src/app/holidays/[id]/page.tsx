@@ -425,6 +425,7 @@ export default function HolidayDetailPage() {
                 people={people}
                 statuses={statuses}
                 showAddresses={showAddresses}
+                onExportGifts={handleExportGifts}
               />
             </TabsContent>
           </Tabs>

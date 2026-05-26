@@ -83,6 +83,7 @@ Business success metric:
 - People CSV export now includes default shipping-address columns for round-trip fulfillment ops.
 - Gift CSV import now bulk-creates gifts for a list and can create/match recipients by name or email.
 - Gift list reports now include fulfillment exceptions for missing recipients, costs, links, and shipping addresses.
+- Gift list reports now include a fulfillment handoff view with recipient rows, address readiness, exception counts, and a CSV export action.
 
 ## Next Engineering Bets
 
