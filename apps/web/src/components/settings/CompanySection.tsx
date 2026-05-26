@@ -72,6 +72,10 @@ export function CompanySection() {
     } catch {
       // Profile might not exist yet for new workspaces
       setProfile(null);
+      setName("");
+      setWebsite("");
+      setAddress("");
+      setUseCaseId(DEFAULT_BUSINESS_USE_CASE.id);
     } finally {
       setIsLoading(false);
     }
