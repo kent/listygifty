@@ -22,6 +22,7 @@ Events:
   - Key properties: `gift_id`, `list_id`, `status_id`, `source`, `save_mode`, `time_to_save_ms`, `has_recipient`, `has_giver`, `has_link`, `has_cost`.
 - `mobile_gift_status_changed`
   - Fires when a gift status changes from mobile.
+  - Purchase shortcut source: `gift_detail_purchase_action`.
   - Key properties: `gift_id`, `list_id`, `from_status_id`, `to_status_id`, `source`.
 - `mobile_gift_link_opened`
   - Fires when a mobile user opens a saved gift link from a list card or gift detail.

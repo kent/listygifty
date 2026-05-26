@@ -5,6 +5,7 @@ import {
   buildRepeatGiftCaptureValues,
   filterGifts,
   getNextGiftStatus,
+  getPurchasedGiftStatus,
   giftFormHasChanges,
   sortGiftStatuses,
 } from "@/lib/models";
@@ -206,5 +207,24 @@ describe("gift model helpers", () => {
       "Purchased"
     );
     expect(getNextGiftStatus(buildGift({ gift_status_id: 3 }), statuses)).toBeNull();
+  });
+
+  it("finds the purchased status for purchase-loop shortcuts", () => {
+    const statuses = [
+      buildStatus({ id: 3, name: "Wrapped", position: 3 }),
+      buildStatus({ id: 2, name: "Purchased", position: 2 }),
+      buildStatus({ id: 1, name: "Idea", position: 1 }),
+    ];
+
+    expect(getPurchasedGiftStatus(statuses)?.id).toBe(2);
+  });
+
+  it("falls back to bought-style custom status names", () => {
+    const statuses = [
+      buildStatus({ id: 1, name: "Idea", position: 1 }),
+      buildStatus({ id: 4, name: "Bought online", position: 2 }),
+    ];
+
+    expect(getPurchasedGiftStatus(statuses)?.id).toBe(4);
   });
 });

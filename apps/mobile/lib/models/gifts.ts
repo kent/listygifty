@@ -140,6 +140,18 @@ export function getNextGiftStatus(gift: Gift, statuses: GiftStatus[]): GiftStatu
   return sortedStatuses[currentIndex + 1] ?? null;
 }
 
+export function getPurchasedGiftStatus(statuses: GiftStatus[]): GiftStatus | null {
+  const sortedStatuses = sortGiftStatuses(statuses);
+  return (
+    sortedStatuses.find((status) => status.name.trim().toLowerCase() === "purchased") ??
+    sortedStatuses.find((status) => {
+      const normalizedName = status.name.trim().toLowerCase();
+      return normalizedName.includes("purchased") || normalizedName.includes("bought");
+    }) ??
+    null
+  );
+}
+
 export function filterGifts(gifts: Gift[], filters: GiftFilterValues): Gift[] {
   const normalizedSearch = filters.search.trim().toLowerCase();
 

@@ -21,6 +21,7 @@ import {
   filterListsBySection,
   getListSectionCounts,
   getNextGiftStatus,
+  getPurchasedGiftStatus,
   getPreferredGiftCaptureList,
   getResolvedGiftStatusId,
   sortGiftCaptureLists,
@@ -725,6 +726,7 @@ export function useGiftDetailController() {
 
   const [form, setForm] = useState<GiftFormValues>(EMPTY_GIFT_FORM_VALUES);
   const [saving, setSaving] = useState(false);
+  const [markingPurchased, setMarkingPurchased] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -756,6 +758,17 @@ export function useGiftDetailController() {
     [resource.data.gift, form]
   );
 
+  const purchasedStatus = useMemo(
+    () => getPurchasedGiftStatus(resource.data.statuses),
+    [resource.data.statuses]
+  );
+
+  const canMarkPurchased =
+    Boolean(resource.data.gift) &&
+    Boolean(purchasedStatus) &&
+    selectedStatusId !== purchasedStatus?.id &&
+    !hasChanges;
+
   const error = !isValidGiftId ? "Invalid gift ID" : actionError || resource.error;
 
   const updateField = useCallback((field: keyof GiftFormValues, value: string | number[]) => {
@@ -780,6 +793,36 @@ export function useGiftDetailController() {
       source: "gift_detail",
     });
   }, [resource.data.gift, track]);
+
+  const handleMarkPurchased = useCallback(async () => {
+    const gift = resource.data.gift;
+    if (!gift || !purchasedStatus || hasChanges || markingPurchased) {
+      return;
+    }
+
+    setActionError(null);
+    setMarkingPurchased(true);
+
+    try {
+      const updatedGift = await gifts.update(id, { gift_status_id: purchasedStatus.id });
+      resource.setData((current) => ({ ...current, gift: updatedGift }));
+      setForm(buildGiftFormValues(updatedGift));
+      track("mobile_gift_status_changed", {
+        from_status_id: gift.gift_status_id,
+        gift_id: updatedGift.id,
+        list_id: updatedGift.holiday_id,
+        source: "gift_detail_purchase_action",
+        to_status_id: purchasedStatus.id,
+      });
+      await haptics.success();
+    } catch (purchaseStatusError) {
+      console.error("Failed to mark gift purchased", purchaseStatusError);
+      setActionError("Failed to mark gift as purchased");
+      await haptics.error();
+    } finally {
+      setMarkingPurchased(false);
+    }
+  }, [gifts, hasChanges, id, markingPurchased, purchasedStatus, resource, track]);
 
   const handleSave = useCallback(async () => {
     if (!resource.data.gift) {
@@ -861,14 +904,18 @@ export function useGiftDetailController() {
     error,
     form,
     gift: resource.data.gift,
+    canMarkPurchased,
     handleCancel: () => router.back(),
     handleDelete: promptDelete,
+    handleMarkPurchased,
     handleOpenLink,
     handleSave,
     handleStatusChange,
     hasChanges,
     loading: isValidGiftId && resource.loading,
+    markingPurchased,
     openLink: form.link.trim(),
+    purchasedStatusName: purchasedStatus?.name ?? null,
     saving,
     selectedStatusId,
     setGiverIds: (giverIds: number[]) => updateField("giverIds", giverIds),

@@ -167,6 +167,45 @@ export default function GiftDetailScreen() {
           ) : null}
         </View>
 
+        {controller.canMarkPurchased ? (
+          <TouchableOpacity
+            onPress={controller.handleMarkPurchased}
+            disabled={controller.markingPurchased}
+            accessibilityRole="button"
+            accessibilityLabel={`Mark gift as ${controller.purchasedStatusName ?? "Purchased"}`}
+            style={{
+              backgroundColor: isDark ? "#14532d" : "#dcfce7",
+              padding: 14,
+              borderRadius: 8,
+              alignItems: "center",
+              marginBottom: 16,
+              borderWidth: 1,
+              borderColor: isDark ? "#22c55e" : "#86efac",
+            }}
+          >
+            {controller.markingPurchased ? (
+              <ActivityIndicator color={isDark ? "#bbf7d0" : "#15803d"} />
+            ) : (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={20}
+                  color={isDark ? "#bbf7d0" : "#15803d"}
+                />
+                <Text
+                  style={{
+                    color: isDark ? "#bbf7d0" : "#15803d",
+                    fontSize: 16,
+                    fontWeight: "600",
+                  }}
+                >
+                  Mark {controller.purchasedStatusName ?? "Purchased"}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        ) : null}
+
         <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Cost</Text>
         <TextInput
           placeholder="0.00"
