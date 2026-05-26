@@ -28,6 +28,33 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "imports people creates business addresses from CSV" do
+    business_workspace = Workspace.create!(
+      name: "Acme Gifts",
+      workspace_type: "business",
+      created_by_user: @user
+    )
+    business_workspace.workspace_memberships.create!(user: @user, role: "owner")
+    headers = auth_headers_for(@user, workspace: business_workspace).except("Content-Type")
+    csv_content = "name,email,address_label,street_line_1,city,state,postal_code,country,is_default\nJamie Lee,jamie@example.com,Jamie home,123 Maple Street,Toronto,ON,M5V 2T6,CA,true"
+    file = Rack::Test::UploadedFile.new(
+      StringIO.new(csv_content),
+      "text/csv",
+      original_filename: "people_with_addresses.csv"
+    )
+
+    post "/imports/people",
+      headers: headers,
+      params: { file: file }
+
+    assert_response :success
+    assert_equal 1, json_response["created"]
+    assert_equal 1, json_response["addresses_created"]
+    address = business_workspace.company_profile.addresses.find_by!(label: "Jamie home")
+    assert_equal "123 Maple Street", address.street_line_1
+    assert address.is_default?
+  end
+
   test "imports people handles invalid CSV" do
     invalid_csv = "this,is,not,valid"
     file = Rack::Test::UploadedFile.new(

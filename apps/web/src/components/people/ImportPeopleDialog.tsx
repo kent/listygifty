@@ -99,7 +99,11 @@ export function ImportPeopleDialog({
   };
 
   const handleDownloadTemplate = () => {
-    const csvContent = "name,email,relationship,age,gender,notes\nJohn Smith,john@example.com,friend,35,male,Birthday in March\nJane Doe,jane@example.com,coworker,,female,";
+    const csvContent = [
+      "name,email,relationship,age,gender,notes,address_label,street_line_1,street_line_2,city,state,postal_code,country,is_default",
+      "John Smith,john@example.com,friend,35,male,Birthday in March,John home,123 Main Street,,Toronto,ON,M5V 2T6,CA,true",
+      "Jane Doe,jane@example.com,coworker,,female,,,,,,,",
+    ].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -119,7 +123,7 @@ export function ImportPeopleDialog({
             Import People
           </DialogTitle>
           <DialogDescription className="text-slate-500 dark:text-slate-400">
-            Upload a CSV file to import multiple people at once.
+            Upload a CSV file to import people and optional business shipping addresses.
           </DialogDescription>
         </DialogHeader>
 
@@ -258,8 +262,14 @@ export function ImportPeopleDialog({
                 </div>
                 <div className="text-sm text-green-700 dark:text-green-300 space-y-1">
                   <p>Created: {result.created} people</p>
+                  {result.addresses_created > 0 && (
+                    <p>Created: {result.addresses_created} addresses</p>
+                  )}
                   {result.skipped > 0 && (
                     <p>Skipped: {result.skipped} (duplicate emails)</p>
+                  )}
+                  {result.addresses_skipped > 0 && (
+                    <p>Skipped: {result.addresses_skipped} duplicate addresses</p>
                   )}
                 </div>
               </div>

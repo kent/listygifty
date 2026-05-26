@@ -23,6 +23,8 @@ class ImportsController < ApplicationController
     render json: {
       created: result[:created],
       skipped: result[:skipped],
+      addresses_created: result[:addresses_created],
+      addresses_skipped: result[:addresses_skipped],
       errors: result[:errors],
       people: PersonBlueprint.render_as_hash(result[:people], current_user: current_user, current_workspace: current_workspace)
     }

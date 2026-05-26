@@ -958,6 +958,8 @@ export const WORKSPACE_API_ENDPOINTS = {
 export interface ImportPeopleResult {
   created: number;
   skipped: number;
+  addresses_created: number;
+  addresses_skipped: number;
   errors: string[];
   people: Person[];
 }
