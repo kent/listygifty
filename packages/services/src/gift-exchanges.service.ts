@@ -1,5 +1,6 @@
 import type { ApiClient } from "@niftygifty/api-client";
 import type {
+  CreateGiftExchangeRequest,
   GiftExchange,
   GiftExchangeWithParticipants,
 } from "@niftygifty/types";
@@ -7,6 +8,7 @@ import type {
 export interface GiftExchangesService {
   getAll(): Promise<GiftExchange[]>;
   getById(id: number): Promise<GiftExchangeWithParticipants>;
+  create(data: CreateGiftExchangeRequest["gift_exchange"]): Promise<GiftExchange>;
 }
 
 export function createGiftExchangesService(client: ApiClient): GiftExchangesService {
@@ -17,6 +19,10 @@ export function createGiftExchangesService(client: ApiClient): GiftExchangesServ
 
     getById(id: number) {
       return client.get<GiftExchangeWithParticipants>(`/gift_exchanges/${id}`);
+    },
+
+    create(data: CreateGiftExchangeRequest["gift_exchange"]) {
+      return client.post<GiftExchange>("/gift_exchanges", { gift_exchange: data });
     },
   };
 }

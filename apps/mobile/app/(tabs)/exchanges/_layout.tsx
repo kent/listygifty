@@ -30,6 +30,10 @@ export default function ExchangesLayout() {
         options={{ title: "Your Match" }}
       />
       <Stack.Screen
+        name="new"
+        options={{ title: "New Exchange", presentation: "modal" }}
+      />
+      <Stack.Screen
         name="wishlist/new"
         options={{ title: "Add Item", presentation: "modal" }}
       />

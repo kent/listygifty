@@ -1,9 +1,24 @@
-import type { GiftExchange } from "@niftygifty/types";
+import type { CreateGiftExchangeRequest, GiftExchange } from "@niftygifty/types";
+import { parseOptionalDecimal, trim, trimOrUndefined } from "./inputs";
 
 export type ExchangeSection = {
   key: "owned" | "participating";
   title: string;
   data: GiftExchange[];
+};
+
+export interface ExchangeFormValues {
+  name: string;
+  exchangeDate: string;
+  budgetMin: string;
+  budgetMax: string;
+}
+
+export const EMPTY_EXCHANGE_FORM_VALUES: ExchangeFormValues = {
+  name: "",
+  exchangeDate: "",
+  budgetMin: "",
+  budgetMax: "",
 };
 
 export function buildExchangeSections(exchanges: GiftExchange[]): ExchangeSection[] {
@@ -20,4 +35,15 @@ export function buildExchangeSections(exchanges: GiftExchange[]): ExchangeSectio
   }
 
   return sections;
+}
+
+export function buildCreateExchangePayload(
+  values: ExchangeFormValues
+): CreateGiftExchangeRequest["gift_exchange"] {
+  return {
+    name: trim(values.name),
+    exchange_date: trimOrUndefined(values.exchangeDate),
+    budget_min: parseOptionalDecimal(values.budgetMin),
+    budget_max: parseOptionalDecimal(values.budgetMax),
+  };
 }

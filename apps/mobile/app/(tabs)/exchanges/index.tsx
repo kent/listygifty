@@ -1,7 +1,8 @@
-import { View, Text, RefreshControl, SectionList } from "react-native";
+import { View, Text, RefreshControl, SectionList, TouchableOpacity } from "react-native";
 import { ExchangeCard } from "@/components/ExchangeCard";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { InlineError } from "@/components/InlineError";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { useTheme } from "@/lib/theme";
 import { useExchangesController } from "@/lib/controllers";
 
@@ -66,13 +67,34 @@ export default function ExchangesScreen() {
                 fontSize: 14,
                 textAlign: "center",
                 paddingHorizontal: 32,
+                marginBottom: 24,
               }}
             >
-              You'll see exchanges here when someone invites you to participate in a gift exchange.
+              Create an exchange or accept an invite to start a Secret Santa-style gift swap.
             </Text>
+            <TouchableOpacity
+              onPress={controller.openNewExchange}
+              style={{
+                backgroundColor: colors.primary,
+                paddingVertical: 12,
+                paddingHorizontal: 24,
+                borderRadius: 8,
+              }}
+            >
+              <Text style={{ color: colors.textInverse, fontWeight: "600" }}>
+                Create Exchange
+              </Text>
+            </TouchableOpacity>
           </View>
         }
       />
+
+      {controller.totalExchanges > 0 ? (
+        <FloatingActionButton
+          onPress={controller.openNewExchange}
+          accessibilityLabel="Add Exchange"
+        />
+      ) : null}
     </View>
   );
 }

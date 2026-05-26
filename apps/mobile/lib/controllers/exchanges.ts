@@ -5,10 +5,14 @@ import { useAuth } from "@clerk/clerk-expo";
 import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
+  buildCreateExchangePayload,
   buildCreateWishlistItemPayload,
   buildExchangeSections,
+  EMPTY_EXCHANGE_FORM_VALUES,
   EMPTY_WISHLIST_ITEM_FORM_VALUES,
+  isValidIsoDate,
   parseOptionalDecimal,
+  type ExchangeFormValues,
   type ExchangeInviteDetails,
   type GiftExchange,
   type GiftExchangeWithParticipants,
@@ -41,10 +45,74 @@ export function useExchangesController() {
     error: resource.error,
     handlePressExchange: (exchangeId: number) => router.push(`/(tabs)/exchanges/${exchangeId}`),
     loading: resource.loading,
+    openNewExchange: () => router.push("/(tabs)/exchanges/new"),
     refreshing: resource.refreshing,
     retryLoad: resource.reload,
     sections,
+    totalExchanges: resource.data.length,
     triggerRefresh: resource.refresh,
+  };
+}
+
+export function useNewExchangeController() {
+  const router = useRouter();
+  const { giftExchanges } = useServices();
+  const [form, setForm] = useState<ExchangeFormValues>(EMPTY_EXCHANGE_FORM_VALUES);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const updateField = useCallback((field: keyof ExchangeFormValues, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  }, []);
+
+  const handleSubmit = useCallback(async () => {
+    if (!form.name.trim()) {
+      setError("Name is required");
+      return;
+    }
+
+    if (form.exchangeDate.trim() && !isValidIsoDate(form.exchangeDate)) {
+      setError("Date must use YYYY-MM-DD");
+      return;
+    }
+
+    const parsedMin = parseOptionalDecimal(form.budgetMin);
+    const parsedMax = parseOptionalDecimal(form.budgetMax);
+    if (Number.isNaN(parsedMin) || Number.isNaN(parsedMax)) {
+      setError("Budgets must be valid numbers");
+      return;
+    }
+
+    if (
+      parsedMin !== undefined &&
+      parsedMax !== undefined &&
+      parsedMin > parsedMax
+    ) {
+      setError("Minimum budget cannot be greater than maximum budget");
+      return;
+    }
+
+    setError(null);
+    setSaving(true);
+
+    try {
+      const exchange = await giftExchanges.create(buildCreateExchangePayload(form));
+      router.replace(`/(tabs)/exchanges/${exchange.id}`);
+    } catch (submitError) {
+      console.error("Failed to create exchange", submitError);
+      setError("Failed to create exchange");
+    } finally {
+      setSaving(false);
+    }
+  }, [form, giftExchanges, router]);
+
+  return {
+    error,
+    form,
+    handleCancel: () => router.back(),
+    handleSubmit,
+    saving,
+    updateField,
   };
 }
 

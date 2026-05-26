@@ -295,6 +295,13 @@ export const giftExchangesService = {
       baseGiftExchangesService.getById(id)
     );
   },
+
+  async create(data: Parameters<typeof baseGiftExchangesService.create>[0]) {
+    const exchange = await baseGiftExchangesService.create(data);
+    resetBootstrapState();
+    invalidateCachedResources("gift-exchanges:");
+    return exchange;
+  },
 };
 
 export function prefetchAppShellData() {
