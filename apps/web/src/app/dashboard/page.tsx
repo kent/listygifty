@@ -34,8 +34,125 @@ interface ActivationStep {
   href: string;
 }
 
+interface UpcomingDate {
+  date: Date;
+  daysUntil: number;
+  href: string;
+  id: string;
+  kind: "birthday" | "list" | "milestone";
+  subtitle: string;
+  title: string;
+}
+
 function formatProgress(current: number, target: number): string {
   return `${Math.min(current, target)}/${target}`;
+}
+
+function startOfToday(): Date {
+  const today = new Date();
+  return new Date(today.getFullYear(), today.getMonth(), today.getDate());
+}
+
+function parseDateOnly(date: string | null | undefined): Date | null {
+  if (!date) {
+    return null;
+  }
+
+  const [year, month, day] = date.split("-").map(Number);
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  return new Date(year, month - 1, day);
+}
+
+function nextAnnualDate(date: string | null | undefined, today = startOfToday()): Date | null {
+  const parsedDate = parseDateOnly(date);
+  if (!parsedDate) {
+    return null;
+  }
+
+  const nextDate = new Date(today.getFullYear(), parsedDate.getMonth(), parsedDate.getDate());
+  if (nextDate < today) {
+    nextDate.setFullYear(today.getFullYear() + 1);
+  }
+
+  return nextDate;
+}
+
+function getDaysUntil(date: Date, today = startOfToday()): number {
+  return Math.round((date.getTime() - today.getTime()) / 86_400_000);
+}
+
+function formatUpcomingDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatDaysUntil(daysUntil: number): string {
+  if (daysUntil === 0) {
+    return "Today";
+  }
+
+  if (daysUntil === 1) {
+    return "Tomorrow";
+  }
+
+  return `${daysUntil} days`;
+}
+
+function buildUpcomingDates(holidays: Holiday[], people: Person[]): UpcomingDate[] {
+  const today = startOfToday();
+  const dates: UpcomingDate[] = [];
+
+  holidays.forEach((holiday) => {
+    const date = parseDateOnly(holiday.date);
+    if (!date || date < today) {
+      return;
+    }
+
+    dates.push({
+      date,
+      daysUntil: getDaysUntil(date, today),
+      href: `/holidays/${holiday.id}`,
+      id: `list-${holiday.id}`,
+      kind: "list",
+      subtitle: "Gift list",
+      title: holiday.name,
+    });
+  });
+
+  people.forEach((person) => {
+    const birthdayDate = nextAnnualDate(person.birthday, today);
+    if (birthdayDate) {
+      dates.push({
+        date: birthdayDate,
+        daysUntil: getDaysUntil(birthdayDate, today),
+        href: `/people/${person.id}`,
+        id: `birthday-${person.id}`,
+        kind: "birthday",
+        subtitle: "Birthday",
+        title: person.name,
+      });
+    }
+
+    const milestoneDate = nextAnnualDate(person.milestone_date, today);
+    if (milestoneDate) {
+      dates.push({
+        date: milestoneDate,
+        daysUntil: getDaysUntil(milestoneDate, today),
+        href: `/people/${person.id}`,
+        id: `milestone-${person.id}`,
+        kind: "milestone",
+        subtitle: person.milestone_label || "Milestone",
+        title: person.name,
+      });
+    }
+  });
+
+  return dates.sort((left, right) => left.date.getTime() - right.date.getTime()).slice(0, 5);
 }
 
 function ActivationChecklist({
@@ -125,6 +242,55 @@ function ActivationChecklist({
   );
 }
 
+function UpcomingDatesCard({ dates }: { dates: UpcomingDate[] }) {
+  if (dates.length === 0) {
+    return null;
+  }
+
+  const kindClasses: Record<UpcomingDate["kind"], string> = {
+    birthday: "bg-pink-100 text-pink-700 dark:bg-pink-950/40 dark:text-pink-300",
+    list: "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300",
+    milestone: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+  };
+
+  return (
+    <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+      <CardContent className="p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-violet-500 dark:text-violet-300" />
+          <h2 className="font-semibold text-slate-900 dark:text-white">Upcoming Dates</h2>
+        </div>
+        <div className="space-y-2">
+          {dates.map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-slate-700 dark:hover:bg-slate-900"
+            >
+              <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                <span className="text-xs font-semibold">{formatUpcomingDate(item.date)}</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-slate-900 dark:text-white">
+                  {item.title}
+                </p>
+                <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                  {item.subtitle}
+                </p>
+              </div>
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-medium ${kindClasses[item.kind]}`}
+              >
+                {formatDaysUntil(item.daysUntil)}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading, signOut } = useAuth();
   const { bootstrapData, currentWorkspace, refreshWorkspaces } = useWorkspace();
@@ -147,6 +313,10 @@ export default function DashboardPage() {
   const sharedListCount = userHolidays.filter((holiday) => holiday.collaborator_count > 1).length;
   const isBusinessWorkspace = currentWorkspace?.workspace_type === "business";
   const businessWorkflowLabel = getBusinessUseCaseLabel(currentWorkspace?.business_initial_use_case);
+  const upcomingDates = useMemo(
+    () => buildUpcomingDates(activeHolidays, people),
+    [activeHolidays, people]
+  );
   const activationSteps = useMemo<ActivationStep[]>(() => {
     if (isBusinessWorkspace) {
       return [
@@ -318,6 +488,12 @@ export default function DashboardPage() {
             workflowLabel={businessWorkflowLabel}
           />
         </section>
+
+        {upcomingDates.length > 0 && (
+          <section className="mb-8">
+            <UpcomingDatesCard dates={upcomingDates} />
+          </section>
+        )}
 
         {/* Gift To Do List */}
         <section className="mb-8">
