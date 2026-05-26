@@ -49,8 +49,9 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
 5. Activation metric
    - A household is activated when it has at least one list, three people, and five gifts.
    - Secondary activation: at least one shared collaborator or one gift exchange participant.
-   - Track the funnel as list created -> people added -> gift ideas captured -> gift status changed.
-   - Mobile now emits activation events for list creation, person creation, gift capture, gift status changes, exchange creation, participant invites, wishlist additions, exclusions, and match draw.
+- Track the funnel as list created -> people added -> gift ideas captured -> gift status changed.
+- Mobile now emits activation events for list creation, person creation, gift capture, gift status changes, exchange creation, participant invites, wishlist additions, exclusions, and match draw.
+- Web dashboard now shows household activation progress against the first-list, three-people, five-gifts, and collaboration/exchange milestones.
 
 ## Business GTM Checklist
 
@@ -84,6 +85,7 @@ Business success metric:
 - Gift CSV import now bulk-creates gifts for a list and can create/match recipients by name or email.
 - Gift list reports now include fulfillment exceptions for missing recipients, costs, links, and shipping addresses.
 - Gift list reports now include a fulfillment handoff view with recipient rows, address readiness, exception counts, and a CSV export action.
+- Web dashboard now shows business activation progress against the workspace, 20-people, 20-gifts, and first-workflow milestones.
 
 ## Next Engineering Bets
 

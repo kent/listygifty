@@ -271,6 +271,7 @@ export interface AppBootstrapData {
   people: Person[];
   gift_statuses: GiftStatus[];
   gift_exchanges: GiftExchange[];
+  gift_total: number;
   pending_gifts: Gift[];
   pending_gift_total: number;
 }

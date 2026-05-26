@@ -65,6 +65,9 @@ class BootstrapPayloadService
     end
 
     pending_gifts_scope = pending_gifts_scope_for(workspace_holidays)
+    gift_total = measure(timings, :gift_total) do
+      Gift.where(holiday_id: workspace_holidays.select(:id)).count
+    end
     pending_gift_total = measure(timings, :pending_gift_total) { pending_gifts_scope.count }
     pending_gifts = measure(timings, :pending_gifts) do
       GiftBlueprint.render_as_hash(
@@ -89,6 +92,7 @@ class BootstrapPayloadService
       people: people,
       gift_statuses: gift_statuses,
       gift_exchanges: gift_exchanges,
+      gift_total: gift_total,
       pending_gifts: pending_gifts,
       pending_gift_total: pending_gift_total
     }
@@ -133,6 +137,7 @@ class BootstrapPayloadService
       people: [],
       gift_statuses: [],
       gift_exchanges: [],
+      gift_total: 0,
       pending_gifts: [],
       pending_gift_total: 0
     }

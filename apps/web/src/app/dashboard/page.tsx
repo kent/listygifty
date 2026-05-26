@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Plus, ArrowRight, Loader2, Calendar } from "lucide-react";
+import { ArrowRight, Calendar, CheckCircle2, Circle, Gift as GiftIcon, Loader2, Plus, Users } from "lucide-react";
 import { GiftTodoList } from "@/components/gift-todo-list";
 import type { Holiday, Person } from "@niftygifty/types";
 
@@ -26,9 +26,86 @@ const HOLIDAY_ICONS: Record<string, string> = {
   Valentine: "💝",
 };
 
+interface ActivationStep {
+  label: string;
+  countLabel: string;
+  complete: boolean;
+  href: string;
+}
+
+function formatProgress(current: number, target: number): string {
+  return `${Math.min(current, target)}/${target}`;
+}
+
+function ActivationChecklist({
+  steps,
+  isBusiness,
+}: {
+  steps: ActivationStep[];
+  isBusiness: boolean;
+}) {
+  const completedCount = steps.filter((step) => step.complete).length;
+
+  return (
+    <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+      <CardContent className="p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
+            Activation
+          </h2>
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            {completedCount}/{steps.length}
+          </span>
+        </div>
+        <div className="space-y-2">
+          {steps.map((step) => {
+            const StatusIcon = step.complete ? CheckCircle2 : Circle;
+
+            return (
+              <Link
+                key={step.label}
+                href={step.href}
+                className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-slate-700 dark:hover:bg-slate-900"
+              >
+                <StatusIcon
+                  className={`h-4 w-4 shrink-0 ${
+                    step.complete
+                      ? "text-emerald-500 dark:text-emerald-400"
+                      : "text-slate-400 dark:text-slate-600"
+                  }`}
+                />
+                <span className="min-w-0 flex-1 text-slate-700 dark:text-slate-300">
+                  {step.label}
+                </span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  {step.countLabel}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          {isBusiness ? (
+            <>
+              <Users className="h-3.5 w-3.5" />
+              <span>Business goal: 20 people and 20 gifts in one workflow.</span>
+            </>
+          ) : (
+            <>
+              <GiftIcon className="h-3.5 w-3.5" />
+              <span>Household goal: one list, three people, and five gifts.</span>
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading, signOut } = useAuth();
-  const { bootstrapData, refreshWorkspaces } = useWorkspace();
+  const { bootstrapData, currentWorkspace, refreshWorkspaces } = useWorkspace();
   const router = useRouter();
 
   const [templates, setTemplates] = useState<Holiday[]>([]);
@@ -43,6 +120,75 @@ export default function DashboardPage() {
     () => userHolidays.filter((h) => !h.completed && !h.archived),
     [userHolidays]
   );
+  const giftTotal = bootstrapData?.gift_total ?? bootstrapData?.pending_gift_total ?? 0;
+  const exchangeCount = bootstrapData?.gift_exchanges.length ?? 0;
+  const sharedListCount = userHolidays.filter((holiday) => holiday.collaborator_count > 1).length;
+  const isBusinessWorkspace = currentWorkspace?.workspace_type === "business";
+  const activationSteps = useMemo<ActivationStep[]>(() => {
+    if (isBusinessWorkspace) {
+      return [
+        {
+          label: "Business workspace",
+          countLabel: currentWorkspace ? "1/1" : "0/1",
+          complete: Boolean(currentWorkspace),
+          href: "/settings",
+        },
+        {
+          label: "People added",
+          countLabel: formatProgress(people.length, 20),
+          complete: people.length >= 20,
+          href: "/people",
+        },
+        {
+          label: "Gifts tracked",
+          countLabel: formatProgress(giftTotal, 20),
+          complete: giftTotal >= 20,
+          href: activeHolidays[0] ? `/holidays/${activeHolidays[0].id}` : "/holidays",
+        },
+        {
+          label: "Workflow started",
+          countLabel: exchangeCount > 0 || activeHolidays.length > 0 ? "1/1" : "0/1",
+          complete: exchangeCount > 0 || activeHolidays.length > 0,
+          href: activeHolidays[0] ? `/holidays/${activeHolidays[0].id}` : "/exchanges",
+        },
+      ];
+    }
+
+    return [
+      {
+        label: "Gift list created",
+        countLabel: formatProgress(activeHolidays.length, 1),
+        complete: activeHolidays.length >= 1,
+        href: "/holidays",
+      },
+      {
+        label: "People added",
+        countLabel: formatProgress(people.length, 3),
+        complete: people.length >= 3,
+        href: "/people",
+      },
+      {
+        label: "Gifts captured",
+        countLabel: formatProgress(giftTotal, 5),
+        complete: giftTotal >= 5,
+        href: activeHolidays[0] ? `/holidays/${activeHolidays[0].id}` : "/holidays",
+      },
+      {
+        label: "Shared or exchange",
+        countLabel: sharedListCount > 0 || exchangeCount > 0 ? "1/1" : "0/1",
+        complete: sharedListCount > 0 || exchangeCount > 0,
+        href: exchangeCount > 0 ? "/exchanges" : activeHolidays[0] ? `/holidays/${activeHolidays[0].id}` : "/exchanges",
+      },
+    ];
+  }, [
+    activeHolidays,
+    currentWorkspace,
+    exchangeCount,
+    giftTotal,
+    isBusinessWorkspace,
+    people.length,
+    sharedListCount,
+  ]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -141,6 +287,13 @@ export default function DashboardPage() {
             </div>
           </section>
         )}
+
+        <section className="mb-8">
+          <ActivationChecklist
+            steps={activationSteps}
+            isBusiness={isBusinessWorkspace}
+          />
+        </section>
 
         {/* Gift To Do List */}
         <section className="mb-8">
