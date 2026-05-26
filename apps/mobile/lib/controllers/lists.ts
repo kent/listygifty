@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Alert, Share } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { haptics } from "@/lib/haptics";
@@ -13,8 +13,10 @@ import {
   EMPTY_HOLIDAY_FORM_VALUES,
   filterGifts,
   filterListsBySection,
+  getDefaultGiftCaptureList,
   getListSectionCounts,
   getResolvedGiftStatusId,
+  sortGiftCaptureLists,
   giftFormHasChanges,
   isValidIsoDate,
   ListSection,
@@ -61,6 +63,10 @@ export function useGiftListsController() {
     router.push("/(tabs)/lists/new");
   }, [router]);
 
+  const openQuickGift = useCallback(() => {
+    router.push("/(tabs)/lists/gifts/new");
+  }, [router]);
+
   const updateListFlag = useCallback(
     async (item: Holiday, changes: Partial<Pick<Holiday, "completed" | "archived">>) => {
       try {
@@ -85,6 +91,7 @@ export function useGiftListsController() {
     handleComplete: (item: Holiday) => updateListFlag(item, { completed: !item.completed }),
     handlePressItem: (item: Holiday) => openList(item.id),
     loading: resource.loading,
+    openQuickGift,
     openNewList,
     refreshing: resource.refreshing,
     retryLoad: resource.reload,
@@ -402,13 +409,23 @@ export function useNewListController() {
 export function useNewGiftController() {
   const router = useRouter();
   const { holiday_id } = useLocalSearchParams<{ holiday_id: string }>();
-  const { gifts, giftStatuses } = useServices();
-  const holidayId = holiday_id ? Number.parseInt(holiday_id, 10) : Number.NaN;
-  const isValidHolidayId = Number.isFinite(holidayId);
+  const { gifts, giftStatuses, holidays } = useServices();
+  const holidayIdParam = holiday_id ? Number.parseInt(holiday_id, 10) : Number.NaN;
+  const hasPresetHoliday = Number.isFinite(holidayIdParam);
 
   const [form, setForm] = useState<GiftFormValues>(EMPTY_GIFT_FORM_VALUES);
+  const [selectedHolidayId, setSelectedHolidayId] = useState<number | null>(
+    hasPresetHoliday ? holidayIdParam : null
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const listResource = useFocusResource({
+    enabled: !hasPresetHoliday,
+    errorMessage: "Failed to load lists",
+    initialValue: [] as Holiday[],
+    load: () => holidays.getAll(),
+  });
 
   const statusResource = useFocusResource({
     errorMessage: "Failed to load statuses",
@@ -416,13 +433,42 @@ export function useNewGiftController() {
     load: () => giftStatuses.getAll(),
   });
 
+  const captureLists = useMemo(
+    () => sortGiftCaptureLists(listResource.data),
+    [listResource.data]
+  );
   const selectedStatusId = useMemo(
     () => getResolvedGiftStatusId(form, statusResource.data),
     [form, statusResource.data]
   );
+  const selectedHoliday = useMemo(
+    () => captureLists.find((list) => list.id === selectedHolidayId) ?? null,
+    [captureLists, selectedHolidayId]
+  );
+
+  useEffect(() => {
+    if (hasPresetHoliday) {
+      return;
+    }
+
+    const defaultList = getDefaultGiftCaptureList(captureLists);
+    if (!defaultList) {
+      setSelectedHolidayId(null);
+      return;
+    }
+
+    if (!selectedHolidayId || !captureLists.some((list) => list.id === selectedHolidayId)) {
+      setSelectedHolidayId(defaultList.id);
+    }
+  }, [captureLists, hasPresetHoliday, selectedHolidayId]);
 
   const updateField = useCallback((field: keyof GiftFormValues, value: string | number[]) => {
     setForm((current) => ({ ...current, [field]: value }));
+  }, []);
+
+  const handleHolidayChange = useCallback(async (holidayId: number) => {
+    setSelectedHolidayId(holidayId);
+    await haptics.selection();
   }, []);
 
   const handleStatusChange = useCallback(async (statusId: number) => {
@@ -436,7 +482,7 @@ export function useNewGiftController() {
       return;
     }
 
-    if (!isValidHolidayId) {
+    if (!selectedHolidayId) {
       setError("No list selected");
       return;
     }
@@ -456,7 +502,7 @@ export function useNewGiftController() {
     setSaving(true);
 
     try {
-      await gifts.create(buildCreateGiftPayload(holidayId, form, selectedStatusId));
+      await gifts.create(buildCreateGiftPayload(selectedHolidayId, form, selectedStatusId));
       await haptics.success();
       router.back();
     } catch (submitError) {
@@ -466,16 +512,26 @@ export function useNewGiftController() {
     } finally {
       setSaving(false);
     }
-  }, [form, gifts, holidayId, isValidHolidayId, router, selectedStatusId]);
+  }, [form, gifts, router, selectedHolidayId, selectedStatusId]);
 
   return {
+    canChooseList: !hasPresetHoliday,
+    canSubmit: Boolean(selectedHolidayId) && !saving,
+    captureLists,
     error,
     form,
     handleCancel: () => router.back(),
+    handleHolidayChange,
     handleStatusChange,
     handleSubmit,
+    listsError: listResource.error,
+    listsLoading: listResource.loading,
     loadingStatuses: statusResource.loading,
+    openNewList: () => router.push("/(tabs)/lists/new"),
+    retryLists: listResource.reload,
     saving,
+    selectedHoliday,
+    selectedHolidayId,
     selectedStatusId,
     setGiverIds: (giverIds: number[]) => updateField("giverIds", giverIds),
     setRecipientIds: (recipientIds: number[]) => updateField("recipientIds", recipientIds),

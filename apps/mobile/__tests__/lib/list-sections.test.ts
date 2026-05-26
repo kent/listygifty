@@ -1,7 +1,9 @@
 import type { Holiday } from "@niftygifty/types";
 import {
   filterListsBySection,
+  getDefaultGiftCaptureList,
   getListSectionCounts,
+  sortGiftCaptureLists,
   type ListSection,
 } from "@/lib/list-sections";
 
@@ -52,4 +54,25 @@ describe("list-sections helpers", () => {
       expect(result).toEqual(expectedIds);
     }
   );
+
+  it("prioritizes active upcoming lists for quick gift capture", () => {
+    const captureLists = [
+      buildHoliday({ id: 1, name: "Archived", archived: true, date: "2026-01-01" }),
+      buildHoliday({ id: 2, name: "Future", date: "2026-12-25" }),
+      buildHoliday({ id: 3, name: "Soon", date: "2026-06-01" }),
+      buildHoliday({ id: 4, name: "Completed", completed: true, date: "2026-02-01" }),
+    ];
+
+    expect(sortGiftCaptureLists(captureLists).map((item) => item.id)).toEqual([3, 2, 4, 1]);
+    expect(getDefaultGiftCaptureList(captureLists)?.id).toBe(3);
+  });
+
+  it("falls back to name ordering when capture dates are missing", () => {
+    const captureLists = [
+      buildHoliday({ id: 1, name: "Teachers", date: null }),
+      buildHoliday({ id: 2, name: "Birthdays", date: null }),
+    ];
+
+    expect(sortGiftCaptureLists(captureLists).map((item) => item.id)).toEqual([2, 1]);
+  });
 });

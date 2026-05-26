@@ -23,6 +23,24 @@ export default function GiftListsScreen() {
       ) : null}
 
       <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+        {controller.totalLists > 0 ? (
+          <TouchableOpacity
+            onPress={controller.openQuickGift}
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: 10,
+              paddingVertical: 14,
+              paddingHorizontal: 16,
+              alignItems: "center",
+              marginBottom: 12,
+            }}
+          >
+            <Text style={{ color: colors.textInverse, fontSize: 16, fontWeight: "700" }}>
+              Capture Gift Idea
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+
         <View
           style={{
             flexDirection: "row",

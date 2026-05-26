@@ -12,6 +12,7 @@ import { useTheme } from "@/lib/theme";
 import { PersonPicker } from "@/components/PersonPicker";
 import { InlineError } from "@/components/InlineError";
 import { useNewGiftController } from "@/lib/controllers";
+import { formatShortDate } from "@/lib/formatters";
 import { getGiftStatusColors } from "@/lib/gift-status-colors";
 
 export default function NewGiftScreen() {
@@ -26,7 +27,110 @@ export default function NewGiftScreen() {
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         {controller.error ? <InlineError message={controller.error} margin={0} /> : null}
         {controller.statusesError ? (
-          <InlineError message={controller.statusesError} onRetry={controller.retryStatuses} margin={16} />
+          <InlineError
+            message={controller.statusesError}
+            onRetry={controller.retryStatuses}
+            margin={16}
+          />
+        ) : null}
+
+        {controller.canChooseList ? (
+          <View style={{ marginBottom: 16 }}>
+            <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
+              List *
+            </Text>
+
+            {controller.listsLoading ? (
+              <ActivityIndicator color={colors.primary} style={{ marginVertical: 12 }} />
+            ) : controller.listsError ? (
+              <InlineError
+                message={controller.listsError}
+                onRetry={controller.retryLists}
+                margin={0}
+              />
+            ) : controller.captureLists.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginHorizontal: -16 }}
+                contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+              >
+                {controller.captureLists.map((list) => {
+                  const isSelected = controller.selectedHolidayId === list.id;
+                  const dateLabel = formatShortDate(list.date);
+
+                  return (
+                    <TouchableOpacity
+                      key={list.id}
+                      onPress={() => controller.handleHolidayChange(list.id)}
+                      style={{
+                        width: 180,
+                        minHeight: 78,
+                        backgroundColor: isSelected ? colors.primarySurface : colors.input,
+                        borderWidth: 2,
+                        borderColor: isSelected ? colors.primary : colors.inputBorder,
+                        borderRadius: 10,
+                        padding: 12,
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Text
+                        numberOfLines={2}
+                        style={{
+                          color: colors.text,
+                          fontSize: 15,
+                          fontWeight: "700",
+                          lineHeight: 20,
+                        }}
+                      >
+                        {list.name}
+                      </Text>
+                      <Text
+                        numberOfLines={1}
+                        style={{
+                          color: isSelected ? colors.primary : colors.textTertiary,
+                          fontSize: 12,
+                          fontWeight: "600",
+                          marginTop: 8,
+                        }}
+                      >
+                        {dateLabel ?? (list.completed ? "Past list" : "Anytime")}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            ) : (
+              <View
+                style={{
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: 10,
+                  padding: 14,
+                  gap: 12,
+                }}
+              >
+                <Text style={{ color: colors.text, fontSize: 15, fontWeight: "600" }}>
+                  Create a list before saving a gift idea.
+                </Text>
+                <TouchableOpacity
+                  onPress={controller.openNewList}
+                  style={{
+                    alignSelf: "flex-start",
+                    backgroundColor: colors.primary,
+                    borderRadius: 8,
+                    paddingHorizontal: 14,
+                    paddingVertical: 10,
+                  }}
+                >
+                  <Text style={{ color: colors.textInverse, fontWeight: "600" }}>
+                    New List
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         ) : null}
 
         <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Name *</Text>
@@ -161,9 +265,9 @@ export default function NewGiftScreen() {
 
         <TouchableOpacity
           onPress={controller.handleSubmit}
-          disabled={controller.saving}
+          disabled={!controller.canSubmit}
           style={{
-            backgroundColor: colors.primary,
+            backgroundColor: controller.canSubmit ? colors.primary : colors.surfaceSecondary,
             padding: 16,
             borderRadius: 8,
             alignItems: "center",
@@ -173,7 +277,13 @@ export default function NewGiftScreen() {
           {controller.saving ? (
             <ActivityIndicator color={colors.textInverse} />
           ) : (
-            <Text style={{ color: colors.textInverse, fontSize: 16, fontWeight: "600" }}>
+            <Text
+              style={{
+                color: controller.canSubmit ? colors.textInverse : colors.muted,
+                fontSize: 16,
+                fontWeight: "600",
+              }}
+            >
               Add Gift
             </Text>
           )}
