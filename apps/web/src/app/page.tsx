@@ -9,9 +9,9 @@ import { JsonLd } from "@/components/json-ld";
 import { HeroPreview } from "@/components/hero-preview";
 
 export const metadata: Metadata = {
-  title: "Listy Gifty: Never Stress About Gifts Again",
+  title: "Listy Gifty: Gift Planning for Families, Exchanges, and Teams",
   description:
-    "The smartest way to manage gift lists. Track gifts across occasions, balance spending between loved ones, get AI suggestions, and stay organized with status notifications.",
+    "Capture gift ideas year-round, organize gifts by person and occasion, run gift exchanges, and coordinate team gifting from one shared workspace.",
   alternates: {
     canonical: "/",
   },
@@ -34,8 +34,8 @@ const features = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
       </svg>
     ),
-    title: "Match Up Gifts Fairly",
-    description: "Worried one kid has more than another? Our matching tool helps you balance gifts so everyone feels equally loved.",
+    title: "Capture Ideas Year-Round",
+    description: "Save gift ideas the moment they happen, then come back later to add links, prices, recipients, and buying status.",
     gradient: "from-violet-500 to-purple-500",
   },
   {
@@ -44,8 +44,8 @@ const features = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
     ),
-    title: "Compare Spending",
-    description: "See at a glance who you've been generous with and who needs more love. Perfect for making sure parents, friends, or siblings are treated fairly.",
+    title: "See Budgets and Status",
+    description: "Track what is still an idea, already purchased, wrapped, or delivered so December does not turn into a spreadsheet audit.",
     gradient: "from-amber-500 to-orange-500",
   },
   {
@@ -54,8 +54,8 @@ const features = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
       </svg>
     ),
-    title: "AI Gift Suggestions",
-    description: "Stuck on what to get? Our AI analyzes interests, past gifts, and budget to suggest perfect presents they'll actually love.",
+    title: "Run Gift Exchanges",
+    description: "Create Secret Santa-style exchanges, invite participants, collect wishlists, draw matches, and keep the group moving.",
     gradient: "from-cyan-500 to-blue-500",
   },
 ];
@@ -104,16 +104,16 @@ export default function HomePage() {
         data={{
           "@context": "https://schema.org",
           "@type": "WebPage",
-          name: "Listy Gifty: Never Stress About Gifts Again",
+          name: "Listy Gifty: Gift Planning for Families, Exchanges, and Teams",
           url: baseUrl,
           description:
-            "The smartest way to manage gift lists. Track gifts across occasions, balance spending, and get AI suggestions.",
+            "Capture gift ideas year-round, organize gifts by person and occasion, and coordinate gift exchanges.",
           mainEntity: {
             "@type": "SoftwareApplication",
             name: "Listy Gifty",
             applicationCategory: "LifestyleApplication",
             description:
-              "A gift list management app that helps you organize presents for family and friends, track your budget, and coordinate with others.",
+              "A gift planning app that helps families, friend groups, and teams organize presents, track buying status, and coordinate gift exchanges.",
             author: {
               "@type": "Organization",
               name: "Listy Gifty",
@@ -195,7 +195,7 @@ export default function HomePage() {
             </h1>
 
             <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-              The only app that tracks gifts across every holiday, balances spending between loved ones, and suggests perfect presents with AI.
+              Capture gift ideas when they happen, organize every recipient and occasion, and run gift exchanges without a group thread plus a spreadsheet.
             </p>
 
             {/* CTA Buttons */}
@@ -260,7 +260,7 @@ export default function HomePage() {
               </span>
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              From tracking to balancing to AI suggestions, we&apos;ve thought of everything so you don&apos;t have to.
+              From quick ideas to final delivery, Listy Gifty keeps the entire gift loop in one place.
             </p>
           </div>
 
@@ -504,11 +504,11 @@ export default function HomePage() {
               </div>
               <div className="text-center">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Plan Your Gifts</h3>
-                <p className="text-slate-600 dark:text-slate-400">Track ideas, set budgets, and get AI suggestions for each person.</p>
+                <p className="text-slate-600 dark:text-slate-400">Capture ideas, set budgets, add links, and assign gifts to each person.</p>
               </div>
               <div className="text-center">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Balance & Relax</h3>
-                <p className="text-slate-600 dark:text-slate-400">Our tools ensure fair spending. Notifications keep you on track.</p>
+                <p className="text-slate-600 dark:text-slate-400">Status tracking and shared lists keep everyone clear on what is left.</p>
               </div>
             </div>
           </div>
@@ -671,7 +671,7 @@ export default function HomePage() {
                 Ready to Make Gifting Effortless?
               </h2>
               <p className="text-lg text-slate-600 dark:text-slate-300 mb-8 max-w-xl mx-auto">
-                Join thousands of families who&apos;ve made holiday stress a thing of the past. Start free today.
+                Start your 2026 gift plan now, then keep adding ideas whenever they happen.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
