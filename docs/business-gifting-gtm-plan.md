@@ -119,6 +119,6 @@ Measurement:
 ## Next GTM Bets
 
 - Export and fulfillment report tracking are now in place; use them to find workspaces that reached handoff.
-- Import dialogs now include instrumented sample CSV downloads; next step is surfacing them before signup for prospects.
+- Business signup and import dialogs now include instrumented sample CSV downloads.
 - Add a short business demo dataset that mirrors the remote-team holiday box workflow.
 - Build a lightweight company activation dashboard by use case.

@@ -7,11 +7,22 @@ import { useAuth } from "@/contexts/auth-context";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { workspacesService, AUTH_ROUTES } from "@/services";
 import { captureWebEvent } from "@/lib/analytics";
+import { downloadCsvFile } from "@/lib/csv-download";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Gift, Loader2, CheckCircle, Users, Calendar, ArrowRight } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  Calendar,
+  CheckCircle,
+  Download,
+  FileSpreadsheet,
+  Gift,
+  Loader2,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 
 const BUSINESS_USE_CASES = [
@@ -40,6 +51,26 @@ const BUSINESS_USE_CASES = [
 
 function getBusinessUseCase(useCaseId: string | null) {
   return BUSINESS_USE_CASES.find((useCase) => useCase.id === useCaseId) ?? BUSINESS_USE_CASES[0];
+}
+
+function downloadBusinessSampleCsv(sampleType: "people" | "gifts") {
+  if (sampleType === "people") {
+    downloadCsvFile("listy_gifty_people_sample.csv", [
+      "name,email,relationship,age,gender,birthday,milestone_label,milestone_date,notes,address_label,street_line_1,street_line_2,city,state,postal_code,country,is_default",
+      "Jamie Lee,jamie@example.com,coworker,,female,1991-03-14,Work anniversary,2026-09-01,Remote holiday box recipient,Jamie home,123 Main Street,,Toronto,ON,M5V 2T6,CA,true",
+      "Alex Chen,alex@example.com,coworker,,male,,,,,,,,,,,,",
+    ]);
+  } else {
+    downloadCsvFile("listy_gifty_gifts_sample.csv", [
+      "name,description,cost,status,link,recipient_name,recipient_email,giver_name,giver_email",
+      "Remote Holiday Box,Company hoodie and mug,75,Idea,https://example.com,Jamie Lee,jamie@example.com,,",
+      "Welcome Kit,Notebook and mug,35,Planned,,Alex Chen,alex@example.com,,",
+    ]);
+  }
+
+  captureWebEvent("business_sample_csv_downloaded", {
+    sample_type: sampleType,
+  });
 }
 
 function BusinessSignupContent() {
@@ -300,6 +331,35 @@ function BusinessSignupContent() {
                   </button>
                 );
               })}
+            </div>
+
+            <div className="mb-8 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <FileSpreadsheet className="h-4 w-4 text-violet-500" />
+                Sample CSVs
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => downloadBusinessSampleCsv("people")}
+                  className="gap-2 border-slate-200 dark:border-slate-700"
+                >
+                  <Download className="h-4 w-4" />
+                  People
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => downloadBusinessSampleCsv("gifts")}
+                  className="gap-2 border-slate-200 dark:border-slate-700"
+                >
+                  <Download className="h-4 w-4" />
+                  Gifts
+                </Button>
+              </div>
             </div>
 
             {/* Signup Form */}

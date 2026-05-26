@@ -63,6 +63,9 @@ Events:
 - `business_workspace_created`
   - Fires when a business workspace is created.
   - Key properties: `workspace_id`, `use_case`, `company_provided`.
+- `business_sample_csv_downloaded`
+  - Fires when a business signup visitor downloads a people or gifts sample CSV.
+  - Key properties: `sample_type`.
 - `people_csv_import_started`
   - Fires when a people CSV import starts.
   - Key properties: `owner_assigned`.
