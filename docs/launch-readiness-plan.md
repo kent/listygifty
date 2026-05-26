@@ -104,6 +104,7 @@ Business success metric:
    - Add owner-facing readiness states that explain why an exchange cannot be drawn yet.
    - Add copy/share controls for participant invite links for cases where email delivery fails.
    - Web now serves iOS universal-link association and Android app-link association for exchange invite links.
+   - App-link metadata routes are public through web auth middleware and verified locally with signed-out requests.
    - Android App Links are wired, but staging and production still need real signing fingerprints set in `niftygifty:androidAppLinkSha256CertFingerprints` before verification.
    - Test mobile exclusion management with one four-person family exchange before promising Secret Santa parity.
 
