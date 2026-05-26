@@ -121,4 +121,5 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile now tracks core activation, gift status-change, and exchange-funnel events through PostHog when analytics is configured.
 - Web homepage and business signup now present the first three business gifting playbooks as concrete entry points.
 - App review seed data now covers gift exchange screens in addition to lists, people, and gifts.
+- Mobile dependency audit was refreshed; remaining mobile npm audit items require a breaking Expo 56 SDK upgrade.
 - Web and MCP dependencies were refreshed to reduce actionable high-severity advisories; the remaining root npm audit item is Next's exact nested PostCSS dependency, where npm currently suggests a breaking downgrade rather than a safe patch.
