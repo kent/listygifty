@@ -325,7 +325,25 @@ export default function PeopleScreen() {
                   ? "Add recipients and givers to speed up gift planning."
                   : `Try another group or add a new ${controller.activeGroupLabel.toLowerCase()} contact.`}
             </Text>
-            {!controller.search.trim() ? (
+            {controller.search.trim() ? (
+              <TouchableOpacity
+                onPress={controller.openCreateFromSearch}
+                style={{
+                  backgroundColor: colors.primary,
+                  paddingHorizontal: 22,
+                  paddingVertical: 12,
+                  borderRadius: 8,
+                  maxWidth: "100%",
+                }}
+              >
+                <Text
+                  style={{ color: "#fff", fontWeight: "600", fontSize: 15 }}
+                  numberOfLines={1}
+                >
+                  Add "{controller.search.trim()}"
+                </Text>
+              </TouchableOpacity>
+            ) : (
               <TouchableOpacity
                 onPress={controller.openCreate}
                 style={{
@@ -339,7 +357,7 @@ export default function PeopleScreen() {
                   Add First Person
                 </Text>
               </TouchableOpacity>
-            ) : null}
+            )}
           </View>
         }
       />

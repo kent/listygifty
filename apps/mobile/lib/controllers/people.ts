@@ -7,6 +7,7 @@ import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
   buildCreatePersonPayload,
   buildPersonFormValues,
+  buildPersonFormValuesFromName,
   buildUpdatePersonPayload,
   EMPTY_PERSON_FORM_VALUES,
   filterPeople,
@@ -60,12 +61,16 @@ export function usePeopleController() {
     setForm((current) => ({ ...current, [field]: value }));
   }, []);
 
-  const openCreate = useCallback(() => {
+  const openCreateWithName = useCallback((name: string) => {
     setEditingPerson(null);
-    setForm(EMPTY_PERSON_FORM_VALUES);
+    setForm(name ? buildPersonFormValuesFromName(name) : EMPTY_PERSON_FORM_VALUES);
     setFormError(null);
     setEditorOpen(true);
   }, []);
+
+  const openCreate = useCallback(() => {
+    openCreateWithName("");
+  }, [openCreateWithName]);
 
   const openEdit = useCallback((person: Person) => {
     setEditingPerson(person);
@@ -186,6 +191,7 @@ export function usePeopleController() {
     isEditing: Boolean(editingPerson),
     loading: resource.loading,
     openCreate,
+    openCreateFromSearch: () => openCreateWithName(search),
     openEdit,
     peopleCount: resource.data.length,
     refreshing: resource.refreshing,

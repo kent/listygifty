@@ -1,5 +1,6 @@
 import type { Person } from "@niftygifty/types";
 import {
+  buildPersonFormValuesFromName,
   buildPersonFormValues,
   filterPeople,
   getPeopleGroupCounts,
@@ -63,6 +64,15 @@ describe("people model helpers", () => {
       relationship: "partner",
       email: "partner@example.com",
       notes: "  note  ",
+    });
+  });
+
+  it("builds new-person form state from a searched name", () => {
+    expect(buildPersonFormValuesFromName("  Jordan Kim  ")).toEqual({
+      name: "Jordan Kim",
+      relationship: "",
+      email: "",
+      notes: "",
     });
   });
 });

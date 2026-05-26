@@ -208,6 +208,13 @@ export function buildPersonFormValues(person?: Person | null): PersonFormValues 
   };
 }
 
+export function buildPersonFormValuesFromName(name: string): PersonFormValues {
+  return {
+    ...EMPTY_PERSON_FORM_VALUES,
+    name: trim(name),
+  };
+}
+
 export function buildCreatePersonPayload(
   values: PersonFormValues
 ): CreatePersonRequest["person"] {
