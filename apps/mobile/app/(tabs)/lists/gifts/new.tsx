@@ -194,6 +194,13 @@ export default function NewGiftScreen() {
           placeholderTextColor={colors.placeholder}
           value={controller.form.name}
           onChangeText={(value) => controller.updateField("name", value)}
+          autoFocus
+          returnKeyType="done"
+          onSubmitEditing={() => {
+            if (controller.canSubmit) {
+              void controller.handleSubmit();
+            }
+          }}
           style={{
             backgroundColor: colors.input,
             color: colors.text,

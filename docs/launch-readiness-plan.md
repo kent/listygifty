@@ -161,6 +161,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile quick gift capture now exposes save actions before optional details.
 - Mobile quick gift capture now tracks time-to-save for the core capture event.
 - Mobile quick gift capture now remembers the last selected list for repeat idea entry.
+- Mobile quick gift capture now focuses the gift-name field immediately and only enables save when required fields are ready.
 - Mobile now tracks core activation, gift status-change, and exchange-funnel events through PostHog when analytics is configured.
 - Web homepage and business signup now present the first three business gifting playbooks as concrete entry points.
 - Web business signup now tracks playbook-specific start and workspace-created events.

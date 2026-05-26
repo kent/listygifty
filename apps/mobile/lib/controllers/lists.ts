@@ -688,7 +688,7 @@ export function useNewGiftController() {
 
   return {
     canChooseList: !hasPresetHoliday,
-    canSubmit: Boolean(selectedHolidayId) && !saving,
+    canSubmit: Boolean(form.name.trim()) && Boolean(selectedHolidayId) && Boolean(selectedStatusId) && !saving,
     captureLists,
     error,
     form,
