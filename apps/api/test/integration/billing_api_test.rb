@@ -27,24 +27,24 @@ class BillingApiTest < ActionDispatch::IntegrationTest
   # Checkout Tests
   # ============================================================================
 
-  test "create_checkout_session creates Stripe session" do
-    # This will fail without proper Stripe setup, but should return appropriate error
+  test "create_checkout_session rejects invalid plan" do
     post "/billing/create_checkout_session",
       headers: @auth_headers,
-      params: { price_id: "price_test_123", success_url: "http://localhost/success", cancel_url: "http://localhost/cancel" },
+      params: { plan: "invalid" },
       as: :json
 
-    # In test environment without Stripe, this may return error
-    # but should still respond (not crash)
-    assert_includes [ 200, 201, 422, 500, 503 ], response.status
+    assert_response :unprocessable_entity
+    assert_equal "Invalid plan", json_response["error"]
   end
 
-  test "create_checkout_session requires price_id" do
+  test "create_checkout_session requires plan" do
     post "/billing/create_checkout_session",
       headers: @auth_headers,
-      params: { success_url: "http://localhost/success", cancel_url: "http://localhost/cancel" },
+      params: {},
       as: :json
-    assert_includes [ 400, 422 ], response.status
+
+    assert_response :unprocessable_entity
+    assert_equal "Invalid plan", json_response["error"]
   end
 
   # ============================================================================
