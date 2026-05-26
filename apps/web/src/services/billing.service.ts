@@ -4,7 +4,6 @@ import type {
   BillingPlan,
   CheckoutSessionResponse,
   CouponRedemptionResponse,
-  CharityStats,
 } from "@niftygifty/types";
 
 class BillingService {
@@ -26,12 +25,6 @@ class BillingService {
   async redeemCoupon(code: string): Promise<CouponRedemptionResponse> {
     return apiClient.post<CouponRedemptionResponse>("/billing/redeem_coupon", { code });
   }
-
-  // Get charity stats (public endpoint)
-  async getCharityStats(): Promise<CharityStats> {
-    return apiClient.get<CharityStats>("/billing/charity_stats");
-  }
 }
 
 export const billingService = new BillingService();
-

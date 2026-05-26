@@ -24,17 +24,6 @@ class BillingApiTest < ActionDispatch::IntegrationTest
   end
 
   # ============================================================================
-  # Charity Stats Tests
-  # ============================================================================
-
-  test "charity_stats returns donation statistics" do
-    get "/billing/charity_stats", headers: @auth_headers, as: :json
-    assert_response :success
-    # Should return charity donation stats
-    assert_kind_of Hash, json_response
-  end
-
-  # ============================================================================
   # Checkout Tests
   # ============================================================================
 

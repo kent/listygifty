@@ -442,14 +442,6 @@ export interface CouponRedemptionResponse {
   subscription_expires_at: string;
 }
 
-export interface CharityStats {
-  raised_amount: number;
-  goal_amount: number;
-  premium_count: number;
-  currency: string;
-  year: number;
-}
-
 export const BILLING_PLANS = {
   yearly: {
     id: "yearly" as const,

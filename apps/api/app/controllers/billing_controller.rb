@@ -1,5 +1,5 @@
 class BillingController < ApplicationController
-  skip_before_action :authenticate!, only: [ :webhook, :charity_stats ]
+  skip_before_action :authenticate!, only: [ :webhook ]
   skip_before_action :verify_authenticity_token, only: [ :webhook ], raise: false
 
   PRICES = {
@@ -17,24 +17,6 @@ class BillingController < ApplicationController
       gifts_remaining: current_user.gifts_remaining,
       can_create_gift: current_user.can_create_gift?,
       free_limit: User::FREE_GIFT_LIMIT
-    }
-  end
-
-  # GET /billing/charity_stats (public)
-  def charity_stats
-    # $5 per premium user goes to SickKids Hospital
-    premium_count = User.where.not(subscription_expires_at: nil)
-                        .where("subscription_expires_at > ?", Time.current)
-                        .count
-    raised_amount = premium_count * 5
-    goal_amount = 1000
-
-    render json: {
-      raised_amount: raised_amount,
-      goal_amount: goal_amount,
-      premium_count: premium_count,
-      currency: "CAD",
-      year: Time.current.year
     }
   end
 
