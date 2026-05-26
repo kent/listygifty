@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/theme";
 import { PersonPicker } from "@/components/PersonPicker";
 import { InlineError } from "@/components/InlineError";
@@ -288,24 +289,42 @@ export default function NewGiftScreen() {
         />
 
         <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Link</Text>
-        <TextInput
-          placeholder="https://..."
-          placeholderTextColor={colors.placeholder}
-          value={controller.form.link}
-          onChangeText={(value) => controller.updateField("link", value)}
-          keyboardType="url"
-          autoCapitalize="none"
-          style={{
-            backgroundColor: colors.input,
-            color: colors.text,
-            padding: 16,
-            borderRadius: 8,
-            marginBottom: 16,
-            fontSize: 16,
-            borderWidth: 1,
-            borderColor: colors.inputBorder,
-          }}
-        />
+        <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
+          <TextInput
+            placeholder="https://..."
+            placeholderTextColor={colors.placeholder}
+            value={controller.form.link}
+            onChangeText={(value) => controller.updateField("link", value)}
+            keyboardType="url"
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={{
+              flex: 1,
+              backgroundColor: colors.input,
+              color: colors.text,
+              padding: 16,
+              borderRadius: 8,
+              fontSize: 16,
+              borderWidth: 1,
+              borderColor: colors.inputBorder,
+            }}
+          />
+          <TouchableOpacity
+            accessibilityLabel="Paste gift link from clipboard"
+            onPress={controller.pasteLinkFromClipboard}
+            style={{
+              width: 52,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: colors.input,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: colors.inputBorder,
+            }}
+          >
+            <Ionicons name="clipboard-outline" size={20} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
 
         <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Cost</Text>
         <TextInput

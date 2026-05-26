@@ -1,6 +1,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Share } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
@@ -47,6 +48,11 @@ type GiftListDetailState = {
 
 type NewGiftSaveMode = "done" | "another";
 const LAST_CAPTURE_LIST_STORAGE_KEY = "listygifty:last-capture-list-id";
+
+async function readClipboardText(): Promise<string | null> {
+  const value = (await Clipboard.getStringAsync()).trim();
+  return value.length > 0 ? value : null;
+}
 
 export function useGiftListsController() {
   const router = useRouter();
@@ -629,6 +635,23 @@ export function useNewGiftController() {
     await haptics.selection();
   }, []);
 
+  const pasteLinkFromClipboard = useCallback(async () => {
+    const link = await readClipboardText();
+
+    if (!link) {
+      setError("Clipboard is empty");
+      await haptics.warning();
+      return;
+    }
+
+    updateField("link", link);
+    setError(null);
+    track("mobile_gift_link_pasted", {
+      source: hasPresetHoliday ? "list_detail" : "quick_capture",
+    });
+    await haptics.selection();
+  }, [hasPresetHoliday, track, updateField]);
+
   const submitGift = useCallback(async (mode: NewGiftSaveMode) => {
     if (!form.name.trim()) {
       setError("Name is required");
@@ -701,6 +724,7 @@ export function useNewGiftController() {
     listsLoading: listResource.loading,
     loadingStatuses: statusResource.loading,
     openNewList: () => router.push("/(tabs)/lists/new"),
+    pasteLinkFromClipboard,
     retryLists: listResource.reload,
     saving,
     savingMode,
@@ -793,6 +817,25 @@ export function useGiftDetailController() {
       source: "gift_detail",
     });
   }, [resource.data.gift, track]);
+
+  const pasteLinkFromClipboard = useCallback(async () => {
+    const link = await readClipboardText();
+
+    if (!link) {
+      setActionError("Clipboard is empty");
+      await haptics.warning();
+      return;
+    }
+
+    updateField("link", link);
+    setActionError(null);
+    track("mobile_gift_link_pasted", {
+      gift_id: resource.data.gift?.id,
+      list_id: resource.data.gift?.holiday_id,
+      source: "gift_detail",
+    });
+    await haptics.selection();
+  }, [resource.data.gift, track, updateField]);
 
   const handleMarkPurchased = useCallback(async () => {
     const gift = resource.data.gift;
@@ -915,6 +958,7 @@ export function useGiftDetailController() {
     loading: isValidGiftId && resource.loading,
     markingPurchased,
     openLink: form.link.trim(),
+    pasteLinkFromClipboard,
     purchasedStatusName: purchasedStatus?.name ?? null,
     saving,
     selectedStatusId,

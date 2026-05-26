@@ -138,6 +138,7 @@ export default function GiftDetailScreen() {
             onChangeText={(value) => controller.updateField("link", value)}
             keyboardType="url"
             autoCapitalize="none"
+            autoCorrect={false}
             style={{
               flex: 1,
               backgroundColor: colors.input,
@@ -149,6 +150,21 @@ export default function GiftDetailScreen() {
               borderColor: colors.inputBorder,
             }}
           />
+          <TouchableOpacity
+            accessibilityLabel="Paste gift link from clipboard"
+            onPress={controller.pasteLinkFromClipboard}
+            style={{
+              width: 52,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: colors.input,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: colors.inputBorder,
+            }}
+          >
+            <Ionicons name="clipboard-outline" size={20} color={colors.primary} />
+          </TouchableOpacity>
           {controller.openLink ? (
             <TouchableOpacity
               onPress={() => {
