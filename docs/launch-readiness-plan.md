@@ -2,6 +2,8 @@
 
 This plan turns `GOALS.md` into the next operating checklist for product, engineering, and go-to-market work.
 
+Activation measurement details live in `docs/activation-event-dictionary.md`.
+
 ## North Star
 
 Help a household capture a real gift idea in under five seconds, then make it easy to turn that idea into a purchased gift before the deadline.
