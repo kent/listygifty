@@ -1,7 +1,7 @@
 # Listy Gifty Mobile App Guidelines
 
 ## Overview
-`apps/mobile` is the Expo/React Native client for NiftyGifty.  
+`apps/mobile` is the Expo/React Native client for Listy Gifty.
 It shares types and services with the monorepo but has its own dependency graph and build/test flow.
 
 ## Critical Build Constraint

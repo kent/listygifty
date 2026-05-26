@@ -1,5 +1,5 @@
 name: niftygifty
-description: Pulumi-managed infrastructure for the listygifty.com (NiftyGifty) GCP project
+description: Pulumi-managed infrastructure for the listygifty.com (Listy Gifty) GCP project
 runtime:
   name: nodejs
   options:

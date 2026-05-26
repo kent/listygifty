@@ -1,9 +1,9 @@
-# NiftyGifty Development Guidelines
+# Listy Gifty Development Guidelines
 
 ## Overview
-NiftyGifty is a gift planning application built as a monorepo with:
+Listy Gifty is a gift planning application built as a monorepo with:
 - **Rails API** backend
-- **Next.js** web frontend  
+- **Next.js** web frontend
 - **React Native/Expo** mobile app (Listy Gifty)
 - **Shared packages** for types, API client, and services
 
@@ -14,7 +14,7 @@ NiftyGifty is a gift planning application built as a monorepo with:
 niftygifty/
 ├── apps/
 │   ├── api/              # Rails 8 API-only backend
-│   ├── web/              # Next.js 16 frontend (NiftyGifty)
+│   ├── web/              # Next.js 16 frontend (Listy Gifty)
 │   └── mobile/           # Expo/React Native app (Listy Gifty) ⚠️ SPECIAL
 ├── packages/
 │   ├── types/            # Shared TypeScript types
