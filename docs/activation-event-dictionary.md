@@ -2,6 +2,13 @@
 
 This is the measurement contract for the household and business activation funnels in `GOALS.md`.
 
+## Public Funnel
+
+Events:
+- `homepage_cta_clicked`
+  - Fires when a visitor clicks a primary homepage CTA.
+  - Key properties: `location`, `destination`, `use_case`.
+
 ## Household Funnel
 
 Activation definition:

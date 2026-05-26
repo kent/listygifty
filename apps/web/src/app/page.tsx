@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { AUTH_ROUTES } from "@/services";
 import { AuthRedirect } from "@/components/auth-redirect";
 import { JsonLd } from "@/components/json-ld";
+import { TrackedLink } from "@/components/tracked-link";
 // InteractiveDemo available for future use
 import { HeroPreview } from "@/components/hero-preview";
 import { BUSINESS_USE_CASES, DEFAULT_BUSINESS_USE_CASE } from "@/lib/business-use-cases";
@@ -159,7 +160,13 @@ export default function HomePage() {
               asChild
               className="hidden sm:flex text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
             >
-              <Link href="/business/signup">For Business</Link>
+              <TrackedLink
+                href="/business/signup"
+                analyticsEvent="homepage_cta_clicked"
+                analyticsProperties={{ location: "header", destination: "business_signup" }}
+              >
+                For Business
+              </TrackedLink>
             </Button>
             <Button
               variant="ghost"
@@ -172,7 +179,13 @@ export default function HomePage() {
               asChild
               className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white shadow-lg shadow-violet-500/25"
             >
-              <Link href={AUTH_ROUTES.signUp}>Get Started Free</Link>
+              <TrackedLink
+                href={AUTH_ROUTES.signUp}
+                analyticsEvent="homepage_cta_clicked"
+                analyticsProperties={{ location: "header", destination: "signup" }}
+              >
+                Get Started Free
+              </TrackedLink>
             </Button>
           </div>
         </nav>
@@ -201,12 +214,16 @@ export default function HomePage() {
                 size="lg"
                 className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white text-lg px-8 py-6 h-auto shadow-xl shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-300"
               >
-                <Link href={AUTH_ROUTES.signUp}>
+                <TrackedLink
+                  href={AUTH_ROUTES.signUp}
+                  analyticsEvent="homepage_cta_clicked"
+                  analyticsProperties={{ location: "hero", destination: "signup" }}
+                >
                   Start Planning for Free
                   <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
-                </Link>
+                </TrackedLink>
               </Button>
               <Button
                 variant="outline"
@@ -214,7 +231,13 @@ export default function HomePage() {
                 asChild
                 className="border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white hover:border-slate-400 dark:hover:border-slate-600 text-lg px-8 py-6 h-auto"
               >
-                <Link href="#features">See How It Works</Link>
+                <TrackedLink
+                  href="#features"
+                  analyticsEvent="homepage_cta_clicked"
+                  analyticsProperties={{ location: "hero", destination: "features" }}
+                >
+                  See How It Works
+                </TrackedLink>
               </Button>
             </div>
 
@@ -376,12 +399,16 @@ export default function HomePage() {
                     size="lg"
                     className="bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-500 hover:to-violet-500 text-white shadow-lg shadow-fuchsia-500/25"
                   >
-                    <Link href={AUTH_ROUTES.signUp}>
+                    <TrackedLink
+                      href={AUTH_ROUTES.signUp}
+                      analyticsEvent="homepage_cta_clicked"
+                      analyticsProperties={{ location: "collaboration", destination: "signup" }}
+                    >
                       Start Sharing for Free
                       <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                       </svg>
-                    </Link>
+                    </TrackedLink>
                   </Button>
                 </div>
               </div>
@@ -444,28 +471,42 @@ export default function HomePage() {
                     size="lg"
                     className="bg-white text-slate-900 hover:bg-slate-100 shadow-xl shadow-white/10 font-semibold"
                   >
-                    <Link href={DEFAULT_BUSINESS_USE_CASE.href}>
+                    <TrackedLink
+                      href={DEFAULT_BUSINESS_USE_CASE.href}
+                      analyticsEvent="homepage_cta_clicked"
+                      analyticsProperties={{
+                        destination: "business_signup",
+                        location: "business_primary",
+                        use_case: DEFAULT_BUSINESS_USE_CASE.id,
+                      }}
+                    >
                       Choose a Business Workflow
                       <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                       </svg>
-                    </Link>
+                    </TrackedLink>
                   </Button>
                 </div>
               </div>
 
               <div className="relative z-10 mt-10 grid gap-3 md:grid-cols-3">
                 {BUSINESS_USE_CASES.map((playbook) => (
-                  <Link
+                  <TrackedLink
                     key={playbook.id}
                     href={playbook.href}
+                    analyticsEvent="homepage_cta_clicked"
+                    analyticsProperties={{
+                      destination: "business_signup",
+                      location: "business_playbook",
+                      use_case: playbook.id,
+                    }}
                     className="rounded-lg border border-white/10 bg-white/5 p-4 text-left transition-colors hover:border-white/25 hover:bg-white/10"
                   >
                     <p className="text-sm font-semibold text-white">{playbook.title}</p>
                     <p className="mt-2 text-xs leading-relaxed text-slate-300">
                       {playbook.description}
                     </p>
-                  </Link>
+                  </TrackedLink>
                 ))}
               </div>
             </div>
@@ -613,15 +654,17 @@ export default function HomePage() {
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                     Secure OAuth 2.1 authorization • Your data stays private • Revoke access anytime
                   </p>
-                  <Link
+                  <TrackedLink
                     href="/integrations"
+                    analyticsEvent="homepage_cta_clicked"
+                    analyticsProperties={{ location: "assistant_integrations", destination: "integrations" }}
                     className="inline-flex items-center gap-2 text-cyan-600 dark:text-cyan-400 font-medium hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors"
                   >
                     Learn more about integrations
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
-                  </Link>
+                  </TrackedLink>
                 </div>
               </div>
             </div>
@@ -685,12 +728,16 @@ export default function HomePage() {
                   size="lg"
                   className="bg-white dark:bg-white text-violet-700 hover:bg-slate-100 text-lg px-8 py-6 h-auto shadow-xl font-semibold"
                 >
-                  <Link href={AUTH_ROUTES.signUp}>
+                  <TrackedLink
+                    href={AUTH_ROUTES.signUp}
+                    analyticsEvent="homepage_cta_clicked"
+                    analyticsProperties={{ location: "final_cta", destination: "signup" }}
+                  >
                     Get Started Free
                     <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
-                  </Link>
+                  </TrackedLink>
                 </Button>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
