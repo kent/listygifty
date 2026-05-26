@@ -46,9 +46,9 @@ Workflow:
 5. Record notes for future anniversary or milestone gifts.
 
 Activation:
-- Five new hires added.
+- 10 new hires added.
 - One reusable onboarding list created.
-- At least five gifts moved beyond idea status.
+- At least 10 kit gifts tracked, with progress visible beyond idea status.
 
 Sales message:
 > Make every new hire feel expected before their first day.
@@ -71,7 +71,7 @@ Workflow:
 Activation:
 - 20 employees added.
 - One quarterly milestone list created.
-- Five milestone gifts tracked.
+- 10 milestone gifts tracked.
 
 Sales message:
 > Stop missing the moments employees remember.

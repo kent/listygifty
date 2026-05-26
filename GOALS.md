@@ -1,10 +1,10 @@
-# ListyGifty — Goals
+# Listy Gifty — Goals
 
 ## What it is
 
-ListyGifty is a tool for keeping the gift side of life organized — for families, friend groups, and teams. Built originally because Kent and Christina hit the wall trying to manage **50+ Christmas gifts** across friends and family. The list lives in your head, the ideas fade by November, the orders get scattered across five tabs.
+Listy Gifty is a tool for keeping the gift side of life organized — for families, friend groups, and teams. Built originally because Kent and Christina hit the wall trying to manage **50+ Christmas gifts** across friends and family. The list lives in your head, the ideas fade by November, the orders get scattered across five tabs.
 
-ListyGifty fixes that. One place to:
+Listy Gifty fixes that. One place to:
 
 - **Track who you're giving gifts to** (and who's getting what).
 - **Capture ideas year-round** so December isn't a panic.
@@ -34,7 +34,7 @@ ListyGifty fixes that. One place to:
 
 **Business (the revenue):**
 - A "Teams" plan exists with company billing, multi-admin, and bulk gift workflows.
-- 5 paying companies running their employee gift program through ListyGifty.
+- 5 paying companies running their employee gift program through Listy Gifty.
 - At least one playbook ("onboarding gift kits," "remote-team holiday box") templated and reusable.
 
 **Product:**
