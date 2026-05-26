@@ -16,7 +16,12 @@ export const AUTH_ROUTES = {
 
 export const PUBLIC_ROUTES = [
   "/",
+  "/.well-known(.*)",
+  "/apple-app-site-association",
   "/login(.*)",
+  "/manifest.webmanifest",
+  "/robots.txt",
+  "/sitemap.xml",
   "/signup(.*)",
   "/giving-pledge",
   "/billing(.*)",
