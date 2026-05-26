@@ -38,14 +38,27 @@ export default function GiftsScreen() {
         options={{
           title: controller.holiday?.name || "Gifts",
           headerRight: () => (
-            <TouchableOpacity
-              onPress={controller.openShareModal}
-              style={{ marginRight: 4, padding: 6 }}
-              accessibilityRole="button"
-              accessibilityLabel="Share gift list"
-            >
-              <Ionicons name="share-social-outline" size={22} color={colors.primary} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginRight: 4 }}>
+              {controller.holiday?.date ? (
+                <TouchableOpacity
+                  onPress={controller.triggerScheduleReminder}
+                  disabled={controller.schedulingReminder}
+                  style={{ padding: 6, opacity: controller.schedulingReminder ? 0.5 : 1 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Schedule gift list reminder"
+                >
+                  <Ionicons name="notifications-outline" size={22} color={colors.primary} />
+                </TouchableOpacity>
+              ) : null}
+              <TouchableOpacity
+                onPress={controller.openShareModal}
+                style={{ padding: 6 }}
+                accessibilityRole="button"
+                accessibilityLabel="Share gift list"
+              >
+                <Ionicons name="share-social-outline" size={22} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
           ),
         }}
       />

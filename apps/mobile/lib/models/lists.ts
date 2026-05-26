@@ -153,3 +153,41 @@ export function getListDeadlineState(
 
   return null;
 }
+
+export function getGiftListReminderDate(
+  list: Holiday,
+  now: Date = new Date()
+): Date | null {
+  if (!list.date || list.completed || list.archived) {
+    return null;
+  }
+
+  const deadline = parseLocalDate(list.date);
+  if (Number.isNaN(deadline.getTime())) {
+    return null;
+  }
+
+  const dayBefore = new Date(
+    deadline.getFullYear(),
+    deadline.getMonth(),
+    deadline.getDate() - 1,
+    9,
+    0,
+    0,
+    0
+  );
+  if (dayBefore > now) {
+    return dayBefore;
+  }
+
+  const deadlineMorning = new Date(
+    deadline.getFullYear(),
+    deadline.getMonth(),
+    deadline.getDate(),
+    9,
+    0,
+    0,
+    0
+  );
+  return deadlineMorning > now ? deadlineMorning : null;
+}

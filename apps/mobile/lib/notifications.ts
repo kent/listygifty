@@ -2,6 +2,8 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
 import { router } from "expo-router";
+import type { Holiday } from "@niftygifty/types";
+import { getGiftListReminderDate } from "@/lib/models";
 
 // Configure how notifications appear when app is in foreground
 Notifications.setNotificationHandler({
@@ -94,6 +96,12 @@ export function setupNotificationHandlers(): () => void {
         }
         break;
 
+      case "gift_list_reminder":
+        if (data.holidayId) {
+          router.push(`/(tabs)/lists/${data.holidayId}`);
+        }
+        break;
+
       default:
         // Default to exchanges list
         router.push("/(tabs)/exchanges");
@@ -113,9 +121,49 @@ export async function getInitialNotification(): Promise<Notifications.Notificati
   return await Notifications.getLastNotificationResponseAsync();
 }
 
+async function requestLocalNotificationPermission(): Promise<boolean> {
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  if (existingStatus === "granted") {
+    return true;
+  }
+
+  const { status } = await Notifications.requestPermissionsAsync();
+  return status === "granted";
+}
+
+export async function scheduleGiftListReminder(holiday: Holiday): Promise<string | null> {
+  const reminderDate = getGiftListReminderDate(holiday);
+  if (!reminderDate) {
+    return null;
+  }
+
+  const hasPermission = await requestLocalNotificationPermission();
+  if (!hasPermission) {
+    return null;
+  }
+
+  await setupNotificationChannel();
+
+  return Notifications.scheduleNotificationAsync({
+    content: {
+      title: `Gift deadline: ${holiday.name}`,
+      body: "Review gift ideas, purchases, and delivery details before the date arrives.",
+      data: {
+        type: "gift_list_reminder",
+        holidayId: holiday.id,
+      } satisfies NotificationData,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: reminderDate,
+    },
+  });
+}
+
 // Notification types for reference
 export interface NotificationData {
-  type: "exchange_invite" | "match_revealed" | "wishlist_updated";
+  type: "exchange_invite" | "match_revealed" | "wishlist_updated" | "gift_list_reminder";
   token?: string; // For exchange_invite
   exchangeId?: number; // For match_revealed and wishlist_updated
+  holidayId?: number; // For gift_list_reminder
 }

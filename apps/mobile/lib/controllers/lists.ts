@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
+import { scheduleGiftListReminder } from "@/lib/notifications";
 import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
@@ -128,6 +129,7 @@ export function useGiftListDetailController() {
   const [collaborators, setCollaborators] = useState<HolidayCollaborator[]>([]);
   const [shareLoading, setShareLoading] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [schedulingReminder, setSchedulingReminder] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
   const deferredSearch = useDeferredValue(search);
 
@@ -318,6 +320,34 @@ export function useGiftListDetailController() {
     }
   }, [holiday, holidays]);
 
+  const handleScheduleReminder = useCallback(async () => {
+    if (!holiday || schedulingReminder) {
+      return;
+    }
+
+    setSchedulingReminder(true);
+    try {
+      const notificationId = await scheduleGiftListReminder(holiday);
+      if (notificationId) {
+        track("mobile_list_reminder_scheduled", {
+          list_id: holiday.id,
+          source: "list_detail",
+        });
+        await haptics.success();
+        Alert.alert("Reminder Scheduled", "Listy Gifty will remind you before this gift deadline.");
+      } else {
+        await haptics.warning();
+        Alert.alert("No Reminder Scheduled", "This list needs a future date and notification permission.");
+      }
+    } catch (reminderError) {
+      console.error("Failed to schedule reminder", reminderError);
+      await haptics.error();
+      Alert.alert("Reminder Failed", "Could not schedule a reminder for this list.");
+    } finally {
+      setSchedulingReminder(false);
+    }
+  }, [holiday, schedulingReminder, track]);
+
   const removeCollaborator = useCallback(
     (collaborator: HolidayCollaborator) => {
       if (!holiday?.is_owner || collaborator.role === "owner") {
@@ -393,6 +423,7 @@ export function useGiftListDetailController() {
     retryLoad: resource.reload,
     search,
     selectedStatusIds,
+    schedulingReminder,
     setSearch,
     setShowFilters,
     shareError,
@@ -405,6 +436,7 @@ export function useGiftListDetailController() {
     toggleStatusFilter,
     triggerAddGift: openAddGift,
     triggerRegenerateLink: handleRegenerateLink,
+    triggerScheduleReminder: handleScheduleReminder,
   };
 }
 

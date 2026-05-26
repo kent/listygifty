@@ -2,6 +2,7 @@ import type { Holiday } from "@niftygifty/types";
 import {
   filterListsBySection,
   getDefaultGiftCaptureList,
+  getGiftListReminderDate,
   getPreferredGiftCaptureList,
   getListDeadlineState,
   getListSectionCounts,
@@ -132,5 +133,17 @@ describe("list-sections helpers", () => {
     expect(getListDeadlineState(buildHoliday({ archived: true, date: "2026-11-25" }), now)).toBeNull();
     expect(getListDeadlineState(buildHoliday({ date: null }), now)).toBeNull();
     expect(getListDeadlineState(buildHoliday({ date: "2026-12-31" }), now)).toBeNull();
+  });
+
+  it("schedules gift list reminders for the day before or deadline morning", () => {
+    const list = buildHoliday({ date: "2026-06-10" });
+
+    expect(getGiftListReminderDate(list, new Date("2026-06-01T12:00:00"))).toEqual(
+      new Date("2026-06-09T09:00:00")
+    );
+    expect(getGiftListReminderDate(list, new Date("2026-06-09T12:00:00"))).toEqual(
+      new Date("2026-06-10T09:00:00")
+    );
+    expect(getGiftListReminderDate(list, new Date("2026-06-10T12:00:00"))).toBeNull();
   });
 });

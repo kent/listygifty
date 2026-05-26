@@ -1,6 +1,7 @@
 export {
   filterListsBySection,
   getDefaultGiftCaptureList,
+  getGiftListReminderDate,
   getPreferredGiftCaptureList,
   getListDeadlineState,
   getListSectionCounts,
