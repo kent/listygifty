@@ -18,6 +18,7 @@ import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { useTheme } from "@/lib/theme";
 import { usePeopleController } from "@/lib/controllers";
 import {
+  getBirthdayReminder,
   getRelationshipLabel,
   normalizeRelationship,
   PEOPLE_GROUP_FILTERS,
@@ -163,19 +164,22 @@ export default function PeopleScreen() {
             tintColor={colors.primary}
           />
         }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => controller.openEdit(item)}
-            style={{
-              backgroundColor: colors.card,
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: 12,
-              padding: 14,
-              gap: 8,
-            }}
-            activeOpacity={0.7}
-          >
+        renderItem={({ item }) => {
+          const birthdayReminder = getBirthdayReminder(item);
+
+          return (
+            <TouchableOpacity
+              onPress={() => controller.openEdit(item)}
+              style={{
+                backgroundColor: colors.card,
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 12,
+                padding: 14,
+                gap: 8,
+              }}
+              activeOpacity={0.7}
+            >
             <View
               style={{
                 flexDirection: "row",
@@ -244,6 +248,21 @@ export default function PeopleScreen() {
                       </Text>
                     </View>
                   ) : null}
+                  {birthdayReminder ? (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 4,
+                        marginTop: 3,
+                      }}
+                    >
+                      <Ionicons name="calendar-outline" size={12} color={colors.primary} />
+                      <Text style={{ color: colors.primary, fontSize: 12, fontWeight: "600" }}>
+                        {birthdayReminder}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
               </View>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -299,8 +318,9 @@ export default function PeopleScreen() {
                 </View>
               ) : null}
             </View>
-          </TouchableOpacity>
-        )}
+            </TouchableOpacity>
+          );
+        }}
         ListEmptyComponent={
           <View style={{ alignItems: "center", paddingVertical: 56 }}>
             <Ionicons name="people-outline" size={56} color={colors.muted} />
@@ -479,6 +499,28 @@ export default function PeopleScreen() {
               onChangeText={(value) => controller.updateField("email", value)}
               autoCapitalize="none"
               keyboardType="email-address"
+              style={{
+                backgroundColor: colors.input,
+                color: colors.text,
+                padding: 14,
+                borderRadius: 8,
+                marginBottom: 16,
+                borderWidth: 1,
+                borderColor: colors.inputBorder,
+                fontSize: 16,
+              }}
+            />
+
+            <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
+              Birthday
+            </Text>
+            <TextInput
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={colors.placeholder}
+              value={controller.form.birthday}
+              onChangeText={(value) => controller.updateField("birthday", value)}
+              autoCapitalize="none"
+              keyboardType="numbers-and-punctuation"
               style={{
                 backgroundColor: colors.input,
                 color: colors.text,

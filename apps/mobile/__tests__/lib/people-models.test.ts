@@ -3,6 +3,7 @@ import {
   buildPersonFormValuesFromName,
   buildPersonFormValues,
   filterPeople,
+  getBirthdayReminder,
   getPeopleGroupCounts,
   type PeopleGroupFilter,
 } from "@/lib/models";
@@ -15,6 +16,7 @@ function buildPerson(overrides: Partial<Person> = {}): Person {
     relationship: overrides.relationship || null,
     age: null,
     gender: null,
+    birthday: overrides.birthday || null,
     notes: overrides.notes || null,
     default_shipping_address_id: null,
     default_shipping_address: null,
@@ -58,13 +60,19 @@ describe("people model helpers", () => {
 
   it("normalizes known relationship values when building form state", () => {
     const formValues = buildPersonFormValues(
-      buildPerson({ relationship: " Partner ", email: "partner@example.com", notes: "  note  " })
+      buildPerson({
+        relationship: " Partner ",
+        email: "partner@example.com",
+        birthday: "1991-03-14",
+        notes: "  note  ",
+      })
     );
 
     expect(formValues).toEqual({
       name: "Person",
       relationship: "partner",
       email: "partner@example.com",
+      birthday: "1991-03-14",
       notes: "  note  ",
     });
   });
@@ -74,7 +82,19 @@ describe("people model helpers", () => {
       name: "Jordan Kim",
       relationship: "",
       email: "",
+      birthday: "",
       notes: "",
     });
+  });
+
+  it.each([
+    ["2026-05-26", "Birthday today"],
+    ["1991-05-27", "Birthday tomorrow"],
+    ["1991-06-10", "Birthday in 15 days"],
+    ["1991-07-01", null],
+  ])("returns birthday reminder for %s", (birthday, expected) => {
+    expect(
+      getBirthdayReminder(buildPerson({ birthday }), new Date("2026-05-26T12:00:00Z"))
+    ).toBe(expected);
   });
 });

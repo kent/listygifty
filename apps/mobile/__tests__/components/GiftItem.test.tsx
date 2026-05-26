@@ -114,6 +114,7 @@ describe("GiftItem", () => {
           relationship: null,
           age: null,
           gender: null,
+          birthday: null,
           default_shipping_address_id: null,
           default_shipping_address: null,
           gift_count: 0,

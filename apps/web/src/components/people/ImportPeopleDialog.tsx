@@ -100,9 +100,9 @@ export function ImportPeopleDialog({
 
   const handleDownloadTemplate = () => {
     const csvContent = [
-      "name,email,relationship,age,gender,notes,address_label,street_line_1,street_line_2,city,state,postal_code,country,is_default",
-      "John Smith,john@example.com,friend,35,male,Birthday in March,John home,123 Main Street,,Toronto,ON,M5V 2T6,CA,true",
-      "Jane Doe,jane@example.com,coworker,,female,,,,,,,",
+      "name,email,relationship,age,gender,birthday,notes,address_label,street_line_1,street_line_2,city,state,postal_code,country,is_default",
+      "John Smith,john@example.com,friend,35,male,1991-03-14,Birthday in March,John home,123 Main Street,,Toronto,ON,M5V 2T6,CA,true",
+      "Jane Doe,jane@example.com,coworker,,female,,,,,,,,",
     ].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);

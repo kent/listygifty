@@ -26,6 +26,8 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
       params: { file: file }
     # Should successfully process the import request
     assert_response :success
+    john = @workspace.people.find_by!(email: "john@example.com")
+    assert_equal Date.new(1990, 1, 15), john.birthday
   end
 
   test "imports people creates business addresses from CSV" do
@@ -150,6 +152,7 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
       name: "Jamie Lee",
       email: "jamie@example.com",
       relationship: "co-worker",
+      birthday: Date.new(1991, 3, 14),
       user: @user,
       default_shipping_address: address
     )
@@ -160,6 +163,7 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
     csv = CSV.parse(response.body, headers: true)
     jamie = csv.find { |row| row["Email"] == "jamie@example.com" }
     assert_equal "Jamie Home", jamie["Address Label"]
+    assert_equal "1991-03-14", jamie["Birthday"]
     assert_equal "123 Maple Street", jamie["Street Line 1"]
     assert_equal "Unit 4", jamie["Street Line 2"]
     assert_equal "Toronto", jamie["City"]

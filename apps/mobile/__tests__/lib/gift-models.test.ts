@@ -48,6 +48,7 @@ function buildPerson(overrides: Partial<Person> = {}): Person {
     relationship: overrides.relationship || null,
     age: null,
     gender: null,
+    birthday: null,
     notes: overrides.notes || null,
     default_shipping_address_id: null,
     default_shipping_address: null,

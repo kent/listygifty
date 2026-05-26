@@ -6,6 +6,7 @@ export interface PersonFormValues {
   name: string;
   relationship: string;
   email: string;
+  birthday: string;
   notes: string;
 }
 
@@ -94,8 +95,11 @@ export const EMPTY_PERSON_FORM_VALUES: PersonFormValues = {
   name: "",
   relationship: "",
   email: "",
+  birthday: "",
   notes: "",
 };
+
+const DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 export function normalizeRelationship(relationship?: string | null): string {
   return (relationship || "").trim().toLowerCase();
@@ -186,6 +190,42 @@ export function sortPeopleByName(people: Person[]): Person[] {
   return [...people].sort((left, right) => left.name.localeCompare(right.name));
 }
 
+export function getBirthdayReminder(
+  person: Pick<Person, "birthday">,
+  now: Date = new Date()
+): string | null {
+  if (!person.birthday) {
+    return null;
+  }
+
+  const match = person.birthday.match(DATE_ONLY_PATTERN);
+  if (!match) {
+    return null;
+  }
+
+  const month = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  let birthdayUtc = Date.UTC(now.getFullYear(), month, day);
+
+  if (birthdayUtc < todayUtc) {
+    birthdayUtc = Date.UTC(now.getFullYear() + 1, month, day);
+  }
+
+  const daysAway = Math.round((birthdayUtc - todayUtc) / 86_400_000);
+  if (daysAway === 0) {
+    return "Birthday today";
+  }
+  if (daysAway === 1) {
+    return "Birthday tomorrow";
+  }
+  if (daysAway <= 30) {
+    return `Birthday in ${daysAway} days`;
+  }
+
+  return null;
+}
+
 export function getPersonInitial(person: Person): string {
   const trimmed = person.name.trim();
   return trimmed ? trimmed.charAt(0).toUpperCase() : "?";
@@ -204,6 +244,7 @@ export function buildPersonFormValues(person?: Person | null): PersonFormValues 
       ? normalizedRelationship
       : (person.relationship || "").trim(),
     email: person.email || "",
+    birthday: person.birthday || "",
     notes: person.notes || "",
   };
 }
@@ -222,6 +263,7 @@ export function buildCreatePersonPayload(
     name: trim(values.name),
     relationship: trimOrUndefined(values.relationship),
     email: trimOrUndefined(values.email),
+    birthday: trimOrUndefined(values.birthday),
     notes: trimOrUndefined(values.notes),
   };
 }
@@ -233,6 +275,7 @@ export function buildUpdatePersonPayload(
     name: trim(values.name),
     relationship: trim(values.relationship),
     email: trim(values.email),
+    birthday: trim(values.birthday) || null,
     notes: trim(values.notes),
   };
 }

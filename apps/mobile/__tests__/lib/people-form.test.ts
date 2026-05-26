@@ -9,6 +9,7 @@ describe("people-form helpers", () => {
       name: "  Marie  ",
       relationship: "  ",
       email: " marie@gifts.com ",
+      birthday: " ",
       notes: "",
     });
 
@@ -16,6 +17,7 @@ describe("people-form helpers", () => {
       name: "Marie",
       email: "marie@gifts.com",
       relationship: undefined,
+      birthday: undefined,
       notes: undefined,
     });
   });
@@ -25,6 +27,7 @@ describe("people-form helpers", () => {
       name: "  Marie  ",
       relationship: "   ",
       email: "",
+      birthday: "1991-03-14",
       notes: "  updated note  ",
     });
 
@@ -32,6 +35,7 @@ describe("people-form helpers", () => {
       name: "Marie",
       relationship: "",
       email: "",
+      birthday: "1991-03-14",
       notes: "updated note",
     });
   });
