@@ -32,12 +32,18 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
    - Make sharing a list obvious from list detail.
    - Keep invite links revocable and visible to owners.
 
-3. App Store readiness
+3. Gift exchange readiness
+   - Mobile users can create an exchange with name, date, and budget range.
+   - Owners can add participants, send or copy invites, verify accepted count, and draw matches.
+   - Participants can accept invites, add wishlist items, and view their match after the draw.
+   - Before launch, test one complete exchange with at least four participants and one exclusion.
+
+4. App Store readiness
    - Maintain TestFlight default group: `Internal Testers`.
    - Keep app review data current and production-safe.
    - Capture screenshots that show lists, people, exchanges, and profile settings.
 
-4. Activation metric
+5. Activation metric
    - A household is activated when it has at least one list, three people, and five gifts.
    - Secondary activation: at least one shared collaborator or one gift exchange participant.
 
@@ -69,7 +75,7 @@ Business success metric:
    - Consider a default "Ideas" status and default active list.
 
 2. Exchange completion
-   - Make create, invite, wishlist, draw, and match visibility testable end to end.
+   - Make invite, wishlist, draw, and match visibility testable end to end on mobile.
    - Add owner-facing readiness states before drawing matches.
 
 3. Calendar and reminders
