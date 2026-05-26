@@ -37,7 +37,7 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
    - Mobile users can create an exchange with name, date, and budget range.
    - Owners can add participants, send invites, add exclusion rules, verify accepted count, and draw matches.
    - Participants can accept invites, add wishlist items before the draw, and view their match after the draw.
-   - Before launch, test one complete exchange with at least four participants and one exclusion.
+   - Before launch, complete the rehearsal in `docs/testflight-exchange-rehearsal.md`.
 
 4. App Store readiness
    - Maintain TestFlight default group: `Internal Testers`.
