@@ -647,6 +647,7 @@ export function useNewGiftController() {
     updateField("link", link);
     setError(null);
     track("mobile_gift_link_pasted", {
+      merchant: getMerchantLabel(link),
       source: hasPresetHoliday ? "list_detail" : "quick_capture",
     });
     await haptics.selection();
@@ -832,6 +833,7 @@ export function useGiftDetailController() {
     track("mobile_gift_link_pasted", {
       gift_id: resource.data.gift?.id,
       list_id: resource.data.gift?.holiday_id,
+      merchant: getMerchantLabel(link),
       source: "gift_detail",
     });
     await haptics.selection();
