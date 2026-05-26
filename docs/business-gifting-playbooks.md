@@ -96,4 +96,4 @@ Sales message:
 - Calendar/deadline fields for people and lists. People now have birthday dates; business-specific milestone dates are still needed.
 - Export view for purchase and fulfillment handoff. Gift and people exports now include fulfillment address data; next step is a dedicated business fulfillment view.
 - Bulk gift creation is now available from gift CSV import; bulk status updates are still needed.
-- Simple team-level reporting: count, spend, status, and exceptions.
+- Simple team-level reporting now covers count, spend, status, and fulfillment exceptions from the gift list reports tab.

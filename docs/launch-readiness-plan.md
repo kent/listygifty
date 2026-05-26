@@ -78,6 +78,7 @@ Business success metric:
 - Imported business addresses can now become each recipient's default shipping address and apply automatically to new gifts.
 - People CSV export now includes default shipping-address columns for round-trip fulfillment ops.
 - Gift CSV import now bulk-creates gifts for a list and can create/match recipients by name or email.
+- Gift list reports now include fulfillment exceptions for missing recipients, costs, links, and shipping addresses.
 
 ## Next Engineering Bets
 
@@ -137,4 +138,5 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Gift CSV exports now include recipient emails and shipping addresses for fulfillment handoff.
 - People CSV exports now include each person's default shipping address fields.
 - Web gift lists now support CSV gift import for bulk business setup.
+- Web gift reports now surface fulfillment exceptions for business handoff.
 - Web and MCP dependencies were refreshed to reduce actionable high-severity advisories; the remaining root npm audit item is Next's exact nested PostCSS dependency, where npm currently suggests a breaking downgrade rather than a safe patch.
