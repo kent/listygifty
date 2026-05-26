@@ -6,4 +6,4 @@ export { GiftGrid } from "./GiftGrid";
 export { SortableGiftRow } from "./SortableGiftRow";
 export { MobileGiftCard } from "./MobileGiftCard";
 export { HolidayReports } from "./HolidayReports";
-
+export { ImportGiftsDialog } from "./ImportGiftsDialog";

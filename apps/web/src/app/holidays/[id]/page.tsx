@@ -9,15 +9,15 @@ import { useGiftFilters } from "@/hooks";
 import { holidaysService, giftsService, peopleService, giftStatusesService, workspacesService, exportsService, AUTH_ROUTES } from "@/services";
 import { AppHeader } from "@/components/layout";
 import { GiftFilters } from "@/components/filters";
-import { GiftGrid, HolidayReports } from "@/components/gifts";
+import { GiftGrid, HolidayReports, ImportGiftsDialog } from "@/components/gifts";
 import { ShareHolidayDialog } from "@/components/holidays";
 import { CursorOverlay } from "@/components/cursors";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, Gift as GiftIcon, BarChart3, Users, Scale, Archive, RotateCcw, Share2, Download } from "lucide-react";
+import { ArrowLeft, Calendar, Gift as GiftIcon, BarChart3, Users, Scale, Archive, RotateCcw, Share2, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
-import type { Holiday, Gift, Person, GiftStatus, HolidayCollaborator, Address } from "@niftygifty/types";
+import type { Holiday, Gift, Person, GiftStatus, HolidayCollaborator, Address, ImportGiftsResult } from "@niftygifty/types";
 
 function getHolidayIcon(icon?: string | null) {
   const icons: Record<string, string> = {
@@ -73,6 +73,7 @@ export default function HolidayDetailPage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [collaboratorsLoading, setCollaboratorsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [importGiftsOpen, setImportGiftsOpen] = useState(false);
 
   const showAddresses = (currentWorkspace?.show_gift_addresses && currentWorkspace?.workspace_type === "business") ?? false;
 
@@ -170,6 +171,22 @@ export default function HolidayDetailPage() {
       toast.error("Failed to export gift list");
     }
   }, [holidayId]);
+
+  const handleGiftsImported = useCallback(async (result: ImportGiftsResult) => {
+    if (result.created > 0) {
+      setGifts((current) => [...result.gifts, ...current]);
+      toast.success(`Imported ${result.created} gift${result.created === 1 ? "" : "s"}`);
+    }
+
+    if (result.people_created > 0) {
+      try {
+        const updatedPeople = await peopleService.getAll();
+        setPeople(updatedPeople);
+      } catch {
+        toast.error("Gifts imported, but people refresh failed");
+      }
+    }
+  }, []);
 
   if (authLoading || dataLoading) {
     return (
@@ -316,6 +333,15 @@ export default function HolidayDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => setImportGiftsOpen(true)}
+                className="gap-1.5 md:gap-2 flex-1 md:flex-none"
+              >
+                <Upload className="h-4 w-4" />
+                <span className="hidden sm:inline">Import</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleExportGifts}
                 className="gap-1.5 md:gap-2 flex-1 md:flex-none"
               >
@@ -405,7 +431,12 @@ export default function HolidayDetailPage() {
       </main>
 
       <CursorOverlay holidayId={holidayId} />
+      <ImportGiftsDialog
+        holidayId={holidayId}
+        open={importGiftsOpen}
+        onOpenChange={setImportGiftsOpen}
+        onImported={handleGiftsImported}
+      />
     </div>
   );
 }
-
