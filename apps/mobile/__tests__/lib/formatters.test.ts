@@ -4,6 +4,7 @@ import {
   formatShortDate,
   formatLongDate,
   formatDate,
+  parseLocalDate,
 } from "@/lib/formatters";
 
 describe("formatCurrency", () => {
@@ -63,15 +64,14 @@ describe("formatDate", () => {
 
   it("formats valid ISO date", () => {
     const result = formatDate("2025-12-25", { month: "short", day: "numeric", year: "numeric" }, "en-US");
-    // Day of month varies with TZ; just assert month + year present
-    expect(result).toMatch(/Dec.*2025/);
+    expect(result).toBe("Dec 25, 2025");
   });
 });
 
 describe("formatShortDate", () => {
   it("produces short month-day-year format", () => {
     const result = formatShortDate("2025-12-25", "en-US");
-    expect(result).toMatch(/Dec \d+, 2025/);
+    expect(result).toBe("Dec 25, 2025");
   });
 
   it("returns null for null/undefined input", () => {
@@ -82,7 +82,15 @@ describe("formatShortDate", () => {
 describe("formatLongDate", () => {
   it("produces long format with weekday", () => {
     const result = formatLongDate("2025-12-25", "en-US");
-    // Weekday + month + year should be present (day varies with TZ)
-    expect(result).toMatch(/December.*2025/);
+    expect(result).toBe("Thursday, December 25, 2025");
+  });
+});
+
+describe("parseLocalDate", () => {
+  it("keeps date-only values on the intended local calendar day", () => {
+    const result = parseLocalDate("2025-12-25");
+    expect(result.getFullYear()).toBe(2025);
+    expect(result.getMonth()).toBe(11);
+    expect(result.getDate()).toBe(25);
   });
 });

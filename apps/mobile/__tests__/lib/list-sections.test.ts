@@ -2,6 +2,7 @@ import type { Holiday } from "@niftygifty/types";
 import {
   filterListsBySection,
   getDefaultGiftCaptureList,
+  getListDeadlineState,
   getListSectionCounts,
   sortGiftCaptureLists,
   type ListSection,
@@ -94,5 +95,39 @@ describe("list-sections helpers", () => {
       2,
       1,
     ]);
+  });
+
+  it("returns deadline reminder labels for active dated lists", () => {
+    const now = new Date(2026, 10, 25);
+
+    expect(getListDeadlineState(buildHoliday({ date: "2026-11-24" }), now)).toEqual({
+      daysUntil: -1,
+      label: "1 day overdue",
+      tone: "overdue",
+    });
+    expect(getListDeadlineState(buildHoliday({ date: "2026-11-25" }), now)).toEqual({
+      daysUntil: 0,
+      label: "Due today",
+      tone: "today",
+    });
+    expect(getListDeadlineState(buildHoliday({ date: "2026-11-26" }), now)).toEqual({
+      daysUntil: 1,
+      label: "Due tomorrow",
+      tone: "soon",
+    });
+    expect(getListDeadlineState(buildHoliday({ date: "2026-12-10" }), now)).toEqual({
+      daysUntil: 15,
+      label: "Due in 15 days",
+      tone: "soon",
+    });
+  });
+
+  it("does not show deadline reminders for completed, archived, missing, or distant lists", () => {
+    const now = new Date(2026, 10, 25);
+
+    expect(getListDeadlineState(buildHoliday({ completed: true, date: "2026-11-25" }), now)).toBeNull();
+    expect(getListDeadlineState(buildHoliday({ archived: true, date: "2026-11-25" }), now)).toBeNull();
+    expect(getListDeadlineState(buildHoliday({ date: null }), now)).toBeNull();
+    expect(getListDeadlineState(buildHoliday({ date: "2026-12-31" }), now)).toBeNull();
   });
 });

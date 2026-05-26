@@ -1,6 +1,14 @@
 import type { Holiday } from "@niftygifty/types";
+import { parseLocalDate } from "@/lib/formatters";
 
 export type ListSection = "active" | "past" | "archived" | "all";
+export type ListDeadlineTone = "overdue" | "today" | "soon";
+
+export interface ListDeadlineState {
+  daysUntil: number;
+  label: string;
+  tone: ListDeadlineTone;
+}
 
 export const LIST_SECTION_OPTIONS: Array<{ key: ListSection; label: string }> = [
   { key: "active", label: "Active" },
@@ -39,7 +47,7 @@ function getDateSortValue(list: Holiday): number {
     return Number.MAX_SAFE_INTEGER;
   }
 
-  const timestamp = new Date(list.date).getTime();
+  const timestamp = parseLocalDate(list.date).getTime();
   return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
 }
 
@@ -68,4 +76,65 @@ export function sortGiftCaptureLists(lists: Holiday[]): Holiday[] {
 
 export function getDefaultGiftCaptureList(lists: Holiday[]): Holiday | null {
   return sortGiftCaptureLists(lists)[0] ?? null;
+}
+
+function getStartOfLocalDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function getCalendarDayDifference(left: Date, right: Date): number {
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+  return Math.round(
+    (getStartOfLocalDay(left).getTime() - getStartOfLocalDay(right).getTime()) /
+      millisecondsPerDay
+  );
+}
+
+export function getListDeadlineState(
+  list: Holiday,
+  now: Date = new Date()
+): ListDeadlineState | null {
+  if (!list.date || list.completed || list.archived) {
+    return null;
+  }
+
+  const date = parseLocalDate(list.date);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const daysUntil = getCalendarDayDifference(date, now);
+  if (daysUntil < 0) {
+    return {
+      daysUntil,
+      label: daysUntil === -1 ? "1 day overdue" : `${Math.abs(daysUntil)} days overdue`,
+      tone: "overdue",
+    };
+  }
+
+  if (daysUntil === 0) {
+    return {
+      daysUntil,
+      label: "Due today",
+      tone: "today",
+    };
+  }
+
+  if (daysUntil === 1) {
+    return {
+      daysUntil,
+      label: "Due tomorrow",
+      tone: "soon",
+    };
+  }
+
+  if (daysUntil <= 30) {
+    return {
+      daysUntil,
+      label: `Due in ${daysUntil} days`,
+      tone: "soon",
+    };
+  }
+
+  return null;
 }

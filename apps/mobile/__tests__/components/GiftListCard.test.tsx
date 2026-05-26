@@ -30,8 +30,33 @@ describe("GiftListCard", () => {
     const onPress = jest.fn();
     render(<GiftListCard item={mockHoliday} onPress={onPress} />);
 
-    // Date formatting is locale-dependent, just check that a date is shown
-    expect(screen.getByText(/Dec \d+, 2025/)).toBeTruthy();
+    expect(screen.getByText("Dec 25, 2025")).toBeTruthy();
+  });
+
+  it("shows an actionable deadline reminder for soon lists", () => {
+    const onPress = jest.fn();
+    render(
+      <GiftListCard
+        item={mockHoliday}
+        now={new Date(2025, 11, 20)}
+        onPress={onPress}
+      />
+    );
+
+    expect(screen.getByText("Due in 5 days")).toBeTruthy();
+  });
+
+  it("shows overdue reminders for active lists past their date", () => {
+    const onPress = jest.fn();
+    render(
+      <GiftListCard
+        item={mockHoliday}
+        now={new Date(2025, 11, 26)}
+        onPress={onPress}
+      />
+    );
+
+    expect(screen.getByText("1 day overdue")).toBeTruthy();
   });
 
   it("calls onPress when tapped", () => {

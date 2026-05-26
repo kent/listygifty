@@ -4,7 +4,9 @@ import { Swipeable } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
 import type { Holiday } from "@niftygifty/types";
 import { HapticPressable } from "@/components/HapticPressable";
+import { formatShortDate } from "@/lib/formatters";
 import { haptics } from "@/lib/haptics";
+import { getListDeadlineState } from "@/lib/models";
 import { useTheme } from "@/lib/theme";
 
 interface GiftListCardProps {
@@ -12,24 +14,27 @@ interface GiftListCardProps {
   onPress: () => void;
   onComplete?: () => void;
   onArchive?: () => void;
+  now?: Date;
 }
 
-export function GiftListCard({ item, onPress, onComplete, onArchive }: GiftListCardProps) {
+export function GiftListCard({ item, onPress, onComplete, onArchive, now }: GiftListCardProps) {
   const { colors, isDark } = useTheme();
   const swipeableRef = useRef<Swipeable>(null);
+  const deadline = getListDeadlineState(item, now);
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return null;
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    } catch {
-      return dateStr;
-    }
+  const deadlineColors = {
+    overdue: {
+      backgroundColor: colors.errorLight,
+      textColor: isDark ? "#fecaca" : colors.errorDark,
+    },
+    today: {
+      backgroundColor: colors.warningLight,
+      textColor: isDark ? "#fde68a" : colors.warningDark,
+    },
+    soon: {
+      backgroundColor: colors.infoLight,
+      textColor: isDark ? "#bfdbfe" : colors.infoDark,
+    },
   };
 
   const handleComplete = async () => {
@@ -131,7 +136,10 @@ export function GiftListCard({ item, onPress, onComplete, onArchive }: GiftListC
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
-            <Text style={{ color: colors.text, fontSize: 18, fontWeight: "600" }}>
+            <Text
+              numberOfLines={2}
+              style={{ color: colors.text, fontSize: 18, fontWeight: "600", flexShrink: 1 }}
+            >
               {item.name}
             </Text>
             {item.archived ? (
@@ -139,11 +147,38 @@ export function GiftListCard({ item, onPress, onComplete, onArchive }: GiftListC
             ) : null}
           </View>
           {item.date ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 6,
+              }}
+            >
               <Ionicons name="calendar-outline" size={14} color={colors.textTertiary} />
               <Text style={{ color: colors.textTertiary, fontSize: 14 }}>
-                {formatDate(item.date)}
+                {formatShortDate(item.date)}
               </Text>
+              {deadline ? (
+                <View
+                  style={{
+                    backgroundColor: deadlineColors[deadline.tone].backgroundColor,
+                    borderRadius: 4,
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: deadlineColors[deadline.tone].textColor,
+                      fontSize: 12,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {deadline.label}
+                  </Text>
+                </View>
+              ) : null}
             </View>
           ) : null}
         </View>

@@ -1,3 +1,15 @@
+const DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+export function parseLocalDate(dateString: string): Date {
+  const dateOnlyMatch = DATE_ONLY_PATTERN.exec(dateString);
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  return new Date(dateString);
+}
+
 export function formatDate(
   dateString: string | null | undefined,
   options: Intl.DateTimeFormatOptions,
@@ -7,7 +19,7 @@ export function formatDate(
     return null;
   }
 
-  const parsedDate = new Date(dateString);
+  const parsedDate = parseLocalDate(dateString);
   if (Number.isNaN(parsedDate.getTime())) {
     return dateString;
   }
