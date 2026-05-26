@@ -46,6 +46,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ApiError } from "@/lib/api-client";
+import { captureWebEvent } from "@/lib/analytics";
+import { downloadIcsEvent } from "@/lib/calendar-download";
 import { toast } from "sonner";
 import type { PersonWithGifts, Gift, Holiday, RelationshipCategory, GiftSuggestion } from "@niftygifty/types";
 import { RELATIONSHIP_CATEGORIES } from "@niftygifty/types";
@@ -314,6 +316,29 @@ function AboutSection({
 
   const hasGifts = person.gifts_received.length > 0 || person.gifts_given.length > 0;
 
+  const handleDownloadPersonDate = (kind: "birthday" | "milestone") => {
+    const date = kind === "birthday" ? person.birthday : person.milestone_date;
+    const label =
+      kind === "birthday" ? "Birthday" : person.milestone_label || "Milestone";
+
+    if (!date) {
+      toast.error(`${label} needs a date before it can be added to a calendar`);
+      return;
+    }
+
+    downloadIcsEvent({
+      date,
+      description: `Plan gifts for ${person.name}.`,
+      filename: `${person.name} ${label}`,
+      title: `${person.name} ${label}`,
+      uid: `person-${person.id}-${kind}@listygifty.com`,
+    });
+    captureWebEvent("person_calendar_exported", {
+      kind,
+      person_id: person.id,
+    });
+  };
+
   const handleSave = async () => {
     if (!hasChanges || saving) return;
     setSaving(true);
@@ -411,6 +436,28 @@ function AboutSection({
                 className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleDownloadPersonDate("birthday")}
+              disabled={!person.birthday}
+              className="border-slate-200 dark:border-slate-700"
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Birthday Calendar
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleDownloadPersonDate("milestone")}
+              disabled={!person.milestone_date}
+              className="border-slate-200 dark:border-slate-700"
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Milestone Calendar
+            </Button>
           </div>
           <Button
             onClick={handleSave}

@@ -29,6 +29,9 @@ Events:
 - `gift_list_calendar_exported`
   - Fires when a web user downloads an `.ics` calendar event for a dated gift list.
   - Key properties: `holiday_id`.
+- `person_calendar_exported`
+  - Fires when a web user downloads an `.ics` calendar event for a person birthday or milestone.
+  - Key properties: `person_id`, `kind`.
 
 ## Exchange Funnel
 
