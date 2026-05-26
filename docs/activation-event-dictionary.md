@@ -23,6 +23,9 @@ Events:
 - `mobile_gift_status_changed`
   - Fires when a gift status changes from mobile.
   - Key properties: `gift_id`, `list_id`, `from_status_id`, `to_status_id`, `source`.
+- `mobile_gift_link_opened`
+  - Fires when a mobile user opens a saved gift link from a list card or gift detail.
+  - Key properties: `gift_id`, `list_id`, `merchant`, `source`.
 - `mobile_list_reminder_scheduled`
   - Fires when a mobile user schedules a local notification for a dated list.
   - Key properties: `list_id`, `source`.

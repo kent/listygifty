@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
 import { scheduleGiftListReminder } from "@/lib/notifications";
+import { getMerchantLabel } from "@/lib/url";
 import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
@@ -274,6 +275,18 @@ export function useGiftListDetailController() {
     [gifts, resource, track]
   );
 
+  const trackGiftLinkOpen = useCallback(
+    (gift: Gift, source: string) => {
+      track("mobile_gift_link_opened", {
+        gift_id: gift.id,
+        list_id: gift.holiday_id,
+        merchant: getMerchantLabel(gift.link),
+        source,
+      });
+    },
+    [track]
+  );
+
   const openShareModal = useCallback(() => {
     setShareModalVisible(true);
     void loadShareData();
@@ -407,6 +420,7 @@ export function useGiftListDetailController() {
     handleAdvanceGiftStatus: advanceGiftStatus,
     handleDeleteGift: deleteGift,
     handleGiftPress: openGift,
+    handleGiftLinkOpen: trackGiftLinkOpen,
     handleNativeShare,
     handleRefresh: resource.refresh,
     hasActiveFilters,
@@ -753,6 +767,20 @@ export function useGiftDetailController() {
     await haptics.selection();
   }, []);
 
+  const handleOpenLink = useCallback(() => {
+    const gift = resource.data.gift;
+    if (!gift?.link) {
+      return;
+    }
+
+    track("mobile_gift_link_opened", {
+      gift_id: gift.id,
+      list_id: gift.holiday_id,
+      merchant: getMerchantLabel(gift.link),
+      source: "gift_detail",
+    });
+  }, [resource.data.gift, track]);
+
   const handleSave = useCallback(async () => {
     if (!resource.data.gift) {
       return;
@@ -835,6 +863,7 @@ export function useGiftDetailController() {
     gift: resource.data.gift,
     handleCancel: () => router.back(),
     handleDelete: promptDelete,
+    handleOpenLink,
     handleSave,
     handleStatusChange,
     hasChanges,

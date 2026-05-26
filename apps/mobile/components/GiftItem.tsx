@@ -21,6 +21,7 @@ interface GiftItemProps {
   onPress?: () => void;
   onAdvanceStatus?: () => void;
   onDelete?: () => void;
+  onOpenLink?: () => void;
   nextStatusName?: string | null;
 }
 
@@ -29,6 +30,7 @@ export function GiftItem({
   onPress,
   onAdvanceStatus,
   onDelete,
+  onOpenLink,
   nextStatusName,
 }: GiftItemProps) {
   const { colors, isDark } = useTheme();
@@ -37,6 +39,7 @@ export function GiftItem({
   const handleOpenLink = async () => {
     if (item.link) {
       await openExternalUrl(item.link);
+      onOpenLink?.();
     }
   };
 

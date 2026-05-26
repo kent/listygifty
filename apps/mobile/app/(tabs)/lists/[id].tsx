@@ -233,6 +233,7 @@ export default function GiftsScreen() {
               }
               onPress={() => controller.handleGiftPress(item.id)}
               onDelete={() => controller.handleDeleteGift(item.id)}
+              onOpenLink={() => controller.handleGiftLinkOpen(item, "list_detail_card")}
             />
           );
         }}

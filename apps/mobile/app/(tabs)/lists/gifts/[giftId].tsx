@@ -151,7 +151,10 @@ export default function GiftDetailScreen() {
           />
           {controller.openLink ? (
             <TouchableOpacity
-              onPress={() => openExternalUrl(controller.openLink)}
+              onPress={() => {
+                controller.handleOpenLink();
+                void openExternalUrl(controller.openLink);
+              }}
               style={{
                 backgroundColor: colors.primary,
                 paddingHorizontal: 16,
