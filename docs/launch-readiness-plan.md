@@ -115,6 +115,7 @@ Business success metric:
 
 4. Purchase loop
    - Mobile now normalizes gift links and surfaces merchant/domain labels on gift cards.
+   - Web gift rows now normalize gift links and surface merchant/domain labels in gift cards and details.
    - Mobile gift cards now support swipe-to-advance status from the list detail view.
 
 ## Messaging
@@ -142,6 +143,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile people can schedule recurring local birthday reminders.
 - Mobile list creation now offers Christmas, birthdays, teachers, and in-laws templates; undated lists no longer get forced to today.
 - Mobile gift links now normalize missing URL schemes and show merchant/domain labels on gift cards.
+- Web gift links now normalize missing URL schemes and show merchant/domain labels in gift rows.
 - Mobile list-detail gift cards now support quick status advancement and reuse the status-change analytics event.
 - Mobile quick gift capture now exposes save actions before optional details.
 - Mobile quick gift capture now tracks time-to-save for the core capture event.

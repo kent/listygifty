@@ -32,6 +32,7 @@ import { PeopleCell } from "./PeopleCell";
 import { AddressCell } from "./AddressCell";
 import type { Gift, Person, GiftStatus, Address } from "@niftygifty/types";
 import { cn } from "@/lib/utils";
+import { getMerchantLabel, normalizeExternalUrl } from "@/lib/url";
 
 interface SortableGiftRowProps {
   gift: Gift & { _isNew?: boolean; _isSaving?: boolean };
@@ -81,6 +82,8 @@ export function SortableGiftRow({
 
   const isShared = !gift.is_mine;
   const creatorName = gift.created_by?.safe_name;
+  const linkHref = normalizeExternalUrl(gift.link);
+  const merchantLabel = getMerchantLabel(gift.link);
 
   return (
     <>
@@ -233,14 +236,17 @@ export function SortableGiftRow({
             <div>
               <p className="text-sm font-medium text-muted-foreground">Link</p>
               <a
-                href={gift.link}
+                href={linkHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-violet-400 hover:text-violet-300 flex items-center gap-1"
               >
-                {gift.link}
+                {merchantLabel || gift.link}
                 <ExternalLink className="h-3 w-3" />
               </a>
+              {merchantLabel && (
+                <p className="mt-1 break-all text-xs text-muted-foreground">{gift.link}</p>
+              )}
             </div>
           )}
 

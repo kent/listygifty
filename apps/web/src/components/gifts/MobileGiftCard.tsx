@@ -10,6 +10,7 @@ import { StatusCell } from "./StatusCell";
 import { PeopleCell } from "./PeopleCell";
 import { CurrencyCell } from "./CurrencyCell";
 import { cn } from "@/lib/utils";
+import { getMerchantLabel } from "@/lib/url";
 import type { Gift, Person, GiftStatus } from "@niftygifty/types";
 
 interface MobileGiftCardProps {
@@ -38,6 +39,7 @@ export function MobileGiftCard({
   const [expanded, setExpanded] = useState(false);
   const isShared = !gift.is_mine;
   const recipientNames = gift.recipients.map((r) => r.name).join(", ") || "No recipient";
+  const merchantLabel = getMerchantLabel(gift.link);
 
   return (
     <Card
@@ -60,7 +62,10 @@ export function MobileGiftCard({
                 {gift.name || "Untitled gift"}
               </span>
               {gift.link && (
-                <ExternalLink className="h-3.5 w-3.5 text-violet-400 shrink-0" />
+                <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-300">
+                  <ExternalLink className="h-3 w-3 shrink-0" />
+                  {merchantLabel || "Link"}
+                </span>
               )}
               {isShared && (
                 <Users className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
