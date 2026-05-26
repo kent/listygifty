@@ -24,7 +24,7 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
 
 1. Mobile capture
    - Open app, tap capture, type gift name, save to the default active list.
-   - Add optional link, price, recipient, giver, and status after the idea is saved.
+   - Optional link, price, recipient, and giver fields now sit below the first save action.
    - Track time-to-save in analytics once event tracking is wired.
 
 2. Household readiness
@@ -116,6 +116,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile list creation now offers Christmas, birthdays, teachers, and in-laws templates; undated lists no longer get forced to today.
 - Mobile gift links now normalize missing URL schemes and show merchant/domain labels on gift cards.
 - Mobile list-detail gift cards now support quick status advancement and reuse the status-change analytics event.
+- Mobile quick gift capture now exposes save actions before optional details.
 - Mobile now tracks core activation, gift status-change, and exchange-funnel events through PostHog when analytics is configured.
 - Web homepage and business signup now present the first three business gifting playbooks as concrete entry points.
 - App review seed data now covers gift exchange screens in addition to lists, people, and gifts.
