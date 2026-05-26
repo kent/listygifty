@@ -19,6 +19,7 @@ Workflow:
 5. Track status from idea to delivered.
 6. Export or hand off final shipping/purchase data.
    - Gift CSV exports include recipient emails and shipping addresses when available.
+   - People CSV exports include default shipping-address columns for audit and re-import workflows.
 
 Activation:
 - 20 employees added.
@@ -92,6 +93,6 @@ Sales message:
 
 - Business import now creates people and optional shipping addresses from one CSV, and imported addresses become recipient defaults for new gifts.
 - Calendar/deadline fields for people and lists.
-- Export view for purchase and fulfillment handoff. Gift exports now include recipient emails and shipping addresses; next step is a dedicated business fulfillment view.
+- Export view for purchase and fulfillment handoff. Gift and people exports now include fulfillment address data; next step is a dedicated business fulfillment view.
 - Bulk gift creation and status updates.
 - Simple team-level reporting: count, spend, status, and exceptions.

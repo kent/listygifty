@@ -76,6 +76,7 @@ Business success metric:
 - Web now tracks `business_signup_started` and `business_workspace_created` with the selected playbook use case, so the homepage-to-workspace funnel is measurable.
 - People CSV import now accepts optional business shipping-address columns and reports created/skipped address counts.
 - Imported business addresses can now become each recipient's default shipping address and apply automatically to new gifts.
+- People CSV export now includes default shipping-address columns for round-trip fulfillment ops.
 
 ## Next Engineering Bets
 
@@ -129,4 +130,5 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - App review seed data now covers gift exchange screens in addition to lists, people, and gifts.
 - Mobile dependency audit was refreshed; remaining mobile npm audit items require a breaking Expo 56 SDK upgrade.
 - Gift CSV exports now include recipient emails and shipping addresses for fulfillment handoff.
+- People CSV exports now include each person's default shipping address fields.
 - Web and MCP dependencies were refreshed to reduce actionable high-severity advisories; the remaining root npm audit item is Next's exact nested PostCSS dependency, where npm currently suggests a breaking downgrade rather than a safe patch.
