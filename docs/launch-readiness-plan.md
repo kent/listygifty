@@ -28,6 +28,7 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
    - Track time-to-save in analytics once event tracking is wired.
 
 2. Household readiness
+   - Search for a recipient and create that person directly from the no-match state.
    - Seed templates for Christmas, birthdays, teachers, and in-laws.
    - Make sharing a list obvious from list detail.
    - Keep invite links revocable and visible to owners.
@@ -46,6 +47,7 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
 5. Activation metric
    - A household is activated when it has at least one list, three people, and five gifts.
    - Secondary activation: at least one shared collaborator or one gift exchange participant.
+   - Track the funnel as list created -> people added -> gift ideas captured -> gift status changed.
 
 ## Business GTM Checklist
 
