@@ -887,6 +887,7 @@ export interface CreateWorkspaceRequest {
     workspace_type: WorkspaceType;
   };
   company_name?: string;
+  business_use_case?: string;
 }
 
 export interface UpdateWorkspaceRequest {

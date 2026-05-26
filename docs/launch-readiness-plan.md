@@ -79,6 +79,7 @@ Discovery script:
 Business success metric:
 - A company is activated when it imports or creates 20 people, creates one business workspace, and tracks 20 gifts or one exchange.
 - Web now tracks `business_signup_started` and `business_workspace_created` with the selected playbook use case, so the homepage-to-workspace funnel is measurable.
+- Web now stores the selected business playbook on the company profile so follow-up can segment by initial workflow.
 - Web people CSV import now tracks start, completion, address-created counts, skipped rows, and failed attempts.
 - Web gift CSV import now tracks start, completion, created-gift count, created-person count, and failed attempts.
 - People CSV import now accepts optional business shipping-address columns and reports created/skipped address counts.

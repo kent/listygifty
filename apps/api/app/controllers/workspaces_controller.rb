@@ -27,8 +27,11 @@ class WorkspacesController < ApplicationController
       workspace.save!
       workspace.workspace_memberships.create!(user: current_user, role: "owner")
 
-      if workspace.business? && params[:company_name].present?
-        workspace.create_company_profile!(name: params[:company_name])
+      if workspace.business? && (params[:company_name].present? || params[:business_use_case].present?)
+        workspace.create_company_profile!(
+          name: params[:company_name].presence || workspace.name,
+          tax_metadata: business_tax_metadata
+        )
       end
     end
 
@@ -76,5 +79,12 @@ class WorkspacesController < ApplicationController
 
   def workspace_params
     params.require(:workspace).permit(:name, :workspace_type, :show_gift_addresses)
+  end
+
+  def business_tax_metadata
+    use_case = params[:business_use_case].presence
+    return {} unless use_case
+
+    { initial_use_case: use_case }
   end
 end

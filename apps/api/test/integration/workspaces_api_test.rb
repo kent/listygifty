@@ -35,6 +35,24 @@ class WorkspacesApiTest < ActionDispatch::IntegrationTest
     assert_equal "business", Workspace.last.workspace_type
   end
 
+  test "create stores initial business use case on company profile" do
+    assert_difference([ "Workspace.count", "CompanyProfile.count" ], 1) do
+      post workspaces_path,
+        headers: @auth_headers,
+        params: {
+          workspace: { name: "Holiday Ops", workspace_type: "business" },
+          company_name: "Acme Gifts",
+          business_use_case: "holiday-box"
+        },
+        as: :json
+    end
+
+    assert_response :created
+    profile = Workspace.last.company_profile
+    assert_equal "Acme Gifts", profile.name
+    assert_equal "holiday-box", profile.tax_metadata["initial_use_case"]
+  end
+
   test "update modifies a workspace" do
     patch workspace_path(@workspace),
       headers: @auth_headers,

@@ -7,10 +7,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Building2, Globe, MapPin, Loader2, Check, X, Pencil } from "lucide-react";
+import { Building2, Gift, Globe, MapPin, Loader2, Check, X, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { AddressesSection } from "./AddressesSection";
 import type { CompanyProfile } from "@niftygifty/types";
+
+const BUSINESS_USE_CASE_LABELS: Record<string, string> = {
+  "holiday-box": "Remote-team holiday box",
+  "new-hire-kit": "New-hire onboarding kit",
+  milestones: "Work anniversaries and milestones",
+};
+
+function getInitialUseCase(profile: CompanyProfile | null): string | null {
+  const useCase = profile?.tax_metadata?.initial_use_case;
+  if (typeof useCase !== "string") {
+    return null;
+  }
+
+  return BUSINESS_USE_CASE_LABELS[useCase] || useCase;
+}
 
 export function CompanySection() {
   const { currentWorkspace } = useWorkspace();
@@ -27,6 +42,7 @@ export function CompanySection() {
   const isAdmin = currentWorkspace?.is_admin;
   const canEdit = isOwner || isAdmin;
   const isBusiness = currentWorkspace?.workspace_type === "business";
+  const initialUseCase = getInitialUseCase(profile);
 
   const loadProfile = useCallback(async () => {
     if (!currentWorkspace || !isBusiness) return;
@@ -197,6 +213,21 @@ export function CompanySection() {
                     </span>
                     <p className="text-lg font-medium text-slate-900 dark:text-white whitespace-pre-line">
                       {profile?.address || "Not set"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Initial Workflow */}
+                <div className="flex items-start gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-slate-50 dark:to-slate-800/50 border border-slate-200 dark:border-slate-700/50 shrink-0">
+                    <Gift className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500 block mb-1">
+                      Initial Workflow
+                    </span>
+                    <p className="text-lg font-medium text-slate-900 dark:text-white">
+                      {initialUseCase || "Not set"}
                     </p>
                   </div>
                 </div>

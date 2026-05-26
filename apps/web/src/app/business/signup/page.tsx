@@ -133,6 +133,7 @@ function BusinessSignupContent() {
           workspace_type: "business",
         },
         company_name: companyName.trim() || undefined,
+        business_use_case: selectedUseCaseId,
       });
 
       await refreshWorkspaces();
