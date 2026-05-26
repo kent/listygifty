@@ -3,7 +3,11 @@ import * as Device from "expo-device";
 import { Platform } from "react-native";
 import { router } from "expo-router";
 import type { Holiday, Person } from "@niftygifty/types";
-import { getBirthdayReminderSchedule, getGiftListReminderDate } from "@/lib/models";
+import {
+  getBirthdayReminderSchedule,
+  getGiftListReminderDate,
+  getMilestoneReminderSchedule,
+} from "@/lib/models";
 
 // Configure how notifications appear when app is in foreground
 Notifications.setNotificationHandler({
@@ -106,6 +110,10 @@ export function setupNotificationHandlers(): () => void {
         router.push("/(tabs)/people");
         break;
 
+      case "milestone_reminder":
+        router.push("/(tabs)/people");
+        break;
+
       default:
         // Default to exchanges list
         router.push("/(tabs)/exchanges");
@@ -198,6 +206,42 @@ export async function scheduleBirthdayReminder(
   });
 }
 
+export async function scheduleMilestoneReminder(
+  person: Pick<Person, "id" | "name" | "milestone_label" | "milestone_date">
+): Promise<string | null> {
+  const reminderSchedule = getMilestoneReminderSchedule(person);
+  if (!reminderSchedule) {
+    return null;
+  }
+
+  const hasPermission = await requestLocalNotificationPermission();
+  if (!hasPermission) {
+    return null;
+  }
+
+  await setupNotificationChannel();
+
+  const milestoneLabel = person.milestone_label || "Milestone";
+
+  return Notifications.scheduleNotificationAsync({
+    content: {
+      title: `${person.name}: ${milestoneLabel}`,
+      body: "Review gift ideas and notes before the milestone arrives.",
+      data: {
+        type: "milestone_reminder",
+        personId: person.id,
+      } satisfies NotificationData,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.YEARLY,
+      day: reminderSchedule.day,
+      month: reminderSchedule.monthIndex,
+      hour: reminderSchedule.hour,
+      minute: reminderSchedule.minute,
+    },
+  });
+}
+
 // Notification types for reference
 export interface NotificationData {
   type:
@@ -205,7 +249,8 @@ export interface NotificationData {
     | "match_revealed"
     | "wishlist_updated"
     | "gift_list_reminder"
-    | "birthday_reminder";
+    | "birthday_reminder"
+    | "milestone_reminder";
   token?: string; // For exchange_invite
   exchangeId?: number; // For match_revealed and wishlist_updated
   holidayId?: number; // For gift_list_reminder

@@ -3,7 +3,7 @@ import { Alert } from "react-native";
 import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
 import { humanizeError } from "@/lib/error-message";
-import { scheduleBirthdayReminder } from "@/lib/notifications";
+import { scheduleBirthdayReminder, scheduleMilestoneReminder } from "@/lib/notifications";
 import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
@@ -42,6 +42,8 @@ export function usePeopleController() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [schedulingBirthdayReminderId, setSchedulingBirthdayReminderId] =
+    useState<number | null>(null);
+  const [schedulingMilestoneReminderId, setSchedulingMilestoneReminderId] =
     useState<number | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const deferredSearch = useDeferredValue(search);
@@ -218,6 +220,47 @@ export function usePeopleController() {
     [schedulingBirthdayReminderId, track]
   );
 
+  const handleScheduleMilestoneReminder = useCallback(
+    async (person: Person) => {
+      if (!person.milestone_date || schedulingMilestoneReminderId === person.id) {
+        return;
+      }
+
+      setSchedulingMilestoneReminderId(person.id);
+      try {
+        const notificationId = await scheduleMilestoneReminder(person);
+
+        if (notificationId) {
+          track("mobile_milestone_reminder_scheduled", {
+            has_label: Boolean(person.milestone_label),
+            person_id: person.id,
+            source: "people_list",
+          });
+          await haptics.success();
+          Alert.alert(
+            "Milestone Reminder Scheduled",
+            `Listy Gifty will remind you every year for ${person.name}'s ${
+              person.milestone_label || "milestone"
+            }.`
+          );
+        } else {
+          await haptics.warning();
+          Alert.alert(
+            "No Reminder Scheduled",
+            "This person needs a valid milestone date and notification permission."
+          );
+        }
+      } catch (reminderError) {
+        console.error("Failed to schedule milestone reminder", reminderError);
+        await haptics.error();
+        Alert.alert("Reminder Failed", "Could not schedule this milestone reminder.");
+      } finally {
+        setSchedulingMilestoneReminderId(null);
+      }
+    },
+    [schedulingMilestoneReminderId, track]
+  );
+
   return {
     activeGroup,
     activeGroupLabel,
@@ -239,6 +282,7 @@ export function usePeopleController() {
     },
     handleRefresh: resource.refresh,
     handleSave,
+    handleScheduleMilestoneReminder,
     isEditing: Boolean(editingPerson),
     loading: resource.loading,
     openCreate,
@@ -251,6 +295,7 @@ export function usePeopleController() {
     retryLoad: resource.reload,
     saving,
     schedulingBirthdayReminderId,
+    schedulingMilestoneReminderId,
     search,
     selectedRelationshipOption,
     setActiveGroup,

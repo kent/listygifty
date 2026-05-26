@@ -324,6 +324,22 @@ export function getBirthdayReminderSchedule(
   };
 }
 
+export function getMilestoneReminderSchedule(
+  person: Pick<Person, "milestone_date">,
+  hour = DEFAULT_BIRTHDAY_REMINDER_HOUR
+): BirthdayReminderSchedule | null {
+  const milestoneParts = parseBirthdayParts(person.milestone_date);
+  if (!milestoneParts) {
+    return null;
+  }
+
+  return {
+    ...milestoneParts,
+    hour,
+    minute: 0,
+  };
+}
+
 export function getPersonInitial(person: Person): string {
   const trimmed = person.name.trim();
   return trimmed ? trimmed.charAt(0).toUpperCase() : "?";

@@ -304,6 +304,27 @@ export default function PeopleScreen() {
                     )}
                   </TouchableOpacity>
                 ) : null}
+                {item.milestone_date ? (
+                  <TouchableOpacity
+                    onPress={(event) => {
+                      event.stopPropagation();
+                      void controller.handleScheduleMilestoneReminder(item);
+                    }}
+                    disabled={controller.schedulingMilestoneReminderId === item.id}
+                    accessibilityLabel={`Schedule milestone reminder for ${item.name}`}
+                    style={{
+                      padding: 6,
+                      borderRadius: 20,
+                      backgroundColor: colors.surfaceSecondary,
+                    }}
+                  >
+                    {controller.schedulingMilestoneReminderId === item.id ? (
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    ) : (
+                      <Ionicons name="flag-outline" size={17} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                ) : null}
                 <TouchableOpacity
                   onPress={() => controller.openEdit(item)}
                   style={{

@@ -26,6 +26,12 @@ Events:
 - `mobile_list_reminder_scheduled`
   - Fires when a mobile user schedules a local notification for a dated list.
   - Key properties: `list_id`, `source`.
+- `mobile_birthday_reminder_scheduled`
+  - Fires when a mobile user schedules a recurring local birthday notification for a person.
+  - Key properties: `person_id`, `source`.
+- `mobile_milestone_reminder_scheduled`
+  - Fires when a mobile user schedules a recurring local milestone notification for a person.
+  - Key properties: `person_id`, `has_label`, `source`.
 - `gift_list_calendar_exported`
   - Fires when a web user downloads an `.ics` calendar event for a dated gift list.
   - Key properties: `holiday_id`.

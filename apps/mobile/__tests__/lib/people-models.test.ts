@@ -6,6 +6,7 @@ import {
   getBirthdayReminder,
   getBirthdayReminderSchedule,
   getMilestoneReminder,
+  getMilestoneReminderSchedule,
   getPeopleGroupCounts,
   type PeopleGroupFilter,
 } from "@/lib/models";
@@ -137,5 +138,16 @@ describe("people model helpers", () => {
         new Date("2026-05-26T12:00:00Z")
       )
     ).toBe(expected);
+  });
+
+  it("builds yearly milestone notification schedule details", () => {
+    expect(
+      getMilestoneReminderSchedule(buildPerson({ milestone_date: "2026-09-01" }))
+    ).toEqual({
+      day: 1,
+      hour: 9,
+      minute: 0,
+      monthIndex: 8,
+    });
   });
 });

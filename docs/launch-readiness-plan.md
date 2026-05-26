@@ -146,6 +146,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Web people now support birthday display and editing.
 - Mobile gift list detail can schedule native local reminder notifications for dated lists.
 - Mobile people can schedule recurring local birthday reminders.
+- Mobile people can schedule recurring local milestone reminders.
 - Web gift lists can download `.ics` calendar events for list deadlines.
 - Web people can download `.ics` calendar events for birthdays and milestones.
 - Mobile list creation now offers Christmas, birthdays, teachers, and in-laws templates; undated lists no longer get forced to today.
