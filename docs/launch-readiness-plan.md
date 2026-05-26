@@ -93,7 +93,8 @@ Business success metric:
 3. Calendar and reminders
    - Surface upcoming birthdays and gift deadlines before purchase windows close.
    - Mobile list cards now show overdue, due today, due tomorrow, and due-within-30-days reminders.
-   - Next reminder step: add recipient birthday reminders and then native calendar sync.
+   - Mobile people now support recipient birthdays and show upcoming birthday reminders.
+   - Next reminder step: native calendar sync.
 
 4. Purchase loop
    - Mobile now normalizes gift links and surfaces merchant/domain labels on gift cards.
@@ -117,6 +118,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile exchange participants can now build their wishlist during the inviting phase, before matches are drawn.
 - Mobile exchange owners can now add and remove exclusion rules before drawing matches.
 - Mobile list cards now surface date-based deadline reminders, and date-only formatting is normalized to local calendar days.
+- Mobile people now support birthday entry and upcoming birthday reminders.
 - Mobile list creation now offers Christmas, birthdays, teachers, and in-laws templates; undated lists no longer get forced to today.
 - Mobile gift links now normalize missing URL schemes and show merchant/domain labels on gift cards.
 - Mobile list-detail gift cards now support quick status advancement and reuse the status-change analytics event.

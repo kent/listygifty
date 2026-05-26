@@ -92,7 +92,7 @@ Sales message:
 ## Product Gaps to Close
 
 - Business import now creates people and optional shipping addresses from one CSV, and imported addresses become recipient defaults for new gifts.
-- Calendar/deadline fields for people and lists.
+- Calendar/deadline fields for people and lists. People now have birthday dates; business-specific milestone dates are still needed.
 - Export view for purchase and fulfillment handoff. Gift and people exports now include fulfillment address data; next step is a dedicated business fulfillment view.
 - Bulk gift creation and status updates.
 - Simple team-level reporting: count, spend, status, and exceptions.
