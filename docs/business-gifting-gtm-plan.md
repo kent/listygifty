@@ -113,6 +113,7 @@ Business activation:
 Measurement:
 - `business_signup_started`
 - `business_workspace_created`
+- `teams_plan_started`
 - `people_csv_import_completed`
 - `people_csv_exported`
 - `gift_csv_import_completed`
@@ -125,6 +126,7 @@ Measurement:
 - Export and fulfillment report tracking are now in place; use them to find workspaces that reached handoff.
 - People CSV export is now available from the People page and tracked for recipient handoff.
 - Visible gift bulk status updates are now available and tracked for handoff progress.
+- Billing now presents a Teams pilot card that routes buyers into business workspace setup.
 - Business signup and import dialogs now include instrumented sample CSV downloads.
 - The app review seed now includes a short business demo dataset that mirrors the remote-team holiday box workflow.
 - Business dashboards now surface the selected signup use case beside activation progress; the next dashboard step is grouping activation metrics by use case across companies.

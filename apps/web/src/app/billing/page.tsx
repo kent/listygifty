@@ -20,11 +20,14 @@ import {
   Infinity,
   Ticket,
   Heart,
+  Building2,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import type { BillingStatus, BillingPlan } from "@niftygifty/types";
 import { BILLING_PLANS, FREE_GIFT_LIMIT } from "@niftygifty/types";
 import { ApiError } from "@/lib/api-client";
+import { captureWebEvent } from "@/lib/analytics";
 
 // Christmas confetti colors
 const CHRISTMAS_COLORS = ["#ff0000", "#00ff00", "#ffffff", "#ffd700", "#ff6b6b", "#4ade80"];
@@ -326,7 +329,7 @@ export default function BillingPage() {
         ) : (
           <>
             {/* Pricing cards */}
-            <div className="grid md:grid-cols-2 gap-6 mb-12">
+            <div className="grid gap-6 mb-12 md:grid-cols-2 lg:grid-cols-3">
               {/* Yearly plan */}
               <PricingCard
                 plan={BILLING_PLANS.yearly}
@@ -343,6 +346,8 @@ export default function BillingPage() {
                 onSelect={() => handleCheckout("two_year")}
                 featured
               />
+
+              <TeamsPlanCard />
             </div>
 
             {/* Features */}
@@ -536,3 +541,56 @@ function PricingCard({ plan, isPremium, loading, onSelect, featured }: PricingCa
   );
 }
 
+function TeamsPlanCard() {
+  return (
+    <div className="relative rounded-2xl border-2 border-cyan-500/30 bg-card/50 p-6 backdrop-blur transition-all shadow-lg shadow-cyan-500/5">
+      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+        <Badge className="border-0 bg-cyan-500 text-slate-950 shadow-lg">
+          Teams Pilot
+        </Badge>
+      </div>
+
+      <div className="mb-6 text-center">
+        <h3 className="mb-2 text-lg font-medium text-muted-foreground">Listy Gifty Teams</h3>
+        <div className="flex items-baseline justify-center gap-1">
+          <span className="text-4xl font-bold">Custom</span>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          For employee gifting workflows
+        </p>
+      </div>
+
+      <div className="mb-6 space-y-3">
+        <div className="flex items-center gap-3 text-sm">
+          <Building2 className="h-4 w-4 text-cyan-400" />
+          <span>Business workspaces and company profile</span>
+        </div>
+        <div className="flex items-center gap-3 text-sm">
+          <Users className="h-4 w-4 text-cyan-400" />
+          <span>Multi-admin setup for HR and ops</span>
+        </div>
+        <div className="flex items-center gap-3 text-sm">
+          <Gift className="h-4 w-4 text-cyan-400" />
+          <span>CSV imports, addresses, reports, and handoff exports</span>
+        </div>
+      </div>
+
+      <Link
+        href="/business/signup?use_case=holiday-box"
+        onClick={() =>
+          captureWebEvent("teams_plan_started", {
+            source: "billing",
+          })
+        }
+      >
+        <Button className="w-full bg-cyan-500 text-slate-950 hover:bg-cyan-400" size="lg">
+          Start Team Setup
+        </Button>
+      </Link>
+
+      <p className="mt-3 text-center text-xs text-muted-foreground">
+        Pilot onboarding for holiday boxes, onboarding kits, and milestones.
+      </p>
+    </div>
+  );
+}

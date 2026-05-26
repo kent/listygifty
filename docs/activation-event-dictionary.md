@@ -78,6 +78,9 @@ Events:
 - `business_sample_csv_downloaded`
   - Fires when a business signup visitor downloads a people or gifts sample CSV.
   - Key properties: `sample_type`.
+- `teams_plan_started`
+  - Fires when a billing-page visitor starts the Teams setup path.
+  - Key properties: `source`.
 - `people_csv_import_started`
   - Fires when a people CSV import starts.
   - Key properties: `owner_assigned`.
