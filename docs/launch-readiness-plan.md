@@ -41,7 +41,7 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
 
 4. App Store readiness
    - Maintain TestFlight default group: `Internal Testers`.
-   - Keep app review data current and production-safe.
+   - App review seed data now includes lists, people, gifts, and an active exchange with wishlists, matches, and an exclusion.
    - Capture screenshots that show lists, people, exchanges, and profile settings.
 
 5. Activation metric
@@ -118,4 +118,5 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile list-detail gift cards now support quick status advancement and reuse the status-change analytics event.
 - Mobile now tracks core activation, gift status-change, and exchange-funnel events through PostHog when analytics is configured.
 - Web homepage and business signup now present the first three business gifting playbooks as concrete entry points.
+- App review seed data now covers gift exchange screens in addition to lists, people, and gifts.
 - Web and MCP dependencies were refreshed to reduce actionable high-severity advisories; the remaining root npm audit item is Next's exact nested PostCSS dependency, where npm currently suggests a breaking downgrade rather than a safe patch.
