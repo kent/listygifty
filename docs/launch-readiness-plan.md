@@ -34,7 +34,7 @@ The first memorable job is not AI recommendations. It is reliable gift logistics
 
 3. Gift exchange readiness
    - Mobile users can create an exchange with name, date, and budget range.
-   - Owners can add participants, send or copy invites, verify accepted count, and draw matches.
+   - Owners can add participants, send invites, verify accepted count, and draw matches.
    - Participants can accept invites, add wishlist items, and view their match after the draw.
    - Before launch, test one complete exchange with at least four participants and one exclusion.
 
@@ -76,7 +76,8 @@ Business success metric:
 
 2. Exchange completion
    - Make invite, wishlist, draw, and match visibility testable end to end on mobile.
-   - Add owner-facing readiness states before drawing matches.
+   - Add owner-facing readiness states that explain why an exchange cannot be drawn yet.
+   - Add copy/share controls for participant invite links for cases where email delivery fails.
 
 3. Calendar and reminders
    - Surface upcoming birthdays and gift deadlines before purchase windows close.
