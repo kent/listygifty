@@ -27,6 +27,9 @@ Events:
 - `mobile_gift_link_opened`
   - Fires when a mobile user opens a saved gift link from a list card or gift detail.
   - Key properties: `gift_id`, `list_id`, `merchant`, `source`.
+- `mobile_gift_link_pasted`
+  - Fires when a mobile user pastes a gift link into quick capture or gift detail.
+  - Key properties: `gift_id`, `list_id`, `merchant`, `source`.
 - `mobile_list_reminder_scheduled`
   - Fires when a mobile user schedules a local notification for a dated list.
   - Key properties: `list_id`, `source`.
@@ -70,6 +73,9 @@ Events:
 - `mobile_exchange_exclusion_added`
   - Fires when an owner adds an exclusion rule.
   - Key properties: `exchange_id`, `giver_participant_id`, `receiver_participant_id`.
+- `mobile_exchange_exclusion_removed`
+  - Fires when an owner removes an exclusion rule.
+  - Key properties: `exchange_id`, `exclusion_id`.
 - `mobile_exchange_draw_completed`
   - Fires when an owner draws matches.
   - Key properties: `exchange_id`, `participant_count`.
@@ -94,6 +100,9 @@ Events:
 - `business_sample_csv_downloaded`
   - Fires when a business signup visitor downloads a people or gifts sample CSV.
   - Key properties: `sample_type`, `use_case`.
+- `dashboard_activation_step_opened`
+  - Fires when a dashboard user clicks an activation checklist step.
+  - Key properties: `complete`, `is_business`, `step`, `workflow`.
 - `teams_plan_started`
   - Fires when a billing-page visitor starts the Teams setup path.
   - Key properties: `source`.
@@ -145,6 +154,12 @@ Events:
 - `fulfillment_report_viewed`
   - Fires when the fulfillment report view opens.
   - Key properties: `holiday_id`, `workspace_type`.
+- `integration_cta_clicked`
+  - Fires when a visitor clicks an integrations-page signup CTA.
+  - Key properties: `location`, `destination`.
+- `integration_how_to_connect_clicked`
+  - Fires when a visitor clicks the integrations-page connect-section anchor.
+  - Key properties: `location`, `destination`.
 
 ## Dashboard Cuts
 
