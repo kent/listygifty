@@ -35,9 +35,24 @@ module AppReviewSeedData
   ].freeze
 
   HOLIDAYS = [
-    { key: :birthday_2026, name: "App Review Birthday 2026", date: Date.new(2026, 6, 12), icon: "cake" },
-    { key: :mothers_day_2026, name: "App Review Mother's Day 2026", date: Date.new(2026, 5, 10), icon: "heart-handshake" },
-    { key: :christmas_2026, name: "App Review Christmas 2026", date: Date.new(2026, 12, 25), icon: "gift" }
+    {
+      key: :birthday_2026,
+      name: "App Review Birthday 2026",
+      date: Date.new(2026, 6, 12),
+      icon: "cake"
+    },
+    {
+      key: :mothers_day_2026,
+      name: "App Review Mother's Day 2026",
+      date: Date.new(2026, 5, 10),
+      icon: "heart-handshake"
+    },
+    {
+      key: :christmas_2026,
+      name: "App Review Christmas 2026",
+      date: Date.new(2026, 12, 25),
+      icon: "gift"
+    }
   ].freeze
 
   GIFTS = {
@@ -121,6 +136,77 @@ module AppReviewSeedData
     ]
   }.freeze
 
+  REVIEW_EXCHANGE = {
+    name: "App Review Secret Santa 2026",
+    exchange_date: Date.new(2026, 12, 20),
+    budget_min: 25.00,
+    budget_max: 50.00,
+    status: "active"
+  }.freeze
+
+  EXCHANGE_PARTICIPANTS = [
+    {
+      key: :marie,
+      name: "#{REVIEWER_FIRST_NAME} #{REVIEWER_LAST_NAME}",
+      email: REVIEWER_EMAIL,
+      reviewer: true,
+      wishlist_items: [
+        {
+          name: "Coffee Subscription",
+          description: "Light roast beans.",
+          price: 35.00,
+          link: "https://example.com/coffee"
+        }
+      ]
+    },
+    {
+      key: :alex,
+      name: "Alex Parker",
+      email: "alex.parker@gifts.com",
+      wishlist_items: [
+        {
+          name: "Desk Plant",
+          description: "Low-maintenance office plant.",
+          price: 28.00,
+          link: "https://example.com/desk-plant"
+        }
+      ]
+    },
+    {
+      key: :sam,
+      name: "Sam Lee",
+      email: "sam.lee@gifts.com",
+      wishlist_items: [
+        {
+          name: "Cozy Throw Blanket",
+          description: "Soft neutral blanket.",
+          price: 42.00,
+          link: "https://example.com/blanket"
+        }
+      ]
+    },
+    {
+      key: :nina,
+      name: "Nina Rivera",
+      email: "nina.rivera@gifts.com",
+      wishlist_items: [
+        {
+          name: "Bookshop Gift Card",
+          description: "Local bookstore credit.",
+          price: 30.00,
+          link: "https://example.com/bookshop"
+        }
+      ]
+    }
+  ].freeze
+
+  EXCHANGE_MATCHES = {
+    marie: :alex,
+    alex: :nina,
+    nina: :sam,
+    sam: :marie
+  }.freeze
+
   def seed!
     puts "Seeding app review demo data..."
 
@@ -130,6 +216,7 @@ module AppReviewSeedData
     people = ensure_people(user, workspace)
     holidays = ensure_holidays(workspace, user, people)
     ensure_gifts(holidays, people, user)
+    ensure_exchange(workspace, user)
 
     puts "App review demo data ready for #{REVIEWER_EMAIL}."
   end
@@ -289,6 +376,76 @@ module AppReviewSeedData
 
     total_gifts = GIFTS.values.sum(&:size)
     puts "  - Seeded #{total_gifts} gifts."
+  end
+
+  def ensure_exchange(workspace, user)
+    exchange = GiftExchange.find_or_initialize_by(
+      workspace: workspace,
+      user: user,
+      name: REVIEW_EXCHANGE[:name]
+    )
+    exchange.exchange_date = REVIEW_EXCHANGE[:exchange_date]
+    exchange.budget_min = REVIEW_EXCHANGE[:budget_min]
+    exchange.budget_max = REVIEW_EXCHANGE[:budget_max]
+    exchange.status = REVIEW_EXCHANGE[:status]
+    exchange.save!
+
+    participants = ensure_exchange_participants(exchange, user)
+    ensure_exchange_wishlist_items(participants)
+    ensure_exchange_matches(participants)
+    ensure_exchange_exclusion(exchange, participants)
+
+    puts "  - Seeded review gift exchange with #{participants.size} participants."
+  end
+
+  def ensure_exchange_participants(exchange, user)
+    EXCHANGE_PARTICIPANTS.each_with_object({}) do |attrs, participants|
+      participant = ExchangeParticipant.find_or_initialize_by(
+        gift_exchange: exchange,
+        email: attrs[:email]
+      )
+      participant.name = attrs[:name]
+      participant.status = "accepted"
+      participant.user = attrs[:reviewer] ? user : nil
+      participant.save!
+      participants[attrs[:key]] = participant
+    end
+  end
+
+  def ensure_exchange_wishlist_items(participants)
+    EXCHANGE_PARTICIPANTS.each do |participant_attrs|
+      participant = participants.fetch(participant_attrs[:key])
+      participant_attrs[:wishlist_items].each do |attrs|
+        item = ExchangeWishlistItem.find_or_initialize_by(
+          exchange_participant: participant,
+          name: attrs[:name]
+        )
+        item.description = attrs[:description]
+        item.price = attrs[:price]
+        item.link = attrs[:link]
+        item.save!
+      end
+    end
+  end
+
+  def ensure_exchange_matches(participants)
+    EXCHANGE_MATCHES.each do |giver_key, receiver_key|
+      participants.fetch(giver_key).update!(
+        matched_participant: participants.fetch(receiver_key)
+      )
+    end
+  end
+
+  def ensure_exchange_exclusion(exchange, participants)
+    participant_a = participants.fetch(:alex)
+    participant_b = participants.fetch(:sam)
+    return if ExchangeExclusion.exists_between?(participant_a, participant_b)
+
+    ExchangeExclusion.create!(
+      gift_exchange: exchange,
+      participant_a: participant_a,
+      participant_b: participant_b
+    )
   end
 end
 
