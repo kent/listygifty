@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { captureWebEvent } from "@/lib/analytics";
 import { importsService } from "@/services";
 import type { ImportGiftsResult } from "@niftygifty/types";
 
@@ -89,13 +90,25 @@ export function ImportGiftsDialog({
 
     setIsImporting(true);
     setError(null);
+    captureWebEvent("gift_csv_import_started", {
+      holiday_id: holidayId,
+    });
 
     try {
       const importResult = await importsService.importGifts(file, holidayId);
       setResult(importResult);
       onImported(importResult);
+      captureWebEvent("gift_csv_import_completed", {
+        created: importResult.created,
+        errors: importResult.errors.length,
+        holiday_id: holidayId,
+        people_created: importResult.people_created,
+      });
     } catch (importError) {
       setError(importError instanceof Error ? importError.message : "Import failed");
+      captureWebEvent("gift_csv_import_failed", {
+        holiday_id: holidayId,
+      });
     } finally {
       setIsImporting(false);
     }
