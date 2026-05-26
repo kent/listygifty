@@ -18,6 +18,61 @@ import { getGiftStatusColors } from "@/lib/gift-status-colors";
 export default function NewGiftScreen() {
   const { colors, isDark } = useTheme();
   const controller = useNewGiftController();
+  const renderSaveActions = () => (
+    <View style={{ gap: 10 }}>
+      <TouchableOpacity
+        onPress={controller.handleSubmit}
+        disabled={!controller.canSubmit}
+        style={{
+          backgroundColor: controller.canSubmit ? colors.primary : colors.surfaceSecondary,
+          padding: 16,
+          borderRadius: 8,
+          alignItems: "center",
+        }}
+      >
+        {controller.savingMode === "done" ? (
+          <ActivityIndicator color={colors.textInverse} />
+        ) : (
+          <Text
+            style={{
+              color: controller.canSubmit ? colors.textInverse : colors.muted,
+              fontSize: 16,
+              fontWeight: "600",
+            }}
+          >
+            Add Gift
+          </Text>
+        )}
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={controller.handleSubmitAndAddAnother}
+        disabled={!controller.canSubmit}
+        style={{
+          backgroundColor: colors.input,
+          padding: 16,
+          borderRadius: 8,
+          alignItems: "center",
+          borderWidth: 1,
+          borderColor: controller.canSubmit ? colors.primary : colors.inputBorder,
+        }}
+      >
+        {controller.savingMode === "another" ? (
+          <ActivityIndicator color={colors.primary} />
+        ) : (
+          <Text
+            style={{
+              color: controller.canSubmit ? colors.primary : colors.muted,
+              fontSize: 16,
+              fontWeight: "600",
+            }}
+          >
+            Save & Add Another
+          </Text>
+        )}
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <KeyboardAvoidingView
@@ -151,6 +206,56 @@ export default function NewGiftScreen() {
           }}
         />
 
+        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Status *</Text>
+        {controller.loadingStatuses ? (
+          <ActivityIndicator color={colors.primary} style={{ marginBottom: 16 }} />
+        ) : (
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+            {controller.statuses.map((status) => {
+              const isSelected = controller.selectedStatusId === status.id;
+              const statusColor = getGiftStatusColors(status.name, colors, isDark);
+              return (
+                <TouchableOpacity
+                  key={status.id}
+                  onPress={() => controller.handleStatusChange(status.id)}
+                  style={{
+                    backgroundColor: isSelected ? statusColor.backgroundColor : colors.input,
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 8,
+                    borderWidth: 2,
+                    borderColor: isSelected ? statusColor.textColor : colors.inputBorder,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: isSelected ? statusColor.textColor : colors.textTertiary,
+                      fontWeight: isSelected ? "600" : "400",
+                    }}
+                  >
+                    {status.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
+        {renderSaveActions()}
+
+        <View
+          style={{
+            height: 1,
+            backgroundColor: colors.border,
+            marginBottom: 20,
+            marginTop: 24,
+          }}
+        />
+
+        <Text style={{ color: colors.text, fontSize: 17, fontWeight: "700", marginBottom: 16 }}>
+          Optional details
+        </Text>
+
         <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
           Description
         </Text>
@@ -214,41 +319,6 @@ export default function NewGiftScreen() {
           }}
         />
 
-        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Status *</Text>
-        {controller.loadingStatuses ? (
-          <ActivityIndicator color={colors.primary} style={{ marginBottom: 16 }} />
-        ) : (
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
-            {controller.statuses.map((status) => {
-              const isSelected = controller.selectedStatusId === status.id;
-              const statusColor = getGiftStatusColors(status.name, colors, isDark);
-              return (
-                <TouchableOpacity
-                  key={status.id}
-                  onPress={() => controller.handleStatusChange(status.id)}
-                  style={{
-                    backgroundColor: isSelected ? statusColor.backgroundColor : colors.input,
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    borderRadius: 8,
-                    borderWidth: 2,
-                    borderColor: isSelected ? statusColor.textColor : colors.inputBorder,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: isSelected ? statusColor.textColor : colors.textTertiary,
-                      fontWeight: isSelected ? "600" : "400",
-                    }}
-                  >
-                    {status.name}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
         <PersonPicker
           label="For (Recipients)"
           selectedIds={controller.form.recipientIds}
@@ -263,59 +333,7 @@ export default function NewGiftScreen() {
           placeholder="Who is giving this gift?"
         />
 
-        <TouchableOpacity
-          onPress={controller.handleSubmit}
-          disabled={!controller.canSubmit}
-          style={{
-            backgroundColor: controller.canSubmit ? colors.primary : colors.surfaceSecondary,
-            padding: 16,
-            borderRadius: 8,
-            alignItems: "center",
-            marginTop: 8,
-          }}
-        >
-          {controller.savingMode === "done" ? (
-            <ActivityIndicator color={colors.textInverse} />
-          ) : (
-            <Text
-              style={{
-                color: controller.canSubmit ? colors.textInverse : colors.muted,
-                fontSize: 16,
-                fontWeight: "600",
-              }}
-            >
-              Add Gift
-            </Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={controller.handleSubmitAndAddAnother}
-          disabled={!controller.canSubmit}
-          style={{
-            backgroundColor: colors.input,
-            padding: 16,
-            borderRadius: 8,
-            alignItems: "center",
-            marginTop: 10,
-            borderWidth: 1,
-            borderColor: controller.canSubmit ? colors.primary : colors.inputBorder,
-          }}
-        >
-          {controller.savingMode === "another" ? (
-            <ActivityIndicator color={colors.primary} />
-          ) : (
-            <Text
-              style={{
-                color: controller.canSubmit ? colors.primary : colors.muted,
-                fontSize: 16,
-                fontWeight: "600",
-              }}
-            >
-              Save & Add Another
-            </Text>
-          )}
-        </TouchableOpacity>
+        <View style={{ marginTop: 8 }}>{renderSaveActions()}</View>
 
         <TouchableOpacity
           onPress={controller.handleCancel}
