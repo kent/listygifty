@@ -117,6 +117,9 @@ Events:
 - `gift_bulk_status_updated`
   - Fires when a web user updates the status for all currently visible gifts in a list.
   - Key properties: `holiday_id`, `status_id`, `gift_count`, `source`.
+- `gift_link_opened`
+  - Fires when a web user opens a saved gift link from a gift row/card.
+  - Key properties: `gift_id`, `holiday_id`, `merchant`, `source`.
 - `fulfillment_report_viewed`
   - Fires when the fulfillment report view opens.
   - Key properties: `holiday_id`, `workspace_type`.

@@ -152,6 +152,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile list creation now offers Christmas, birthdays, teachers, and in-laws templates; undated lists no longer get forced to today.
 - Mobile gift links now normalize missing URL schemes and show merchant/domain labels on gift cards.
 - Web gift links now normalize missing URL schemes and show merchant/domain labels in gift rows.
+- Web gift rows now keep gift names editable while opening the saved merchant link from the row/card.
 - Mobile list-detail gift cards now support quick status advancement and reuse the status-change analytics event.
 - Mobile quick gift capture now exposes save actions before optional details.
 - Mobile quick gift capture now tracks time-to-save for the core capture event.

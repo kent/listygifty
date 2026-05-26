@@ -32,6 +32,7 @@ import { PeopleCell } from "./PeopleCell";
 import { AddressCell } from "./AddressCell";
 import type { Gift, Person, GiftStatus, Address } from "@niftygifty/types";
 import { cn } from "@/lib/utils";
+import { captureWebEvent } from "@/lib/analytics";
 import { getMerchantLabel, normalizeExternalUrl } from "@/lib/url";
 
 interface SortableGiftRowProps {
@@ -161,6 +162,16 @@ export function SortableGiftRow({
           onChange={(name) => onUpdateGift(gift.id, { name })}
           placeholder="Gift name..."
           isLink={!!gift.link}
+          linkHref={linkHref}
+          linkLabel={merchantLabel || "Open link"}
+          onLinkClick={() =>
+            captureWebEvent("gift_link_opened", {
+              gift_id: gift.id,
+              holiday_id: gift.holiday_id,
+              merchant: merchantLabel,
+              source: "gift_row",
+            })
+          }
         />
       </TableCell>
       <TableCell className="p-1">

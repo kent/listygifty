@@ -9,8 +9,9 @@ import { TextCell } from "./TextCell";
 import { StatusCell } from "./StatusCell";
 import { PeopleCell } from "./PeopleCell";
 import { CurrencyCell } from "./CurrencyCell";
+import { captureWebEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
-import { getMerchantLabel } from "@/lib/url";
+import { getMerchantLabel, normalizeExternalUrl } from "@/lib/url";
 import type { Gift, Person, GiftStatus } from "@niftygifty/types";
 
 interface MobileGiftCardProps {
@@ -40,6 +41,7 @@ export function MobileGiftCard({
   const isShared = !gift.is_mine;
   const recipientNames = gift.recipients.map((r) => r.name).join(", ") || "No recipient";
   const merchantLabel = getMerchantLabel(gift.link);
+  const linkHref = normalizeExternalUrl(gift.link);
 
   return (
     <Card
@@ -110,6 +112,16 @@ export function MobileGiftCard({
                 onChange={(name) => onUpdateGift(gift.id, { name })}
                 placeholder="Gift name..."
                 isLink={!!gift.link}
+                linkHref={linkHref}
+                linkLabel={merchantLabel || "Open link"}
+                onLinkClick={() =>
+                  captureWebEvent("gift_link_opened", {
+                    gift_id: gift.id,
+                    holiday_id: gift.holiday_id,
+                    merchant: merchantLabel,
+                    source: "mobile_gift_card",
+                  })
+                }
               />
             </div>
 

@@ -9,6 +9,9 @@ interface TextCellProps {
   placeholder?: string;
   className?: string;
   isLink?: boolean;
+  linkHref?: string | null;
+  linkLabel?: string | null;
+  onLinkClick?: () => void;
 }
 
 export function TextCell({
@@ -17,6 +20,9 @@ export function TextCell({
   placeholder = "",
   className,
   isLink = false,
+  linkHref,
+  linkLabel,
+  onLinkClick,
 }: TextCellProps) {
   const [editing, setEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value);
@@ -71,23 +77,27 @@ export function TextCell({
   const displayValue = localValue || placeholder;
   const isEmpty = !localValue;
 
-  if (isLink && localValue) {
+  if (isLink && localValue && linkHref) {
     return (
       <div
         className={cn(
-          "px-2 py-1 cursor-pointer min-h-[28px] hover:bg-muted/50 rounded text-sm",
+          "flex min-h-[28px] cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-muted/50",
           className
         )}
         onClick={() => setEditing(true)}
       >
+        <span className="min-w-0 flex-1 truncate">{displayValue}</span>
         <a
-          href={localValue}
+          href={linkHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-500 hover:underline"
-          onClick={(e) => e.stopPropagation()}
+          className="shrink-0 text-xs font-medium text-violet-600 hover:text-violet-500 dark:text-violet-300 dark:hover:text-violet-200"
+          onClick={(e) => {
+            e.stopPropagation();
+            onLinkClick?.();
+          }}
         >
-          {localValue}
+          {linkLabel || "Open link"}
         </a>
       </div>
     );
@@ -106,4 +116,3 @@ export function TextCell({
     </div>
   );
 }
-
