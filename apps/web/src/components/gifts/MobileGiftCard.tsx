@@ -19,7 +19,11 @@ interface MobileGiftCardProps {
   people: Person[];
   statuses: GiftStatus[];
   isDeleting: boolean;
-  onUpdateGift: (id: number, updates: { name?: string; gift_status_id?: number; cost?: number }) => void;
+  onUpdateGift: (
+    id: number,
+    updates: { name?: string; gift_status_id?: number; cost?: number },
+    options?: { source?: string }
+  ) => void;
   onUpdateRecipients: (id: number, recipientIds: number[]) => void;
   onUpdateGivers: (id: number, giverIds: number[]) => void;
   onRequestDelete: (gift: Gift) => void;
@@ -154,7 +158,9 @@ export function MobileGiftCard({
                 <StatusCell
                   value={gift.gift_status_id}
                   statuses={statuses}
-                  onChange={(statusId) => onUpdateGift(gift.id, { gift_status_id: statusId })}
+                  onChange={(statusId) =>
+                    onUpdateGift(gift.id, { gift_status_id: statusId }, { source: "mobile_gift_card" })
+                  }
                 />
               </div>
               <div className="space-y-2">

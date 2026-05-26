@@ -179,5 +179,6 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Web gift CSV import now emits funnel events for business activation measurement.
 - Web people CSV import now emits funnel events for business activation measurement.
 - Web gift reports now surface fulfillment exceptions for business handoff.
+- Web gift status changes now emit single-gift analytics in addition to bulk visible-status updates.
 - App review seed data now includes a business workspace that mirrors the remote-team holiday box demo path.
 - Web and MCP dependencies were refreshed to reduce actionable high-severity advisories; the remaining root npm audit item is Next's exact nested PostCSS dependency, where npm currently suggests a breaking downgrade rather than a safe patch.

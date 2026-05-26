@@ -42,7 +42,11 @@ interface SortableGiftRowProps {
   addresses: Address[];
   showAddresses: boolean;
   deletingId: number | null;
-  onUpdateGift: (id: number, updates: { name?: string; gift_status_id?: number; cost?: number }) => void;
+  onUpdateGift: (
+    id: number,
+    updates: { name?: string; gift_status_id?: number; cost?: number },
+    options?: { source?: string }
+  ) => void;
   onUpdateRecipients: (id: number, recipientIds: number[]) => void;
   onUpdateGivers: (id: number, giverIds: number[]) => void;
   onUpdateRecipientAddress: (giftId: number, recipientId: number, addressId: number | null) => void;
@@ -178,7 +182,9 @@ export function SortableGiftRow({
         <StatusCell
           value={gift.gift_status_id}
           statuses={statuses}
-          onChange={(statusId) => onUpdateGift(gift.id, { gift_status_id: statusId })}
+          onChange={(statusId) =>
+            onUpdateGift(gift.id, { gift_status_id: statusId }, { source: "gift_grid_row" })
+          }
         />
       </TableCell>
       <TableCell className="p-1">

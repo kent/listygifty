@@ -124,6 +124,9 @@ Events:
 - `gift_bulk_status_updated`
   - Fires when a web user updates the status for all currently visible gifts in a list.
   - Key properties: `holiday_id`, `status_id`, `gift_count`, `source`.
+- `gift_status_changed`
+  - Fires when a web user changes one gift status from the gift grid.
+  - Key properties: `gift_id`, `holiday_id`, `from_status_id`, `to_status_id`, `source`.
 - `gift_link_opened`
   - Fires when a web user opens a saved gift link from a gift row/card.
   - Key properties: `gift_id`, `holiday_id`, `merchant`, `source`.

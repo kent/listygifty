@@ -52,6 +52,7 @@ import { toast } from "sonner";
 import type { Gift, Person, GiftStatus, Holiday, CreateGiftRequest, Address } from "@niftygifty/types";
 
 type GiftUpdatePayload = Partial<CreateGiftRequest["gift"]>;
+type GiftUpdateOptions = { source?: string };
 type LocalGift = Gift & { _isNew?: boolean; _isSaving?: boolean };
 
 interface GiftGridProps {
@@ -133,9 +134,13 @@ export function GiftGrid({
   }, [people, onPeopleChange]);
 
   const updateGift = useCallback(
-    async (id: number, updates: GiftUpdatePayload) => {
+    async (id: number, updates: GiftUpdatePayload, options: GiftUpdateOptions = {}) => {
       const currentGift = allGiftsRef.current.find((g) => g.id === id);
       if (!currentGift) return;
+      const previousStatusId = currentGift.gift_status_id;
+      const nextStatusId = updates.gift_status_id;
+      const isStatusChange =
+        nextStatusId !== undefined && nextStatusId !== previousStatusId;
 
       const optimisticGift: Gift = { ...currentGift };
       if (updates.name !== undefined) optimisticGift.name = updates.name;
@@ -152,6 +157,15 @@ export function GiftGrid({
           const updated = await giftsService.update(id, updates);
           setLocalMeta(id, { _isNew: false });
           onGiftsChangeRef.current(allGiftsRef.current.map((g) => (g.id === id ? updated : g)));
+          if (isStatusChange) {
+            captureWebEvent("gift_status_changed", {
+              from_status_id: previousStatusId,
+              gift_id: updated.id,
+              holiday_id: updated.holiday_id,
+              source: options.source || "gift_grid",
+              to_status_id: updated.gift_status_id,
+            });
+          }
         } catch {
           const refreshed = await giftsService.getAll();
           const holidayId = defaultHolidayId || holidays[0]?.id;
