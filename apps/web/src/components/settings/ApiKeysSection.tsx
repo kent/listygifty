@@ -239,7 +239,7 @@ export function ApiKeysSection() {
       "command": "npx",
       "args": ["@niftygifty/mcp-server"],
       "env": {
-        "NIFTYGIFTY_API_URL": "https://api.niftygifty.com",
+        "NIFTYGIFTY_API_URL": "https://api.listygifty.com",
         "NIFTYGIFTY_API_KEY": "your_api_key_here"
       }
     }
@@ -257,7 +257,7 @@ export function ApiKeysSection() {
       "command": "npx",
       "args": ["@niftygifty/mcp-server"],
       "env": {
-        "NIFTYGIFTY_API_URL": "https://api.niftygifty.com",
+        "NIFTYGIFTY_API_URL": "https://api.listygifty.com",
         "NIFTYGIFTY_API_KEY": "your_api_key_here"
       }
     }

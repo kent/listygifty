@@ -41,7 +41,7 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
       "command": "npx",
       "args": ["@niftygifty/mcp-server"],
       "env": {
-        "NIFTYGIFTY_API_URL": "https://api.niftygifty.com",
+        "NIFTYGIFTY_API_URL": "https://api.listygifty.com",
         "NIFTYGIFTY_API_KEY": "ng_your_api_key_here"
       }
     }
