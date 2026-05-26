@@ -154,6 +154,7 @@ Do not lead with charity or donation positioning; the homepage hero now stays fo
 - Web people now support birthday display and editing.
 - Web gift-idea upsell copy now frames suggestions as a helper for the saved gift-list workflow, not as the flagship product.
 - The old public giving-pledge page now redirects to the homepage so launch traffic stays focused on gift logistics.
+- The orphaned charity-stats API and shared web/type references were removed to keep the product surface aligned with the non-goals.
 - Mobile gift list detail can schedule native local reminder notifications for dated lists.
 - Mobile people can schedule recurring local birthday reminders.
 - Mobile people can schedule recurring local milestone reminders.
