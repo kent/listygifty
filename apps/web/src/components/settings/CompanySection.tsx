@@ -41,7 +41,7 @@ function getInitialUseCase(profile: CompanyProfile | null): string | null {
 }
 
 export function CompanySection() {
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, refreshWorkspaces } = useWorkspace();
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -111,6 +111,7 @@ export function CompanySection() {
           workspace_id: currentWorkspace.id,
         });
       }
+      void refreshWorkspaces();
       toast.success("Company profile updated");
       setIsEditing(false);
     } catch {
