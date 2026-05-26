@@ -87,18 +87,25 @@ const businessPlaybooks = [
   {
     href: "/business/signup?use_case=holiday-box",
     title: "Remote-team holiday box",
-    description: "Recipients, budgets, gift options, and delivery status in one workflow.",
+    description: "Import recipients, attach shipping addresses, load gifts, and watch delivery exceptions.",
   },
   {
     href: "/business/signup?use_case=new-hire-kit",
     title: "New-hire onboarding kit",
-    description: "Track welcome gifts from accepted offer through first-day delivery.",
+    description: "Give recruiting, HR, and managers one place to track welcome kits through delivery.",
   },
   {
     href: "/business/signup?use_case=milestones",
     title: "Work anniversaries",
-    description: "Plan anniversary, promotion, parental leave, and milestone gifts.",
+    description: "Keep birthdays, anniversaries, promotions, and leave gifts from getting missed.",
   },
+];
+
+const businessWorkflowSteps = [
+  "Import employees, recipient notes, and default shipping addresses from CSV",
+  "Bulk-create gifts from a list and match recipients by name or email",
+  "Export people and gifts with fulfillment-ready address fields",
+  "Review exceptions for missing recipients, costs, links, and shipping addresses",
 ];
 
 function StarRating({ rating }: { rating: number }) {
@@ -447,16 +454,11 @@ export default function HomePage() {
                     </span>
                   </h2>
                   <p className="text-slate-300 mb-6 leading-relaxed max-w-xl">
-                    Run employee gifting without the spreadsheet. Start with a repeatable workflow for holiday boxes, onboarding kits, or work anniversaries, then track every recipient, budget, and status.
+                    Run employee gifting without the spreadsheet. Start with a repeatable workflow for holiday boxes, onboarding kits, or work anniversaries, then import recipients, track every gift, and hand fulfillment a cleaner export.
                   </p>
 
                   <ul className="space-y-3 mb-8 text-left max-w-md mx-auto lg:mx-0">
-                    {[
-                      "Create a business workspace for your first gifting workflow",
-                      "Add employees as recipients and track owner, budget, and status",
-                      "Move gifts from idea to delivered without a handoff spreadsheet",
-                      "Run team exchanges with invites, wishlists, and automatic matching",
-                    ].map((item, i) => (
+                    {businessWorkflowSteps.map((item, i) => (
                       <li key={i} className="flex items-start gap-3 text-slate-200">
                         <svg className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

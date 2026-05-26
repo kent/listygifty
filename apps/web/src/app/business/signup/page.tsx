@@ -18,7 +18,7 @@ const BUSINESS_USE_CASES = [
   {
     id: "holiday-box",
     title: "Remote-team holiday box",
-    description: "Coordinate recipients, gift options, budgets, and delivery status.",
+    description: "Import employees, attach addresses, load gifts, and flag fulfillment gaps.",
     workspaceName: "Holiday Gifting",
     icon: Users,
   },
@@ -32,7 +32,7 @@ const BUSINESS_USE_CASES = [
   {
     id: "milestones",
     title: "Work anniversaries",
-    description: "Plan milestone, promotion, parental leave, and anniversary gifts.",
+    description: "Plan birthdays, anniversaries, promotions, parental leave, and milestone gifts.",
     workspaceName: "Milestone Gifts",
     icon: Calendar,
   },
@@ -259,7 +259,7 @@ function BusinessSignupContent() {
               Listy Gifty for Business
             </CardTitle>
             <CardDescription className="text-slate-600 dark:text-slate-400">
-              Streamline gifting for your team or organization
+              Set up the first employee gifting workflow, then import people and gifts from CSV.
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
