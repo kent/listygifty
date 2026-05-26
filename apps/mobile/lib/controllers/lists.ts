@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Share } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAnalytics } from "@/lib/analytics";
@@ -488,6 +488,7 @@ export function useNewGiftController() {
   );
   const [savingMode, setSavingMode] = useState<NewGiftSaveMode | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const openedAtRef = useRef(Date.now());
   const saving = savingMode !== null;
 
   const listResource = useFocusResource({
@@ -585,10 +586,12 @@ export function useNewGiftController() {
         save_mode: mode,
         source: hasPresetHoliday ? "list_detail" : "quick_capture",
         status_id: selectedStatusId,
+        time_to_save_ms: Date.now() - openedAtRef.current,
       });
       await haptics.success();
       if (mode === "another") {
         setForm(buildRepeatGiftCaptureValues(form));
+        openedAtRef.current = Date.now();
       } else {
         router.back();
       }
