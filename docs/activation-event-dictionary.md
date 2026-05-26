@@ -58,6 +58,9 @@ Events:
 - `mobile_exchange_participant_invited`
   - Fires when an owner adds an exchange participant.
   - Key properties: `exchange_id`, `participant_id`, `has_email`.
+- `mobile_exchange_invite_shared`
+  - Fires when an owner shares a participant invite through the native share sheet.
+  - Key properties: `exchange_id`, `participant_id`, `participant_status`, `source`.
 - `mobile_exchange_wishlist_item_added`
   - Fires when a participant adds a wishlist item.
   - Key properties: `exchange_id`, `participant_id`, `item_id`, `has_url`, `has_price`.

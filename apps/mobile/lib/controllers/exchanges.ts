@@ -189,7 +189,7 @@ export function useExchangeDetailController() {
             try {
               const exchange = await giftExchanges.start(exchangeId);
               resource.setData(exchange);
-              track("mobile_exchange_drawn", {
+              track("mobile_exchange_draw_completed", {
                 accepted_count: exchange.accepted_count,
                 exchange_id: exchange.id,
                 exclusion_count: exclusionsResource.data.length,
@@ -223,12 +223,18 @@ export function useExchangeDetailController() {
           message: `Join "${exchangeName}" on Listy Gifty: ${inviteUrl}`,
           url: inviteUrl,
         });
+        track("mobile_exchange_invite_shared", {
+          exchange_id: resource.data?.id,
+          participant_id: participant.id,
+          participant_status: participant.status,
+          source: "exchange_detail",
+        });
         await haptics.selection();
       } catch (shareError) {
         console.error("Failed to share exchange invite", shareError);
       }
     },
-    [resource.data?.name]
+    [resource.data?.id, resource.data?.name, track]
   );
 
   const canManageExclusions = Boolean(

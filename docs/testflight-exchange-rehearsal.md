@@ -54,7 +54,7 @@ Use four real tester accounts or aliases that can receive invite links.
 - Wishlist entry works before draw.
 - Exclusion rules affect the draw.
 - Match reveal works for every participant.
-- Analytics events appear for exchange creation, participant invite, wishlist item add, exclusion add, and draw.
+- Analytics events appear for exchange creation, participant invite, invite share, wishlist item add, exclusion add, and draw.
 
 ## Follow-Ups
 
