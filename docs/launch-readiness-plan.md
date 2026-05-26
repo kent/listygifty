@@ -60,6 +60,8 @@ First three offers:
 - New-hire onboarding gift kits.
 - Work anniversary and milestone gifting calendar.
 
+Reusable detail lives in `docs/business-gifting-playbooks.md`.
+
 Discovery script:
 - How do you track gift recipients today?
 - Who owns addresses, allergies, budget approvals, and shipping status?
