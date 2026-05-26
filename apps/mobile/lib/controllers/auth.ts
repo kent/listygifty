@@ -11,6 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { getClerkRedirectUrl, shouldUseNativeAppleAuth } from "@/lib/clerk-sso";
+import { completeSocialAuthSession } from "@/lib/controllers/auth-session";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { screenshotProfile } from "@/lib/screenshot-mocks";
 
@@ -24,6 +25,16 @@ type ClerkError = {
 function getClerkErrorMessage(error: unknown, fallback: string): string {
   const clerkError = error as ClerkError;
   return clerkError.errors?.[0]?.message || clerkError.message || fallback;
+}
+
+function getAuthSessionResultType(result: unknown): string | undefined {
+  if (typeof result !== "object" || result === null || !("authSessionResult" in result)) {
+    return undefined;
+  }
+
+  const authSessionResult = (result as { authSessionResult?: { type?: string } | null })
+    .authSessionResult;
+  return typeof authSessionResult?.type === "string" ? authSessionResult.type : undefined;
 }
 
 function useBrowserWarmup() {
@@ -53,7 +64,6 @@ export function useLoginController() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const { startSSOFlow } = useSSO();
   const { startAppleAuthenticationFlow } = useSignInWithApple();
-  const router = useRouter();
   const redirectUrl = getClerkRedirectUrl();
   useBrowserWarmup();
 
@@ -64,10 +74,6 @@ export function useLoginController() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
 
-  const routeToApp = useCallback(() => {
-    router.replace("/(tabs)/lists");
-  }, [router]);
-
   const handleGoogleSignIn = useCallback(async () => {
     setError("");
     setGoogleLoading(true);
@@ -77,14 +83,21 @@ export function useLoginController() {
         console.log("Clerk Google sign-in redirect URL:", redirectUrl);
       }
 
-      const { createdSessionId, setActive: setActiveSession } = await startSSOFlow({
+      const flowResult = await startSSOFlow({
         strategy: "oauth_google",
         redirectUrl,
       });
 
-      if (createdSessionId && setActiveSession) {
-        await setActiveSession({ session: createdSessionId });
-        routeToApp();
+      const outcome = await completeSocialAuthSession(flowResult);
+
+      if (outcome === "missing_session") {
+        if (__DEV__) {
+          console.log("Google sign-in completed without a session", {
+            redirectUrl,
+            authSessionResultType: flowResult.authSessionResult?.type,
+          });
+        }
+        setError("Google sign-in did not complete. Please try again.");
       }
     } catch (error) {
       if (__DEV__) {
@@ -94,23 +107,41 @@ export function useLoginController() {
     } finally {
       setGoogleLoading(false);
     }
-  }, [redirectUrl, routeToApp, startSSOFlow]);
+  }, [redirectUrl, startSSOFlow]);
 
   const handleAppleSignIn = useCallback(async () => {
     setError("");
     setAppleLoading(true);
 
     try {
-      const { createdSessionId, setActive: setActiveSession } = shouldUseNativeAppleAuth()
-        ? await startAppleAuthenticationFlow()
-        : await startSSOFlow({
-            strategy: "oauth_apple",
-            redirectUrl,
-          });
+      const startAppleSSOFlow = () =>
+        startSSOFlow({
+          strategy: "oauth_apple",
+          redirectUrl,
+        });
 
-      if (createdSessionId && setActiveSession) {
-        await setActiveSession({ session: createdSessionId });
-        routeToApp();
+      const flowResult = shouldUseNativeAppleAuth()
+        ? await startAppleAuthenticationFlow().catch(async (nativeError) => {
+            if (__DEV__) {
+              console.log("Native Apple sign-in failed, falling back to SSO", {
+                redirectUrl,
+                nativeError,
+              });
+            }
+            return startAppleSSOFlow();
+          })
+        : await startAppleSSOFlow();
+
+      const outcome = await completeSocialAuthSession(flowResult);
+
+      if (outcome === "missing_session") {
+        if (__DEV__) {
+          console.log("Apple sign-in completed without a session", {
+            redirectUrl,
+            authSessionResultType: getAuthSessionResultType(flowResult),
+          });
+        }
+        setError("Apple sign-in did not complete. Please try again.");
       }
     } catch (error) {
       if (__DEV__) {
@@ -120,7 +151,7 @@ export function useLoginController() {
     } finally {
       setAppleLoading(false);
     }
-  }, [redirectUrl, routeToApp, startAppleAuthenticationFlow, startSSOFlow]);
+  }, [redirectUrl, startAppleAuthenticationFlow, startSSOFlow]);
 
   const handlePasswordSignIn = useCallback(async () => {
     if (!isLoaded) {
@@ -138,14 +169,13 @@ export function useLoginController() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        routeToApp();
       }
     } catch (error) {
       setError(getClerkErrorMessage(error, "Failed to sign in"));
     } finally {
       setLoading(false);
     }
-  }, [email, isLoaded, password, routeToApp, setActive, signIn]);
+  }, [email, isLoaded, password, setActive, signIn]);
 
   return {
     appleLoading,
@@ -166,7 +196,6 @@ export function useSignupController() {
   const { signUp, setActive, isLoaded } = useSignUp();
   const { startSSOFlow } = useSSO();
   const { startAppleAuthenticationFlow } = useSignInWithApple();
-  const router = useRouter();
   const redirectUrl = getClerkRedirectUrl();
   useBrowserWarmup();
 
@@ -179,10 +208,6 @@ export function useSignupController() {
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState("");
 
-  const routeToApp = useCallback(() => {
-    router.replace("/(tabs)/lists");
-  }, [router]);
-
   const handleGoogleSignUp = useCallback(async () => {
     setError("");
     setGoogleLoading(true);
@@ -192,14 +217,21 @@ export function useSignupController() {
         console.log("Clerk Google sign-up redirect URL:", redirectUrl);
       }
 
-      const { createdSessionId, setActive: setActiveSession } = await startSSOFlow({
+      const flowResult = await startSSOFlow({
         strategy: "oauth_google",
         redirectUrl,
       });
 
-      if (createdSessionId && setActiveSession) {
-        await setActiveSession({ session: createdSessionId });
-        routeToApp();
+      const outcome = await completeSocialAuthSession(flowResult);
+
+      if (outcome === "missing_session") {
+        if (__DEV__) {
+          console.log("Google sign-up completed without a session", {
+            redirectUrl,
+            authSessionResultType: flowResult.authSessionResult?.type,
+          });
+        }
+        setError("Google sign-up did not complete. Please try again.");
       }
     } catch (error) {
       if (__DEV__) {
@@ -209,23 +241,41 @@ export function useSignupController() {
     } finally {
       setGoogleLoading(false);
     }
-  }, [redirectUrl, routeToApp, startSSOFlow]);
+  }, [redirectUrl, startSSOFlow]);
 
   const handleAppleSignUp = useCallback(async () => {
     setError("");
     setAppleLoading(true);
 
     try {
-      const { createdSessionId, setActive: setActiveSession } = shouldUseNativeAppleAuth()
-        ? await startAppleAuthenticationFlow()
-        : await startSSOFlow({
-            strategy: "oauth_apple",
-            redirectUrl,
-          });
+      const startAppleSSOFlow = () =>
+        startSSOFlow({
+          strategy: "oauth_apple",
+          redirectUrl,
+        });
 
-      if (createdSessionId && setActiveSession) {
-        await setActiveSession({ session: createdSessionId });
-        routeToApp();
+      const flowResult = shouldUseNativeAppleAuth()
+        ? await startAppleAuthenticationFlow().catch(async (nativeError) => {
+            if (__DEV__) {
+              console.log("Native Apple sign-up failed, falling back to SSO", {
+                redirectUrl,
+                nativeError,
+              });
+            }
+            return startAppleSSOFlow();
+          })
+        : await startAppleSSOFlow();
+
+      const outcome = await completeSocialAuthSession(flowResult);
+
+      if (outcome === "missing_session") {
+        if (__DEV__) {
+          console.log("Apple sign-up completed without a session", {
+            redirectUrl,
+            authSessionResultType: getAuthSessionResultType(flowResult),
+          });
+        }
+        setError("Apple sign-up did not complete. Please try again.");
       }
     } catch (error) {
       if (__DEV__) {
@@ -235,7 +285,7 @@ export function useSignupController() {
     } finally {
       setAppleLoading(false);
     }
-  }, [redirectUrl, routeToApp, startAppleAuthenticationFlow, startSSOFlow]);
+  }, [redirectUrl, startAppleAuthenticationFlow, startSSOFlow]);
 
   const handlePasswordSignUp = useCallback(async () => {
     if (!isLoaded) {
@@ -273,14 +323,13 @@ export function useSignupController() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        routeToApp();
       }
     } catch (error) {
       setError(getClerkErrorMessage(error, "Verification failed"));
     } finally {
       setLoading(false);
     }
-  }, [code, isLoaded, routeToApp, setActive, signUp]);
+  }, [code, isLoaded, setActive, signUp]);
 
   return {
     appleLoading,

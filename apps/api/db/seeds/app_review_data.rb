@@ -148,9 +148,7 @@ module AppReviewSeedData
         first_name: REVIEWER_FIRST_NAME,
         last_name: REVIEWER_LAST_NAME,
         password: REVIEWER_PASSWORD,
-        skip_password_checks: true,
-        skip_password_requirement: true,
-        bypass_client_trust: true
+        skip_password_checks: true
       )
       updated_user = clerk.users.update_user(existing_user.id, update_request)
       puts "  - Updated Clerk user #{REVIEWER_EMAIL}."
@@ -162,9 +160,7 @@ module AppReviewSeedData
       last_name: REVIEWER_LAST_NAME,
       email_address: [ REVIEWER_EMAIL ],
       password: REVIEWER_PASSWORD,
-      skip_password_checks: true,
-      skip_password_requirement: true,
-      bypass_client_trust: true
+      skip_password_checks: true
     )
     created_user = clerk.users.create_user(create_request)
     puts "  - Created Clerk user #{REVIEWER_EMAIL}."

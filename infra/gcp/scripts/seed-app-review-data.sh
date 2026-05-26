@@ -26,7 +26,7 @@ run_seed_job() {
     --project "${PROJECT_ID}" \
     --region "${REGION}" \
     --wait \
-    --args="exec,rails,runner,db/seeds/app_review_data.rb"
+    --args="db:seed"
 }
 
 case "${TARGET}" in
