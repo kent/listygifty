@@ -20,18 +20,18 @@ export function getListSectionCounts(lists: Holiday[]): Record<ListSection, numb
 
 export function filterListsBySection(lists: Holiday[], section: ListSection): Holiday[] {
   if (section === "active") {
-    return lists.filter((list) => !list.completed && !list.archived);
+    return sortGiftCaptureLists(lists.filter((list) => !list.completed && !list.archived));
   }
 
   if (section === "past") {
-    return lists.filter((list) => list.completed && !list.archived);
+    return sortGiftCaptureLists(lists.filter((list) => list.completed && !list.archived));
   }
 
   if (section === "archived") {
-    return lists.filter((list) => list.archived);
+    return sortGiftCaptureLists(lists.filter((list) => list.archived));
   }
 
-  return lists;
+  return sortGiftCaptureLists(lists);
 }
 
 function getDateSortValue(list: Holiday): number {

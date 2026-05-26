@@ -75,4 +75,24 @@ describe("list-sections helpers", () => {
 
     expect(sortGiftCaptureLists(captureLists).map((item) => item.id)).toEqual([2, 1]);
   });
+
+  it("sorts filtered lists by planning priority", () => {
+    const unsortedLists = [
+      buildHoliday({ id: 1, name: "Later", date: "2026-12-25" }),
+      buildHoliday({ id: 2, name: "Sooner", date: "2026-06-01" }),
+      buildHoliday({ id: 3, name: "Archived", archived: true, date: "2026-01-01" }),
+      buildHoliday({ id: 4, name: "Completed", completed: true, date: "2026-02-01" }),
+    ];
+
+    expect(filterListsBySection(unsortedLists, "all").map((item) => item.id)).toEqual([
+      2,
+      1,
+      4,
+      3,
+    ]);
+    expect(filterListsBySection(unsortedLists, "active").map((item) => item.id)).toEqual([
+      2,
+      1,
+    ]);
+  });
 });
