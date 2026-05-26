@@ -969,6 +969,13 @@ export interface ImportPeopleResult {
   people: Person[];
 }
 
+export interface ImportGiftsResult {
+  created: number;
+  people_created: number;
+  errors: string[];
+  gifts: Gift[];
+}
+
 // =============================================================================
 // Wishlists (Standalone)
 // =============================================================================

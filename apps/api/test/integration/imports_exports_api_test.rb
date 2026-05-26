@@ -86,6 +86,30 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
     assert_response :unauthorized
   end
 
+  test "imports gifts creates gifts and recipients from CSV" do
+    csv_content = "name,description,cost,status,link,recipient_name,recipient_email\nTeam Hoodie,Blue hoodie,49.99,Idea,https://example.com,Jamie Lee,jamie@example.com"
+    file = Rack::Test::UploadedFile.new(
+      StringIO.new(csv_content),
+      "text/csv",
+      original_filename: "gifts.csv"
+    )
+
+    assert_difference([ "Gift.count", "Person.count" ], 1) do
+      post "/imports/gifts",
+        headers: @auth_headers.except("Content-Type"),
+        params: { file: file, holiday_id: @holiday.id }
+    end
+
+    assert_response :success
+    assert_equal 1, json_response["created"]
+    assert_equal 1, json_response["people_created"]
+
+    gift = Gift.find_by!(name: "Team Hoodie")
+    assert_equal @holiday, gift.holiday
+    assert_equal "49.99", gift.cost.to_s
+    assert_equal "jamie@example.com", gift.recipients.first.email
+  end
+
   # ============================================================================
   # Export Tests
   # ============================================================================

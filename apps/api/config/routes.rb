@@ -135,6 +135,7 @@ Rails.application.routes.draw do
 
   # Imports
   post "imports/people" => "imports#people"
+  post "imports/gifts" => "imports#gifts"
 
   # Exports
   get "exports/gifts" => "exports#gifts"

@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api-client";
-import type { ImportPeopleResult } from "@niftygifty/types";
+import type { ImportGiftsResult, ImportPeopleResult } from "@niftygifty/types";
 
 class ImportsService {
   async importPeople(file: File, ownerId?: number): Promise<ImportPeopleResult> {
@@ -9,6 +9,13 @@ class ImportsService {
       formData.append("owner_id", String(ownerId));
     }
     return apiClient.postFormData<ImportPeopleResult>("/imports/people", formData);
+  }
+
+  async importGifts(file: File, holidayId: number): Promise<ImportGiftsResult> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("holiday_id", String(holidayId));
+    return apiClient.postFormData<ImportGiftsResult>("/imports/gifts", formData);
   }
 }
 
