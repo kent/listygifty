@@ -131,16 +131,16 @@ function PremiumUpsell() {
           </div>
         </div>
         <h3 className="text-xl font-semibold text-white mb-2">
-          AI Gift Suggestions
+          Gift Idea Generator
         </h3>
         <p className="text-slate-400 mb-6 max-w-md mx-auto">
-          Get personalized gift ideas powered by AI. Our smart suggestions
-          consider age, relationship, occasion, and gift history.
+          Brainstorm ideas from age, relationship, occasion, and gift history,
+          then save the strongest options to the gift list.
         </p>
         <Link href="/billing">
           <Button className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700">
             <Sparkles className="h-4 w-4 mr-2" />
-            Upgrade to Premium
+            Upgrade for Ideas
           </Button>
         </Link>
       </CardContent>
@@ -225,9 +225,10 @@ export function GiftSuggestionsTab({
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-medium text-white">AI Suggestions</h3>
+              <h3 className="font-medium text-white">Idea Generator</h3>
               <p className="text-sm text-slate-400">
-                Generate personalized gift ideas for {personName}
+                Brainstorm gift ideas for {personName}, then add the useful ones
+                to the list.
               </p>
             </div>
             <Button
@@ -285,4 +286,3 @@ export function GiftSuggestionsTab({
     </div>
   );
 }
-
