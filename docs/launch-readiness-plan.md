@@ -139,8 +139,8 @@ Consumer CTA:
 Business CTA:
 > Run employee gifting without the spreadsheet.
 
-Do not lead with AI. AI is a helpful assistant layer after the core gift-planning loop works.
-Public demo and homepage copy now emphasize capture, budgets, deadlines, status, and gap review before AI assistance.
+Do not lead with AI. Assistant features are helpful layers after the core gift-planning loop works.
+Public demo and homepage copy now emphasize capture, budgets, deadlines, status, and gap review before assistant integrations.
 Do not lead with charity or donation positioning; the homepage hero now stays focused on Christmas 2026 gift logistics.
 
 ## Recent Progress Notes
@@ -152,6 +152,8 @@ Do not lead with charity or donation positioning; the homepage hero now stays fo
 - Mobile list cards now surface date-based deadline reminders, and date-only formatting is normalized to local calendar days.
 - Mobile people now support birthday entry and upcoming birthday reminders.
 - Web people now support birthday display and editing.
+- Web gift-idea upsell copy now frames suggestions as a helper for the saved gift-list workflow, not as the flagship product.
+- The old public giving-pledge page now redirects to the homepage so launch traffic stays focused on gift logistics.
 - Mobile gift list detail can schedule native local reminder notifications for dated lists.
 - Mobile people can schedule recurring local birthday reminders.
 - Mobile people can schedule recurring local milestone reminders.
