@@ -118,7 +118,7 @@ Measurement:
 
 ## Next GTM Bets
 
-- Add tracking for gift CSV export and fulfillment report view.
+- Export and fulfillment report tracking are now in place; use them to find workspaces that reached handoff.
 - Add one-click sample CSV downloads to business signup and import dialogs.
 - Add a short business demo dataset that mirrors the remote-team holiday box workflow.
 - Build a lightweight company activation dashboard by use case.

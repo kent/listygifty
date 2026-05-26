@@ -81,6 +81,15 @@ Events:
 - `gift_csv_import_failed`
   - Fires when a gift CSV import request fails.
   - Key properties: `holiday_id`.
+- `gift_csv_exported`
+  - Fires when a gift CSV export succeeds.
+  - Key properties: `holiday_id`, `source`.
+- `gift_csv_export_failed`
+  - Fires when a gift CSV export request fails.
+  - Key properties: `holiday_id`, `source`.
+- `fulfillment_report_viewed`
+  - Fires when the fulfillment report view opens.
+  - Key properties: `holiday_id`, `workspace_type`.
 
 ## Dashboard Cuts
 

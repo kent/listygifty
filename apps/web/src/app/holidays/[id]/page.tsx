@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useGiftFilters } from "@/hooks";
 import { holidaysService, giftsService, peopleService, giftStatusesService, workspacesService, exportsService, AUTH_ROUTES } from "@/services";
+import { captureWebEvent } from "@/lib/analytics";
 import { AppHeader } from "@/components/layout";
 import { GiftFilters } from "@/components/filters";
 import { GiftGrid, HolidayReports, ImportGiftsDialog } from "@/components/gifts";
@@ -163,14 +164,29 @@ export default function HolidayDetailPage() {
     }
   }, [holiday, holidayId]);
 
-  const handleExportGifts = useCallback(async () => {
+  const handleExportGifts = useCallback(async (source = "header") => {
     try {
       await exportsService.downloadGiftsCsv(holidayId);
+      captureWebEvent("gift_csv_exported", {
+        holiday_id: holidayId,
+        source,
+      });
       toast.success("Gift list exported successfully");
     } catch {
+      captureWebEvent("gift_csv_export_failed", {
+        holiday_id: holidayId,
+        source,
+      });
       toast.error("Failed to export gift list");
     }
   }, [holidayId]);
+
+  const handleFulfillmentReportViewed = useCallback(() => {
+    captureWebEvent("fulfillment_report_viewed", {
+      holiday_id: holidayId,
+      workspace_type: currentWorkspace?.workspace_type,
+    });
+  }, [currentWorkspace?.workspace_type, holidayId]);
 
   const handleGiftsImported = useCallback(async (result: ImportGiftsResult) => {
     if (result.created > 0) {
@@ -342,7 +358,7 @@ export default function HolidayDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleExportGifts}
+                onClick={() => handleExportGifts("header")}
                 className="gap-1.5 md:gap-2 flex-1 md:flex-none"
               >
                 <Download className="h-4 w-4" />
@@ -426,6 +442,7 @@ export default function HolidayDetailPage() {
                 statuses={statuses}
                 showAddresses={showAddresses}
                 onExportGifts={handleExportGifts}
+                onFulfillmentViewed={handleFulfillmentReportViewed}
               />
             </TabsContent>
           </Tabs>

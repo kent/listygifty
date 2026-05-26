@@ -35,7 +35,8 @@ interface HolidayReportsProps {
   people: Person[];
   statuses: GiftStatus[];
   showAddresses?: boolean;
-  onExportGifts?: () => void;
+  onExportGifts?: (source?: string) => void;
+  onFulfillmentViewed?: () => void;
 }
 
 interface StatusSummary {
@@ -546,7 +547,7 @@ function FulfillmentView({
 }: {
   gifts: Gift[];
   showAddresses: boolean;
-  onExportGifts?: () => void;
+  onExportGifts?: (source?: string) => void;
 }) {
   const rows = useMemo(
     () => getFulfillmentRows(gifts, showAddresses),
@@ -579,7 +580,7 @@ function FulfillmentView({
             variant="outline"
             size="sm"
             className="gap-2 self-start sm:self-center"
-            onClick={onExportGifts}
+            onClick={() => onExportGifts("fulfillment_report")}
           >
             <Download className="h-4 w-4" />
             Export CSV
@@ -710,6 +711,7 @@ export function HolidayReports({
   statuses,
   showAddresses = false,
   onExportGifts,
+  onFulfillmentViewed,
 }: HolidayReportsProps) {
   const [currentView, setCurrentView] = useState<ViewType>("summary");
 
@@ -750,7 +752,12 @@ export function HolidayReports({
         <Button
           variant={currentView === "fulfillment" ? "secondary" : "ghost"}
           className="w-full justify-start gap-2"
-          onClick={() => setCurrentView("fulfillment")}
+          onClick={() => {
+            if (currentView !== "fulfillment") {
+              onFulfillmentViewed?.();
+            }
+            setCurrentView("fulfillment");
+          }}
         >
           <Truck className="h-4 w-4" />
           Fulfillment
