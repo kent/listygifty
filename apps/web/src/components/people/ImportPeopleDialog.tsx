@@ -26,6 +26,7 @@ import {
   Download,
 } from "lucide-react";
 import { captureWebEvent } from "@/lib/analytics";
+import { downloadCsvFile } from "@/lib/csv-download";
 import { importsService } from "@/services";
 import type { ImportPeopleResult, WorkspaceMember } from "@niftygifty/types";
 
@@ -114,20 +115,14 @@ export function ImportPeopleDialog({
   };
 
   const handleDownloadTemplate = () => {
-    const csvContent = [
+    downloadCsvFile("people_import_template.csv", [
       "name,email,relationship,age,gender,birthday,notes,address_label,street_line_1,street_line_2,city,state,postal_code,country,is_default",
-      "John Smith,john@example.com,friend,35,male,1991-03-14,Birthday in March,John home,123 Main Street,,Toronto,ON,M5V 2T6,CA,true",
-      "Jane Doe,jane@example.com,coworker,,female,,,,,,,,",
-    ].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "people_import_template.csv";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      "Jamie Lee,jamie@example.com,coworker,,female,1991-03-14,Remote holiday box recipient,Jamie home,123 Main Street,,Toronto,ON,M5V 2T6,CA,true",
+      "Alex Chen,alex@example.com,coworker,,male,,,,,,,,",
+    ]);
+    captureWebEvent("people_csv_template_downloaded", {
+      owner_assigned: Boolean(ownerId),
+    });
   };
 
   return (
@@ -196,7 +191,6 @@ export function ImportPeopleDialog({
                     <div className="text-slate-500 dark:text-slate-400">
                       <Upload className="h-8 w-8 mx-auto mb-2 opacity-50" />
                       <p>Click to select a CSV file</p>
-                      <p className="text-xs mt-1">or drag and drop</p>
                     </div>
                   )}
                 </div>

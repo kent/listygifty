@@ -66,6 +66,9 @@ Events:
 - `people_csv_import_started`
   - Fires when a people CSV import starts.
   - Key properties: `owner_assigned`.
+- `people_csv_template_downloaded`
+  - Fires when a people CSV template is downloaded.
+  - Key properties: `owner_assigned`.
 - `people_csv_import_completed`
   - Fires when a people CSV import completes.
   - Key properties: `created`, `skipped`, `addresses_created`, `addresses_skipped`, `errors`, `owner_assigned`.
@@ -74,6 +77,9 @@ Events:
   - Key properties: `owner_assigned`.
 - `gift_csv_import_started`
   - Fires when a gift CSV import starts.
+  - Key properties: `holiday_id`.
+- `gift_csv_template_downloaded`
+  - Fires when a gift CSV template is downloaded.
   - Key properties: `holiday_id`.
 - `gift_csv_import_completed`
   - Fires when a gift CSV import completes.

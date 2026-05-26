@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { captureWebEvent } from "@/lib/analytics";
+import { downloadCsvFile } from "@/lib/csv-download";
 import { importsService } from "@/services";
 import type { ImportGiftsResult } from "@niftygifty/types";
 
@@ -69,20 +70,14 @@ export function ImportGiftsDialog({
   };
 
   const handleDownloadTemplate = () => {
-    const csvContent = [
+    downloadCsvFile("gift_import_template.csv", [
       "name,description,cost,status,link,recipient_name,recipient_email,giver_name,giver_email",
-      "Team Hoodie,Blue hoodie,49.99,Idea,https://example.com,Jamie Lee,jamie@example.com,,",
+      "Remote Holiday Box,Company hoodie and mug,75,Idea,https://example.com,Jamie Lee,jamie@example.com,,",
       "Welcome Kit,Notebook and mug,35,Planned,,Alex Chen,alex@example.com,,",
-    ].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "gift_import_template.csv";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    ]);
+    captureWebEvent("gift_csv_template_downloaded", {
+      holiday_id: holidayId,
+    });
   };
 
   const handleImport = async () => {
