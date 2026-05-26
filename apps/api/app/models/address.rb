@@ -3,6 +3,11 @@
 class Address < ApplicationRecord
   belongs_to :company_profile
   has_many :gift_recipients, foreign_key: :shipping_address_id, dependent: :nullify
+  has_many :default_shipping_people,
+    class_name: "Person",
+    foreign_key: :default_shipping_address_id,
+    dependent: :nullify,
+    inverse_of: :default_shipping_address
 
   validates :label, presence: true, uniqueness: { scope: :company_profile_id, message: "already exists for this company" }
   validates :street_line_1, presence: true

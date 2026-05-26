@@ -1,5 +1,12 @@
 class PersonBlueprint < ApplicationBlueprint
-  fields :name, :email, :relationship, :age, :gender, :notes, :created_at, :updated_at
+  fields :name, :email, :relationship, :age, :gender, :notes, :default_shipping_address_id, :created_at, :updated_at
+
+  field :default_shipping_address do |person, options|
+    next unless person.default_shipping_address
+    next unless options[:current_workspace]&.id == person.workspace_id
+
+    AddressBlueprint.render_as_hash(person.default_shipping_address)
+  end
 
   view :gift_context do
     fields :name

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_28_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_26_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -377,6 +377,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_000001) do
   create_table "people", force: :cascade do |t|
     t.integer "age"
     t.datetime "created_at", null: false
+    t.bigint "default_shipping_address_id"
     t.string "email"
     t.string "gender"
     t.string "name"
@@ -385,6 +386,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_000001) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.bigint "workspace_id", null: false
+    t.index ["default_shipping_address_id"], name: "index_people_on_default_shipping_address_id"
     t.index ["user_id"], name: "index_people_on_user_id"
     t.index ["workspace_id", "email"], name: "index_people_on_workspace_id_and_email_unique", unique: true, where: "(email IS NOT NULL)"
     t.index ["workspace_id", "user_id"], name: "index_people_on_workspace_id_and_user_id"
@@ -679,6 +681,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_000001) do
   add_foreign_key "oauth_authorization_codes", "oauth_clients"
   add_foreign_key "oauth_authorization_codes", "users"
   add_foreign_key "oauth_clients", "users"
+  add_foreign_key "people", "addresses", column: "default_shipping_address_id"
   add_foreign_key "people", "users"
   add_foreign_key "people", "workspaces"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

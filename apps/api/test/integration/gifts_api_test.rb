@@ -43,6 +43,47 @@ class GiftsApiTest < ActionDispatch::IntegrationTest
     assert_response :created
   end
 
+  test "create assigns recipient default shipping address" do
+    business_workspace = Workspace.create!(
+      name: "Business",
+      workspace_type: "business",
+      created_by_user: @user
+    )
+    business_workspace.workspace_memberships.create!(user: @user, role: "owner")
+    holiday = business_workspace.holidays.create!(name: "Team Holiday", date: Date.new(2026, 12, 15))
+    holiday.holiday_users.create!(user: @user, role: "owner")
+    company_profile = business_workspace.create_company_profile!(name: "Test Co")
+    address = company_profile.addresses.create!(
+      label: "Jamie Home",
+      street_line_1: "123 Maple Street",
+      city: "Toronto",
+      postal_code: "M5V 2T6",
+      country: "CA"
+    )
+    person = business_workspace.people.create!(
+      name: "Jamie Lee",
+      email: "jamie@example.com",
+      user: @user,
+      default_shipping_address: address
+    )
+
+    post gifts_path,
+      headers: auth_headers_for(@user, workspace: business_workspace),
+      params: {
+        gift: {
+          name: "Team Hoodie",
+          holiday_id: holiday.id,
+          gift_status_id: @status.id,
+          recipient_ids: [ person.id ]
+        }
+      },
+      as: :json
+
+    assert_response :created
+    gift = Gift.find(json_response["id"])
+    assert_equal address, gift.gift_recipients.find_by!(person: person).shipping_address
+  end
+
   test "update modifies a gift" do
     gift = gifts(:sweater)
     patch gift_path(gift),

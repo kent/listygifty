@@ -1,6 +1,10 @@
 class Person < ApplicationRecord
   belongs_to :user
   belongs_to :workspace
+  belongs_to :default_shipping_address,
+    class_name: "Address",
+    optional: true,
+    inverse_of: :default_shipping_people
   has_many :gift_recipients, dependent: :destroy
   has_many :gifts_received, through: :gift_recipients, source: :gift
   has_many :gift_givers, dependent: :destroy
@@ -12,10 +16,19 @@ class Person < ApplicationRecord
 
   validates :name, presence: true
   validates :email, uniqueness: { scope: :workspace_id, allow_blank: true }
+  validate :default_shipping_address_belongs_to_workspace, if: :default_shipping_address_id
 
   # Check if user can access this person (workspace member or shared to a common holiday)
   def accessible_by?(user)
     return true if workspace.member?(user)
     shared_holidays.joins(:holiday_users).where(holiday_users: { user_id: user.id }).exists?
+  end
+
+  private
+
+  def default_shipping_address_belongs_to_workspace
+    return if default_shipping_address&.workspace == workspace
+
+    errors.add(:default_shipping_address, "must belong to the same workspace")
   end
 end

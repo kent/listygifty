@@ -134,6 +134,7 @@ class CsvImportService
     )
 
     if address.save
+      person.update!(default_shipping_address: address)
       @addresses_created += 1
     else
       @errors << "Row #{index + 2}: Address #{address.errors.full_messages.join(', ')}"

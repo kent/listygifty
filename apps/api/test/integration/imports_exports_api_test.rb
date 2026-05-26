@@ -51,7 +51,9 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
     assert_equal 1, json_response["created"]
     assert_equal 1, json_response["addresses_created"]
     address = business_workspace.company_profile.addresses.find_by!(label: "Jamie home")
+    person = business_workspace.people.find_by!(email: "jamie@example.com")
     assert_equal "123 Maple Street", address.street_line_1
+    assert_equal address, person.default_shipping_address
     assert address.is_default?
   end
 

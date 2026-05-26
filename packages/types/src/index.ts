@@ -62,6 +62,8 @@ export interface Person extends BaseEntity {
   age: number | null;
   gender: string | null;
   notes: string | null;
+  default_shipping_address_id: number | null;
+  default_shipping_address: Address | null;
   gift_count: number;
   user_id: number;
   is_mine: boolean;
@@ -81,6 +83,7 @@ export interface CreatePersonRequest {
     age?: number;
     gender?: string;
     notes?: string;
+    default_shipping_address_id?: number | null;
   };
 }
 

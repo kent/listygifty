@@ -24,9 +24,9 @@ class PeopleController < ApplicationController
 
   def show
     if params[:include] == "gifts"
-      render json: PersonBlueprint.render(@person, view: :with_gifts, current_user: current_user)
+      render json: PersonBlueprint.render(@person, view: :with_gifts, current_user: current_user, current_workspace: current_workspace)
     else
-      render json: PersonBlueprint.render(@person, current_user: current_user)
+      render json: PersonBlueprint.render(@person, current_user: current_user, current_workspace: current_workspace)
     end
   end
 
@@ -43,7 +43,7 @@ class PeopleController < ApplicationController
 
   def update
     if @person.update(person_params)
-      render json: PersonBlueprint.render(@person, current_user: current_user)
+      render json: PersonBlueprint.render(@person, current_user: current_user, current_workspace: current_workspace)
     else
       render json: { errors: @person.errors.full_messages }, status: :unprocessable_entity
     end
@@ -76,7 +76,7 @@ class PeopleController < ApplicationController
   end
 
   def person_params
-    params.require(:person).permit(:name, :email, :relationship, :age, :gender, :notes)
+    params.require(:person).permit(:name, :email, :relationship, :age, :gender, :notes, :default_shipping_address_id)
   end
 
   def accessible_people_for_holiday(holiday)
@@ -99,6 +99,6 @@ class PeopleController < ApplicationController
   end
 
   def preload_people(scope)
-    scope.includes(:gift_recipients, :gift_givers, { shared_holidays: :holiday_users }).order(:name)
+    scope.includes(:default_shipping_address, :gift_recipients, :gift_givers, { shared_holidays: :holiday_users }).order(:name)
   end
 end
