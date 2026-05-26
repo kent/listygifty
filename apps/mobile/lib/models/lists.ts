@@ -78,6 +78,21 @@ export function getDefaultGiftCaptureList(lists: Holiday[]): Holiday | null {
   return sortGiftCaptureLists(lists)[0] ?? null;
 }
 
+export function getPreferredGiftCaptureList(
+  lists: Holiday[],
+  preferredListId: number | null
+): Holiday | null {
+  const sortedLists = sortGiftCaptureLists(lists);
+  if (preferredListId) {
+    const preferredList = sortedLists.find((list) => list.id === preferredListId);
+    if (preferredList) {
+      return preferredList;
+    }
+  }
+
+  return sortedLists[0] ?? null;
+}
+
 function getStartOfLocalDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }

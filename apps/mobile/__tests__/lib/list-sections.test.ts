@@ -2,6 +2,7 @@ import type { Holiday } from "@niftygifty/types";
 import {
   filterListsBySection,
   getDefaultGiftCaptureList,
+  getPreferredGiftCaptureList,
   getListDeadlineState,
   getListSectionCounts,
   sortGiftCaptureLists,
@@ -66,6 +67,8 @@ describe("list-sections helpers", () => {
 
     expect(sortGiftCaptureLists(captureLists).map((item) => item.id)).toEqual([3, 2, 4, 1]);
     expect(getDefaultGiftCaptureList(captureLists)?.id).toBe(3);
+    expect(getPreferredGiftCaptureList(captureLists, 2)?.id).toBe(2);
+    expect(getPreferredGiftCaptureList(captureLists, 999)?.id).toBe(3);
   });
 
   it("falls back to name ordering when capture dates are missing", () => {

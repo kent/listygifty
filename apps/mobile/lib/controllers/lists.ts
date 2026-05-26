@@ -1,5 +1,6 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Share } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
@@ -16,9 +17,9 @@ import {
   EMPTY_HOLIDAY_FORM_VALUES,
   filterGifts,
   filterListsBySection,
-  getDefaultGiftCaptureList,
   getListSectionCounts,
   getNextGiftStatus,
+  getPreferredGiftCaptureList,
   getResolvedGiftStatusId,
   sortGiftCaptureLists,
   giftFormHasChanges,
@@ -42,6 +43,7 @@ type GiftListDetailState = {
 };
 
 type NewGiftSaveMode = "done" | "another";
+const LAST_CAPTURE_LIST_STORAGE_KEY = "listygifty:last-capture-list-id";
 
 export function useGiftListsController() {
   const router = useRouter();
@@ -486,6 +488,8 @@ export function useNewGiftController() {
   const [selectedHolidayId, setSelectedHolidayId] = useState<number | null>(
     hasPresetHoliday ? holidayIdParam : null
   );
+  const [preferredHolidayId, setPreferredHolidayId] = useState<number | null>(null);
+  const [preferredHolidayLoaded, setPreferredHolidayLoaded] = useState(hasPresetHoliday);
   const [savingMode, setSavingMode] = useState<NewGiftSaveMode | null>(null);
   const [error, setError] = useState<string | null>(null);
   const openedAtRef = useRef(Date.now());
@@ -522,16 +526,43 @@ export function useNewGiftController() {
       return;
     }
 
-    const defaultList = getDefaultGiftCaptureList(captureLists);
-    if (!defaultList) {
+    let isMounted = true;
+
+    AsyncStorage.getItem(LAST_CAPTURE_LIST_STORAGE_KEY)
+      .then((storedHolidayId) => {
+        if (!isMounted) {
+          return;
+        }
+
+        const parsedHolidayId = Number.parseInt(storedHolidayId || "", 10);
+        setPreferredHolidayId(Number.isFinite(parsedHolidayId) ? parsedHolidayId : null);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setPreferredHolidayLoaded(true);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [hasPresetHoliday]);
+
+  useEffect(() => {
+    if (hasPresetHoliday || !preferredHolidayLoaded) {
+      return;
+    }
+
+    const preferredList = getPreferredGiftCaptureList(captureLists, preferredHolidayId);
+    if (!preferredList) {
       setSelectedHolidayId(null);
       return;
     }
 
     if (!selectedHolidayId || !captureLists.some((list) => list.id === selectedHolidayId)) {
-      setSelectedHolidayId(defaultList.id);
+      setSelectedHolidayId(preferredList.id);
     }
-  }, [captureLists, hasPresetHoliday, selectedHolidayId]);
+  }, [captureLists, hasPresetHoliday, preferredHolidayId, preferredHolidayLoaded, selectedHolidayId]);
 
   const updateField = useCallback((field: keyof GiftFormValues, value: string | number[]) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -539,6 +570,10 @@ export function useNewGiftController() {
 
   const handleHolidayChange = useCallback(async (holidayId: number) => {
     setSelectedHolidayId(holidayId);
+    setPreferredHolidayId(holidayId);
+    AsyncStorage.setItem(LAST_CAPTURE_LIST_STORAGE_KEY, String(holidayId)).catch(() => {
+      // Best-effort preference only.
+    });
     await haptics.selection();
   }, []);
 
