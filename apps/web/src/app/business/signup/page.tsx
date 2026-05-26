@@ -13,6 +13,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Building2, Gift, Loader2, CheckCircle, Users, Calendar, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
+const BUSINESS_USE_CASES = [
+  {
+    id: "holiday-box",
+    title: "Remote-team holiday box",
+    description: "Coordinate recipients, gift options, budgets, and delivery status.",
+    workspaceName: "Holiday Gifting",
+    icon: Users,
+  },
+  {
+    id: "new-hire-kit",
+    title: "New-hire onboarding kit",
+    description: "Track welcome gifts from accepted offer through first-day delivery.",
+    workspaceName: "Onboarding Gifts",
+    icon: Gift,
+  },
+  {
+    id: "milestones",
+    title: "Work anniversaries",
+    description: "Plan milestone, promotion, parental leave, and anniversary gifts.",
+    workspaceName: "Milestone Gifts",
+    icon: Calendar,
+  },
+] as const;
+
+function getBusinessUseCase(useCaseId: string | null) {
+  return BUSINESS_USE_CASES.find((useCase) => useCase.id === useCaseId) ?? BUSINESS_USE_CASES[0];
+}
+
 function BusinessSignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -20,9 +48,13 @@ function BusinessSignupContent() {
   const { refreshWorkspaces, switchWorkspace } = useWorkspace();
 
   const [companyName, setCompanyName] = useState(searchParams.get("company") || "");
+  const [selectedUseCaseId, setSelectedUseCaseId] = useState(
+    getBusinessUseCase(searchParams.get("use_case")).id
+  );
   const [workspaceName, setWorkspaceName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const selectedUseCase = getBusinessUseCase(selectedUseCaseId);
 
   // If user is authenticated and came back from signup, show the workspace creation form
   useEffect(() => {
@@ -34,9 +66,21 @@ function BusinessSignupContent() {
     }
   }, [authLoading, isAuthenticated, searchParams]);
 
+  useEffect(() => {
+    if (showForm && !workspaceName.trim()) {
+      setWorkspaceName(selectedUseCase.workspaceName);
+    }
+  }, [selectedUseCase.workspaceName, showForm, workspaceName]);
+
   const handleStartSignup = () => {
-    // Redirect to signup with return URL
-    const returnUrl = encodeURIComponent(`/business/signup?from=signup&company=${encodeURIComponent(companyName)}`);
+    const returnParams = new URLSearchParams({
+      from: "signup",
+      use_case: selectedUseCaseId,
+    });
+    if (companyName.trim()) {
+      returnParams.set("company", companyName.trim());
+    }
+    const returnUrl = encodeURIComponent(`/business/signup?${returnParams.toString()}`);
     router.push(`${AUTH_ROUTES.signUp}?redirect_url=${returnUrl}`);
   };
 
@@ -133,6 +177,18 @@ function BusinessSignupContent() {
                   </div>
                 )}
 
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-800/50">
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    First workflow
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+                    {selectedUseCase.title}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {selectedUseCase.description}
+                  </p>
+                </div>
+
                 <Button
                   type="submit"
                   disabled={!workspaceName.trim() || isCreating}
@@ -196,41 +252,43 @@ function BusinessSignupContent() {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
-            {/* Features */}
+            {/* First workflows */}
             <div className="space-y-4 mb-8">
-              <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
-                  <Users className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="font-medium text-slate-900 dark:text-white text-sm">Team Collaboration</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Invite teammates and manage gifts together
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-fuchsia-500/10 text-fuchsia-500">
-                  <Calendar className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="font-medium text-slate-900 dark:text-white text-sm">Company Events</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Coordinate holiday parties, birthdays, and more
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
-                  <Gift className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="font-medium text-slate-900 dark:text-white text-sm">Secret Santa & Exchanges</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Run gift exchanges with automatic matching
-                  </p>
-                </div>
-              </div>
+              {BUSINESS_USE_CASES.map((useCase) => {
+                const UseCaseIcon = useCase.icon;
+                const isSelected = selectedUseCaseId === useCase.id;
+
+                return (
+                  <button
+                    key={useCase.id}
+                    type="button"
+                    onClick={() => setSelectedUseCaseId(useCase.id)}
+                    className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors ${
+                      isSelected
+                        ? "border-violet-500 bg-violet-50 dark:border-violet-400 dark:bg-violet-950/30"
+                        : "border-slate-200 bg-slate-50 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/40 dark:hover:border-slate-600"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                        isSelected
+                          ? "bg-violet-500/15 text-violet-600 dark:text-violet-300"
+                          : "bg-slate-200/70 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                      }`}
+                    >
+                      <UseCaseIcon className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">
+                        {useCase.title}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {useCase.description}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Signup Form */}
