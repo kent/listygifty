@@ -128,6 +128,47 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
     assert_match "text/csv", response.content_type
   end
 
+  test "exports people includes default shipping address columns" do
+    business_workspace = Workspace.create!(
+      name: "Acme Gifts",
+      workspace_type: "business",
+      created_by_user: @user
+    )
+    business_workspace.workspace_memberships.create!(user: @user, role: "owner")
+    company_profile = business_workspace.create_company_profile!(name: "Acme Gifts")
+    address = company_profile.addresses.create!(
+      label: "Jamie Home",
+      street_line_1: "123 Maple Street",
+      street_line_2: "Unit 4",
+      city: "Toronto",
+      state: "ON",
+      postal_code: "M5V 2T6",
+      country: "CA",
+      is_default: true
+    )
+    business_workspace.people.create!(
+      name: "Jamie Lee",
+      email: "jamie@example.com",
+      relationship: "co-worker",
+      user: @user,
+      default_shipping_address: address
+    )
+
+    get "/exports/people", headers: auth_headers_for(@user, workspace: business_workspace)
+
+    assert_response :success
+    csv = CSV.parse(response.body, headers: true)
+    jamie = csv.find { |row| row["Email"] == "jamie@example.com" }
+    assert_equal "Jamie Home", jamie["Address Label"]
+    assert_equal "123 Maple Street", jamie["Street Line 1"]
+    assert_equal "Unit 4", jamie["Street Line 2"]
+    assert_equal "Toronto", jamie["City"]
+    assert_equal "ON", jamie["State"]
+    assert_equal "M5V 2T6", jamie["Postal Code"]
+    assert_equal "CA", jamie["Country"]
+    assert_equal "true", jamie["Default Company Address"]
+  end
+
   test "exports require authentication" do
     get "/exports/people"
     assert_response :unauthorized

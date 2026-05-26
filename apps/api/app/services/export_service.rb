@@ -14,7 +14,22 @@ class ExportService
     "Givers",
     "Link"
   ].freeze
-  PEOPLE_HEADERS = [ "Name", "Email", "Relationship", "Age", "Gender", "Notes" ].freeze
+  PEOPLE_HEADERS = [
+    "Name",
+    "Email",
+    "Relationship",
+    "Age",
+    "Gender",
+    "Notes",
+    "Address Label",
+    "Street Line 1",
+    "Street Line 2",
+    "City",
+    "State",
+    "Postal Code",
+    "Country",
+    "Default Company Address"
+  ].freeze
 
   def self.gifts_to_csv(holiday)
     gifts = holiday.gifts.by_position.includes(:gift_status, :givers, gift_recipients: [ :person, :shipping_address ])
@@ -41,19 +56,29 @@ class ExportService
   end
 
   def self.people_to_csv(workspace)
-    people = workspace.people.order(:name)
+    people = workspace.people.includes(:default_shipping_address).order(:name)
 
     CSV.generate do |csv|
       csv << PEOPLE_HEADERS
 
       people.each do |person|
+        address = person.default_shipping_address
+
         csv << [
           person.name,
           person.email,
           person.relationship,
           person.age,
           person.gender,
-          person.notes
+          person.notes,
+          address&.label,
+          address&.street_line_1,
+          address&.street_line_2,
+          address&.city,
+          address&.state,
+          address&.postal_code,
+          address&.country,
+          address&.is_default?
         ]
       end
     end
