@@ -13,7 +13,7 @@ class WellKnownController < ApplicationController
       bearer_methods_supported: [ "header" ],
       resource_documentation: "https://docs.listygifty.com/mcp",
       resource_signing_alg_values_supported: [ "none" ],
-      resource_name: "ListyGifty MCP Server"
+      resource_name: "Listy Gifty MCP Server"
     }
   end
 

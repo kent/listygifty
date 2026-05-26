@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for thinking about contributing to Listy Gifty / NiftyGifty. This is
+Thanks for thinking about contributing to Listy Gifty. This is
 primarily a single-author product, but PRs that fix bugs, improve docs, or
 add clearly scoped features are welcome.
 
@@ -37,7 +37,7 @@ cd apps/mobile && npm install --legacy-peer-deps && npx expo start
 - Shared types live in `packages/types`; never duplicate.
 - Service-layer pattern: components use shared services from `packages/services`
   rather than calling the API directly.
-- Run `./bin/lint` before opening a PR.
+- Run `cd apps/web && npm run lint` and `cd apps/api && bin/rubocop` before opening a PR.
 
 ## Areas where help is appreciated
 
