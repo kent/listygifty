@@ -90,6 +90,12 @@ Events:
 - `people_csv_import_failed`
   - Fires when a people CSV import request fails.
   - Key properties: `owner_assigned`.
+- `people_csv_exported`
+  - Fires when a web user downloads the people CSV export.
+  - Key properties: `people_count`, `workspace_type`.
+- `people_csv_export_failed`
+  - Fires when a people CSV export request fails.
+  - Key properties: `people_count`, `workspace_type`.
 - `gift_csv_import_started`
   - Fires when a gift CSV import starts.
   - Key properties: `holiday_id`.

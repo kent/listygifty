@@ -166,6 +166,7 @@ Do not lead with AI. AI is a helpful assistant layer after the core gift-plannin
 - Mobile dependency audit was refreshed; remaining mobile npm audit items require a breaking Expo 56 SDK upgrade.
 - Gift CSV exports now include recipient emails and shipping addresses for fulfillment handoff.
 - People CSV exports now include each person's default shipping address fields.
+- Web People now exposes the people CSV export action and tracks people export success/failure.
 - Web gift lists now support CSV gift import for bulk business setup.
 - Web gift CSV import now emits funnel events for business activation measurement.
 - Web people CSV import now emits funnel events for business activation measurement.

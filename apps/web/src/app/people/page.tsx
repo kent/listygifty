@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { peopleService, workspacesService } from "@/services";
+import { exportsService, peopleService, workspacesService } from "@/services";
 import { useWorkspaceData } from "@/hooks";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { AppHeader } from "@/components/layout";
@@ -17,7 +17,8 @@ import {
   type PeopleSection,
 } from "@/components/people";
 import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
+import { Download, Loader2, Upload } from "lucide-react";
+import { captureWebEvent } from "@/lib/analytics";
 import { toast } from "sonner";
 import type { Person, WorkspaceMember } from "@niftygifty/types";
 
@@ -39,6 +40,7 @@ export default function PeoplePage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceMember[]>([]);
+  const [isExportingPeople, setIsExportingPeople] = useState(false);
 
   useEffect(() => {
     if (currentWorkspace) {
@@ -59,6 +61,27 @@ export default function PeoplePage() {
       setActiveSection(section);
     }
   };
+
+  const handleExportPeople = useCallback(async () => {
+    setIsExportingPeople(true);
+
+    try {
+      await exportsService.downloadPeopleCsv();
+      captureWebEvent("people_csv_exported", {
+        people_count: people.length,
+        workspace_type: currentWorkspace?.workspace_type,
+      });
+      toast.success("People exported successfully");
+    } catch {
+      captureWebEvent("people_csv_export_failed", {
+        people_count: people.length,
+        workspace_type: currentWorkspace?.workspace_type,
+      });
+      toast.error("Failed to export people");
+    } finally {
+      setIsExportingPeople(false);
+    }
+  }, [currentWorkspace?.workspace_type, people.length]);
 
   const counts = useMemo(() => ({
     all: people.length,
@@ -87,22 +110,38 @@ export default function PeoplePage() {
 
       <main className="relative z-10 container mx-auto px-4 py-8">
         <div className="mb-8">
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">People</h1>
               <p className="text-slate-600 dark:text-slate-400">
                 Manage everyone on your gift list. Add family, friends, and colleagues.
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setImportDialogOpen(true)}
-              className="gap-2"
-            >
-              <Upload className="h-4 w-4" />
-              Import CSV
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportPeople}
+                disabled={isExportingPeople}
+                className="gap-2"
+              >
+                {isExportingPeople ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Export CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setImportDialogOpen(true)}
+                className="gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Import CSV
+              </Button>
+            </div>
           </div>
         </div>
 
