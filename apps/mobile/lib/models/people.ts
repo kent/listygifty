@@ -100,6 +100,43 @@ export const EMPTY_PERSON_FORM_VALUES: PersonFormValues = {
 };
 
 const DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+const DEFAULT_BIRTHDAY_REMINDER_HOUR = 9;
+
+interface BirthdayParts {
+  day: number;
+  monthIndex: number;
+}
+
+export interface BirthdayReminderSchedule extends BirthdayParts {
+  hour: number;
+  minute: number;
+}
+
+function parseBirthdayParts(birthday?: string | null): BirthdayParts | null {
+  if (!birthday) {
+    return null;
+  }
+
+  const match = birthday.match(DATE_ONLY_PATTERN);
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const monthIndex = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const parsed = new Date(Date.UTC(year, monthIndex, day));
+
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== monthIndex ||
+    parsed.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return { day, monthIndex };
+}
 
 export function normalizeRelationship(relationship?: string | null): string {
   return (relationship || "").trim().toLowerCase();
@@ -194,22 +231,24 @@ export function getBirthdayReminder(
   person: Pick<Person, "birthday">,
   now: Date = new Date()
 ): string | null {
-  if (!person.birthday) {
+  const birthdayParts = parseBirthdayParts(person.birthday);
+  if (!birthdayParts) {
     return null;
   }
 
-  const match = person.birthday.match(DATE_ONLY_PATTERN);
-  if (!match) {
-    return null;
-  }
-
-  const month = Number(match[2]) - 1;
-  const day = Number(match[3]);
   const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  let birthdayUtc = Date.UTC(now.getFullYear(), month, day);
+  let birthdayUtc = Date.UTC(
+    now.getFullYear(),
+    birthdayParts.monthIndex,
+    birthdayParts.day
+  );
 
   if (birthdayUtc < todayUtc) {
-    birthdayUtc = Date.UTC(now.getFullYear() + 1, month, day);
+    birthdayUtc = Date.UTC(
+      now.getFullYear() + 1,
+      birthdayParts.monthIndex,
+      birthdayParts.day
+    );
   }
 
   const daysAway = Math.round((birthdayUtc - todayUtc) / 86_400_000);
@@ -224,6 +263,22 @@ export function getBirthdayReminder(
   }
 
   return null;
+}
+
+export function getBirthdayReminderSchedule(
+  person: Pick<Person, "birthday">,
+  hour = DEFAULT_BIRTHDAY_REMINDER_HOUR
+): BirthdayReminderSchedule | null {
+  const birthdayParts = parseBirthdayParts(person.birthday);
+  if (!birthdayParts) {
+    return null;
+  }
+
+  return {
+    ...birthdayParts,
+    hour,
+    minute: 0,
+  };
 }
 
 export function getPersonInitial(person: Person): string {

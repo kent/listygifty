@@ -3,6 +3,7 @@ import { Alert } from "react-native";
 import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
 import { humanizeError } from "@/lib/error-message";
+import { scheduleBirthdayReminder } from "@/lib/notifications";
 import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
@@ -40,6 +41,8 @@ export function usePeopleController() {
   const [form, setForm] = useState<PersonFormValues>(EMPTY_PERSON_FORM_VALUES);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [schedulingBirthdayReminderId, setSchedulingBirthdayReminderId] =
+    useState<number | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const deferredSearch = useDeferredValue(search);
 
@@ -176,6 +179,44 @@ export function usePeopleController() {
     [editingPerson?.id, peopleService, resource]
   );
 
+  const handleScheduleBirthdayReminder = useCallback(
+    async (person: Person) => {
+      if (!person.birthday || schedulingBirthdayReminderId === person.id) {
+        return;
+      }
+
+      setSchedulingBirthdayReminderId(person.id);
+      try {
+        const notificationId = await scheduleBirthdayReminder(person);
+
+        if (notificationId) {
+          track("mobile_birthday_reminder_scheduled", {
+            person_id: person.id,
+            source: "people_list",
+          });
+          await haptics.success();
+          Alert.alert(
+            "Birthday Reminder Scheduled",
+            `Listy Gifty will remind you every year on ${person.name}'s birthday.`
+          );
+        } else {
+          await haptics.warning();
+          Alert.alert(
+            "No Reminder Scheduled",
+            "This person needs a valid birthday and notification permission."
+          );
+        }
+      } catch (reminderError) {
+        console.error("Failed to schedule birthday reminder", reminderError);
+        await haptics.error();
+        Alert.alert("Reminder Failed", "Could not schedule this birthday reminder.");
+      } finally {
+        setSchedulingBirthdayReminderId(null);
+      }
+    },
+    [schedulingBirthdayReminderId, track]
+  );
+
   return {
     activeGroup,
     activeGroupLabel,
@@ -208,11 +249,13 @@ export function usePeopleController() {
     relationships: RELATIONSHIP_OPTIONS,
     retryLoad: resource.reload,
     saving,
+    schedulingBirthdayReminderId,
     search,
     selectedRelationshipOption,
     setActiveGroup,
     setRelationshipPickerOpen,
     setSearch,
+    handleScheduleBirthdayReminder,
     triggerRelationshipSelect: (relationshipValue: string) => {
       setForm((current) => ({ ...current, relationship: relationshipValue }));
       setRelationshipPickerOpen(false);

@@ -4,6 +4,7 @@ import {
   buildPersonFormValues,
   filterPeople,
   getBirthdayReminder,
+  getBirthdayReminderSchedule,
   getPeopleGroupCounts,
   type PeopleGroupFilter,
 } from "@/lib/models";
@@ -96,5 +97,19 @@ describe("people model helpers", () => {
     expect(
       getBirthdayReminder(buildPerson({ birthday }), new Date("2026-05-26T12:00:00Z"))
     ).toBe(expected);
+  });
+
+  it("returns no birthday reminder for invalid date-only values", () => {
+    expect(getBirthdayReminder(buildPerson({ birthday: "1991-02-31" }))).toBeNull();
+    expect(getBirthdayReminderSchedule(buildPerson({ birthday: "03-14" }))).toBeNull();
+  });
+
+  it("builds yearly birthday notification schedule details", () => {
+    expect(getBirthdayReminderSchedule(buildPerson({ birthday: "1991-03-14" }))).toEqual({
+      day: 14,
+      hour: 9,
+      minute: 0,
+      monthIndex: 2,
+    });
   });
 });

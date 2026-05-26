@@ -2,8 +2,8 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
 import { router } from "expo-router";
-import type { Holiday } from "@niftygifty/types";
-import { getGiftListReminderDate } from "@/lib/models";
+import type { Holiday, Person } from "@niftygifty/types";
+import { getBirthdayReminderSchedule, getGiftListReminderDate } from "@/lib/models";
 
 // Configure how notifications appear when app is in foreground
 Notifications.setNotificationHandler({
@@ -102,6 +102,10 @@ export function setupNotificationHandlers(): () => void {
         }
         break;
 
+      case "birthday_reminder":
+        router.push("/(tabs)/people");
+        break;
+
       default:
         // Default to exchanges list
         router.push("/(tabs)/exchanges");
@@ -160,10 +164,50 @@ export async function scheduleGiftListReminder(holiday: Holiday): Promise<string
   });
 }
 
+export async function scheduleBirthdayReminder(
+  person: Pick<Person, "id" | "name" | "birthday">
+): Promise<string | null> {
+  const reminderSchedule = getBirthdayReminderSchedule(person);
+  if (!reminderSchedule) {
+    return null;
+  }
+
+  const hasPermission = await requestLocalNotificationPermission();
+  if (!hasPermission) {
+    return null;
+  }
+
+  await setupNotificationChannel();
+
+  return Notifications.scheduleNotificationAsync({
+    content: {
+      title: `${person.name}'s birthday`,
+      body: "Check gift ideas and plans before the day gets away.",
+      data: {
+        type: "birthday_reminder",
+        personId: person.id,
+      } satisfies NotificationData,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.YEARLY,
+      day: reminderSchedule.day,
+      month: reminderSchedule.monthIndex,
+      hour: reminderSchedule.hour,
+      minute: reminderSchedule.minute,
+    },
+  });
+}
+
 // Notification types for reference
 export interface NotificationData {
-  type: "exchange_invite" | "match_revealed" | "wishlist_updated" | "gift_list_reminder";
+  type:
+    | "exchange_invite"
+    | "match_revealed"
+    | "wishlist_updated"
+    | "gift_list_reminder"
+    | "birthday_reminder";
   token?: string; // For exchange_invite
   exchangeId?: number; // For match_revealed and wishlist_updated
   holidayId?: number; // For gift_list_reminder
+  personId?: number; // For birthday_reminder
 }
