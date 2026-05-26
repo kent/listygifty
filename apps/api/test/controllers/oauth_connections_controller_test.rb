@@ -41,6 +41,16 @@ class OauthConnectionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [], json_response
   end
 
+  test "does not list revoked oauth clients" do
+    @client.revoke!
+    create_token(user: @user)
+
+    get "/oauth/connections", headers: auth_headers_for(@user), as: :json
+
+    assert_response :success
+    assert_equal [], json_response
+  end
+
   test "revokes current user tokens for connected client" do
     token = create_token(user: @user)
     other_token = create_token(user: @other_user, client: @client)

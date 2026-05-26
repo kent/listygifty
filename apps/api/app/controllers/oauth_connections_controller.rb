@@ -28,7 +28,9 @@ class OauthConnectionsController < ApplicationController
 
   def connected_tokens
     current_user.oauth_access_tokens
+      .joins(:oauth_client)
       .includes(:oauth_client)
+      .merge(OauthClient.active)
       .where(revoked_at: nil)
       .where(
         "oauth_access_tokens.expires_at > :now OR oauth_access_tokens.refresh_token_expires_at > :now",
