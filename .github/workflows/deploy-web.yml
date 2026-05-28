@@ -52,12 +52,14 @@ jobs:
             echo "API_URL=https://api.listygifty.com" >> $GITHUB_OUTPUT
             echo "APP_URL=https://listygifty.com" >> $GITHUB_OUTPUT
             echo "CLERK_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY_PROD }}" >> $GITHUB_OUTPUT
+            echo "MIN_INSTANCES=1" >> $GITHUB_OUTPUT
           else
             echo "ENV=staging" >> $GITHUB_OUTPUT
             echo "SERVICE_NAME=listygifty-web-staging" >> $GITHUB_OUTPUT
             echo "API_URL=https://api-staging.listygifty.com" >> $GITHUB_OUTPUT
             echo "APP_URL=https://staging.listygifty.com" >> $GITHUB_OUTPUT
             echo "CLERK_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING }}" >> $GITHUB_OUTPUT
+            echo "MIN_INSTANCES=0" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and push Docker image
@@ -93,8 +95,9 @@ jobs:
             --port=8080 \
             --memory=512Mi \
             --cpu=1 \
-            --min-instances=0 \
+            --min-instances=${{ steps.env.outputs.MIN_INSTANCES }} \
             --max-instances=10 \
+            --concurrency=80 \
             --no-cpu-throttling
 
       - name: Show deployment URL

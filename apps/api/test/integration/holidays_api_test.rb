@@ -57,6 +57,20 @@ class HolidaysApiTest < ActionDispatch::IntegrationTest
     assert_kind_of Array, json_response
   end
 
+  test "templates reflects template changes after the cached payload is populated" do
+    Holiday.create!(name: "Template A", date: "2026-01-01", is_template: true)
+
+    get templates_holidays_path, headers: @auth_headers, as: :json
+    assert_response :success
+    assert_includes json_response.pluck("name"), "Template A"
+
+    Holiday.create!(name: "Template B", date: "2026-02-01", is_template: true)
+
+    get templates_holidays_path, headers: @auth_headers, as: :json
+    assert_response :success
+    assert_includes json_response.pluck("name"), "Template B"
+  end
+
   # ============================================================================
   # Share and Join Tests
   # ============================================================================

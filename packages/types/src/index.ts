@@ -664,6 +664,7 @@ export interface CreateGiftExchangeRequest {
     exchange_date?: string;
     budget_min?: number;
     budget_max?: number;
+    include_creator?: boolean;
   };
 }
 
@@ -749,9 +750,9 @@ export const EXCHANGE_API_ENDPOINTS = {
   
   // Wishlist Items
   wishlistItems: (exchangeId: number, participantId: number) => 
-    `/gift_exchanges/${exchangeId}/exchange_participants/${participantId}/wishlist_items`,
+    `/gift_exchanges/${exchangeId}/exchange_participants/${participantId}/exchange_wishlist_items`,
   wishlistItem: (exchangeId: number, participantId: number, itemId: number) => 
-    `/gift_exchanges/${exchangeId}/exchange_participants/${participantId}/wishlist_items/${itemId}`,
+    `/gift_exchanges/${exchangeId}/exchange_participants/${participantId}/exchange_wishlist_items/${itemId}`,
   
   // Exclusions
   exchangeExclusions: (exchangeId: number) => `/gift_exchanges/${exchangeId}/exchange_exclusions`,

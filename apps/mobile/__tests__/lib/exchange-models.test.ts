@@ -4,9 +4,12 @@ import {
   buildCreateExchangeExclusionPayload,
   buildCreateExchangeParticipantPayload,
   buildCreateExchangePayload,
+  buildFamilyExchangeFormValues,
   buildExchangeSections,
   buildExchangeInviteUrl,
   canStartExchange,
+  canScheduleExchangeReminder,
+  getExchangeReminderDate,
   getExchangeStartBlocker,
   getExchangeReadinessItems,
   getExchangeWishlistSubtitle,
@@ -88,12 +91,14 @@ describe("exchange model helpers", () => {
         exchangeDate: "2026-12-24",
         budgetMin: " 25 ",
         budgetMax: " 50.50 ",
+        includeCreator: true,
       })
     ).toEqual({
       name: "Family Christmas",
       exchange_date: "2026-12-24",
       budget_min: 25,
       budget_max: 50.5,
+      include_creator: true,
     });
   });
 
@@ -104,13 +109,29 @@ describe("exchange model helpers", () => {
         exchangeDate: "",
         budgetMin: "",
         budgetMax: "",
+        includeCreator: false,
       })
     ).toEqual({
       name: "Team Swap",
       exchange_date: undefined,
       budget_min: undefined,
       budget_max: undefined,
+      include_creator: false,
     });
+  });
+
+  it("prefills a family Christmas exchange for fast setup", () => {
+    expect(buildFamilyExchangeFormValues(new Date("2026-05-27T12:00:00"))).toEqual({
+      name: "Family Christmas 2026",
+      exchangeDate: "2026-12-25",
+      budgetMin: "25",
+      budgetMax: "50",
+      includeCreator: true,
+    });
+
+    expect(buildFamilyExchangeFormValues(new Date("2026-12-26T12:00:00")).name).toBe(
+      "Family Christmas 2027"
+    );
   });
 
   it("builds a trimmed participant invite payload", () => {
@@ -188,6 +209,23 @@ describe("exchange model helpers", () => {
 
     expect(getExchangeWishlistSubtitle(exchange)).toBe("1 item before matches are drawn");
     expect(getExchangeWishlistSubtitle({ ...exchange, status: "active" })).toBe("1 item");
+  });
+
+  it("builds private exchange reminder dates before the exchange", () => {
+    const exchange = buildExchange({
+      exchange_date: "2026-12-25",
+      status: "active",
+    });
+
+    expect(getExchangeReminderDate(exchange, new Date("2026-12-20T12:00:00"))).toEqual(
+      new Date(2026, 11, 24, 9, 0, 0, 0)
+    );
+    expect(getExchangeReminderDate(exchange, new Date("2026-12-24T10:00:00"))).toEqual(
+      new Date(2026, 11, 25, 9, 0, 0, 0)
+    );
+    expect(getExchangeReminderDate(exchange, new Date("2026-12-25T10:00:00"))).toBeNull();
+    expect(getExchangeReminderDate({ ...exchange, status: "completed" })).toBeNull();
+    expect(canScheduleExchangeReminder(exchange)).toBe(true);
   });
 
   it("explains why an owner cannot draw matches yet", () => {

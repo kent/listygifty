@@ -13,8 +13,7 @@ class HolidaysController < ApplicationController
   end
 
   def templates
-    holidays = Holiday.templates
-    render json: HolidayBlueprint.render(holidays)
+    render json: BootstrapPayloadService.cached_holiday_templates
   end
 
   def show

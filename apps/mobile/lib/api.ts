@@ -59,11 +59,13 @@ function resetBootstrapState() {
 }
 
 function seedShellCache(data: {
+  holiday_templates: Awaited<ReturnType<typeof baseHolidaysService.getTemplates>>;
   holidays: Awaited<ReturnType<typeof baseHolidaysService.getAll>>;
   people: Awaited<ReturnType<typeof basePeopleService.getAll>>;
   gift_statuses: Awaited<ReturnType<typeof baseGiftStatusesService.getAll>>;
   gift_exchanges: Awaited<ReturnType<typeof baseGiftExchangesService.getAll>>;
 }) {
+  primeCachedResource("holiday-templates:list", data.holiday_templates, CACHE_TTL_MS.holiday);
   primeCachedResource("holidays:list", data.holidays, CACHE_TTL_MS.holidays);
   primeCachedResource("people:list", data.people, CACHE_TTL_MS.people);
   primeCachedResource("gift-statuses:list", data.gift_statuses, CACHE_TTL_MS.giftStatuses);
@@ -134,7 +136,9 @@ export const holidaysService = {
   },
 
   getTemplates() {
-    return baseHolidaysService.getTemplates();
+    return readAppShellResource("holiday-templates:list", CACHE_TTL_MS.holiday, () =>
+      baseHolidaysService.getTemplates()
+    );
   },
 
   getById(id: number) {

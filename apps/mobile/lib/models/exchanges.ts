@@ -6,10 +6,14 @@ import type {
   GiftExchange,
   GiftExchangeWithParticipants,
 } from "@niftygifty/types";
+import { parseLocalDate } from "@/lib/formatters";
 import { parseOptionalDecimal, trim, trimOrUndefined } from "./inputs";
 import { runtimeConfig } from "@/lib/runtime-config";
 
 const EXCHANGE_INVITE_PATH = "/join/exchange";
+const DEFAULT_EXCHANGE_REMINDER_HOUR = 9;
+const FAMILY_BUDGET_MIN = "25";
+const FAMILY_BUDGET_MAX = "50";
 
 export type ExchangeSection = {
   key: "owned" | "participating";
@@ -22,6 +26,7 @@ export interface ExchangeFormValues {
   exchangeDate: string;
   budgetMin: string;
   budgetMax: string;
+  includeCreator: boolean;
 }
 
 export const EMPTY_EXCHANGE_FORM_VALUES: ExchangeFormValues = {
@@ -29,6 +34,7 @@ export const EMPTY_EXCHANGE_FORM_VALUES: ExchangeFormValues = {
   exchangeDate: "",
   budgetMin: "",
   budgetMax: "",
+  includeCreator: true,
 };
 
 export interface ExchangeParticipantFormValues {
@@ -57,6 +63,39 @@ export interface ExchangeReadinessItem {
   detail: string;
   complete: boolean;
   required: boolean;
+}
+
+function padDatePart(value: number): string {
+  return value.toString().padStart(2, "0");
+}
+
+function toIsoDate(year: number, month: number, day: number): string {
+  return `${year}-${padDatePart(month)}-${padDatePart(day)}`;
+}
+
+function getNextAnnualDate(month: number, day: number, now: Date): string {
+  let year = now.getFullYear();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const candidate = new Date(year, month - 1, day);
+
+  if (candidate < today) {
+    year += 1;
+  }
+
+  return toIsoDate(year, month, day);
+}
+
+export function buildFamilyExchangeFormValues(now: Date = new Date()): ExchangeFormValues {
+  const exchangeDate = getNextAnnualDate(12, 25, now);
+  const year = exchangeDate.split("-")[0];
+
+  return {
+    name: `Family Christmas ${year}`,
+    exchangeDate,
+    budgetMin: FAMILY_BUDGET_MIN,
+    budgetMax: FAMILY_BUDGET_MAX,
+    includeCreator: true,
+  };
 }
 
 export function buildExchangeSections(exchanges: GiftExchange[]): ExchangeSection[] {
@@ -100,6 +139,49 @@ export function getExchangeWishlistSubtitle(exchange: GiftExchange): string {
   }
 
   return `${itemLabel} before matches are drawn`;
+}
+
+export function getExchangeReminderDate(
+  exchange: Pick<GiftExchange, "exchange_date" | "status">,
+  now: Date = new Date()
+): Date | null {
+  if (!exchange.exchange_date || exchange.status === "completed") {
+    return null;
+  }
+
+  const exchangeDate = parseLocalDate(exchange.exchange_date);
+  if (Number.isNaN(exchangeDate.getTime())) {
+    return null;
+  }
+
+  const dayBefore = new Date(
+    exchangeDate.getFullYear(),
+    exchangeDate.getMonth(),
+    exchangeDate.getDate() - 1,
+    DEFAULT_EXCHANGE_REMINDER_HOUR,
+    0,
+    0,
+    0
+  );
+  if (dayBefore > now) {
+    return dayBefore;
+  }
+
+  const exchangeMorning = new Date(
+    exchangeDate.getFullYear(),
+    exchangeDate.getMonth(),
+    exchangeDate.getDate(),
+    DEFAULT_EXCHANGE_REMINDER_HOUR,
+    0,
+    0,
+    0
+  );
+
+  return exchangeMorning > now ? exchangeMorning : null;
+}
+
+export function canScheduleExchangeReminder(exchange: GiftExchange): boolean {
+  return getExchangeReminderDate(exchange) !== null;
 }
 
 export function getExchangeStartBlocker(exchange: GiftExchange): string | null {
@@ -189,6 +271,7 @@ export function buildCreateExchangePayload(
     exchange_date: trimOrUndefined(values.exchangeDate),
     budget_min: parseOptionalDecimal(values.budgetMin),
     budget_max: parseOptionalDecimal(values.budgetMax),
+    include_creator: values.includeCreator,
   };
 }
 

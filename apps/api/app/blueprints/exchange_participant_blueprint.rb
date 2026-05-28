@@ -36,10 +36,14 @@ class ExchangeParticipantBlueprint < ApplicationBlueprint
     association :exchange_wishlist_items, blueprint: ExchangeWishlistItemBlueprint, name: :wishlist_items
   end
 
-  view :admin do
+  view :organizer do
     field :invite_token do |participant|
       participant.invite_token
     end
+  end
+
+  view :admin do
+    include_view :organizer
 
     field :matched_participant_id do |participant|
       participant.matched_participant_id

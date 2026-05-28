@@ -40,20 +40,67 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
 
   test "create creates a gift exchange" do
     assert_difference("GiftExchange.count") do
+      assert_difference("ExchangeParticipant.count") do
+        post gift_exchanges_path,
+          headers: @auth_headers,
+          params: {
+            gift_exchange: {
+              name: "Holiday Gift Exchange",
+              budget_min: 25,
+              budget_max: 75,
+              exchange_date: 2.months.from_now
+            }
+          },
+          as: :json
+      end
+    end
+    assert_response :created
+    exchange = GiftExchange.last
+    creator_participant = exchange.participant_for(@user)
+    assert_equal "Holiday Gift Exchange", exchange.name
+    assert_equal "accepted", creator_participant.status
+    assert_equal @user.email, creator_participant.email
+    assert_equal creator_participant.id, json_response.dig("my_participant", "id")
+    assert_equal 1, json_response["participant_count"]
+    assert_equal 1, json_response["accepted_count"]
+  end
+
+  test "create can skip adding the organizer as a participant" do
+    assert_difference("GiftExchange.count") do
+      assert_no_difference("ExchangeParticipant.count") do
+        post gift_exchanges_path,
+          headers: @auth_headers,
+          params: {
+            gift_exchange: {
+              name: "Organizer Only Exchange",
+              include_creator: false
+            }
+          },
+          as: :json
+      end
+    end
+
+    assert_response :created
+    assert_nil json_response["my_participant"]
+    assert_equal 0, json_response["participant_count"]
+  end
+
+  test "create returns validation errors" do
+    assert_no_difference("GiftExchange.count") do
       post gift_exchanges_path,
         headers: @auth_headers,
         params: {
           gift_exchange: {
-            name: "Holiday Gift Exchange",
-            budget_min: 25,
-            budget_max: 75,
-            exchange_date: 2.months.from_now
+            name: "",
+            budget_min: 75,
+            budget_max: 25
           }
         },
         as: :json
     end
-    assert_response :created
-    assert_equal "Holiday Gift Exchange", GiftExchange.last.name
+
+    assert_response :unprocessable_entity
+    assert json_response["errors"].any?
   end
 
   test "update modifies a gift exchange" do

@@ -53,13 +53,13 @@ export default function MatchPage() {
       try {
         const [holidayData, giftsData, peopleData, statusesData, arrangementsData] = await Promise.all([
           holidaysService.getById(holidayId),
-          giftsService.getAll(),
+          giftsService.getAll({ holidayId }),
           peopleService.getAll(),
           giftStatusesService.getAll(),
           matchArrangementsService.getByHoliday(holidayId),
         ]);
         setHoliday(holidayData);
-        setGifts(giftsData.filter((g) => g.holiday_id === holidayId));
+        setGifts(giftsData);
         setPeople(peopleData);
         setStatuses(statusesData);
         setArrangement(arrangementsData[0] || null);

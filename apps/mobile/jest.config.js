@@ -16,6 +16,7 @@ module.exports = {
     "^@niftygifty/services$": "<rootDir>/../../packages/services/dist/index.js",
   },
   testMatch: ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],
+  testPathIgnorePatterns: ["/node_modules/", "<rootDir>/e2e/"],
   collectCoverageFrom: [
     "components/**/*.{ts,tsx}",
     "lib/**/*.{ts,tsx}",

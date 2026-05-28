@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useAuth } from "@clerk/clerk-expo";
 import {
   apiClient,
@@ -49,15 +49,18 @@ export function useServices() {
 
   useApiSetup();
 
-  return {
-    holidays: holidaysService,
-    gifts: giftsService,
-    giftStatuses: giftStatusesService,
-    people: peopleService,
-    giftExchanges: giftExchangesService,
-    exchangeParticipants: exchangeParticipantsService,
-    exchangeExclusions: exchangeExclusionsService,
-    wishlistItems: wishlistItemsService,
-    exchangeInvites: exchangeInvitesService,
-  };
+  return useMemo(
+    () => ({
+      holidays: holidaysService,
+      gifts: giftsService,
+      giftStatuses: giftStatusesService,
+      people: peopleService,
+      giftExchanges: giftExchangesService,
+      exchangeParticipants: exchangeParticipantsService,
+      exchangeExclusions: exchangeExclusionsService,
+      wishlistItems: wishlistItemsService,
+      exchangeInvites: exchangeInvitesService,
+    }),
+    []
+  );
 }

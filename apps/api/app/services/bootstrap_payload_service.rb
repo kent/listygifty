@@ -1,5 +1,29 @@
 class BootstrapPayloadService
+  STATIC_CACHE_EXPIRES_IN = 12.hours
+
   attr_reader :user, :requested_workspace_id
+
+  class << self
+    def cached_holiday_templates
+      relation = Holiday.templates
+      Rails.cache.fetch(static_cache_key("holiday_templates", relation), expires_in: STATIC_CACHE_EXPIRES_IN) do
+        HolidayBlueprint.render_as_hash(relation)
+      end
+    end
+
+    def cached_gift_statuses
+      relation = GiftStatus.order(:position, :id)
+      Rails.cache.fetch(static_cache_key("gift_statuses", relation), expires_in: STATIC_CACHE_EXPIRES_IN) do
+        GiftStatusBlueprint.render_as_hash(relation)
+      end
+    end
+
+    private
+
+    def static_cache_key(name, relation)
+      "bootstrap_payload/#{name}/#{relation.cache_key_with_version}"
+    end
+  end
 
   def initialize(user:, workspace_id: nil)
     @user = user
@@ -42,7 +66,7 @@ class BootstrapPayloadService
     holidays = measure(timings, :holidays) do
       workspace_holidays.includes(:holiday_users).order(:date, :created_at)
     end
-    holiday_templates = measure(timings, :holiday_templates) { HolidayBlueprint.render_as_hash(Holiday.templates) }
+    holiday_templates = measure(timings, :holiday_templates) { self.class.cached_holiday_templates }
     people = measure(timings, :people) do
       PersonBlueprint.render_as_hash(
         preload_people(workspace),
@@ -50,9 +74,7 @@ class BootstrapPayloadService
         current_workspace: workspace
       )
     end
-    gift_statuses = measure(timings, :gift_statuses) do
-      GiftStatusBlueprint.render_as_hash(GiftStatus.order(:position, :id))
-    end
+    gift_statuses = measure(timings, :gift_statuses) { self.class.cached_gift_statuses }
     gift_exchanges = measure(timings, :gift_exchanges) do
       GiftExchangeBlueprint.render_as_hash(
         workspace.gift_exchanges

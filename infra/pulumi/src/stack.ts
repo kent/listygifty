@@ -26,6 +26,8 @@ const apiMinInstances = Number(nfg.require("apiMinInstances"));
 const apiMaxInstances = Number(nfg.require("apiMaxInstances"));
 const webMinInstances = Number(nfg.require("webMinInstances"));
 const webMaxInstances = Number(nfg.require("webMaxInstances"));
+const apiConcurrency = Number(nfg.get("apiConcurrency") ?? "10");
+const webConcurrency = Number(nfg.get("webConcurrency") ?? "80");
 const apiPort = Number(nfg.require("apiPort"));
 const webPort = Number(nfg.require("webPort"));
 const sqlInstanceName = nfg.require("sqlInstance");
@@ -184,6 +186,8 @@ function plainEnv(name: string, value: string) {
 
 const apiEnv: pulumi.Input<pulumi.Input<gcp.types.input.cloudrunv2.ServiceTemplateContainerEnv>[]> = [
   plainEnv("RAILS_ENV", environment === "production" ? "production" : "staging"),
+  plainEnv("RAILS_MAX_THREADS", "5"),
+  plainEnv("RAILS_MIN_THREADS", "5"),
   secretEnv("DATABASE_URL", `${secretPrefix}database-url`),
   secretEnv("SECRET_KEY_BASE", railsKeySecretName),
   secretEnv("ALLOWED_HOSTS", `${secretPrefix}allowed-hosts`),
@@ -206,7 +210,7 @@ const apiServiceResource = new gcp.cloudrunv2.Service(
     template: {
       serviceAccount: defaultComputeSa,
       timeout: "300s",
-      maxInstanceRequestConcurrency: 80,
+      maxInstanceRequestConcurrency: apiConcurrency,
       scaling: {
         minInstanceCount: apiMinInstances,
         maxInstanceCount: apiMaxInstances,
@@ -275,7 +279,7 @@ const webServiceResource = new gcp.cloudrunv2.Service(
     template: {
       serviceAccount: webSaEmail,
       timeout: "300s",
-      maxInstanceRequestConcurrency: 80,
+      maxInstanceRequestConcurrency: webConcurrency,
       scaling: {
         minInstanceCount: webMinInstances,
         maxInstanceCount: webMaxInstances,

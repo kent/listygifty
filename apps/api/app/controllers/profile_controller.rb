@@ -19,6 +19,7 @@ class ProfileController < ApplicationController
       updates[:image_url] = params[:image_url] if params[:image_url].present?
     end
 
+    updates[:clerk_profile_synced_at] = Time.current
     current_user.update!(updates) if updates.any?
     render json: UserBlueprint.render_as_hash(current_user)
   end

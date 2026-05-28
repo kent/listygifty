@@ -91,13 +91,15 @@ export default function NewGiftScreen() {
         ) : null}
 
         {controller.canChooseList ? (
-          <View style={{ marginBottom: 16 }}>
+          <View style={{ marginBottom: 16, minHeight: 118 }}>
             <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
               List *
             </Text>
 
             {controller.listsLoading ? (
-              <ActivityIndicator color={colors.primary} style={{ marginVertical: 12 }} />
+              <View style={{ minHeight: 78, justifyContent: "center" }}>
+                <ActivityIndicator color={colors.primary} />
+              </View>
             ) : controller.listsError ? (
               <InlineError
                 message={controller.listsError}
@@ -216,9 +218,19 @@ export default function NewGiftScreen() {
 
         <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Status *</Text>
         {controller.loadingStatuses ? (
-          <ActivityIndicator color={colors.primary} style={{ marginBottom: 16 }} />
+          <View style={{ minHeight: 44, justifyContent: "center", marginBottom: 20 }}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
         ) : (
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              gap: 8,
+              marginBottom: 20,
+              minHeight: 44,
+            }}
+          >
             {controller.statuses.map((status) => {
               const isSelected = controller.selectedStatusId === status.id;
               const statusColor = getGiftStatusColors(status.name, colors, isDark);

@@ -34,5 +34,27 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
     new_user = User.find_by(clerk_user_id: clerk_id)
     assert_not_nil new_user
     assert_equal email, new_user.email
+    assert_not_nil new_user.clerk_profile_synced_at
+  end
+
+  test "recent Clerk profile sync attempts are not repeated on every request" do
+    user = create_test_user
+    user.update!(
+      first_name: nil,
+      image_url: nil,
+      clerk_profile_synced_at: Time.current
+    )
+    headers = auth_headers_for(user)
+    original_users = Clerk::SDK.instance_method(:users)
+
+    Clerk::SDK.define_method(:users) do
+      raise "Clerk user fetch should not run for recently synced profiles"
+    end
+
+    get holidays_path, headers: headers, as: :json
+
+    assert_response :success
+  ensure
+    Clerk::SDK.define_method(:users, original_users) if original_users
   end
 end

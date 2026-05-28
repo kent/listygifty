@@ -42,15 +42,17 @@ npm install --legacy-peer-deps
 For Listy Gifty TestFlight releases:
 
 ```bash
-cd apps/mobile
-eas build --platform ios --profile production --auto-submit
+npm run release -- patch
 ```
 
-Default App Store Connect internal testing group:
-- `Internal Testers`
+The release helper bumps the mobile version, commits it, pushes a matching
+`v<version>` tag, and lets GitHub Actions queue the production-profile
+TestFlight build. The default App Store Connect internal testing group is
+`Internal Testers` for `kent.fenwick@gmail.com`.
 
-Default internal tester account:
-- `kent.fenwick@gmail.com`
+Production App Store review is deliberately separate: run the `Mobile Release`
+workflow with `release_action=app_store_review` after validating TestFlight.
+See `docs/mobile-release.md`.
 
 ## 3) Local development
 
@@ -144,71 +146,156 @@ Guidelines:
 - Keep UI code focused on presentation/state orchestration, not low-level HTTP.
 - Extract repeated formatting/UI patterns into shared modules (`apps/mobile/lib/*`, reusable components, etc.).
 
-## 7) Staging and production deployment (Pulumi)
+## 7) Deployment
+
+Deployments are split by shipped surface. Use Pulumi for the Cloud Run API/web
+stack, and use the `Mobile Release` workflow for TestFlight and App Store
+control.
+
+### Deployable Surfaces
+
+| Surface | What Ships | Owner | Primary Release Path |
+|---|---|---|---|
+| API | Rails API, migrations, runtime secrets, Cloud SQL connection | Pulumi + Cloud Run | `npm run deploy:staging` / `npm run deploy:production` |
+| Web | Next.js app, public web env, app-link metadata | Pulumi + Cloud Run | `npm run deploy:staging` / `npm run deploy:production` |
+| Mobile TestFlight | Expo iOS store build, production API/web URLs, app assets from `apps/mobile/app.json` | GitHub Actions + EAS | `npm run release -- patch` or `Mobile Release` workflow |
+| App Store Production | Promotion of a validated TestFlight build to App Review | GitHub Actions + App Store Connect | `Mobile Release` workflow with `app_store_review` |
+
+### Cloud Run API And Web
 
 Project:
 - Project ID: `listygifty`
 - Project number: `906707282968`
 - Region: `us-central1`
+- Pulumi state: `gs://listygifty-pulumi-state`
 
-Everything is infrastructure-as-code via Pulumi (`infra/pulumi/`). State is
-self-hosted in `gs://listygifty-pulumi-state`. One command per environment:
+Canonical deploy commands:
 
 ```bash
+gcloud config configurations activate listygifty
 source .gcp/listygifty-deploy.env
 
-npm run deploy:staging      # build + roll + migrate + smoke + EAS staging
-npm run deploy:production   # same against prod stack
+npm run deploy:staging
+npm run deploy:production
 ```
 
-Each command runs (parallel where independent):
+Each Pulumi deploy:
 
-1. Cloud Build for the API + web images (registry-cached)
-2. Cloud Run revision rollout
-3. `db:migrate` via Cloud Run job
-4. Smoke tests (`/up`, `/holidays` → 401, web `/`, `/login`)
-5. `eas build --no-wait --auto-submit` for mobile
+1. Builds API and web images with Cloud Build.
+2. Rolls Cloud Run revisions.
+3. Updates and runs the Rails migration job.
+4. Smoke-tests the new API/web revisions.
+5. Prints deployed URLs and the source SHA.
 
-Same git SHA twice → no-op redeploy. Expected timings:
-
-| Scenario | Wall time |
-|---|---|
-| Cold deploy (no image cache) | 5–7 min |
-| Warm deploy (cache hit) | 2–3 min |
-| No-change redeploy | 10–20 s |
-| EAS build (async on Expo) | 15–30 min, returns immediately |
-
-See `infra/pulumi/README.md` for the full architecture, bootstrap, import-
-existing-resources, rollback, and what is/isn't managed by Pulumi.
-
-### Preview without deploying
+Preview before applying:
 
 ```bash
 npm run deploy:preview:staging
 npm run deploy:preview:production
 ```
 
-### Validate production data counts
+Skip mobile side effects during a backend/web hotfix:
+
+```bash
+cd infra/pulumi
+pulumi up --stack production -c niftygifty:enableMobile=false
+```
+
+Validate production data after migration-heavy deploys:
 
 ```bash
 source .gcp/listygifty-deploy.env
 ENVIRONMENT=production HEROKU_APP=niftygifty-production npm run infra:verify-db
 ```
 
-## 8) CI/CD branch policy
+See `infra/pulumi/README.md` for bootstrap, imports, rollback, and resource
+ownership.
 
-- Push to `staging` branch → GitHub Actions runs `pulumi up --stack staging`
-- Push to `main` branch → GitHub Actions runs `pulumi up --stack production`
-- Both flows invoke the same Pulumi program; the wrapper exists only to
-  compute the source SHA and gate by branch.
+### Mobile TestFlight
 
-One-time trigger configuration:
+Default TestFlight target:
+- EAS profile: `production`
+- App Store Connect app: `6759929474`
+- Bundle ID: `com.ewakened.niftygifty`
+- Internal testing group: `Internal Testers`
+- Default tester: `kent.fenwick@gmail.com`
+
+Normal release-candidate flow:
 
 ```bash
-bash infra/gcp/scripts/configure-github-triggers.sh
+npm run release -- patch
 ```
 
-## 9) Domains and target services
+That helper requires a clean tree, bumps `apps/mobile/app.json` and
+`apps/mobile/package.json`, creates `v<version>`, pushes the branch and tag,
+and lets GitHub Actions queue the production-profile TestFlight build.
+
+Manual TestFlight dispatch:
+
+1. Open GitHub Actions.
+2. Run `Mobile Release`.
+3. Choose `release_action=testflight`.
+4. Keep `eas_profile=production` unless intentionally testing staging.
+
+The workflow runs mobile quality gates, queues `eas build --profile production
+--platform ios --auto-submit --wait`, then verifies through App Store Connect
+that the processed build is attached to `Internal Testers`.
+
+Local emergency TestFlight command:
+
+```bash
+cd apps/mobile
+npx eas-cli build --profile production --platform ios --auto-submit --non-interactive --wait
+```
+
+### App Store Production Promotion
+
+Public production release is deliberately separate from TestFlight. After the
+TestFlight build is validated:
+
+1. Open GitHub Actions.
+2. Run `Mobile Release`.
+3. Choose `release_action=app_store_review`.
+4. Set `app_version` if promoting a version other than the current
+   `apps/mobile/app.json` version.
+5. Keep `app_store_release_type=MANUAL` unless automatic release after Apple
+   approval is intentional.
+
+The `mobile-production` GitHub environment requires reviewer approval before
+the App Store review job runs.
+
+### Required Secrets And Access
+
+GitHub Actions secrets:
+- `EXPO_TOKEN`
+- `APP_STORE_CONNECT_API_KEY_P8`
+- `GCP_WORKLOAD_IDENTITY_PROVIDER`
+- `GCP_SERVICE_ACCOUNT`
+- `CLERK_PUBLISHABLE_KEY_PROD`
+- `CLERK_PUBLISHABLE_KEY_STAGING`
+- `POSTHOG_KEY` and `POSTHOG_HOST` when analytics are enabled for web builds
+
+Local deploy files:
+- `.gcp/listygifty-deploy.env`
+- `.gcp/keys/listygifty-deployer.json`
+- `apps/mobile/AuthKey_2XG664G4GG.p8` for local EAS submit diagnostics only
+
+Never commit local key files. `apps/mobile/.gitignore` excludes `.p8`,
+certificates, provisioning profiles, native build folders, and credentials.
+
+### CI/CD Branch Policy
+
+- Push to `staging`: `deploy-api.yml` and `deploy-web.yml` deploy changed
+  API/web surfaces to staging; `mobile-release.yml` queues TestFlight when
+  mobile or shared package files change.
+- Push to `main`: `deploy-api.yml` and `deploy-web.yml` deploy changed API/web
+  surfaces to production; `mobile-release.yml` queues production-profile
+  TestFlight for mobile changes, not App Store review.
+- Push a `v<version>` tag: queue a production-profile TestFlight build for
+  that exact mobile version.
+- App Store review always requires manual `Mobile Release` dispatch.
+
+## 8) Domains and target services
 
 Production:
 - `listygifty.com` -> `niftygifty-web`
@@ -218,6 +305,34 @@ Production:
 Staging:
 - `staging.listygifty.com` -> `niftygifty-staging-web`
 - `api-staging.listygifty.com` -> `niftygifty-staging-api`
+
+## 9) Verification And Rollback
+
+Check Cloud Run services:
+
+```bash
+gcloud run services describe niftygifty-api --region us-central1 --project listygifty
+gcloud run services describe niftygifty-web --region us-central1 --project listygifty
+```
+
+Check EAS builds and TestFlight submissions:
+
+```bash
+cd apps/mobile
+npx eas-cli build:list --platform ios --limit 5
+npx eas-cli submit:list --platform ios --limit 5
+```
+
+Rollback API/web through Pulumi by redeploying a prior SHA:
+
+```bash
+cd infra/pulumi
+pulumi up --stack production -c niftygifty:sourceSha=<previous-sha>
+```
+
+Mobile rollback means submitting a new App Store/TestFlight build with the
+desired code and a higher iOS build number; Apple does not allow reusing an old
+build number.
 
 ## 10) Infra runbook
 

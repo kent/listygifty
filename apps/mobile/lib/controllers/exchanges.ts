@@ -5,8 +5,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
 import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
+import { runtimeConfig } from "@/lib/runtime-config";
 import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
+import { scheduleExchangeReminder } from "@/lib/notifications";
 import {
   buildCreateExchangePayload,
   buildCreateExchangeExclusionPayload,
@@ -14,6 +16,8 @@ import {
   buildExchangeInviteUrl,
   buildCreateWishlistItemPayload,
   buildRepeatWishlistItemFormValues,
+  buildFamilyExchangeFormValues,
+  canScheduleExchangeReminder,
   canStartExchange,
   EMPTY_EXCHANGE_EXCLUSION_FORM_VALUES,
   EMPTY_EXCHANGE_PARTICIPANT_FORM_VALUES,
@@ -77,12 +81,16 @@ export function useNewExchangeController() {
   const router = useRouter();
   const { giftExchanges } = useServices();
   const track = useAnalytics();
-  const [form, setForm] = useState<ExchangeFormValues>(EMPTY_EXCHANGE_FORM_VALUES);
+  const [form, setForm] = useState<ExchangeFormValues>(() => buildFamilyExchangeFormValues());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const updateField = useCallback((field: keyof ExchangeFormValues, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
+  }, []);
+
+  const updateIncludeCreator = useCallback((value: boolean) => {
+    setForm((current) => ({ ...current, includeCreator: value }));
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -121,6 +129,7 @@ export function useNewExchangeController() {
         exchange_id: exchange.id,
         has_budget: Boolean(form.budgetMin.trim() || form.budgetMax.trim()),
         has_date: Boolean(form.exchangeDate.trim()),
+        include_creator: form.includeCreator,
       });
       router.replace(`/(tabs)/exchanges/${exchange.id}`);
     } catch (submitError) {
@@ -133,11 +142,14 @@ export function useNewExchangeController() {
 
   return {
     error,
+    applyFamilyDefaults: () => setForm(buildFamilyExchangeFormValues()),
     form,
     handleCancel: () => router.back(),
     handleSubmit,
     saving,
+    startBlank: () => setForm(EMPTY_EXCHANGE_FORM_VALUES),
     updateField,
+    updateIncludeCreator,
   };
 }
 
@@ -149,6 +161,7 @@ export function useExchangeDetailController() {
   const exchangeId = Number.parseInt(id ?? "", 10);
   const isValidExchangeId = Number.isFinite(exchangeId);
   const [starting, setStarting] = useState(false);
+  const [schedulingReminder, setSchedulingReminder] = useState(false);
   const [exclusionModalVisible, setExclusionModalVisible] = useState(false);
   const [exclusionForm, setExclusionForm] = useState<ExchangeExclusionFormValues>(
     EMPTY_EXCHANGE_EXCLUSION_FORM_VALUES
@@ -237,6 +250,35 @@ export function useExchangeDetailController() {
     },
     [resource.data?.id, resource.data?.name, track]
   );
+
+  const scheduleReminder = useCallback(async () => {
+    if (!resource.data) {
+      return;
+    }
+
+    setSchedulingReminder(true);
+
+    try {
+      const notificationId = await scheduleExchangeReminder(resource.data);
+      if (!notificationId) {
+        Alert.alert("Reminder Not Set", "Add a future exchange date and allow notifications.");
+        return;
+      }
+
+      track("mobile_exchange_reminder_scheduled", {
+        exchange_id: resource.data.id,
+        notification_id: notificationId,
+      });
+      await haptics.success();
+      Alert.alert("Reminder Set", "A private reminder is scheduled before the exchange date.");
+    } catch (scheduleError) {
+      console.error("Failed to schedule exchange reminder", scheduleError);
+      await haptics.error();
+      Alert.alert("Reminder Failed", "Could not schedule this reminder.");
+    } finally {
+      setSchedulingReminder(false);
+    }
+  }, [resource.data, track]);
 
   const copyParticipantInvite = useCallback(
     async (participant: ExchangeParticipant) => {
@@ -414,6 +456,7 @@ export function useExchangeDetailController() {
 
   return {
     canStartExchange: resource.data ? canStartExchange(resource.data) : false,
+    canScheduleReminder: resource.data ? canScheduleExchangeReminder(resource.data) : false,
     canManageExclusions,
     canSaveExclusion,
     closeExclusionModal,
@@ -431,6 +474,7 @@ export function useExchangeDetailController() {
       router.push(`/(tabs)/exchanges/${exchangeId}/participants/new`),
     goToWishlist: () => router.push(`/(tabs)/exchanges/${exchangeId}/my-wishlist`),
     handleStartExchange: startExchange,
+    handleScheduleReminder: scheduleReminder,
     loading: isValidExchangeId && resource.loading,
     openExclusionModal,
     refreshing: resource.refreshing,
@@ -442,6 +486,7 @@ export function useExchangeDetailController() {
     shareParticipantInvite,
     copyParticipantInvite,
     savingExclusion,
+    schedulingReminder,
     starting,
     startBlocker: resource.data ? getExchangeStartBlocker(resource.data) : null,
     triggerRefresh,
@@ -709,7 +754,9 @@ export function useNewWishlistItemController() {
 export function useExchangeInviteController() {
   const { token } = useLocalSearchParams<{ token: string }>();
   const router = useRouter();
-  const { isSignedIn, isLoaded } = useAuth();
+  const clerkAuth = useAuth();
+  const isSignedIn = runtimeConfig.screenshotMode ? false : clerkAuth.isSignedIn;
+  const isLoaded = runtimeConfig.screenshotMode ? true : clerkAuth.isLoaded;
   const { exchangeInvites } = useServices();
   const [actionLoading, setActionLoading] = useState(false);
   const hasToken = Boolean(token);

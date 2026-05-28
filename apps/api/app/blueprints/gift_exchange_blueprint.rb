@@ -24,21 +24,38 @@ class GiftExchangeBlueprint < ApplicationBlueprint
       participants.all? { |participant| participant.status == "accepted" }
   end
 
+  field :my_participant do |exchange, options|
+    user = options[:current_user]
+    participant = user ? GiftExchangeBlueprint.participant_for(exchange, user) : nil
+
+    if participant
+      ExchangeParticipantBlueprint.render_as_hash(
+        participant,
+        view: GiftExchangeBlueprint.my_participant_view(exchange, participant)
+      )
+    end
+  end
+
   view :with_participants do
-    association :exchange_participants, blueprint: ExchangeParticipantBlueprint
+    association :exchange_participants, blueprint: ExchangeParticipantBlueprint, view: :organizer
   end
 
   view :with_my_participation do
-    field :my_participant do |exchange, options|
-      return nil unless options[:current_user]
-      participant = GiftExchangeBlueprint.participants_for(exchange).find do |item|
-        item.user_id == options[:current_user].id
-      end
-      ExchangeParticipantBlueprint.render_as_hash(participant) if participant
-    end
   end
 
   def self.participants_for(exchange)
     exchange.exchange_participants.to_a
+  end
+
+  def self.participant_for(exchange, user)
+    participants_for(exchange).find { |participant| participant.user_id == user.id }
+  end
+
+  def self.my_participant_view(exchange, participant)
+    if %w[active completed].include?(exchange.status) && participant.matched_participant_id.present?
+      :with_match
+    else
+      :default
+    end
   end
 end

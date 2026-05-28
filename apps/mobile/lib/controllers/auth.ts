@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert } from "react-native";
+import { Alert, Platform } from "react-native";
 import {
   useAuth,
   useSignIn,
@@ -39,6 +39,10 @@ function getAuthSessionResultType(result: unknown): string | undefined {
 
 function useBrowserWarmup() {
   useEffect(() => {
+    if (Platform.OS === "web") {
+      return undefined;
+    }
+
     void WebBrowser.warmUpAsync();
     return () => {
       void WebBrowser.coolDownAsync();
@@ -351,18 +355,27 @@ export function useSignupController() {
 }
 
 export function useProfileController() {
+  if (runtimeConfig.screenshotMode) {
+    const displayName = [ screenshotProfile.firstName, screenshotProfile.lastName ]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    return {
+      displayName,
+      email: screenshotProfile.email,
+      promptSignOut: () => {
+        Alert.alert("Sign out", "Screenshot mode uses a static profile.");
+      },
+    };
+  }
+
   const { user } = useUser();
   const { signOutAndRedirect } = useSessionController();
 
-  const profileFirstName = runtimeConfig.screenshotMode
-    ? screenshotProfile.firstName
-    : user?.firstName;
-  const profileLastName = runtimeConfig.screenshotMode
-    ? screenshotProfile.lastName
-    : user?.lastName;
-  const profileEmail = runtimeConfig.screenshotMode
-    ? screenshotProfile.email
-    : user?.primaryEmailAddress?.emailAddress;
+  const profileFirstName = user?.firstName;
+  const profileLastName = user?.lastName;
+  const profileEmail = user?.primaryEmailAddress?.emailAddress;
 
   const displayName = [profileFirstName, profileLastName].filter(Boolean).join(" ").trim();
 

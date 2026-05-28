@@ -1,5 +1,6 @@
 class ExchangeWishlistItemsController < ApplicationController
   before_action :set_participant
+  before_action :require_wishlist_viewer, only: %i[index show]
   before_action :require_participant_owner, only: %i[create update destroy]
   before_action :set_wishlist_item, only: %i[show update destroy]
 
@@ -38,14 +39,21 @@ class ExchangeWishlistItemsController < ApplicationController
   private
 
   def set_participant
-    @participant = ExchangeParticipant.find(params[:exchange_participant_id])
-    # Verify current user has access to this participant's exchange
-    exchange = @participant.gift_exchange
-    unless exchange.owner?(current_user) || @participant.user_id == current_user.id
-      render json: { error: "Access denied" }, status: :forbidden
+    @participant = ExchangeParticipant.includes(:gift_exchange).find(params[:exchange_participant_id])
+    if @participant.gift_exchange_id != params[:gift_exchange_id].to_i
+      return render json: { error: "Participant not found" }, status: :not_found
     end
+
+    @gift_exchange = GiftExchange.for_user(current_user).find(params[:gift_exchange_id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Participant not found" }, status: :not_found
+  end
+
+  def require_wishlist_viewer
+    return if participant_owner?
+    return if current_user_matched_to_participant?
+
+    render json: { error: "Access denied" }, status: :forbidden
   end
 
   def set_wishlist_item
@@ -55,8 +63,22 @@ class ExchangeWishlistItemsController < ApplicationController
   end
 
   def require_participant_owner
-    return if @participant.user_id == current_user.id
+    return if participant_owner?
     render json: { error: "You can only manage your own wishlist" }, status: :forbidden
+  end
+
+  def participant_owner?
+    @participant.user_id == current_user.id
+  end
+
+  def current_user_participant
+    @current_user_participant ||= @gift_exchange.exchange_participants.find_by(user_id: current_user.id)
+  end
+
+  def current_user_matched_to_participant?
+    return false unless %w[active completed].include?(@gift_exchange.status)
+
+    current_user_participant&.matched_participant_id == @participant.id
   end
 
   def wishlist_item_params

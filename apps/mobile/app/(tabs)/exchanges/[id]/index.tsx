@@ -52,7 +52,8 @@ export default function ExchangeDetailScreen() {
     exchange.is_owner && exchange.status !== "active" && exchange.status !== "completed";
   const hasMatch = myParticipant?.matched_participant_id != null;
   const canManageWishlist = canManageExchangeWishlist(exchange);
-  const shouldShowParticipantActions = canManageWishlist || (isActive && hasMatch);
+  const shouldShowParticipantActions =
+    canManageWishlist || (isActive && hasMatch) || controller.canScheduleReminder;
 
   return (
     <ScrollView
@@ -164,6 +165,38 @@ export default function ExchangeDetailScreen() {
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.success} />
+            </TouchableOpacity>
+          ) : null}
+
+          {controller.canScheduleReminder ? (
+            <TouchableOpacity
+              onPress={controller.handleScheduleReminder}
+              disabled={controller.schedulingReminder}
+              style={{
+                backgroundColor: colors.infoLight,
+                padding: 16,
+                borderRadius: 12,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
+                <Ionicons name="notifications-outline" size={24} color={colors.info} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.info, fontSize: 16, fontWeight: "600" }}>
+                    Set Reminder
+                  </Text>
+                  <Text style={{ color: colors.infoDark, fontSize: 12 }}>
+                    Private notification before the exchange
+                  </Text>
+                </View>
+              </View>
+              {controller.schedulingReminder ? (
+                <ActivityIndicator size="small" color={colors.info} />
+              ) : (
+                <Ionicons name="chevron-forward" size={20} color={colors.info} />
+              )}
             </TouchableOpacity>
           ) : null}
         </View>

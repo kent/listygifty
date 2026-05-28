@@ -104,7 +104,7 @@ export default function HolidayDetailPage() {
         const promises: Promise<unknown>[] = [
           holidaysService.getById(holidayId),
           holidaysService.getAll(),
-          giftsService.getAll(),
+          giftsService.getAll({ holidayId }),
           peopleService.getAll(),
           giftStatusesService.getAll(),
           holidaysService.getCollaborators(holidayId),
@@ -127,7 +127,7 @@ export default function HolidayDetailPage() {
 
         setHoliday(holidayData);
         setHolidays(holidaysData);
-        setGifts(giftsData.filter((g) => g.holiday_id === holidayId));
+        setGifts(giftsData);
         setPeople(peopleData);
         setStatuses(statusesData);
         setCollaborators(collaboratorsData);

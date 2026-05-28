@@ -2,9 +2,10 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
 import { router } from "expo-router";
-import type { Holiday, Person } from "@niftygifty/types";
+import type { GiftExchange, Holiday, Person } from "@niftygifty/types";
 import {
   getBirthdayReminderSchedule,
+  getExchangeReminderDate,
   getGiftListReminderDate,
   getMilestoneReminderSchedule,
 } from "@/lib/models";
@@ -100,6 +101,12 @@ export function setupNotificationHandlers(): () => void {
         }
         break;
 
+      case "exchange_reminder":
+        if (data.exchangeId) {
+          router.push(`/(tabs)/exchanges/${data.exchangeId}`);
+        }
+        break;
+
       case "gift_list_reminder":
         if (data.holidayId) {
           router.push(`/(tabs)/lists/${data.holidayId}`);
@@ -163,6 +170,37 @@ export async function scheduleGiftListReminder(holiday: Holiday): Promise<string
       data: {
         type: "gift_list_reminder",
         holidayId: holiday.id,
+      } satisfies NotificationData,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: reminderDate,
+    },
+  });
+}
+
+export async function scheduleExchangeReminder(
+  exchange: Pick<GiftExchange, "id" | "name" | "exchange_date" | "status">
+): Promise<string | null> {
+  const reminderDate = getExchangeReminderDate(exchange);
+  if (!reminderDate) {
+    return null;
+  }
+
+  const hasPermission = await requestLocalNotificationPermission();
+  if (!hasPermission) {
+    return null;
+  }
+
+  await setupNotificationChannel();
+
+  return Notifications.scheduleNotificationAsync({
+    content: {
+      title: `Gift exchange soon: ${exchange.name}`,
+      body: "Review your wishlist, gift plan, and exchange details before the date arrives.",
+      data: {
+        type: "exchange_reminder",
+        exchangeId: exchange.id,
       } satisfies NotificationData,
     },
     trigger: {
@@ -248,6 +286,7 @@ export interface NotificationData {
     | "exchange_invite"
     | "match_revealed"
     | "wishlist_updated"
+    | "exchange_reminder"
     | "gift_list_reminder"
     | "birthday_reminder"
     | "milestone_reminder";

@@ -2,8 +2,7 @@ class GiftStatusesController < ApplicationController
   before_action :set_gift_status, only: %i[show update destroy]
 
   def index
-    statuses = GiftStatus.by_position
-    render json: GiftStatusBlueprint.render(statuses)
+    render json: BootstrapPayloadService.cached_gift_statuses
   end
 
   def show

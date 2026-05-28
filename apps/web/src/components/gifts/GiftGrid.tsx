@@ -95,6 +95,17 @@ export function GiftGrid({
   const allGiftsRef = useRef(allGifts);
   allGiftsRef.current = allGifts;
 
+  const getActiveHolidayId = useCallback(
+    () => defaultHolidayId || holidays[0]?.id,
+    [defaultHolidayId, holidays]
+  );
+
+  const refreshGiftList = useCallback(async () => {
+    const holidayId = getActiveHolidayId();
+    const refreshed = await giftsService.getAll(holidayId ? { holidayId } : undefined);
+    return holidayId ? refreshed.filter((gift) => gift.holiday_id === holidayId) : refreshed;
+  }, [getActiveHolidayId]);
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -167,13 +178,12 @@ export function GiftGrid({
             });
           }
         } catch {
-          const refreshed = await giftsService.getAll();
-          const holidayId = defaultHolidayId || holidays[0]?.id;
-          onGiftsChangeRef.current(refreshed.filter((g) => g.holiday_id === holidayId));
+          const refreshed = await refreshGiftList();
+          onGiftsChangeRef.current(refreshed);
         }
       });
     },
-    [statuses, defaultHolidayId, holidays]
+    [statuses, refreshGiftList]
   );
 
   const updateVisibleStatuses = useCallback(
@@ -217,15 +227,14 @@ export function GiftGrid({
           `Updated ${targetGifts.length} visible gift${targetGifts.length === 1 ? "" : "s"}`
         );
       } catch {
-        const refreshed = await giftsService.getAll();
-        const holidayId = defaultHolidayId || holidays[0]?.id;
-        onGiftsChangeRef.current(refreshed.filter((gift) => gift.holiday_id === holidayId));
+        const refreshed = await refreshGiftList();
+        onGiftsChangeRef.current(refreshed);
         toast.error("Failed to update visible gifts");
       } finally {
         setIsBulkUpdatingStatus(false);
       }
     },
-    [defaultHolidayId, gifts, holidays, statuses]
+    [defaultHolidayId, gifts, refreshGiftList, statuses]
   );
 
   const updateRecipients = useCallback(
@@ -245,13 +254,12 @@ export function GiftGrid({
           setLocalMeta(id, { _isNew: false });
           onGiftsChangeRef.current(allGiftsRef.current.map((g) => (g.id === id ? updated : g)));
         } catch {
-          const refreshed = await giftsService.getAll();
-          const holidayId = defaultHolidayId || holidays[0]?.id;
-          onGiftsChangeRef.current(refreshed.filter((g) => g.holiday_id === holidayId));
+          const refreshed = await refreshGiftList();
+          onGiftsChangeRef.current(refreshed);
         }
       });
     },
-    [people, defaultHolidayId, holidays]
+    [people, refreshGiftList]
   );
 
   const updateGivers = useCallback(
@@ -271,13 +279,12 @@ export function GiftGrid({
           setLocalMeta(id, { _isNew: false });
           onGiftsChangeRef.current(allGiftsRef.current.map((g) => (g.id === id ? updated : g)));
         } catch {
-          const refreshed = await giftsService.getAll();
-          const holidayId = defaultHolidayId || holidays[0]?.id;
-          onGiftsChangeRef.current(refreshed.filter((g) => g.holiday_id === holidayId));
+          const refreshed = await refreshGiftList();
+          onGiftsChangeRef.current(refreshed);
         }
       });
     },
-    [people, defaultHolidayId, holidays]
+    [people, refreshGiftList]
   );
 
   const updateRecipientAddress = useCallback(
@@ -305,17 +312,16 @@ export function GiftGrid({
           const updated = await giftsService.updateRecipientAddress(giftId, recipientId, addressId);
           onGiftsChangeRef.current(allGiftsRef.current.map((g) => (g.id === giftId ? updated : g)));
         } catch {
-          const refreshed = await giftsService.getAll();
-          const holidayId = defaultHolidayId || holidays[0]?.id;
-          onGiftsChangeRef.current(refreshed.filter((g) => g.holiday_id === holidayId));
+          const refreshed = await refreshGiftList();
+          onGiftsChangeRef.current(refreshed);
         }
       });
     },
-    [addresses, defaultHolidayId, holidays]
+    [addresses, refreshGiftList]
   );
 
   const addGift = useCallback(async (atPosition?: number) => {
-    const holidayId = defaultHolidayId || holidays[0]?.id;
+    const holidayId = getActiveHolidayId();
     const statusId = defaultStatusId || statuses[0]?.id;
     if (!holidayId || !statusId) return;
 
@@ -331,9 +337,8 @@ export function GiftGrid({
         setLocalMeta(created.id, { _isNew: true });
         
         // Always refresh so ordering/positions stay consistent (especially when inserting at top).
-        const refreshed = await giftsService.getAll();
-        const holidayGifts = refreshed.filter((g) => g.holiday_id === holidayId);
-        onGiftsChangeRef.current(holidayGifts);
+        const refreshed = await refreshGiftList();
+        onGiftsChangeRef.current(refreshed);
 
         // Refresh billing status after creating gift
         await refreshBillingStatus();
@@ -353,7 +358,7 @@ export function GiftGrid({
         }
       }
     });
-  }, [defaultHolidayId, defaultStatusId, holidays, statuses, refreshBillingStatus]);
+  }, [defaultStatusId, getActiveHolidayId, refreshBillingStatus, refreshGiftList, statuses]);
 
   const insertGift = useCallback(async (referenceId: number, position: "above" | "below") => {
     const sorted = [...allGiftsRef.current].sort((a, b) => a.position - b.position);
@@ -378,14 +383,13 @@ export function GiftGrid({
         // Refresh billing status after deletion
         await refreshBillingStatus();
       } catch {
-        const refreshed = await giftsService.getAll();
-        const holidayId = defaultHolidayId || holidays[0]?.id;
-        onGiftsChangeRef.current(refreshed.filter((g) => g.holiday_id === holidayId));
+        const refreshed = await refreshGiftList();
+        onGiftsChangeRef.current(refreshed);
       } finally {
         setDeletingId(null);
       }
     });
-  }, [refreshBillingStatus, defaultHolidayId, holidays]);
+  }, [refreshBillingStatus, refreshGiftList]);
 
   const requestDeleteGift = useCallback((gift: Gift) => {
     setPendingDeleteGift(gift);
@@ -423,16 +427,15 @@ export function GiftGrid({
 
     startTransition(async () => {
       try {
-        const holidayId = defaultHolidayId || holidays[0]?.id;
+        const holidayId = getActiveHolidayId();
         const updatedGifts = await giftsService.reorder(Number(active.id), newPosition);
         onGiftsChangeRef.current(updatedGifts.filter((g) => g.holiday_id === holidayId));
       } catch {
-        const refreshed = await giftsService.getAll();
-        const holidayId = defaultHolidayId || holidays[0]?.id;
-        onGiftsChangeRef.current(refreshed.filter((g) => g.holiday_id === holidayId));
+        const refreshed = await refreshGiftList();
+        onGiftsChangeRef.current(refreshed);
       }
     });
-  }, [defaultHolidayId, holidays]);
+  }, [getActiveHolidayId, refreshGiftList]);
 
   const atLimit = !canCreateGift;
 

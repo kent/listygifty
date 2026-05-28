@@ -8,6 +8,7 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+build-artifacts/
 
 # Native
 .kotlin/
@@ -39,3 +40,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Local signing material (keystores, ASC keys, service account JSONs)
+credentials/

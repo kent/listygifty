@@ -9,7 +9,11 @@ import { ThemeProvider, useTheme } from "@/lib/theme";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { clearCachedResources } from "@/lib/api";
-import { getScreenshotRouteTarget, getScreenshotTargetPath } from "@/lib/screenshot-routes";
+import {
+  getActiveScreenshotRouteName,
+  getScreenshotRouteTarget,
+  getScreenshotTargetPath,
+} from "@/lib/screenshot-routes";
 
 const publishableKey = runtimeConfig.clerkPublishableKey;
 const posthogApiKey = runtimeConfig.posthogApiKey;
@@ -24,16 +28,17 @@ function ScreenshotRouter() {
   const router = useRouter();
   const pathname = usePathname();
   const { isDark } = useTheme();
+  const routeName = getActiveScreenshotRouteName(runtimeConfig.screenshotRoute);
 
   useEffect(() => {
-    const targetRoute = getScreenshotRouteTarget(runtimeConfig.screenshotRoute);
+    const targetRoute = getScreenshotRouteTarget(routeName);
     const currentRoute = pathname.replace(/^\//, "");
     const normalizedTarget = getScreenshotTargetPath(targetRoute);
 
     if (currentRoute !== normalizedTarget) {
       router.replace(targetRoute);
     }
-  }, [pathname, router, runtimeConfig.screenshotRoute]);
+  }, [pathname, routeName, router]);
 
   return (
     <>
@@ -90,9 +95,7 @@ export default function RootLayout() {
     return (
       <ThemeProvider>
         <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-          <ClerkLoaded>
-            <ScreenshotRouter />
-          </ClerkLoaded>
+          <ScreenshotRouter />
         </ClerkProvider>
       </ThemeProvider>
     );

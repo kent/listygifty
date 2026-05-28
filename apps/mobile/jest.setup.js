@@ -94,6 +94,29 @@ jest.mock("expo-haptics", () => ({
   },
 }));
 
+// Mock Expo notifications for local reminder tests
+jest.mock("expo-notifications", () => ({
+  AndroidImportance: {
+    MAX: "max",
+  },
+  SchedulableTriggerInputTypes: {
+    DATE: "date",
+    YEARLY: "yearly",
+  },
+  addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  getExpoPushTokenAsync: jest.fn().mockResolvedValue({ data: "ExponentPushToken[test]" }),
+  getLastNotificationResponseAsync: jest.fn().mockResolvedValue(null),
+  getPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
+  requestPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
+  scheduleNotificationAsync: jest.fn().mockResolvedValue("notification-id"),
+  setNotificationChannelAsync: jest.fn().mockResolvedValue(undefined),
+  setNotificationHandler: jest.fn(),
+}));
+
+jest.mock("expo-device", () => ({
+  isDevice: true,
+}));
+
 // Mock icon components to avoid async font loading in tests
 jest.mock("@expo/vector-icons", () => {
   const React = require("react");

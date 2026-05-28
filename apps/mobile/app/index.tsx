@@ -1,10 +1,16 @@
 import { Redirect } from "expo-router";
 import { runtimeConfig } from "@/lib/runtime-config";
-import { getScreenshotRouteTarget } from "@/lib/screenshot-routes";
+import { getActiveScreenshotRouteName, getScreenshotRouteTarget } from "@/lib/screenshot-routes";
 
 export default function Index() {
   if (runtimeConfig.screenshotMode) {
-    return <Redirect href={getScreenshotRouteTarget(runtimeConfig.screenshotRoute)} />;
+    return (
+      <Redirect
+        href={getScreenshotRouteTarget(
+          getActiveScreenshotRouteName(runtimeConfig.screenshotRoute)
+        )}
+      />
+    );
   }
 
   // Redirect to auth - the AuthRouter in _layout will handle

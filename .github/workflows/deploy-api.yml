@@ -45,8 +45,10 @@ jobs:
           if [[ "${{ github.ref_name }}" == "main" ]]; then
             echo "ENV=production" >> $GITHUB_OUTPUT
             echo "SERVICE_NAME=listygifty-api-prod" >> $GITHUB_OUTPUT
+            echo "MIGRATION_JOB=listygifty-migrate-prod" >> $GITHUB_OUTPUT
             echo "REGION=us-central1" >> $GITHUB_OUTPUT
             echo "RAILS_ENV=production" >> $GITHUB_OUTPUT
+            echo "MIN_INSTANCES=1" >> $GITHUB_OUTPUT
             echo "CLOUD_SQL_INSTANCE=listygifty:us-central1:niftygifty-postgres-central" >> $GITHUB_OUTPUT
             echo "ALLOWED_HOSTS_SECRET=niftygifty-allowed-hosts" >> $GITHUB_OUTPUT
             echo "SECRET_KEY_SECRET=listygifty-rails-key-prod" >> $GITHUB_OUTPUT
@@ -61,8 +63,10 @@ jobs:
           else
             echo "ENV=staging" >> $GITHUB_OUTPUT
             echo "SERVICE_NAME=listygifty-api-staging" >> $GITHUB_OUTPUT
+            echo "MIGRATION_JOB=listygifty-migrate-staging" >> $GITHUB_OUTPUT
             echo "REGION=us-central1" >> $GITHUB_OUTPUT
             echo "RAILS_ENV=staging" >> $GITHUB_OUTPUT
+            echo "MIN_INSTANCES=0" >> $GITHUB_OUTPUT
             echo "CLOUD_SQL_INSTANCE=listygifty:us-central1:niftygifty-postgres-central" >> $GITHUB_OUTPUT
             echo "ALLOWED_HOSTS_SECRET=niftygifty-staging-allowed-hosts" >> $GITHUB_OUTPUT
             echo "SECRET_KEY_SECRET=listygifty-rails-key-staging" >> $GITHUB_OUTPUT
@@ -98,19 +102,22 @@ jobs:
             --port=3000 \
             --memory=512Mi \
             --cpu=1 \
-            --min-instances=0 \
+            --min-instances=${{ steps.env.outputs.MIN_INSTANCES }} \
             --max-instances=10 \
+            --concurrency=10 \
             --no-cpu-throttling \
             --set-cloudsql-instances=${{ steps.env.outputs.CLOUD_SQL_INSTANCE }} \
-            --set-env-vars="RAILS_ENV=${{ steps.env.outputs.RAILS_ENV }}" \
+            --set-env-vars="RAILS_ENV=${{ steps.env.outputs.RAILS_ENV }},RAILS_MAX_THREADS=5,RAILS_MIN_THREADS=5" \
             --set-secrets="DATABASE_URL=${{ steps.env.outputs.DATABASE_URL_SECRET }}:latest,SECRET_KEY_BASE=${{ steps.env.outputs.SECRET_KEY_SECRET }}:latest,ALLOWED_HOSTS=${{ steps.env.outputs.ALLOWED_HOSTS_SECRET }}:latest,CLERK_SECRET_KEY=${{ steps.env.outputs.CLERK_SECRET }}:latest,STRIPE_SECRET_KEY=${{ steps.env.outputs.STRIPE_SECRET }}:latest,STRIPE_WEBHOOK_SECRET=${{ steps.env.outputs.STRIPE_WEBHOOK_SECRET }}:latest,POSTMARK_API_KEY=${{ steps.env.outputs.POSTMARK_SECRET }}:latest,OPENAI_API_KEY=${{ steps.env.outputs.OPENAI_SECRET }}:latest,CORS_ORIGINS=${{ steps.env.outputs.CORS_ORIGINS_SECRET }}:latest,FRONTEND_URL=${{ steps.env.outputs.FRONTEND_URL_SECRET }}:latest"
 
       - name: Run database migrations
         run: |
-          gcloud run jobs execute migrate-${{ steps.env.outputs.ENV }} \
+          gcloud run jobs update ${{ steps.env.outputs.MIGRATION_JOB }} \
+            --image=${{ env.IMAGE }}:${{ github.sha }} \
+            --region=${{ steps.env.outputs.REGION }}
+          gcloud run jobs execute ${{ steps.env.outputs.MIGRATION_JOB }} \
             --region=${{ steps.env.outputs.REGION }} \
-            --wait \
-            || echo "Migration job not found, skipping"
+            --wait
 
       - name: Show deployment URL
         run: |

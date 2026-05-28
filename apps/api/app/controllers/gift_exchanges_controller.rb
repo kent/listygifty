@@ -5,10 +5,13 @@ class GiftExchangesController < ApplicationController
   before_action :require_owner, only: %i[update destroy start]
 
   def index
-    exchanges = current_workspace.gift_exchanges
-                                 .for_user(current_user)
-                                 .includes(:exchange_participants)
-                                 .order(created_at: :desc)
+    workspace_exchange_ids = current_workspace.gift_exchanges.for_user(current_user).select(:id)
+    participating_exchange_ids = GiftExchange.participating(current_user).select(:id)
+    exchanges = GiftExchange
+                .where(id: workspace_exchange_ids)
+                .or(GiftExchange.where(id: participating_exchange_ids))
+                .includes(exchange_participants: [ :matched_participant, :exchange_wishlist_items ])
+                .order(created_at: :desc)
     render json: GiftExchangeBlueprint.render(exchanges, current_user: current_user, view: :with_my_participation)
   end
 
@@ -18,14 +21,17 @@ class GiftExchangesController < ApplicationController
   end
 
   def create
-    exchange = current_workspace.gift_exchanges.build(gift_exchange_params)
+    attributes = gift_exchange_params
+    exchange = current_workspace.gift_exchanges.build(attributes.except(:include_creator))
     exchange.user = current_user
 
-    if exchange.save
-      render json: GiftExchangeBlueprint.render(exchange, current_user: current_user), status: :created
-    else
-      render json: { errors: exchange.errors.full_messages }, status: :unprocessable_entity
+    GiftExchange.transaction do
+      exchange.save!
+      create_creator_participant(exchange) if include_creator?(attributes)
     end
+    render json: GiftExchangeBlueprint.render(exchange.reload, current_user: current_user), status: :created
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
   end
 
   def update
@@ -48,7 +54,7 @@ class GiftExchangesController < ApplicationController
     service.perform!
 
     # Send match assignment emails
-    @gift_exchange.exchange_participants.each do |participant|
+    @gift_exchange.exchange_participants.includes(:user).each do |participant|
       ExchangeMailer.match_assignment(participant).deliver_later
     end
 
@@ -60,10 +66,10 @@ class GiftExchangesController < ApplicationController
   private
 
   def set_gift_exchange
-    @gift_exchange = current_workspace.gift_exchanges
-                                     .for_user(current_user)
-                                     .includes(:exchange_participants)
-                                     .find(params[:id])
+    @gift_exchange = GiftExchange
+                     .for_user(current_user)
+                     .includes(exchange_participants: [ :matched_participant, :exchange_wishlist_items ])
+                     .find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Gift exchange not found" }, status: :not_found
   end
@@ -74,6 +80,27 @@ class GiftExchangesController < ApplicationController
   end
 
   def gift_exchange_params
-    params.require(:gift_exchange).permit(:name, :exchange_date, :status, :budget_min, :budget_max)
+    params.require(:gift_exchange).permit(
+      :name,
+      :exchange_date,
+      :status,
+      :budget_min,
+      :budget_max,
+      :include_creator
+    )
+  end
+
+  def include_creator?(attributes)
+    return true unless attributes.key?(:include_creator)
+
+    ActiveModel::Type::Boolean.new.cast(attributes[:include_creator])
+  end
+
+  def create_creator_participant(exchange)
+    exchange.exchange_participants.find_or_create_by!(email: current_user.email) do |participant|
+      participant.name = current_user.safe_name
+      participant.user = current_user
+      participant.status = "accepted"
+    end
   end
 end

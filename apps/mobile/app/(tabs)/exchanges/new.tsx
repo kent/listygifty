@@ -3,11 +3,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { InlineError } from "@/components/InlineError";
 import { useNewExchangeController } from "@/lib/controllers";
 import { useTheme } from "@/lib/theme";
@@ -23,6 +25,64 @@ export default function NewExchangeScreen() {
     >
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         {controller.error ? <InlineError message={controller.error} margin={0} /> : null}
+
+        <View
+          style={{
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            borderRadius: 12,
+            borderWidth: 1,
+            marginBottom: 16,
+            padding: 14,
+            gap: 12,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Ionicons name="sparkles-outline" size={20} color={colors.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: "700" }}>
+                Family Setup
+              </Text>
+              <Text style={{ color: colors.textTertiary, fontSize: 13 }}>
+                Christmas date, common budget, and your spot are filled in.
+              </Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <TouchableOpacity
+              onPress={controller.applyFamilyDefaults}
+              style={{
+                flex: 1,
+                backgroundColor: colors.primarySurface,
+                borderColor: colors.primary,
+                borderRadius: 10,
+                borderWidth: 1,
+                padding: 12,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: colors.primary, fontSize: 14, fontWeight: "700" }}>
+                Family Christmas
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={controller.startBlank}
+              style={{
+                flex: 1,
+                backgroundColor: colors.surfaceSecondary,
+                borderColor: colors.border,
+                borderRadius: 10,
+                borderWidth: 1,
+                padding: 12,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: colors.textTertiary, fontSize: 14, fontWeight: "700" }}>
+                Blank
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
           Name *
@@ -102,6 +162,36 @@ export default function NewExchangeScreen() {
               borderWidth: 1,
               borderColor: colors.inputBorder,
             }}
+          />
+        </View>
+
+        <View
+          style={{
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            borderRadius: 12,
+            borderWidth: 1,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            marginBottom: 24,
+            padding: 14,
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.text, fontSize: 15, fontWeight: "700" }}>
+              Include me
+            </Text>
+            <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
+              Add your wishlist without accepting an invite.
+            </Text>
+          </View>
+          <Switch
+            value={controller.form.includeCreator}
+            onValueChange={controller.updateIncludeCreator}
+            trackColor={{ false: colors.borderSecondary, true: colors.primaryLight }}
+            thumbColor={controller.form.includeCreator ? colors.primary : colors.surface}
           />
         </View>
 

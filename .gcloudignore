@@ -1,0 +1,17 @@
+.git
+.gcp/
+
+**/node_modules/
+**/.turbo/
+
+apps/web/.next/
+apps/web/tsconfig.tsbuildinfo
+
+apps/mobile/
+
+apps/api/log/
+apps/api/tmp/
+apps/api/storage/*
+!apps/api/storage/.keep
+
+infra/pulumi/node_modules/

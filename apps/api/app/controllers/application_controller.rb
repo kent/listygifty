@@ -1,6 +1,8 @@
 class ApplicationController < ActionController::API
   include ApiKeyAuthenticatable
 
+  CLERK_PROFILE_SYNC_INTERVAL = 24.hours
+
   before_action :authenticate!
 
   private
@@ -30,6 +32,7 @@ class ApplicationController < ActionController::API
       clerk_user = fetch_clerk_user(clerk_user_id)
       apply_clerk_data(u, clerk_user, clerk_user_id, token_email: email_from_token)
       u.subscription_plan = "free"
+      u.clerk_profile_synced_at = Time.current
       is_new_user = true
     end
 
@@ -95,12 +98,15 @@ class ApplicationController < ActionController::API
   end
 
   def sync_clerk_user_data(user, clerk_user_id, token_email: nil)
-    # Sync if email is placeholder or profile data is missing
-    needs_sync = user.email.end_with?("@clerk.user") || user.first_name.nil? || user.image_url.nil?
-    return unless needs_sync
+    updates = immediate_clerk_token_updates(user, token_email)
+    if updates.any?
+      user.update!(updates)
+      user.assign_attributes(updates)
+    end
 
-    updates = {}
-    updates[:email] = token_email if user.email.end_with?("@clerk.user") && token_email.present?
+    return unless should_sync_clerk_profile?(user)
+
+    updates = { clerk_profile_synced_at: Time.current }
 
     clerk_user = fetch_clerk_user(clerk_user_id)
     if clerk_user
@@ -113,6 +119,23 @@ class ApplicationController < ActionController::API
     end
 
     user.update!(updates) if updates.any?
+  end
+
+  def immediate_clerk_token_updates(user, token_email)
+    return {} unless token_email.present? && user.email.end_with?("@clerk.user")
+
+    { email: token_email }
+  end
+
+  def should_sync_clerk_profile?(user)
+    return false unless clerk_profile_incomplete?(user)
+    return true if user.clerk_profile_synced_at.blank?
+
+    user.clerk_profile_synced_at < CLERK_PROFILE_SYNC_INTERVAL.ago
+  end
+
+  def clerk_profile_incomplete?(user)
+    user.email.end_with?("@clerk.user") || user.first_name.nil? || user.image_url.nil?
   end
 
   def current_user

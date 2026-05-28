@@ -1,5 +1,5 @@
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type LoadMode = "initial" | "refresh";
 
@@ -24,6 +24,18 @@ export function useFocusResource<T>({
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
   const scopeIdRef = useRef(0);
+  const hasResolvedRef = useRef(false);
+  const lastKeyRef = useRef(key);
+  const loadRef = useRef(load);
+  const initialValueRef = useRef(initialValue);
+
+  useEffect(() => {
+    loadRef.current = load;
+  }, [load]);
+
+  useEffect(() => {
+    initialValueRef.current = initialValue;
+  }, [initialValue]);
 
   const isCurrentRequest = useCallback(
     (requestId: number, scopeId: number) =>
@@ -43,17 +55,20 @@ export function useFocusResource<T>({
       const scopeId = scopeIdRef.current;
       requestIdRef.current = requestId;
 
+      const shouldBlockScreen = mode === "initial" && !hasResolvedRef.current;
+
       if (mode === "refresh") {
         setRefreshing(true);
-      } else {
+      } else if (shouldBlockScreen) {
         setLoading(true);
       }
 
       try {
         setError(null);
-        const nextData = await load();
+        const nextData = await loadRef.current();
         if (isCurrentRequest(requestId, scopeId)) {
           setData(nextData);
+          hasResolvedRef.current = true;
         }
         return nextData;
       } catch (loadError) {
@@ -72,7 +87,7 @@ export function useFocusResource<T>({
         }
       }
     },
-    [enabled, errorMessage, isCurrentRequest, load]
+    [enabled, errorMessage, isCurrentRequest]
   );
 
   useFocusEffect(
@@ -81,6 +96,13 @@ export function useFocusResource<T>({
         setLoading(false);
         setRefreshing(false);
         return undefined;
+      }
+
+      if (lastKeyRef.current !== key) {
+        lastKeyRef.current = key;
+        hasResolvedRef.current = false;
+        setData(initialValueRef.current);
+        setError(null);
       }
 
       scopeIdRef.current += 1;

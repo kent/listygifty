@@ -11,10 +11,12 @@ config:
   niftygifty:appDomain: listygifty.com
   niftygifty:apiDomain: api.listygifty.com
   niftygifty:wwwDomain: www.listygifty.com
-  niftygifty:apiMinInstances: "0"
+  niftygifty:apiMinInstances: "1"
   niftygifty:apiMaxInstances: "10"
-  niftygifty:webMinInstances: "0"
+  niftygifty:apiConcurrency: "10"
+  niftygifty:webMinInstances: "1"
   niftygifty:webMaxInstances: "10"
+  niftygifty:webConcurrency: "80"
   niftygifty:apiPort: "3000"
   niftygifty:webPort: "8080"
   niftygifty:sqlInstance: niftygifty-postgres-central

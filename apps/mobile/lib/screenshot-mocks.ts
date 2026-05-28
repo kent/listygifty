@@ -1,23 +1,59 @@
 import type {
+  AcceptInviteResponse,
   ExchangeExclusion,
+  ExchangeInviteDetails,
   ExchangeParticipant,
+  Gift,
   GiftExchange,
   GiftExchangeWithParticipants,
+  GiftStatus,
   Holiday,
+  HolidayCollaborator,
   Person,
+  ShareLinkResponse,
   WishlistItem,
 } from "@niftygifty/types";
-import {
-  exchangeInvitesService,
-  giftStatusesService,
-  giftsService,
-} from "@/lib/api";
 
 const nowIso = "2026-03-03T00:00:00.000Z";
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
+
+let giftStatusesStore: GiftStatus[] = [
+  {
+    id: 1,
+    name: "Idea",
+    position: 1,
+    color: "#2563eb",
+    created_at: nowIso,
+    updated_at: nowIso,
+  },
+  {
+    id: 2,
+    name: "Researching",
+    position: 2,
+    color: "#7c3aed",
+    created_at: nowIso,
+    updated_at: nowIso,
+  },
+  {
+    id: 3,
+    name: "Purchased",
+    position: 3,
+    color: "#16a34a",
+    created_at: nowIso,
+    updated_at: nowIso,
+  },
+  {
+    id: 4,
+    name: "Wrapped",
+    position: 4,
+    color: "#dc2626",
+    created_at: nowIso,
+    updated_at: nowIso,
+  },
+];
 
 let peopleStore: Person[] = [
   {
@@ -168,6 +204,239 @@ let holidaysStore: Holiday[] = [
     created_at: nowIso,
     updated_at: nowIso,
   },
+];
+
+const holidayTemplatesStore: Holiday[] = [
+  {
+    id: 901,
+    name: "Birthday",
+    date: null,
+    icon: "cake",
+    is_template: true,
+    completed: false,
+    archived: false,
+    share_token: null,
+    is_owner: true,
+    role: "owner",
+    collaborator_count: 0,
+    created_at: nowIso,
+    updated_at: nowIso,
+  },
+  {
+    id: 902,
+    name: "Holiday",
+    date: null,
+    icon: "gift",
+    is_template: true,
+    completed: false,
+    archived: false,
+    share_token: null,
+    is_owner: true,
+    role: "owner",
+    collaborator_count: 0,
+    created_at: nowIso,
+    updated_at: nowIso,
+  },
+];
+
+let holidayCollaboratorsStore: Record<number, HolidayCollaborator[]> = {
+  201: [
+    {
+      user_id: 1,
+      email: "marie@gifts.com",
+      first_name: "Marie",
+      last_name: "Reviewer",
+      image_url: null,
+      role: "owner",
+    },
+    {
+      user_id: 2,
+      email: "alex.parker@gifts.com",
+      first_name: "Alex",
+      last_name: "Parker",
+      image_url: null,
+      role: "collaborator",
+    },
+  ],
+  202: [
+    {
+      user_id: 1,
+      email: "marie@gifts.com",
+      first_name: "Marie",
+      last_name: "Reviewer",
+      image_url: null,
+      role: "owner",
+    },
+  ],
+  203: [
+    {
+      user_id: 1,
+      email: "marie@gifts.com",
+      first_name: "Marie",
+      last_name: "Reviewer",
+      image_url: null,
+      role: "owner",
+    },
+    {
+      user_id: 3,
+      email: "sam.lee@gifts.com",
+      first_name: "Sam",
+      last_name: "Lee",
+      image_url: null,
+      role: "collaborator",
+    },
+    {
+      user_id: 4,
+      email: "nina.rivera@gifts.com",
+      first_name: "Nina",
+      last_name: "Rivera",
+      image_url: null,
+      role: "collaborator",
+    },
+    {
+      user_id: 5,
+      email: "jordan.kim@gifts.com",
+      first_name: "Jordan",
+      last_name: "Kim",
+      image_url: null,
+      role: "collaborator",
+    },
+  ],
+};
+
+const screenshotGiftCreator = {
+  id: 1,
+  email: "marie@gifts.com",
+  first_name: "Marie",
+  last_name: "Reviewer",
+  safe_name: "Marie Reviewer",
+};
+
+function getHolidayById(id: number): Holiday {
+  const holiday = holidaysStore.find((item) => item.id === id);
+  if (!holiday) {
+    throw new Error("Holiday not found");
+  }
+  return holiday;
+}
+
+function getGiftStatusById(id: number): GiftStatus {
+  return giftStatusesStore.find((status) => status.id === id) ?? giftStatusesStore[0];
+}
+
+function getPeopleByIds(ids: number[] | undefined): Person[] {
+  if (!ids || ids.length === 0) {
+    return [];
+  }
+
+  return peopleStore.filter((person) => ids.includes(person.id));
+}
+
+function buildGiftRecipientLinks(giftId: number, recipients: Person[]): Gift["gift_recipients"] {
+  return recipients.map((person, index) => ({
+    id: giftId * 10 + index,
+    person_id: person.id,
+    shipping_address_id: null,
+    person,
+    shipping_address: null,
+    created_at: nowIso,
+    updated_at: nowIso,
+  }));
+}
+
+function buildGift(
+  id: number,
+  data: {
+    name: string;
+    description?: string | null;
+    link?: string | null;
+    cost?: string | null;
+    holidayId: number;
+    statusId: number;
+    position: number;
+    recipientIds?: number[];
+    giverIds?: number[];
+  }
+): Gift {
+  const recipients = getPeopleByIds(data.recipientIds);
+  const givers = getPeopleByIds(data.giverIds);
+  return {
+    id,
+    name: data.name,
+    description: data.description ?? null,
+    link: data.link ?? null,
+    cost: data.cost ?? null,
+    holiday_id: data.holidayId,
+    gift_status_id: data.statusId,
+    position: data.position,
+    gift_status: getGiftStatusById(data.statusId),
+    holiday: getHolidayById(data.holidayId),
+    recipients,
+    givers,
+    gift_recipients: buildGiftRecipientLinks(id, recipients),
+    created_by: screenshotGiftCreator,
+    is_mine: true,
+    created_at: nowIso,
+    updated_at: nowIso,
+  };
+}
+
+let giftsStore: Gift[] = [
+  buildGift(501, {
+    name: "Noise-cancelling headphones",
+    description: "Comfortable over-ear pair for Alex's commute.",
+    link: "https://listygifty.com/example/headphones",
+    cost: "149.00",
+    holidayId: 201,
+    statusId: 1,
+    position: 1,
+    recipientIds: [101],
+    giverIds: [102],
+  }),
+  buildGift(502, {
+    name: "Custom photo book",
+    description: "Use the summer trip photos and leave space for notes.",
+    link: null,
+    cost: "42.00",
+    holidayId: 201,
+    statusId: 2,
+    position: 2,
+    recipientIds: [101],
+    giverIds: [103],
+  }),
+  buildGift(503, {
+    name: "Wellness spa voucher",
+    description: "Downtown location, no expiry if available.",
+    link: "https://listygifty.com/example/spa",
+    cost: "95.00",
+    holidayId: 202,
+    statusId: 3,
+    position: 1,
+    recipientIds: [103],
+    giverIds: [101],
+  }),
+  buildGift(504, {
+    name: "Insulated camp mug set",
+    description: "Two-pack for winter trail days.",
+    link: "https://listygifty.com/example/camp-mugs",
+    cost: "38.00",
+    holidayId: 203,
+    statusId: 1,
+    position: 1,
+    recipientIds: [105],
+    giverIds: [101],
+  }),
+  buildGift(505, {
+    name: "Desk tea sampler",
+    description: "Caffeine-free options for the office.",
+    link: null,
+    cost: "24.00",
+    holidayId: 203,
+    statusId: 4,
+    position: 2,
+    recipientIds: [104],
+    giverIds: [102],
+  }),
 ];
 
 let exchangesStore: GiftExchange[] = [
@@ -550,6 +819,8 @@ let wishlistItemsStore: Record<number, WishlistItem[]> = {
 };
 
 let nextPersonId = 200;
+let nextHolidayId = 250;
+let nextGiftId = 550;
 let nextExchangeId = 400;
 let nextExchangeParticipantId = 500;
 let nextExchangeExclusionId = 600;
@@ -562,6 +833,84 @@ function getExchangeParticipants(exchangeId: number): ExchangeParticipant[] {
 
 function getParticipantWishlist(participantId: number): WishlistItem[] {
   return wishlistItemsStore[participantId] ?? [];
+}
+
+function formatGiftCost(value: string | number | null | undefined): string | null {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  if (typeof value === "number") {
+    return value.toFixed(2);
+  }
+
+  return value;
+}
+
+function normalizeGift(gift: Gift): Gift {
+  const recipients = getPeopleByIds(gift.recipients.map((recipient) => recipient.id));
+  const givers = getPeopleByIds(gift.givers.map((giver) => giver.id));
+
+  return {
+    ...gift,
+    gift_status: getGiftStatusById(gift.gift_status_id),
+    holiday: getHolidayById(gift.holiday_id),
+    recipients,
+    givers,
+    gift_recipients: buildGiftRecipientLinks(gift.id, recipients),
+  };
+}
+
+function getGiftById(id: number): Gift {
+  const gift = giftsStore.find((item) => item.id === id);
+  if (!gift) {
+    throw new Error("Gift not found");
+  }
+
+  return normalizeGift(gift);
+}
+
+function getGifts(options?: { holidayId?: number }): Gift[] {
+  const holidayId = options?.holidayId;
+  return giftsStore
+    .filter((gift) => !holidayId || gift.holiday_id === holidayId)
+    .sort((left, right) => left.position - right.position || left.name.localeCompare(right.name))
+    .map(normalizeGift);
+}
+
+type GiftMutationData = Omit<Partial<Gift>, "cost"> & {
+  cost?: string | number | null;
+  giver_ids?: number[];
+  recipient_ids?: number[];
+};
+
+function applyGiftMutation(gift: Gift, data: GiftMutationData): Gift {
+  const recipientIds = Array.isArray(data.recipient_ids)
+    ? data.recipient_ids
+    : gift.recipients.map((recipient) => recipient.id);
+  const giverIds = Array.isArray(data.giver_ids)
+    ? data.giver_ids
+    : gift.givers.map((giver) => giver.id);
+  const holidayId = data.holiday_id ?? gift.holiday_id;
+  const statusId = data.gift_status_id ?? gift.gift_status_id;
+  const recipients = getPeopleByIds(recipientIds);
+  const givers = getPeopleByIds(giverIds);
+
+  return {
+    ...gift,
+    ...data,
+    description: data.description === undefined ? gift.description : data.description,
+    link: data.link === undefined ? gift.link : data.link,
+    cost: data.cost === undefined ? gift.cost : formatGiftCost(data.cost),
+    holiday_id: holidayId,
+    gift_status_id: statusId,
+    gift_status: getGiftStatusById(statusId),
+    holiday: getHolidayById(holidayId),
+    recipients,
+    givers,
+    gift_recipients: buildGiftRecipientLinks(gift.id, recipients),
+    updated_at: nowIso,
+  };
 }
 
 function withMatchedParticipant(
@@ -627,6 +976,44 @@ export const screenshotServices = {
     async getAll() {
       return clone(holidaysStore);
     },
+    async getTemplates() {
+      return clone(holidayTemplatesStore);
+    },
+    async getById(id: number) {
+      return clone(getHolidayById(id));
+    },
+    async create(data: Partial<Holiday>) {
+      const holiday: Holiday = {
+        id: nextHolidayId++,
+        name: data.name || "New Gift List",
+        date: data.date ?? null,
+        icon: data.icon ?? "gift",
+        is_template: false,
+        completed: data.completed ?? false,
+        archived: data.archived ?? false,
+        share_token: `review-list-${nextHolidayId}`,
+        is_owner: true,
+        role: "owner",
+        collaborator_count: 1,
+        created_at: nowIso,
+        updated_at: nowIso,
+      };
+      holidaysStore = [holiday, ...holidaysStore];
+      holidayCollaboratorsStore = {
+        ...holidayCollaboratorsStore,
+        [holiday.id]: [
+          {
+            user_id: 1,
+            email: "marie@gifts.com",
+            first_name: "Marie",
+            last_name: "Reviewer",
+            image_url: null,
+            role: "owner",
+          },
+        ],
+      };
+      return clone(holiday);
+    },
     async update(id: number, data: Partial<Holiday>) {
       holidaysStore = holidaysStore.map((holiday) =>
         holiday.id === id
@@ -639,10 +1026,70 @@ export const screenshotServices = {
       );
       return clone(holidaysStore.find((holiday) => holiday.id === id) as Holiday);
     },
+    async delete(id: number) {
+      holidaysStore = holidaysStore.filter((holiday) => holiday.id !== id);
+      giftsStore = giftsStore.filter((gift) => gift.holiday_id !== id);
+      delete holidayCollaboratorsStore[id];
+    },
+    async getShareLink(id: number): Promise<ShareLinkResponse> {
+      const holiday = getHolidayById(id);
+      const shareToken = holiday.share_token || `review-list-${id}`;
+      return clone({
+        share_token: shareToken,
+        share_url: `https://listygifty.com/lists/join/${shareToken}`,
+      });
+    },
+    async regenerateShareLink(id: number): Promise<ShareLinkResponse> {
+      const shareToken = `review-list-${id}-fresh`;
+      holidaysStore = holidaysStore.map((holiday) =>
+        holiday.id === id ? { ...holiday, share_token: shareToken, updated_at: nowIso } : holiday
+      );
+      return clone({
+        share_token: shareToken,
+        share_url: `https://listygifty.com/lists/join/${shareToken}`,
+      });
+    },
+    async join(shareToken: string) {
+      const holiday = holidaysStore.find((item) => item.share_token === shareToken);
+      if (!holiday) {
+        throw new Error("Holiday share link not found");
+      }
+      return clone({ ...holiday, is_owner: false, role: "collaborator" as const });
+    },
+    async leave(id: number) {
+      holidaysStore = holidaysStore.filter((holiday) => holiday.id !== id || holiday.is_owner);
+    },
+    async getCollaborators(id: number) {
+      return clone(holidayCollaboratorsStore[id] ?? []);
+    },
+    async removeCollaborator(holidayId: number, userId: number) {
+      holidayCollaboratorsStore = {
+        ...holidayCollaboratorsStore,
+        [holidayId]: (holidayCollaboratorsStore[holidayId] ?? []).filter(
+          (collaborator) => collaborator.user_id !== userId
+        ),
+      };
+      holidaysStore = holidaysStore.map((holiday) =>
+        holiday.id === holidayId
+          ? {
+              ...holiday,
+              collaborator_count: holidayCollaboratorsStore[holidayId]?.length ?? 0,
+              updated_at: nowIso,
+            }
+          : holiday
+      );
+    },
   },
   people: {
     async getAll() {
       return clone(peopleStore);
+    },
+    async getById(id: number) {
+      const person = peopleStore.find((item) => item.id === id);
+      if (!person) {
+        throw new Error("Person not found");
+      }
+      return clone(person);
     },
     async create(data: Partial<Person>) {
       const person: Person = {
@@ -697,7 +1144,7 @@ export const screenshotServices = {
 
       return clone(buildExchangeWithParticipants(exchange));
     },
-    async create(data: Partial<GiftExchange>) {
+    async create(data: Partial<GiftExchange> & { include_creator?: boolean }) {
       const exchange: GiftExchange = {
         id: nextExchangeId++,
         name: data.name || "New Exchange",
@@ -715,7 +1162,28 @@ export const screenshotServices = {
         updated_at: nowIso,
       };
       exchangesStore = [exchange, ...exchangesStore];
-      return clone(exchange);
+      if (data.include_creator !== false) {
+        const participant: ExchangeParticipant = {
+          id: nextExchangeParticipantId++,
+          gift_exchange_id: exchange.id,
+          user_id: 1,
+          name: `${screenshotProfile.firstName} ${screenshotProfile.lastName}`,
+          email: screenshotProfile.email,
+          status: "accepted",
+          display_name: screenshotProfile.firstName,
+          has_user: true,
+          wishlist_count: 0,
+          invite_token: `creator-${exchange.id}`,
+          matched_participant_id: null,
+          created_at: nowIso,
+          updated_at: nowIso,
+        };
+        exchangeParticipantsStore = {
+          ...exchangeParticipantsStore,
+          [exchange.id]: [participant],
+        };
+      }
+      return clone(buildExchangeSummary(exchange));
     },
     async start(id: number) {
       exchangesStore = exchangesStore.map((exchange) =>
@@ -810,8 +1278,70 @@ export const screenshotServices = {
       );
     },
   },
-  gifts: giftsService,
-  giftStatuses: giftStatusesService,
+  gifts: {
+    async getAll(options?: { holidayId?: number }) {
+      return clone(getGifts(options));
+    },
+    async getById(id: number) {
+      return clone(getGiftById(id));
+    },
+    async create(data: GiftMutationData & { holiday_id: number; name: string; gift_status_id: number }) {
+      const existingPositions = giftsStore
+        .filter((gift) => gift.holiday_id === data.holiday_id)
+        .map((gift) => gift.position);
+      const position = data.position ?? Math.max(0, ...existingPositions) + 1;
+      const gift = buildGift(nextGiftId++, {
+        name: data.name || "New Gift",
+        description: data.description ?? null,
+        link: data.link ?? null,
+        cost: formatGiftCost(data.cost),
+        holidayId: data.holiday_id,
+        statusId: data.gift_status_id,
+        position,
+        recipientIds: data.recipient_ids,
+        giverIds: data.giver_ids,
+      });
+      giftsStore = [gift, ...giftsStore];
+      return clone(normalizeGift(gift));
+    },
+    async update(id: number, data: GiftMutationData) {
+      giftsStore = giftsStore.map((gift) =>
+        gift.id === id ? applyGiftMutation(gift, data) : gift
+      );
+      return clone(getGiftById(id));
+    },
+    async delete(id: number) {
+      giftsStore = giftsStore.filter((gift) => gift.id !== id);
+    },
+    async reorder(id: number, newPosition: number) {
+      const gift = getGiftById(id);
+      giftsStore = giftsStore.map((item) =>
+        item.id === id ? { ...item, position: newPosition, updated_at: nowIso } : item
+      );
+      return clone(getGifts({ holidayId: gift.holiday_id }));
+    },
+    async updateRecipientAddress(giftId: number, recipientId: number, shippingAddressId: number | null) {
+      giftsStore = giftsStore.map((gift) =>
+        gift.id === giftId
+          ? {
+              ...gift,
+              gift_recipients: gift.gift_recipients.map((recipient) =>
+                recipient.person_id === recipientId
+                  ? { ...recipient, shipping_address_id: shippingAddressId, updated_at: nowIso }
+                  : recipient
+              ),
+              updated_at: nowIso,
+            }
+          : gift
+      );
+      return clone(getGiftById(giftId));
+    },
+  },
+  giftStatuses: {
+    async getAll() {
+      return clone(giftStatusesStore);
+    },
+  },
   wishlistItems: {
     async getAll(_exchangeId: number, participantId: number) {
       return clone(getParticipantWishlist(participantId));
@@ -916,5 +1446,98 @@ export const screenshotServices = {
       return clone(item);
     },
   },
-  exchangeInvites: exchangeInvitesService,
+  exchangeInvites: {
+    async getByToken(token: string): Promise<ExchangeInviteDetails> {
+      for (const exchange of exchangesStore) {
+        const participant = getExchangeParticipants(exchange.id).find(
+          (item) => item.invite_token === token
+        );
+
+        if (participant) {
+          return clone({
+            exchange: {
+              id: exchange.id,
+              name: exchange.name,
+              exchange_date: exchange.exchange_date,
+              budget_min: exchange.budget_min,
+              budget_max: exchange.budget_max,
+              owner_name: exchange.is_owner ? "Marie Reviewer" : "Gift Exchange Host",
+            },
+            participant: {
+              name: participant.name,
+              email: participant.email,
+              status: participant.status,
+            },
+          });
+        }
+      }
+
+      throw new Error("Invite not found");
+    },
+    async accept(token: string): Promise<AcceptInviteResponse> {
+      let acceptedParticipant: ExchangeParticipant | null = null;
+      let acceptedExchange: GiftExchange | null = null;
+
+      exchangeParticipantsStore = Object.fromEntries(
+        Object.entries(exchangeParticipantsStore).map(([exchangeId, participants]) => [
+          exchangeId,
+          participants.map((participant) => {
+            if (participant.invite_token !== token) {
+              return participant;
+            }
+
+            acceptedParticipant = {
+              ...participant,
+              user_id: 1,
+              status: "accepted",
+              has_user: true,
+              updated_at: nowIso,
+            };
+            acceptedExchange = exchangesStore.find(
+              (exchange) => exchange.id === Number.parseInt(exchangeId, 10)
+            ) ?? null;
+            return acceptedParticipant;
+          }),
+        ])
+      );
+
+      if (!acceptedParticipant || !acceptedExchange) {
+        throw new Error("Invite not found");
+      }
+
+      const exchange = buildExchangeSummary(acceptedExchange);
+      return clone({
+        message: "Invitation accepted",
+        exchange,
+        participant: acceptedParticipant,
+      });
+    },
+    async decline(token: string) {
+      let found = false;
+
+      exchangeParticipantsStore = Object.fromEntries(
+        Object.entries(exchangeParticipantsStore).map(([exchangeId, participants]) => [
+          exchangeId,
+          participants.map((participant) => {
+            if (participant.invite_token !== token) {
+              return participant;
+            }
+
+            found = true;
+            return {
+              ...participant,
+              status: "declined" as const,
+              updated_at: nowIso,
+            };
+          }),
+        ])
+      );
+
+      if (!found) {
+        throw new Error("Invite not found");
+      }
+
+      return clone({ message: "Invitation declined" });
+    },
+  },
 } as const;

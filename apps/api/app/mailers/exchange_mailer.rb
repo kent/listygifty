@@ -20,7 +20,7 @@ class ExchangeMailer < ApplicationMailer
     @exchange_url = "#{@frontend_url}/exchanges/#{@exchange.id}/my-match"
 
     mail(
-      to: participant.user.email,
+      to: participant.user&.email || participant.email,
       subject: "🎅 Your Secret Santa match for #{@exchange.name}!"
     )
   end
