@@ -226,9 +226,10 @@ Normal release-candidate flow:
 npm run release -- patch
 ```
 
-That helper requires a clean tree, bumps `apps/mobile/app.json` and
-`apps/mobile/package.json`, creates `v<version>`, pushes the branch and tag,
-and lets GitHub Actions queue the production-profile TestFlight build.
+That helper requires a clean tree, bumps `apps/mobile/app.json`,
+`apps/mobile/package.json`, and `apps/mobile/package-lock.json`, creates
+`v<version>`, pushes the branch and tag, and lets GitHub Actions queue the
+production-profile TestFlight build.
 
 Manual TestFlight dispatch:
 
@@ -238,14 +239,14 @@ Manual TestFlight dispatch:
 4. Keep `eas_profile=production` unless intentionally testing staging.
 
 The workflow runs mobile quality gates, queues `eas build --profile production
---platform ios --auto-submit --wait`, then verifies through App Store Connect
-that the processed build is attached to `Internal Testers`.
+--platform ios --auto-submit --no-wait`, then verifies through App Store
+Connect that the processed build is attached to `Internal Testers`.
 
 Local emergency TestFlight command:
 
 ```bash
 cd apps/mobile
-npx eas-cli build --profile production --platform ios --auto-submit --non-interactive --wait
+npx eas-cli build --profile production --platform ios --auto-submit --non-interactive
 ```
 
 ### App Store Production Promotion
@@ -286,11 +287,11 @@ certificates, provisioning profiles, native build folders, and credentials.
 ### CI/CD Branch Policy
 
 - Push to `staging`: `deploy-api.yml` and `deploy-web.yml` deploy changed
-  API/web surfaces to staging; `mobile-release.yml` queues TestFlight when
-  mobile or shared package files change.
+  API/web surfaces to staging; `mobile-release.yml` runs the mobile quality
+  gate when mobile or shared package files change.
 - Push to `main`: `deploy-api.yml` and `deploy-web.yml` deploy changed API/web
-  surfaces to production; `mobile-release.yml` queues production-profile
-  TestFlight for mobile changes, not App Store review.
+  surfaces to production; `mobile-release.yml` runs the mobile quality gate for
+  mobile changes and does not queue TestFlight.
 - Push a `v<version>` tag: queue a production-profile TestFlight build for
   that exact mobile version.
 - App Store review always requires manual `Mobile Release` dispatch.

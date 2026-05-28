@@ -4,14 +4,20 @@ Listy Gifty's iOS release path is CI-owned. Local machines can still run EAS
 for diagnostics, but shared TestFlight and App Store promotion should use the
 `Mobile Release` GitHub Actions workflow.
 
-## Automatic TestFlight
+## TestFlight
 
 Pushes to `staging` or `main` that touch the mobile app, shared packages, or
-release scripts run the mobile quality gate and then queue an iOS EAS build
-with the `production` profile:
+release scripts run the mobile quality gate only. They do not queue TestFlight
+builds; shared TestFlight releases are controlled by version tags or manual
+workflow dispatch.
+
+Version tags (`v1.2.3`) queue a production-profile TestFlight build. The tag
+must match `apps/mobile/app.json`'s `expo.version`. The workflow queues EAS
+with auto-submit and then polls App Store Connect until the processed build is
+attached to the tester group:
 
 ```bash
-eas build --profile production --platform ios --auto-submit --non-interactive --wait
+eas build --profile production --platform ios --auto-submit --non-interactive --no-wait
 ```
 
 The production submit profile adds the uploaded build to the App Store Connect
@@ -19,9 +25,6 @@ The production submit profile adds the uploaded build to the App Store Connect
 release configuration that users will eventually receive. CI also verifies the
 uploaded build is attached to `Internal Testers` through the App Store Connect
 API before the run is considered complete.
-
-Version tags (`v1.2.3`) also queue a production-profile TestFlight build. The
-tag must match `apps/mobile/app.json`'s `expo.version`.
 
 ## Production Release Control
 

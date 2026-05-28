@@ -98,10 +98,14 @@ jobs:
             app_version="${INPUT_APP_VERSION}"
           fi
 
-          release_action="${INPUT_RELEASE_ACTION:-testflight}"
+          release_action="none"
           eas_profile="${INPUT_EAS_PROFILE:-production}"
           whats_new="${INPUT_WHATS_NEW:-Bug fixes and performance improvements.}"
           app_store_release_type="${INPUT_APP_STORE_RELEASE_TYPE:-MANUAL}"
+
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            release_action="${INPUT_RELEASE_ACTION:-testflight}"
+          fi
 
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             tag_version="${GITHUB_REF_NAME#v}"
@@ -268,7 +272,7 @@ jobs:
             --platform ios
             --auto-submit
             --non-interactive
-            --wait
+            --no-wait
             --message "${GITHUB_REF_NAME} ${GITHUB_SHA}"
           )
           eas "${args[@]}"
@@ -281,7 +285,7 @@ jobs:
           ASC_APP_ID: ${{ env.ASC_APP_ID }}
           ASC_VERSION_STRING: ${{ needs.release-context.outputs.app_version }}
           ASC_BETA_GROUP_NAME: Internal Testers
-          ASC_WAIT_ATTEMPTS: 30
+          ASC_WAIT_ATTEMPTS: 60
           ASC_WAIT_SECONDS: 60
         run: node scripts/ci/attach-testflight-build-to-group.mjs
 
