@@ -27,7 +27,7 @@ module Niftygifty
     # Email delivery via Postmark
     config.action_mailer.delivery_method = :postmark
     config.action_mailer.postmark_settings = {
-      api_token: ENV["POSTMARK_API_TOKEN"]
+      api_token: ENV["POSTMARK_API_TOKEN"] || ENV["POSTMARK_API_KEY"]
     }
   end
 end

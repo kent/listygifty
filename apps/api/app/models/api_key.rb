@@ -40,7 +40,7 @@ class ApiKey < ApplicationRecord
     api_key = active.find_by(key_prefix: prefix)
     return nil unless api_key
 
-    if Digest::SHA256.hexdigest(actual_key) == api_key.key_hash
+    if ActiveSupport::SecurityUtils.secure_compare(Digest::SHA256.hexdigest(actual_key), api_key.key_hash)
       api_key.touch(:last_used_at)
       api_key
     end

@@ -37,6 +37,7 @@ gem "bootsnap", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
+gem "google-cloud-storage", "~> 1.60"
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
@@ -49,5 +50,5 @@ end
 group :test do
   gem "capybara"
   gem "selenium-webdriver"
-  gem "minitest", "< 6.0" # Pin to avoid compatibility issues with Rails 8.1
+gem "minitest", "< 6.0" # Pin to avoid compatibility issues with Rails 8.1
 end

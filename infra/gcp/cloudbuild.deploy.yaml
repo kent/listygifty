@@ -18,16 +18,12 @@ steps:
         set -euo pipefail
 
         ENVIRONMENT="${_ENVIRONMENT:?_ENVIRONMENT substitution is required}"
-        REGION="${_REGION:-us-central1}"
-        BINDINGS_FILE="${_BINDINGS_FILE:-infra/gcp/secret-bindings.${_ENVIRONMENT}.env}"
+        ENABLE_MOBILE="${_ENABLE_MOBILE:-false}"
 
-        if [[ ! -f "${BINDINGS_FILE}" ]]; then
-          echo "Missing bindings file: ${BINDINGS_FILE}" >&2
-          exit 1
-        fi
+        apt-get update -qq
+        apt-get install -y --no-install-recommends ca-certificates curl git nodejs npm
+        curl -fsSL https://get.pulumi.com | sh
+        export PATH="${HOME}/.pulumi/bin:${PATH}"
 
-        echo "Deploying ${ENVIRONMENT} from ${COMMIT_SHA:-unknown} using ${BINDINGS_FILE}"
-        ENVIRONMENT="${ENVIRONMENT}" REGION="${REGION}" HEROKU_SECRET_BINDINGS_FILE="${BINDINGS_FILE}" \
-          bash infra/gcp/scripts/deploy-api.sh
-        ENVIRONMENT="${ENVIRONMENT}" REGION="${REGION}" HEROKU_SECRET_BINDINGS_FILE="${BINDINGS_FILE}" \
-          bash infra/gcp/scripts/deploy-web.sh
+        pulumi login gs://listygifty-pulumi-state
+        ENABLE_MOBILE="${ENABLE_MOBILE}" bash infra/pulumi/scripts/deploy.sh "${ENVIRONMENT}"

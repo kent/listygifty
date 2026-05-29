@@ -14,12 +14,10 @@ local:
 #   region: your_region
 #   bucket: your_own_bucket-<%= Rails.env %>
 
-# Remember not to checkin your GCS keyfile to a repository
-# google:
-#   service: GCS
-#   project: your_project
-#   credentials: <%= Rails.root.join("path/to/gcs.keyfile") %>
-#   bucket: your_own_bucket-<%= Rails.env %>
+google:
+  service: GCS
+  project: <%= ENV.fetch("GOOGLE_CLOUD_PROJECT", "listygifty") %>
+  bucket: <%= ENV.fetch("ACTIVE_STORAGE_BUCKET", "listygifty-active-storage-#{Rails.env}") %>
 
 # mirror:
 #   service: Mirror

@@ -1,16 +1,7 @@
 name: Deploy Web
 
 on:
-  push:
-    branches:
-      - main
-      - staging
-    paths:
-      - 'apps/web/**'
-      - 'packages/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/deploy-web.yml'
+  workflow_dispatch:
 
 env:
   PROJECT_ID: listygifty

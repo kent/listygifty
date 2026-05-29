@@ -1,13 +1,7 @@
 name: Deploy API
 
 on:
-  push:
-    branches:
-      - main
-      - staging
-    paths:
-      - 'apps/api/**'
-      - '.github/workflows/deploy-api.yml'
+  workflow_dispatch:
 
 env:
   PROJECT_ID: listygifty
@@ -108,7 +102,7 @@ jobs:
             --no-cpu-throttling \
             --set-cloudsql-instances=${{ steps.env.outputs.CLOUD_SQL_INSTANCE }} \
             --set-env-vars="RAILS_ENV=${{ steps.env.outputs.RAILS_ENV }},RAILS_MAX_THREADS=5,RAILS_MIN_THREADS=5" \
-            --set-secrets="DATABASE_URL=${{ steps.env.outputs.DATABASE_URL_SECRET }}:latest,SECRET_KEY_BASE=${{ steps.env.outputs.SECRET_KEY_SECRET }}:latest,ALLOWED_HOSTS=${{ steps.env.outputs.ALLOWED_HOSTS_SECRET }}:latest,CLERK_SECRET_KEY=${{ steps.env.outputs.CLERK_SECRET }}:latest,STRIPE_SECRET_KEY=${{ steps.env.outputs.STRIPE_SECRET }}:latest,STRIPE_WEBHOOK_SECRET=${{ steps.env.outputs.STRIPE_WEBHOOK_SECRET }}:latest,POSTMARK_API_KEY=${{ steps.env.outputs.POSTMARK_SECRET }}:latest,OPENAI_API_KEY=${{ steps.env.outputs.OPENAI_SECRET }}:latest,CORS_ORIGINS=${{ steps.env.outputs.CORS_ORIGINS_SECRET }}:latest,FRONTEND_URL=${{ steps.env.outputs.FRONTEND_URL_SECRET }}:latest"
+            --set-secrets="DATABASE_URL=${{ steps.env.outputs.DATABASE_URL_SECRET }}:latest,SECRET_KEY_BASE=${{ steps.env.outputs.SECRET_KEY_SECRET }}:latest,ALLOWED_HOSTS=${{ steps.env.outputs.ALLOWED_HOSTS_SECRET }}:latest,CLERK_SECRET_KEY=${{ steps.env.outputs.CLERK_SECRET }}:latest,STRIPE_SECRET_KEY=${{ steps.env.outputs.STRIPE_SECRET }}:latest,STRIPE_WEBHOOK_SECRET=${{ steps.env.outputs.STRIPE_WEBHOOK_SECRET }}:latest,POSTMARK_API_TOKEN=${{ steps.env.outputs.POSTMARK_SECRET }}:latest,OPENAI_API_KEY=${{ steps.env.outputs.OPENAI_SECRET }}:latest,CORS_ORIGINS=${{ steps.env.outputs.CORS_ORIGINS_SECRET }}:latest,FRONTEND_URL=${{ steps.env.outputs.FRONTEND_URL_SECRET }}:latest"
 
       - name: Run database migrations
         run: |

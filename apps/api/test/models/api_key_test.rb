@@ -36,6 +36,14 @@ class ApiKeyTest < ActiveSupport::TestCase
     assert_nil ApiKey.find_by_raw_key("ng_invalidkeythatdoesnotexist123")
   end
 
+  test "find_by_raw_key returns nil for matching prefix with wrong secret" do
+    result = ApiKey.generate_for(@user, name: "Test")
+    actual_key = result.raw_key.delete_prefix("ng_")
+    bad_key = "ng_#{actual_key[0..7]}#{'x' * (actual_key.length - 8)}"
+
+    assert_nil ApiKey.find_by_raw_key(bad_key)
+  end
+
   test "find_by_raw_key returns nil for revoked key" do
     result = ApiKey.generate_for(@user, name: "Test")
     result.api_key.revoke!

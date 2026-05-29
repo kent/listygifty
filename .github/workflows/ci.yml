@@ -45,13 +45,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Threshold is `critical` (not `high`) because the high-severity
-      # advisories currently affecting us — Next.js (<=16.3.0-canary.5) and
-      # Hono (transitive via @modelcontextprotocol/sdk) — have no patched
-      # stable release available yet. Tighten back to `high` once both
-      # upstreams ship fixes.
-      - name: Scan for security vulnerabilities in JavaScript dependencies
-        run: npm audit --audit-level=critical
+      - name: Scan workspace production dependencies
+        run: npm audit --workspaces --omit=dev --audit-level=moderate
+
+      - name: Install mobile dependencies
+        run: npm ci --legacy-peer-deps --prefix apps/mobile
+
+      - name: Scan mobile production dependencies
+        run: npm audit --omit=dev --audit-level=moderate --prefix apps/mobile
 
   lint:
     runs-on: ubuntu-latest

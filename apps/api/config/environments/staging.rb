@@ -21,8 +21,8 @@ Rails.application.configure do
   # Cache assets for far-future expiry since they are all digest stamped.
   config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
 
-  # Store uploaded files on the local file system.
-  config.active_storage.service = :local
+  # Store uploaded files outside the ephemeral Cloud Run filesystem.
+  config.active_storage.service = ENV.fetch("ACTIVE_STORAGE_SERVICE", "google").to_sym
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   config.assume_ssl = true

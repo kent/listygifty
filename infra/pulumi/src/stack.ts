@@ -154,6 +154,35 @@ const sqlInstance = gcp.sql.DatabaseInstance.get(
 );
 
 // =============================================================================
+// Active Storage
+// =============================================================================
+
+const activeStorageBucket = new gcp.storage.Bucket(
+  "active-storage-bucket",
+  {
+    name: `${project}-active-storage-${environment}`,
+    location: region.toUpperCase(),
+    uniformBucketLevelAccess: true,
+    publicAccessPrevention: "enforced",
+    versioning: { enabled: true },
+  },
+  {
+    ...providerOpts,
+    protect: environment === "production",
+  }
+);
+
+new gcp.storage.BucketIAMMember(
+  "active-storage-api-object-admin",
+  {
+    bucket: activeStorageBucket.name,
+    role: "roles/storage.objectAdmin",
+    member: pulumi.interpolate`serviceAccount:${defaultComputeSa}`,
+  },
+  providerOpts
+);
+
+// =============================================================================
 // Image URIs (built by Cloud Build / GHA — Pulumi consumes them)
 // =============================================================================
 
@@ -176,7 +205,7 @@ function secretEnv(envVar: string, fullSecretName: string) {
   };
 }
 
-function plainEnv(name: string, value: string) {
+function plainEnv(name: string, value: pulumi.Input<string>) {
   return { name, value };
 }
 
@@ -188,13 +217,16 @@ const apiEnv: pulumi.Input<pulumi.Input<gcp.types.input.cloudrunv2.ServiceTempla
   plainEnv("RAILS_ENV", environment === "production" ? "production" : "staging"),
   plainEnv("RAILS_MAX_THREADS", "5"),
   plainEnv("RAILS_MIN_THREADS", "5"),
+  plainEnv("GOOGLE_CLOUD_PROJECT", project),
+  plainEnv("ACTIVE_STORAGE_SERVICE", "google"),
+  plainEnv("ACTIVE_STORAGE_BUCKET", activeStorageBucket.name),
   secretEnv("DATABASE_URL", `${secretPrefix}database-url`),
   secretEnv("SECRET_KEY_BASE", railsKeySecretName),
   secretEnv("ALLOWED_HOSTS", `${secretPrefix}allowed-hosts`),
   secretEnv("CLERK_SECRET_KEY", `${secretPrefix}clerk-secret-key`),
   secretEnv("STRIPE_SECRET_KEY", `${secretPrefix}stripe-secret-key`),
   secretEnv("STRIPE_WEBHOOK_SECRET", `${secretPrefix}stripe-webhook-secret`),
-  secretEnv("POSTMARK_API_KEY", `${secretPrefix}postmark-api-token`),
+  secretEnv("POSTMARK_API_TOKEN", `${secretPrefix}postmark-api-token`),
   secretEnv("OPENAI_API_KEY", `${secretPrefix}openai-api-key`),
   secretEnv("CORS_ORIGINS", `${secretPrefix}cors-origins`),
   secretEnv("FRONTEND_URL", `${secretPrefix}frontend-url`),
@@ -333,6 +365,9 @@ const migrationJobResource = new gcp.cloudrunv2.Job(
             resources: { limits: { cpu: "1", memory: "512Mi" } },
             envs: [
               plainEnv("RAILS_ENV", environment === "production" ? "production" : "staging"),
+              plainEnv("GOOGLE_CLOUD_PROJECT", project),
+              plainEnv("ACTIVE_STORAGE_SERVICE", "google"),
+              plainEnv("ACTIVE_STORAGE_BUCKET", activeStorageBucket.name),
               secretEnv("DATABASE_URL", `${secretPrefix}database-url`),
               secretEnv("SECRET_KEY_BASE", railsKeySecretName),
               secretEnv("CLERK_SECRET_KEY", `${secretPrefix}clerk-secret-key`),
@@ -390,6 +425,7 @@ check() {
   echo "  ✓ $1 ($code)"
 }
 check "API /up"      "$api_url/up"    200
+check "API /holidays" "$api_url/holidays" 401
 check "web /"        "$web_url/"      200
 check "web /login"   "$web_url/login" 200
 '`,

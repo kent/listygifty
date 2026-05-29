@@ -74,8 +74,9 @@ class OauthClient < ApplicationRecord
   end
 
   def verify_secret(secret)
-    return false unless client_secret_hash.present?
-    Digest::SHA256.hexdigest(secret) == client_secret_hash
+    return false unless client_secret_hash.present? && secret.present?
+
+    ActiveSupport::SecurityUtils.secure_compare(Digest::SHA256.hexdigest(secret), client_secret_hash)
   end
 
   def confidential?

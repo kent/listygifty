@@ -93,6 +93,17 @@ class OauthClientTest < ActiveSupport::TestCase
     assert_not result.client.verify_secret("wrong_secret")
   end
 
+  test "verify_secret returns false for blank secret" do
+    result = OauthClient.generate(
+      name: "Confidential",
+      redirect_uris: [ "https://example.com/callback" ],
+      is_confidential: true
+    )
+
+    assert_not result.client.verify_secret(nil)
+    assert_not result.client.verify_secret("")
+  end
+
   test "revokes client" do
     result = OauthClient.generate(
       name: "Test",
