@@ -163,6 +163,12 @@ else
   MOBILE_PROFILE="${MOBILE_EAS_PROFILE:-${ENVIRONMENT}}"
   [[ "${ENVIRONMENT}" == "production" ]] && MOBILE_PROFILE="${MOBILE_EAS_PROFILE:-production}"
 
+  log "Installing mobile dependencies"
+  (
+    cd "${ROOT_DIR}/apps/mobile"
+    npm ci --legacy-peer-deps --prefer-offline --no-audit --progress=false
+  )
+
   if [[ -n "${APP_STORE_CONNECT_API_KEY_P8:-}" ]]; then
     log "Preparing App Store Connect key for EAS submit"
     MOBILE_STORE_RELEASE=true ASC_KEY_ID="${ASC_KEY_ID:-2XG664G4GG}" \
