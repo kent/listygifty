@@ -78,22 +78,57 @@ API_IMAGE="${IMAGE_REGISTRY}/${API_IMAGE_REPO}:${SHA}"
 WEB_IMAGE="${IMAGE_REGISTRY}/${WEB_IMAGE_REPO}:${SHA}"
 CLERK_PUBLISHABLE_KEY="${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-pk_live_Y2xlcmsubGlzdHlnaWZ0eS5jb20k}"
 
+wait_for_cloud_build() {
+  local build_id="$1"
+  local label="$2"
+  local status=""
+
+  if [[ -z "${build_id}" ]]; then
+    echo "${label} Cloud Build did not return a build ID." >&2
+    return 1
+  fi
+
+  log "Waiting for ${label} Cloud Build ${build_id}"
+  while true; do
+    status="$(gcloud builds describe "${build_id}" --project="${PROJECT}" --format="value(status)")"
+    case "${status}" in
+      SUCCESS)
+        log "${label} Cloud Build ${build_id} succeeded"
+        return 0
+        ;;
+      FAILURE|INTERNAL_ERROR|TIMEOUT|CANCELLED|EXPIRED)
+        echo "${label} Cloud Build ${build_id} failed with status ${status}." >&2
+        return 1
+        ;;
+      *)
+        sleep 10
+        ;;
+    esac
+  done
+}
+
 build_api_image() {
   log "Building API image ${API_IMAGE}"
-  gcloud builds submit "${ROOT_DIR}" \
+  local build_id
+  build_id="$(gcloud builds submit "${ROOT_DIR}" \
     --project="${PROJECT}" \
-    --suppress-logs \
+    --async \
+    --format="value(id)" \
     --config="${ROOT_DIR}/infra/gcp/cloudbuild.api.yaml" \
-    --substitutions="_IMAGE=${API_IMAGE}"
+    --substitutions="_IMAGE=${API_IMAGE}")"
+  wait_for_cloud_build "${build_id}" "API"
 }
 
 build_web_image() {
   log "Building web image ${WEB_IMAGE}"
-  gcloud builds submit "${ROOT_DIR}" \
+  local build_id
+  build_id="$(gcloud builds submit "${ROOT_DIR}" \
     --project="${PROJECT}" \
-    --suppress-logs \
+    --async \
+    --format="value(id)" \
     --config="${ROOT_DIR}/infra/gcp/cloudbuild.web.yaml" \
-    --substitutions="_IMAGE=${WEB_IMAGE},_NEXT_PUBLIC_API_URL=https://${API_DOMAIN},_NEXT_PUBLIC_APP_URL=https://${APP_DOMAIN},_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY},_NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login,_NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup,_NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard,_NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard,_NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY:-},_NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST:-}"
+    --substitutions="_IMAGE=${WEB_IMAGE},_NEXT_PUBLIC_API_URL=https://${API_DOMAIN},_NEXT_PUBLIC_APP_URL=https://${APP_DOMAIN},_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY},_NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login,_NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup,_NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard,_NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard,_NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY:-},_NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST:-}")"
+  wait_for_cloud_build "${build_id}" "web"
 }
 
 log "Building deploy images in Cloud Build"
