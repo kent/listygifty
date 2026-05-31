@@ -82,6 +82,7 @@ build_api_image() {
   log "Building API image ${API_IMAGE}"
   gcloud builds submit "${ROOT_DIR}" \
     --project="${PROJECT}" \
+    --suppress-logs \
     --config="${ROOT_DIR}/infra/gcp/cloudbuild.api.yaml" \
     --substitutions="_IMAGE=${API_IMAGE}"
 }
@@ -90,6 +91,7 @@ build_web_image() {
   log "Building web image ${WEB_IMAGE}"
   gcloud builds submit "${ROOT_DIR}" \
     --project="${PROJECT}" \
+    --suppress-logs \
     --config="${ROOT_DIR}/infra/gcp/cloudbuild.web.yaml" \
     --substitutions="_IMAGE=${WEB_IMAGE},_NEXT_PUBLIC_API_URL=https://${API_DOMAIN},_NEXT_PUBLIC_APP_URL=https://${APP_DOMAIN},_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY},_NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login,_NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup,_NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard,_NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard,_NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY:-},_NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST:-}"
 }
