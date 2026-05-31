@@ -39,3 +39,6 @@ Thumbs.db
 
 # Generated GCP migration artifacts
 .gcp/
+
+# GitHub Actions Google auth credentials
+gha-creds-*.json
