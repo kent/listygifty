@@ -6,7 +6,13 @@ import { Analytics } from "@/components/analytics";
 import { Providers } from "@/components/providers";
 import { JsonLd } from "@/components/json-ld";
 import { Footer } from "@/components/layout";
-import { BRAND_NAME, BRAND_TEAM_NAME } from "@/lib/brand";
+import { BRAND_NAME } from "@/lib/brand";
+import {
+  BASE_KEYWORDS,
+  DEFAULT_OG_IMAGE,
+  DEFAULT_SEO_DESCRIPTION,
+  getSiteUrl,
+} from "@/lib/seo";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-sans",
@@ -20,31 +26,18 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.length ? process.env.NEXT_PUBLIC_APP_URL : "https://listygifty.com";
+const baseUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: `${BRAND_NAME}: Manage and Share Gift Lists`,
+    default: `${BRAND_NAME}: Gift Planning for Families, Exchanges, and Teams`,
     template: `%s | ${BRAND_NAME}`,
   },
-  description:
-    `Track gift ideas, manage budgets, and never forget a special occasion. ${BRAND_NAME} helps you organize thoughtful gifts for everyone you love.`,
+  description: DEFAULT_SEO_DESCRIPTION,
   applicationName: BRAND_NAME,
-  authors: [{ name: BRAND_TEAM_NAME }],
   generator: "Next.js",
-  keywords: [
-    "gift planning",
-    "gift tracker",
-    "gift ideas",
-    "holiday gifts",
-    "birthday gifts",
-    "gift organizer",
-    "gift list",
-    "gift budgeting",
-    "family gift planning",
-    "christmas gift list",
-  ],
+  keywords: BASE_KEYWORDS,
   referrer: "origin-when-cross-origin",
   creator: BRAND_NAME,
   publisher: BRAND_NAME,
@@ -62,24 +55,22 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: baseUrl,
     siteName: BRAND_NAME,
-    title: `${BRAND_NAME} - Gift Planning Made Simple`,
-    description:
-      "Track gift ideas, manage budgets, and never forget a special occasion.",
+    title: `${BRAND_NAME}: Gift Planning for Families, Exchanges, and Teams`,
+    description: DEFAULT_SEO_DESCRIPTION,
     images: [
       {
-        url: "/og-image.png",
+        url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: `${BRAND_NAME} - Gift Planning Made Simple`,
+        alt: `${BRAND_NAME} gift planning workspace preview`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${BRAND_NAME} - Gift Planning Made Simple`,
-    description:
-      "Track gift ideas, manage budgets, and never forget a special occasion.",
-    images: ["/og-image.png"],
+    title: `${BRAND_NAME}: Gift Planning for Families, Exchanges, and Teams`,
+    description: DEFAULT_SEO_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
   },
   robots: {
     index: true,
@@ -123,11 +114,33 @@ export default function RootLayout({
           data={{
             "@context": "https://schema.org",
             "@type": "Organization",
+            "@id": `${baseUrl}/#organization`,
             name: BRAND_NAME,
             url: baseUrl,
             logo: `${baseUrl}/icon-512.png`,
+            email: "support@listygifty.com",
             description:
-              `${BRAND_NAME} helps you organize thoughtful gifts for everyone you love.`,
+              `${BRAND_NAME} helps families, friend groups, and teams organize thoughtful gifts, exchanges, wishlists, budgets, and reminders.`,
+            contactPoint: {
+              "@type": "ContactPoint",
+              contactType: "customer support",
+              email: "support@listygifty.com",
+              url: `${baseUrl}/support`,
+            },
+          }}
+        />
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "@id": `${baseUrl}/#website`,
+            name: BRAND_NAME,
+            url: baseUrl,
+            publisher: {
+              "@id": `${baseUrl}/#organization`,
+            },
+            inLanguage: "en-US",
+            description: DEFAULT_SEO_DESCRIPTION,
           }}
         />
         <Providers>

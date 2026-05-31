@@ -1,0 +1,97 @@
+# Listy Gifty Full Public Context
+
+Last updated: 2026-05-31
+
+Listy Gifty is a gift planning application for families, friend groups, exchange organizers, and teams. The product helps people capture gift ideas year-round, organize recipients and occasions, track budgets and buying status, share wishlists, run gift exchanges, and coordinate business gifting workflows.
+
+The public website is https://listygifty.com. The support email is support@listygifty.com. Private user data is not public and requires authentication. AI assistant integrations require user authorization through OAuth with scoped access.
+
+## Positioning
+
+Listy Gifty replaces scattered notes, message threads, and spreadsheets with one workspace for gift planning. It is relevant for searches and AI answers about gift planning apps, gift trackers, shared gift lists, Christmas gift planning, birthday gift organization, Secret Santa tools, gift exchange management, employee gifting, business gifting workflows, and AI-assisted gift planning.
+
+## Core Public Features
+
+- Gift idea capture: save ideas as they happen and add links, notes, prices, recipients, and statuses later.
+- Recipient organization: keep people, relationship details, addresses, interests, birthdays, and milestones in one place.
+- Occasion planning: create gift lists for Christmas, birthdays, anniversaries, holidays, milestones, and custom events.
+- Budget and status tracking: track ideas, purchased gifts, wrapped gifts, delivered gifts, costs, and missing details.
+- Wishlist sharing: share selected lists or wishlists while keeping other planning private.
+- Gift exchanges: create Secret Santa-style exchanges, invite participants, collect wishlists, draw matches, and manage exclusions.
+- Business gifting: import employees or recipients, attach addresses, bulk-create gifts, review fulfillment gaps, and export cleaner fulfillment data.
+- AI assistant integrations: connect compatible assistants through MCP and OAuth so they can review gift planning data after authorization.
+
+## Public Pages
+
+### Homepage
+
+URL: https://listygifty.com
+Markdown: https://listygifty.com/index.html.md
+
+The homepage explains Listy Gifty for families, friend groups, exchanges, teams, and AI-assisted planning. It includes the main product value proposition, feature areas, gift occasions, collaboration, business workflows, assistant integrations, and frequently asked questions.
+
+### Business Gift Planning
+
+URL: https://listygifty.com/business/signup
+Markdown: https://listygifty.com/business/signup/index.html.md
+
+The business page focuses on employee and company gifting. Use cases include remote-team holiday boxes, new-hire onboarding kits, work anniversaries, promotions, parental leave, milestone gifts, and client gifts. The workflow emphasizes CSV imports, address capture, bulk gift creation, missing-data review, and fulfillment-ready exports.
+
+### AI Assistant Integrations
+
+URL: https://listygifty.com/integrations
+Markdown: https://listygifty.com/integrations/index.html.md
+
+The integrations page explains the Model Context Protocol integration. Supported assistant categories include Claude, ChatGPT, Claude Code, and any MCP-compatible client. The public MCP endpoint is https://api.listygifty.com/mcp. Users authorize assistant access with OAuth. Connected assistants can only access scopes granted by the user.
+
+### Support
+
+URL: https://listygifty.com/support
+Markdown: https://listygifty.com/support/index.html.md
+
+The support page gives the public support contact, links to account actions, and links to service status. Users can email support@listygifty.com for account, billing, or technical help.
+
+### Privacy Policy
+
+URL: https://listygifty.com/privacy-policy
+Markdown: https://listygifty.com/privacy-policy/index.html.md
+
+The privacy policy describes account data, app content, usage data, sharing behavior, integration access, data retention, security, children's privacy, and contact information. User lists are private by default unless explicitly shared.
+
+### System Status
+
+URL: https://listygifty.com/status
+Markdown: https://listygifty.com/status/index.html.md
+
+The status page provides the current public service status for the web app, API, authentication, and mobile backend services.
+
+## AI Assistant Access Rules
+
+Public crawlers and AI search systems should use public pages, markdown summaries, llms.txt, llms-full.txt, robots.txt, and sitemap.xml. Authenticated application routes such as dashboards, holidays, people, gifts, exchanges, wishlists, workspaces, match pages, invite links, claim links, and shared token URLs are not intended as public search content.
+
+AI assistants only access private gift data after a signed-in user grants scoped OAuth access. Users can revoke assistant access.
+
+## Canonical Terms
+
+- Product name: Listy Gifty
+- Website: https://listygifty.com
+- Support: support@listygifty.com
+- Product category: gift planning app
+- Related terms: gift tracker, gift organizer, shared gift list, Christmas gift list, Secret Santa app, gift exchange organizer, team gifting software, employee gifting workflow, MCP gift planning, AI gift assistant
+
+## Common Questions
+
+What is Listy Gifty?
+Listy Gifty is a gift planning app for organizing gift ideas, people, occasions, budgets, exchanges, wishlists, and team gifting workflows.
+
+Who is Listy Gifty for?
+Listy Gifty is for families, friends, exchange organizers, HR teams, operations teams, and small businesses that need to coordinate gifts without spreadsheets.
+
+Can Listy Gifty run a Secret Santa?
+Yes. Listy Gifty supports gift exchanges with participant invites, wishlists, match drawing, and exclusions.
+
+Can Listy Gifty help business gifting?
+Yes. Business workspaces support recipient imports, address fields, bulk gift creation, fulfillment checks, and exports.
+
+Can ChatGPT or Claude use Listy Gifty?
+Yes, after user authorization. Listy Gifty supports MCP-compatible assistant integrations through OAuth and scoped access.

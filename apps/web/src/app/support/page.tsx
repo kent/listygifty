@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Support",
-  description: "Support and status information for Listy Gifty.",
-  alternates: {
-    canonical: "/support",
-  },
-};
+  description: "Get account help, billing support, service status, and contact information for Listy Gifty.",
+  path: "/support",
+  keywords: ["Listy Gifty support", "gift planning app support"],
+});
 
 const lastUpdated = "March 2, 2026";
 

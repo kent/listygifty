@@ -2,6 +2,7 @@ import type { User, BillingStatus } from "@niftygifty/types";
 import type { UserResource } from "@clerk/types";
 import type { Appearance } from "@clerk/types";
 import { dark } from "@clerk/themes";
+import { PUBLIC_MARKETING_PAGES, PUBLIC_STATIC_TEXT_ROUTES } from "@/lib/seo";
 
 // =============================================================================
 // Route Configuration
@@ -15,7 +16,8 @@ export const AUTH_ROUTES = {
 } as const;
 
 export const PUBLIC_ROUTES = [
-  "/",
+  ...PUBLIC_MARKETING_PAGES.map((page) => page.path),
+  ...PUBLIC_STATIC_TEXT_ROUTES,
   "/.well-known(.*)",
   "/apple-app-site-association",
   "/login(.*)",
@@ -25,11 +27,6 @@ export const PUBLIC_ROUTES = [
   "/signup(.*)",
   "/giving-pledge",
   "/billing(.*)",
-  "/integrations",
-  "/business/signup",
-  "/privacy-policy",
-  "/support",
-  "/status",
 ] as const;
 
 // =============================================================================

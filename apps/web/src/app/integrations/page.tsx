@@ -5,15 +5,15 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { TrackedLink } from "@/components/tracked-link";
 import { AUTH_ROUTES } from "@/services";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Assistant Integrations | Listy Gifty",
+export const metadata: Metadata = createPageMetadata({
+  title: "AI Assistant and MCP Integrations",
   description:
     "Connect Listy Gifty to Claude, ChatGPT, and other MCP-compatible assistants so they can help manage your gift lists with scoped OAuth access.",
-  alternates: {
-    canonical: "/integrations",
-  },
-};
+  path: "/integrations",
+  keywords: ["MCP gift planning", "ChatGPT gift planner", "Claude gift planning", "AI assistant integrations"],
+});
 
 const mcpTools = [
   {

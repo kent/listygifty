@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Privacy Policy",
-  description: "Privacy policy for Listy Gifty.",
-  alternates: {
-    canonical: "/privacy-policy",
-  },
-};
+  description: "Review how Listy Gifty collects, uses, protects, and shares account and gift planning data.",
+  path: "/privacy-policy",
+  keywords: ["Listy Gifty privacy", "gift planning data privacy"],
+});
 
 const lastUpdated = "March 2, 2026";
 

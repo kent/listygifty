@@ -1,30 +1,39 @@
 # Listy Gifty
 
-> Gift logistics made simple. Capture ideas, coordinate exchanges, track budgets, and remember every deadline.
+> Listy Gifty is a gift planning app for families, friend groups, and teams. It helps users capture gift ideas, organize recipients and occasions, run gift exchanges, track budgets, and connect AI assistants through scoped MCP integrations.
 
-Listy Gifty is a web and mobile application for keeping the gift side of life organized across families, friend groups, and teams. It helps people capture ideas year-round, coordinate recipients and gift exchanges, manage budgets, and track gifts from idea to purchase to delivery.
+Listy Gifty publishes this file to make the public product information easier for AI assistants and search systems to interpret. Private app data, shared gift links, invite links, and authenticated workspaces are not public content.
 
-## Key Features
+Last updated: 2026-05-31
 
-- **Gift Tracking**: Keep track of gift ideas for all the people in your life
-- **Budget Management**: Set and track budgets for different occasions and recipients
-- **Occasion Reminders**: Never miss a birthday, holiday, or special event
-- **Gift Status Tracking**: Track whether gifts are ideas, purchased, wrapped, or given
-- **Gift Exchanges**: Run Secret Santa, Yankee Swap, and other draw-name exchanges without spreadsheets
-- **Team Gift Workflows**: Plan onboarding kits, holiday boxes, milestone gifts, and client gifts with shared owners
-- **MCP Integrations**: Connect compatible assistants to query, create, and update gift data with scoped OAuth access
+## Public Pages
 
-## Getting Started
+- [Homepage](https://listygifty.com/index.html.md): Overview of gift planning, family use cases, exchanges, business workflows, and AI assistant support.
+- [Business gift planning](https://listygifty.com/business/signup/index.html.md): Team gifting workflows for employee holiday boxes, new-hire kits, milestones, imports, and exports.
+- [AI assistant integrations](https://listygifty.com/integrations/index.html.md): MCP and OAuth integration overview for Claude, ChatGPT, and compatible assistants.
+- [Support](https://listygifty.com/support/index.html.md): Support contact, status information, and helpful account links.
+- [Privacy Policy](https://listygifty.com/privacy-policy/index.html.md): Public summary of Listy Gifty data collection, sharing, retention, and contact practices.
+- [System Status](https://listygifty.com/status/index.html.md): Current public service status page.
 
-Visit [listygifty.com](https://listygifty.com) to create a free account and start planning gifts today.
+## Product Facts
 
-## Links
+- Brand name: Listy Gifty
+- Website: https://listygifty.com
+- Category: gift planning app, gift tracker, shared gift list, gift exchange organizer, business gifting workflow
+- Platforms: web, iOS, Android
+- Public support email: support@listygifty.com
+- Primary audiences: families, friend groups, gift exchange organizers, HR and operations teams, small businesses
+- Main workflows: capture gift ideas, organize recipients, plan occasions, track purchase/wrapping/delivery status, manage budgets, share wishlists, run exchanges, import recipients, export fulfillment data
 
-- Homepage: https://listygifty.com
-- Sign Up: https://listygifty.com/signup
-- Sign In: https://listygifty.com/login
-- Integrations: https://listygifty.com/integrations
+## AI and MCP Access
 
-## Contact
+- [MCP integrations](https://listygifty.com/integrations): Public explanation of assistant access.
+- MCP server endpoint: https://api.listygifty.com/mcp
+- Authentication: OAuth with scoped access.
+- Important privacy rule: AI assistants only access user gift data after the user authorizes access. Public crawlers should use the public pages listed in this file, not authenticated app routes.
 
-For support or inquiries, visit our website at https://listygifty.com
+## Optional
+
+- [Full LLM context file](https://listygifty.com/llms-full.txt): Longer plain-text summary of public Listy Gifty positioning, features, privacy notes, and page descriptions.
+- [Sitemap](https://listygifty.com/sitemap.xml): XML sitemap for public crawlable pages.
+- [Robots policy](https://listygifty.com/robots.txt): Crawler access policy.

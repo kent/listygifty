@@ -1,40 +1,26 @@
 import type { MetadataRoute } from "next";
-
-const DISALLOWED_APP_ROUTES = [
-  "/api/",
-  "/dashboard",
-  "/holidays",
-  "/people",
-  "/settings",
-  "/billing",
-  "/gifts",
-];
-
-const PUBLIC_AI_ROUTES = ["/", "/business/signup", "/integrations", "/login", "/signup", "/support"];
-
-const AI_CRAWLERS = [
-  "GPTBot",
-  "ChatGPT-User",
-  "Claude-Web",
-  "Anthropic-AI",
-  "PerplexityBot",
-  "Google-Extended",
-];
+import {
+  AI_CRAWLER_USER_AGENTS,
+  PRIVATE_CRAWL_DISALLOW_ROUTES,
+  PUBLIC_STATIC_TEXT_ROUTES,
+  getSiteUrl,
+} from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.length ? process.env.NEXT_PUBLIC_APP_URL : "https://listygifty.com";
+  const baseUrl = getSiteUrl();
+  const allow = ["/", ...PUBLIC_STATIC_TEXT_ROUTES];
 
   return {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
-        disallow: DISALLOWED_APP_ROUTES,
+        allow,
+        disallow: [...PRIVATE_CRAWL_DISALLOW_ROUTES],
       },
-      ...AI_CRAWLERS.map((userAgent) => ({
+      ...AI_CRAWLER_USER_AGENTS.map((userAgent) => ({
         userAgent,
-        allow: PUBLIC_AI_ROUTES,
-        disallow: DISALLOWED_APP_ROUTES,
+        allow,
+        disallow: [...PRIVATE_CRAWL_DISALLOW_ROUTES],
       })),
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

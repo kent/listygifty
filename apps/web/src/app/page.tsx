@@ -9,15 +9,20 @@ import { TrackedLink } from "@/components/tracked-link";
 // InteractiveDemo available for future use
 import { HeroPreview } from "@/components/hero-preview";
 import { BUSINESS_USE_CASES, DEFAULT_BUSINESS_USE_CASE } from "@/lib/business-use-cases";
+import { absoluteUrl, createPageMetadata, DEFAULT_SEO_DESCRIPTION } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Listy Gifty: Gift Planning for Families, Exchanges, and Teams",
-  description:
-    "Capture gift ideas year-round, organize gifts by person and occasion, run gift exchanges, and coordinate team gifting from one shared workspace.",
-  alternates: {
-    canonical: "/",
-  },
-};
+  description: DEFAULT_SEO_DESCRIPTION,
+  path: "/",
+  keywords: [
+    "gift planning app",
+    "family gift tracker",
+    "Christmas 2026 gift planning",
+    "AI gift assistant",
+    "team gifting software",
+  ],
+});
 
 const features = [
   {
@@ -62,26 +67,26 @@ const features = [
   },
 ];
 
-const testimonials = [
+const planningScenarios = [
   {
-    quote: "This is the best app in the world!",
-    author: "Kent's Mom",
-    rating: 5,
+    title: "Family holiday planning",
+    description:
+      "Keep Christmas, birthday, and milestone gifts organized by person, status, budget, and purchase link.",
   },
   {
-    quote: "I don't know why my husband built this.",
-    author: "Kent's Wife",
-    rating: 5,
+    title: "Gift exchanges",
+    description:
+      "Invite participants, collect wishlists, draw matches, manage exclusions, and track what still needs attention.",
   },
   {
-    quote: "I think my Dad sells Bitcoin.",
-    author: "Kent's Children",
-    rating: 5,
+    title: "Business gifting",
+    description:
+      "Import recipients, manage employee gifting workflows, catch missing fulfillment details, and export cleaner data.",
   },
   {
-    quote: "These are great reviews",
-    author: "Kyle F.",
-    rating: 5,
+    title: "AI-assisted reviews",
+    description:
+      "Connect a scoped assistant to review lists, summarize gaps, and create planning records after authorization.",
   },
 ];
 
@@ -92,20 +97,31 @@ const businessWorkflowSteps = [
   "Review exceptions for missing recipients, costs, links, and shipping addresses",
 ];
 
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <div className="flex gap-1">
-      {[...Array(rating)].map((_, i) => (
-        <svg key={i} className="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-      ))}
-    </div>
-  );
-}
+const faqItems = [
+  {
+    question: "What is the best way to organize gifts for Christmas 2026?",
+    answer:
+      "Use one shared gift planning workspace for recipients, gift ideas, budgets, links, and buying status instead of spreading the plan across notes, messages, and spreadsheets.",
+  },
+  {
+    question: "Can Listy Gifty run a Secret Santa or gift exchange?",
+    answer:
+      "Yes. Listy Gifty supports gift exchanges with participant invites, wishlists, match drawing, exclusions, and status tracking so groups can coordinate without exposing surprises.",
+  },
+  {
+    question: "Does Listy Gifty work for business gifting?",
+    answer:
+      "Yes. Teams can create business workspaces for employee holiday boxes, new-hire kits, work anniversaries, milestone gifts, recipient imports, and fulfillment-ready exports.",
+  },
+  {
+    question: "Can AI assistants help manage my gift lists?",
+    answer:
+      "Yes. Listy Gifty exposes scoped MCP integrations so compatible assistants such as Claude, ChatGPT, and other MCP clients can review lists, spot missing details, and create gift planning records after OAuth authorization.",
+  },
+];
 
 export default function HomePage() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.length ? process.env.NEXT_PUBLIC_APP_URL : "https://listygifty.com";
+  const baseUrl = absoluteUrl("/");
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden">
@@ -113,21 +129,54 @@ export default function HomePage() {
         data={{
           "@context": "https://schema.org",
           "@type": "WebPage",
+          "@id": `${baseUrl}#webpage`,
           name: "Listy Gifty: Gift Planning for Families, Exchanges, and Teams",
           url: baseUrl,
-          description:
-            "Capture gift ideas year-round, organize gifts by person and occasion, and coordinate gift exchanges.",
+          description: DEFAULT_SEO_DESCRIPTION,
+          isPartOf: {
+            "@id": `${baseUrl}#website`,
+          },
           mainEntity: {
             "@type": "SoftwareApplication",
+            "@id": `${baseUrl}#software`,
             name: "Listy Gifty",
+            url: baseUrl,
             applicationCategory: "LifestyleApplication",
+            operatingSystem: "Web, iOS, Android",
             description:
               "A gift planning app that helps families, friend groups, and teams organize presents, track buying status, and coordinate gift exchanges.",
+            featureList: [
+              "Gift idea tracking",
+              "Recipient and occasion organization",
+              "Gift exchange matching",
+              "Budget and status tracking",
+              "Wishlist sharing",
+              "Business gifting workflows",
+              "MCP assistant integrations",
+            ],
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "USD",
+            },
             author: {
-              "@type": "Organization",
-              name: "Listy Gifty",
+              "@id": `${baseUrl}#organization`,
             },
           },
+        }}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqItems.map((item) => ({
+            "@type": "Question",
+            name: item.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: item.answer,
+            },
+          })),
         }}
       />
       
@@ -260,7 +309,7 @@ export default function HomePage() {
                     </svg>
                   ))}
                 </div>
-                <span className="text-sm">5.0 from happy families</span>
+                <span className="text-sm">Family, exchange, and team gift planning</span>
               </div>
               <div className="hidden sm:block w-px h-4 bg-slate-300 dark:bg-slate-700" />
               <div className="text-sm">
@@ -671,38 +720,62 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Testimonials Section */}
+        {/* Planning Scenarios Section */}
         <section className="container mx-auto px-4 py-20">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
-              Loved by{" "}
+              Built for{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 dark:from-amber-400 to-orange-500 dark:to-orange-400">
-                Real Families
+                Real Planning
               </span>
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Don&apos;t just take our word for it. Here&apos;s what our users have to say.
+              The same workspace supports quick family gift ideas, structured exchanges, and team gifting workflows.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {testimonials.map((testimonial, index) => (
+          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+            {planningScenarios.map((scenario, index) => (
               <div
                 key={index}
                 className="p-8 rounded-2xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300"
               >
-                <StarRating rating={testimonial.rating} />
-                <p className="text-lg text-slate-900 dark:text-white mt-4 mb-6 leading-relaxed">
-                  &ldquo;{testimonial.quote}&rdquo;
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white font-bold">
-                    {testimonial.author.charAt(0)}
-                  </div>
-                  <span className="text-slate-700 dark:text-slate-300 font-medium">- {testimonial.author}</span>
+                <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-sm font-bold text-white">
+                  {index + 1}
                 </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{scenario.title}</h3>
+                <p className="leading-relaxed text-slate-600 dark:text-slate-400">{scenario.description}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className="container mx-auto px-4 py-20">
+          <div className="mx-auto max-w-4xl">
+            <div className="mb-12 text-center">
+              <h2 className="mb-4 text-3xl font-bold text-slate-900 dark:text-white md:text-5xl">
+                Gift Planning{" "}
+                <span className="bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-transparent dark:from-emerald-400 dark:to-cyan-400">
+                  Questions
+                </span>
+              </h2>
+              <p className="mx-auto max-w-2xl text-lg text-slate-600 dark:text-slate-400">
+                Direct answers for families, groups, and teams comparing gift trackers, shared lists, and AI-assisted planning.
+              </p>
+            </div>
+
+            <div className="grid gap-4">
+              {faqItems.map((item) => (
+                <section
+                  key={item.question}
+                  className="rounded-2xl border border-slate-200 bg-white/60 p-6 dark:border-slate-800 dark:bg-slate-900/60"
+                >
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{item.question}</h3>
+                  <p className="mt-3 leading-relaxed text-slate-600 dark:text-slate-400">{item.answer}</p>
+                </section>
+              ))}
+            </div>
           </div>
         </section>
 

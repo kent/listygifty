@@ -5,8 +5,12 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   robots: {
-    index: true,
+    index: false,
     follow: true,
+    googleBot: {
+      index: false,
+      follow: true,
+    },
   },
 };
 
