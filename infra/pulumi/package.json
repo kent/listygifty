@@ -11,7 +11,7 @@
   "dependencies": {
     "@pulumi/command": "^1.0.0",
     "@pulumi/gcp": "^8.0.0",
-    "@pulumi/pulumi": "^3.130.0"
+    "@pulumi/pulumi": "^3.247.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
