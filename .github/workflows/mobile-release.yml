@@ -3,21 +3,8 @@ run-name: ${{ github.event_name == 'workflow_dispatch' && format('Mobile {0}', i
 
 on:
   push:
-    branches:
-      - staging
-      - main
     tags:
       - 'v*'
-    paths:
-      - 'apps/mobile/**'
-      - 'packages/types/**'
-      - 'packages/api-client/**'
-      - 'packages/services/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/mobile-release.yml'
-      - 'scripts/release-mobile.mjs'
-      - 'scripts/ci/**'
   workflow_dispatch:
     inputs:
       release_action:
