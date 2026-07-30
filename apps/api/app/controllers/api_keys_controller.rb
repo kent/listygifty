@@ -7,11 +7,12 @@ class ApiKeysController < ApplicationController
   end
 
   def create
+    attributes = api_key_params
     result = ApiKey.generate_for(
       current_user,
-      name: params[:name],
-      scopes: params[:scopes] || %w[read write],
-      expires_at: params[:expires_at]&.to_datetime
+      name: attributes[:name],
+      scopes: attributes[:scopes].presence || %w[read write],
+      expires_at: attributes[:expires_at].presence&.to_datetime
     )
 
     render json: {
@@ -32,6 +33,10 @@ class ApiKeysController < ApplicationController
   end
 
   private
+
+  def api_key_params
+    params.require(:api_key).permit(:name, :expires_at, scopes: [])
+  end
 
   def api_key_json(api_key)
     {
