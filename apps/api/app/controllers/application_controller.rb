@@ -72,7 +72,7 @@ class ApplicationController < ActionController::API
 
   def fetch_clerk_user(clerk_user_id)
     return nil unless ENV["CLERK_SECRET_KEY"].present?
-    Clerk::SDK.new.users.find(clerk_user_id)
+    Clerk::SDK.new.users.get(user_id: clerk_user_id).user
   rescue StandardError => e
     Rails.logger.warn "Failed to fetch Clerk user: #{e.message}"
     nil
@@ -80,12 +80,25 @@ class ApplicationController < ActionController::API
 
   def clerk_user_email(clerk_user)
     return nil unless clerk_user
-    clerk_user.email_addresses&.find { |e| e["id"] == clerk_user.primary_email_address_id }&.dig("email_address")
+    address = clerk_user.email_addresses&.find do |email|
+      clerk_resource_attribute(email, :id) == clerk_user.primary_email_address_id
+    end
+    clerk_resource_attribute(address, :email_address)
   end
 
   def clerk_user_phone(clerk_user)
     return nil unless clerk_user&.phone_numbers&.any?
-    clerk_user.phone_numbers.find { |p| p["id"] == clerk_user.primary_phone_number_id }&.dig("phone_number")
+    phone = clerk_user.phone_numbers.find do |number|
+      clerk_resource_attribute(number, :id) == clerk_user.primary_phone_number_id
+    end
+    clerk_resource_attribute(phone, :phone_number)
+  end
+
+  def clerk_resource_attribute(resource, attribute)
+    return nil unless resource
+    return resource.public_send(attribute) if resource.respond_to?(attribute)
+
+    resource[attribute.to_s] || resource[attribute]
   end
 
   def apply_clerk_data(user, clerk_user, clerk_user_id, token_email: nil)

@@ -61,11 +61,11 @@ module ActionDispatch
 
           def users
             test_users = self.class.class_variable_get(:@@test_users) rescue {}
-            # Return a mock users object that has a find method
+            # Return a mock users object matching the current Clerk SDK contract.
             users_obj = Object.new
-            users_obj.define_singleton_method(:find) do |id|
-              if test_users[id.to_s]
-                user_email = test_users[id.to_s]
+            users_obj.define_singleton_method(:get) do |user_id:|
+              if test_users[user_id.to_s]
+                user_email = test_users[user_id.to_s]
                 # Create a mock user object
                 user_obj = Object.new
                 user_obj.define_singleton_method(:email_addresses) do
@@ -77,10 +77,12 @@ module ActionDispatch
                 user_obj.define_singleton_method(:image_url) { nil }
                 user_obj.define_singleton_method(:username) { nil }
                 user_obj.define_singleton_method(:phone_numbers) { [] }
-                user_obj
+                response = Object.new
+                response.define_singleton_method(:user) { user_obj }
+                response
               else
                 # Fall back to original if not in test users
-                original_users_for_test.find(id)
+                original_users_for_test.get(user_id: user_id)
               end
             end
             users_obj
