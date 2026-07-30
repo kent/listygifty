@@ -24,5 +24,5 @@ config:
   niftygifty:apiImageRepo: niftygifty-api
   niftygifty:webImageRepo: listygifty-web
   niftygifty:androidAppLinkSha256CertFingerprints: ""
-  niftygifty:sourceSha: 73852a2374cb
+  niftygifty:sourceSha: 671ba0691edb
 encryptionsalt: v1:Y6Pp500F2p4=:v1:SDeV4cgIvjehJdaa:/4eiMdddKoF97Shyjzle4BiFZnl7Qg==
