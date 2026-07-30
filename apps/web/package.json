@@ -64,7 +64,7 @@
     "eslint": "^9",
     "eslint-config-next": "^16.2.6",
     "lightningcss": "^1.30.2",
-    "postcss": "^8.5.15",
+    "postcss": "^8.5.18",
     "schema-dts": "^1.1.5",
     "tailwindcss": "^4",
     "typescript": "^5"
