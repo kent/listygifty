@@ -173,6 +173,7 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     assert json["result"]["tools"].any? { |t| t["name"] == "create_gift_exchange" }
     assert json["result"]["tools"].any? { |t| t["name"] == "start_gift_exchange" }
     assert json["result"]["tools"].any? { |t| t["name"] == "publish_gift_exchange" }
+    assert json["result"]["tools"].any? { |t| t["name"] == "redo_gift_exchange" }
     assert json["result"]["tools"].any? { |t| t["name"] == "accept_exchange_invite" }
     assert json["result"]["tools"].any? { |t| t["name"] == "nudge_exchange_match" }
     assert json["result"]["tools"].any? { |t| t["name"] == "list_exchange_notifications" }
@@ -397,6 +398,56 @@ class McpControllerTest < ActionDispatch::IntegrationTest
       refute notification.key?("actor_id")
       refute notification.key?("recipient_participant_id")
     end
+
+    first_draw = exchange.exchange_participants.pluck(:id, :matched_participant_id).to_h
+    unauthorized_redraw = call_tool(
+      "redo_gift_exchange",
+      { exchange_id: exchange.id, mode: "redraw" },
+      headers: participant_headers.first
+    )
+    assert unauthorized_redraw["isError"]
+
+    redrawn = tool_payload(call_tool("redo_gift_exchange", {
+      exchange_id: exchange.id,
+      mode: "redraw"
+    }))
+    assert_equal "active", redrawn["status"]
+    assert redrawn.dig("capabilities", "redo")
+    exchange.reload.exchange_participants.each do |participant|
+      refute_equal first_draw.fetch(participant.id), participant.matched_participant_id
+    end
+    assert_empty exchange.exchange_notifications
+
+    reopened = tool_payload(call_tool("redo_gift_exchange", {
+      exchange_id: exchange.id,
+      mode: "reopen"
+    }))
+    assert_equal "inviting", reopened["status"]
+    assert_nil reopened["published_at"]
+    refute reopened.dig("capabilities", "redo")
+    assert reopened.dig("capabilities", "publish")
+    assert exchange.reload.exchange_participants.all? { |participant| participant.status == "accepted" }
+    assert exchange.exchange_participants.none? { |participant| participant.matched_participant_id.present? }
+
+    added_after_reopen = tool_payload(call_tool("add_exchange_participant", {
+      exchange_id: exchange.id,
+      name: "Added after reopen",
+      email: "added-after-reopen@example.com"
+    }))
+    assert_equal "invited", added_after_reopen["status"]
+
+    exclusion_to_replace = exchange.exchange_exclusions.first
+    tool_payload(call_tool("remove_exchange_exclusion", {
+      exchange_id: exchange.id,
+      exclusion_id: exclusion_to_replace.id
+    }))
+    replacement_pair = exchange.exchange_participants.accepted.order(:id).last(2)
+    replacement_exclusion = tool_payload(call_tool("add_exchange_exclusion", {
+      exchange_id: exchange.id,
+      participant_a_id: replacement_pair.first.id,
+      participant_b_id: replacement_pair.last.id
+    }))
+    assert replacement_exclusion["id"].present?
   end
 
   test "returns MCP tool errors without leaking exceptions" do

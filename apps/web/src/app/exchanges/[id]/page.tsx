@@ -49,6 +49,8 @@ import {
   Trash2,
   List,
   Bell,
+  RotateCcw,
+  Shuffle,
 } from "lucide-react";
 import { toast } from "sonner";
 import type {
@@ -111,7 +113,9 @@ export default function ExchangeDetailPage({
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showExclusionDialog, setShowExclusionDialog] = useState(false);
   const [showStartDialog, setShowStartDialog] = useState(false);
+  const [showRedoDialog, setShowRedoDialog] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [redoingMode, setRedoingMode] = useState<"reopen" | "redraw" | null>(null);
   const [newParticipant, setNewParticipant] = useState({ name: "", email: "" });
   const [newExclusion, setNewExclusion] = useState({ participant_a_id: "", participant_b_id: "" });
 
@@ -255,6 +259,27 @@ export default function ExchangeDetailPage({
     }
   };
 
+  const handleRedoExchange = async (mode: "reopen" | "redraw") => {
+    setRedoingMode(mode);
+    try {
+      if (!exchange) return;
+      const updated = await giftExchangesService.redo(exchange.id, mode);
+      setExchange(updated);
+      setNotifications([]);
+      setShowRedoDialog(false);
+      toast.success(
+        mode === "reopen"
+          ? "Exchange reopened. Make your changes, then publish when you’re ready."
+          : "Names redrawn. Everyone has a new match and a fresh email."
+      );
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Could not redo the exchange";
+      toast.error(message);
+    } finally {
+      setRedoingMode(null);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
@@ -369,6 +394,71 @@ export default function ExchangeDetailPage({
                     className="bg-gradient-to-r from-green-500 to-emerald-500"
                   >
                     {starting ? "Publishing..." : "Publish Exchange"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {exchange.capabilities.redo && (
+            <Dialog open={showRedoDialog} onOpenChange={setShowRedoDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="border-violet-400/40">
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Redo exchange
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 sm:max-w-xl">
+                <DialogHeader>
+                  <DialogTitle className="text-slate-900 dark:text-white">
+                    How do you want to redo it?
+                  </DialogTitle>
+                </DialogHeader>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  The current matches will stop being valid. Choose whether you need to make changes
+                  first or simply draw a fresh set of names.
+                </p>
+                <div className="grid gap-3 py-2">
+                  <button
+                    type="button"
+                    data-testid="reopen-exchange"
+                    className="rounded-xl border border-slate-200 p-4 text-left transition-colors hover:border-violet-400 hover:bg-violet-500/5 disabled:opacity-50 dark:border-slate-700"
+                    onClick={() => handleRedoExchange("reopen")}
+                    disabled={redoingMode !== null}
+                  >
+                    <span className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
+                      <RotateCcw className="h-4 w-4 text-violet-500" />
+                      {redoingMode === "reopen" ? "Reopening…" : "Reopen and edit"}
+                    </span>
+                    <span className="mt-1 block text-sm text-slate-600 dark:text-slate-400">
+                      Keep joined people accepted, reopen unused invites, and clear the old matches.
+                      You can add people or change the exclusion rules before publishing again.
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="redraw-exchange"
+                    className="rounded-xl border border-slate-200 p-4 text-left transition-colors hover:border-fuchsia-400 hover:bg-fuchsia-500/5 disabled:opacity-50 dark:border-slate-700"
+                    onClick={() => handleRedoExchange("redraw")}
+                    disabled={redoingMode !== null}
+                  >
+                    <span className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
+                      <Shuffle className="h-4 w-4 text-fuchsia-500" />
+                      {redoingMode === "redraw" ? "Redrawing…" : "Redraw names now"}
+                    </span>
+                    <span className="mt-1 block text-sm text-slate-600 dark:text-slate-400">
+                      Keep this roster and these rules, give everyone a different recipient, and send
+                      fresh match emails right away.
+                    </span>
+                  </button>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowRedoDialog(false)}
+                    disabled={redoingMode !== null}
+                  >
+                    Cancel
                   </Button>
                 </DialogFooter>
               </DialogContent>

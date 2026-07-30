@@ -329,6 +329,89 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     assert_includes [ 200, 201, 422 ], response.status
   end
 
+  test "owner can reopen a published exchange and edit it again" do
+    joined_participants = 2.times.map do |index|
+      user = create_test_user(
+        email: "redo-joined-#{index}@example.com",
+        clerk_id: "user_redo_joined_#{index}"
+      )
+      @exchange.exchange_participants.create!(
+        user: user,
+        name: "Joined #{index}",
+        email: user.email,
+        status: "accepted"
+      )
+    end
+    pending = @exchange.exchange_participants.create!(
+      name: "Still deciding",
+      email: "redo-pending@example.com",
+      status: "invited"
+    )
+    @exchange.update!(status: "inviting")
+    ExchangeDrawingService.new(@exchange).publish!
+
+    assert_equal "declined", pending.reload.status
+    assert @exchange.exchange_participants.accepted.all? { |participant| participant.matched_participant_id.present? }
+
+    post redo_gift_exchange_path(@exchange),
+      headers: @auth_headers,
+      params: { mode: "reopen" },
+      as: :json
+
+    assert_response :success
+    assert_equal "inviting", @exchange.reload.status
+    assert_nil @exchange.published_at
+    assert_equal "invited", pending.reload.status
+    assert_equal "accepted", @participant.reload.status
+    assert joined_participants.all? { |participant| participant.reload.status == "accepted" }
+    assert @exchange.exchange_participants.none? { |participant| participant.matched_participant_id.present? }
+    assert json_response.dig("capabilities", "publish")
+    refute json_response.dig("capabilities", "redo")
+
+    post gift_exchange_exchange_participants_path(@exchange),
+      headers: @auth_headers,
+      params: { exchange_participant: { name: "New Person", email: "redo-new@example.com" } },
+      as: :json
+    assert_response :created
+  end
+
+  test "owner can redraw names but a participant cannot" do
+    users_and_participants = 3.times.map do |index|
+      user = create_test_user(
+        email: "redraw-joined-#{index}@example.com",
+        clerk_id: "user_redraw_joined_#{index}"
+      )
+      participant = @exchange.exchange_participants.create!(
+        user: user,
+        name: "Redraw #{index}",
+        email: user.email,
+        status: "accepted"
+      )
+      [ user, participant ]
+    end
+    @exchange.update!(status: "inviting")
+    ExchangeDrawingService.new(@exchange).publish!
+    first_draw = @exchange.exchange_participants.pluck(:id, :matched_participant_id).to_h
+
+    post redo_gift_exchange_path(@exchange),
+      headers: auth_headers_for(users_and_participants.first.first),
+      params: { mode: "redraw" },
+      as: :json
+    assert_response :forbidden
+
+    post redo_gift_exchange_path(@exchange),
+      headers: @auth_headers,
+      params: { mode: "redraw" },
+      as: :json
+
+    assert_response :success
+    assert_equal "active", @exchange.reload.status
+    @exchange.exchange_participants.each do |participant|
+      refute_equal first_draw.fetch(participant.id), participant.matched_participant_id
+    end
+    assert json_response.dig("capabilities", "redo")
+  end
+
   # ============================================================================
   # Resend Invite Tests
   # ============================================================================

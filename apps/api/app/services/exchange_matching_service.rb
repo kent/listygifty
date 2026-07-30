@@ -6,8 +6,9 @@ class ExchangeMatchingService
     @exchange = gift_exchange
   end
 
-  def perform!
+  def perform!(redraw: false)
     @exchange.with_lock do
+      @redraw = redraw
       @participants = @exchange.exchange_participants.accepted.to_a
       @exclusions = build_exclusion_set
       validate_can_match!
@@ -18,9 +19,15 @@ class ExchangeMatchingService
   end
 
   def validate_can_match!
-    raise MatchingError, "Exchange is not in inviting status" unless @exchange.status == "inviting"
+    valid_status = @redraw ? %w[active completed].include?(@exchange.status) : @exchange.status == "inviting"
+    raise MatchingError, invalid_status_message unless valid_status
     raise MatchingError, "Need at least 3 participants" if @participants.size < 3
-    raise ImpossibleMatchError, "No valid matching exists" unless matching_possible?
+    return if matching_possible?
+
+    message = @redraw ?
+      "A completely new draw is not possible with the current exclusion rules" :
+      "No valid matching exists"
+    raise ImpossibleMatchError, message
   end
 
   private
@@ -35,6 +42,8 @@ class ExchangeMatchingService
 
   def excluded?(giver, receiver)
     return true if giver.id == receiver.id # Can't give to yourself
+    return true if @redraw && giver.matched_participant_id == receiver.id
+
     @exclusions.include?([ giver.id, receiver.id ].sort)
   end
 
@@ -102,5 +111,9 @@ class ExchangeMatchingService
       participant.update!(matched_participant_id: matched_id)
     end
     @exchange.update!(status: "active", published_at: Time.current)
+  end
+
+  def invalid_status_message
+    @redraw ? "Only a published exchange can be redrawn" : "Exchange is not in inviting status"
   end
 end

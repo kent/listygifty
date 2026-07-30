@@ -879,6 +879,17 @@ class McpController < ApplicationController
         schema: tool_schema({ exchange_id: id_property("Gift exchange ID or slug") }, [ "exchange_id" ]),
         handler: ->(args) { start_exchange(args["exchange_id"]) }
       },
+      "redo_gift_exchange" => {
+        description: "Redo an owned published exchange: reopen it for roster and exclusion changes, or immediately redraw different names and email everyone",
+        scope: "write",
+        schema: tool_schema({
+          exchange_id: id_property("Gift exchange ID or slug"),
+          mode: enum_property(%w[reopen redraw]).merge(
+            description: "reopen clears matches and makes the exchange editable; redraw keeps the roster and rules and assigns different recipients now"
+          )
+        }, %w[exchange_id mode]),
+        handler: ->(args) { redo_exchange(args["exchange_id"], args["mode"]) }
+      },
       "get_my_exchange_match" => {
         description: "Get the current user's assigned recipient and their exchange wishlist",
         scope: "read",
@@ -1242,12 +1253,27 @@ class McpController < ApplicationController
     exchange = find_owned_exchange(exchange_id)
     raise ArgumentError, "Exchange is not ready to publish" unless exchange.can_publish?
 
-    ExchangeMatchingService.new(exchange).perform!
-    exchange.exchange_participants.accepted.includes(:user).each do |participant|
-      ExchangeMailer.match_assignment(participant).deliver_later
-    end
+    ExchangeDrawingService.new(exchange).publish!
     serialize_exchange(exchange.reload)
   rescue ExchangeMatchingService::MatchingError => e
+    raise ArgumentError, e.message
+  end
+
+  def redo_exchange(exchange_id, mode)
+    exchange = find_owned_exchange(exchange_id)
+    service = ExchangeDrawingService.new(exchange)
+
+    case mode
+    when "reopen"
+      service.reopen!
+    when "redraw"
+      service.redraw!
+    else
+      raise ArgumentError, "Mode must be reopen or redraw"
+    end
+
+    serialize_exchange(exchange.reload)
+  rescue ExchangeDrawingService::RedoError, ExchangeMatchingService::MatchingError => e
     raise ArgumentError, e.message
   end
 

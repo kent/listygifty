@@ -949,6 +949,7 @@ export interface GiftExchange extends BaseEntity {
     view_match: boolean;
     nudge_match: boolean;
     publish: boolean;
+    redo: boolean;
   };
   my_participant?: ExchangeParticipant | null;
 }

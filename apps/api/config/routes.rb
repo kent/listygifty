@@ -69,6 +69,7 @@ Rails.application.routes.draw do
     member do
       post :start
       post :publish
+      post :redo
       post :nudge_match
     end
     resources :exchange_notifications, only: %i[index] do

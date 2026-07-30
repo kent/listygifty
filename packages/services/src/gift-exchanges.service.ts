@@ -10,6 +10,7 @@ export interface GiftExchangesService {
   getBySlug(slug: string): Promise<GiftExchangeWithParticipants>;
   create(data: CreateGiftExchangeRequest["gift_exchange"]): Promise<GiftExchange>;
   start(id: number): Promise<GiftExchangeWithParticipants>;
+  redo(id: number, mode: "reopen" | "redraw"): Promise<GiftExchangeWithParticipants>;
 }
 
 export function createGiftExchangesService(client: ApiClient): GiftExchangesService {
@@ -28,6 +29,10 @@ export function createGiftExchangesService(client: ApiClient): GiftExchangesServ
 
     start(id: number) {
       return client.post<GiftExchangeWithParticipants>(`/gift_exchanges/${id}/start`);
+    },
+
+    redo(id: number, mode: "reopen" | "redraw") {
+      return client.post<GiftExchangeWithParticipants>(`/gift_exchanges/${id}/redo`, { mode });
     },
   };
 }

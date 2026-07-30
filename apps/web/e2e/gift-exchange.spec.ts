@@ -227,4 +227,44 @@ test("five users complete a private exchange lifecycle with real local mail", as
       };
     })
     .toEqual({ reveal: 5, update: 1, nudge: 1 });
+
+  await page.reload();
+  await page.getByRole("button", { name: "Redo exchange" }).click();
+  const redoDialog = page.getByRole("dialog");
+  await expect(redoDialog.getByText("How do you want to redo it?")).toBeVisible();
+  await redoDialog.getByTestId("reopen-exchange").click();
+  await expect(page.getByText("inviting", { exact: true })).toBeVisible();
+  await expect(page.getByText("5/5 joined")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add Rule" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Publish Exchange" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Publish Exchange" }).click();
+  await expect(page.getByText("active", { exact: true })).toBeVisible();
+  await expect
+    .poll(async () => (await mailpitMessages(request)).messages.filter((message) =>
+      message.Subject.includes("The names are in")
+    ).length)
+    .toBe(10);
+
+  const redrawParticipant = await openAs(browser, invitees[0]);
+  await redrawParticipant.page.goto(page.url());
+  const matchName = redrawParticipant.page.getByTestId("match-overview").locator("h2");
+  await expect(matchName).toBeVisible();
+  const beforeRedraw = await matchName.innerText();
+
+  await page.getByRole("button", { name: "Redo exchange" }).click();
+  await page.getByRole("dialog").getByTestId("redraw-exchange").click();
+  await expect(page.getByText("Names redrawn. Everyone has a new match and a fresh email.")).toBeVisible();
+
+  await redrawParticipant.page.reload();
+  await expect(matchName).toBeVisible();
+  expect(await matchName.innerText()).not.toBe(beforeRedraw);
+  await redrawParticipant.context.close();
+
+  await expect
+    .poll(async () => (await mailpitMessages(request)).messages.filter((message) =>
+      message.Subject.includes("The names are in")
+    ).length)
+    .toBe(15);
 });

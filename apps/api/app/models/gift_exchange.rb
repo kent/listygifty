@@ -70,7 +70,8 @@ class GiftExchange < ApplicationRecord
       participate: participant.present?,
       view_match: participant&.matched_participant_id.present? && %w[active completed].include?(status),
       nudge_match: participant&.matched_participant_id.present? && %w[active completed].include?(status),
-      publish: owner?(check_user) && can_publish?
+      publish: owner?(check_user) && can_publish?,
+      redo: owner?(check_user) && %w[active completed].include?(status)
     }
   end
 

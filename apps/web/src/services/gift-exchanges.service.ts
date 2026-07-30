@@ -35,6 +35,10 @@ class GiftExchangesService {
     return apiClient.post<GiftExchangeWithParticipants>(`/gift_exchanges/${id}/publish`);
   }
 
+  async redo(id: number, mode: "reopen" | "redraw"): Promise<GiftExchangeWithParticipants> {
+    return apiClient.post<GiftExchangeWithParticipants>(`/gift_exchanges/${id}/redo`, { mode });
+  }
+
   async nudgeMatch(id: number): Promise<void> {
     return apiClient.post(`/gift_exchanges/${id}/nudge_match`);
   }

@@ -67,6 +67,36 @@ class ExchangeMatchingServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "redraw gives every participant a different recipient" do
+    service = ExchangeMatchingService.new(@exchange)
+    first_draw = service.perform!
+    second_draw = service.perform!(redraw: true)
+
+    first_draw.each do |giver_id, receiver_id|
+      refute_equal receiver_id, second_draw.fetch(giver_id)
+    end
+    assert_equal "active", @exchange.reload.status
+  end
+
+  test "failed redraw preserves the existing assignments" do
+    service = ExchangeMatchingService.new(@exchange)
+    first_draw = service.perform!
+    first_participant = @participants.first
+    old_recipient_id = first_draw.fetch(first_participant.id)
+
+    (@participants.map(&:id) - [ first_participant.id, old_recipient_id ]).each do |participant_id|
+      @exchange.exchange_exclusions.create!(
+        participant_a_id: first_participant.id,
+        participant_b_id: participant_id
+      )
+    end
+
+    assert_raises(ExchangeMatchingService::ImpossibleMatchError) do
+      service.perform!(redraw: true)
+    end
+    assert_equal first_draw, @exchange.exchange_participants.pluck(:id, :matched_participant_id).to_h
+  end
+
   test "raises when exchange is not in inviting status" do
     @exchange.update!(status: "draft")
     service = ExchangeMatchingService.new(@exchange)

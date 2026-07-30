@@ -1,8 +1,8 @@
 class GiftExchangesController < ApplicationController
   include WorkspaceScoped
 
-  before_action :set_gift_exchange, only: %i[show update destroy start publish nudge_match]
-  before_action :require_owner, only: %i[update destroy start publish]
+  before_action :set_gift_exchange, only: %i[show update destroy start publish redo nudge_match]
+  before_action :require_owner, only: %i[update destroy start publish redo]
   before_action :require_editable, only: :update
 
   def index
@@ -55,16 +55,27 @@ class GiftExchangesController < ApplicationController
   def publish
     return render_error("Exchange is not ready to publish", status: :unprocessable_entity) unless @gift_exchange.can_publish?
 
-    service = ExchangeMatchingService.new(@gift_exchange)
-    service.perform!
-
-    # Send match assignment emails
-    @gift_exchange.exchange_participants.accepted.includes(:user).each do |participant|
-      ExchangeMailer.match_assignment(participant).deliver_later
-    end
+    ExchangeDrawingService.new(@gift_exchange).publish!
 
     render json: GiftExchangeBlueprint.render(@gift_exchange.reload, current_user: current_user, view: :with_participants)
   rescue ExchangeMatchingService::MatchingError => e
+    render_error(e.message, status: :unprocessable_entity)
+  end
+
+  def redo
+    service = ExchangeDrawingService.new(@gift_exchange)
+
+    case params.require(:mode)
+    when "reopen"
+      service.reopen!
+    when "redraw"
+      service.redraw!
+    else
+      return render_error("Mode must be reopen or redraw", status: :unprocessable_entity)
+    end
+
+    render json: GiftExchangeBlueprint.render(@gift_exchange.reload, current_user: current_user, view: :with_participants)
+  rescue ExchangeDrawingService::RedoError, ExchangeMatchingService::MatchingError => e
     render_error(e.message, status: :unprocessable_entity)
   end
 

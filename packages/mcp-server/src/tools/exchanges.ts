@@ -248,6 +248,24 @@ export const exchangeTools: Tool[] = [
     },
   },
   {
+    name: "niftygifty_redo_gift_exchange",
+    description:
+      "Redo an exchange you own. Reopen it to change people and exclusion rules, or redraw different recipients immediately and email everyone.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        exchange_id: { type: "number", description: "The exchange ID" },
+        mode: {
+          type: "string",
+          enum: ["reopen", "redraw"],
+          description:
+            "reopen clears matches and makes the exchange editable; redraw keeps the roster and rules and assigns different recipients now",
+        },
+      },
+      required: ["exchange_id", "mode"],
+    },
+  },
+  {
     name: "niftygifty_accept_exchange_invite",
     description: "Accept a private gift exchange invitation as the authenticated user.",
     inputSchema: {
@@ -539,6 +557,22 @@ export async function handleExchangeTool(
       );
       return {
         message: `Exchange published! ${exchange.accepted_count} participants have been assigned.`,
+        exchange,
+      };
+    }
+
+    case "niftygifty_redo_gift_exchange": {
+      const exchangeId = args.exchange_id as number;
+      const mode = args.mode as "reopen" | "redraw";
+      const exchange = await client.post<GiftExchangeWithParticipants>(
+        `/gift_exchanges/${exchangeId}/redo`,
+        { mode }
+      );
+      return {
+        message:
+          mode === "reopen"
+            ? "Exchange reopened. Matches were cleared and organizer editing is available again."
+            : `Exchange redrawn. ${exchange.accepted_count} participants received different recipients and fresh emails.`,
         exchange,
       };
     }
