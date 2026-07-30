@@ -25,6 +25,12 @@ export function ParticipantListItem({
   };
 
   const statusIcon = statusIcons[participant.status] || statusIcons.invited;
+  const statusLabel =
+    participant.status === "accepted"
+      ? "Joined"
+      : participant.status === "declined"
+        ? "Declined"
+        : "Needs to join";
 
   return (
     <View
@@ -46,7 +52,9 @@ export function ParticipantListItem({
           <Text style={{ color: colors.muted, fontSize: 12 }} numberOfLines={1}>
             {participant.email}
           </Text>
-        ) : null}
+        ) : (
+          <Text style={{ color: statusIcon.color, fontSize: 12 }}>{statusLabel}</Text>
+        )}
       </View>
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>

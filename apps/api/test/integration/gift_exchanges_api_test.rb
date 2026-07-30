@@ -39,7 +39,7 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     assert_equal @exchange.slug, json_response["slug"]
   end
 
-  test "joined participant sees the accepted participant roster" do
+  test "joined participant sees the full participant roster without private invite data" do
     joined_user = users(:two)
     joined_participant = @exchange.exchange_participants.create!(
       user: joined_user,
@@ -57,9 +57,9 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     roster = json_response.fetch("exchange_participants")
-    assert_equal [ @participant.id, joined_participant.id ].sort, roster.pluck("id").sort
+    assert_equal [ @participant.id, joined_participant.id, invited_participant.id ].sort, roster.pluck("id").sort
     assert_equal joined_participant.id, json_response.dig("my_participant", "id")
-    refute_includes roster.pluck("id"), invited_participant.id
+    assert_equal "invited", roster.find { |participant| participant["id"] == invited_participant.id }.fetch("status")
     roster.each do |participant_json|
       refute participant_json.key?("email")
       refute participant_json.key?("invite_token")
@@ -186,7 +186,7 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     assert json_response.any? { |p| p["id"] == @participant.id }
   end
 
-  test "participants index only exposes accepted participants to non-owners" do
+  test "participants index exposes invite status but not private invite data to non-owners" do
     joined_user = users(:two)
     joined_participant = @exchange.exchange_participants.create!(
       user: joined_user,
@@ -205,8 +205,9 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
       as: :json
 
     assert_response :success
-    assert_equal [ @participant.id, joined_participant.id ].sort, json_response.pluck("id").sort
-    refute_includes json_response.pluck("id"), invited_participant.id
+    assert_equal [ @participant.id, joined_participant.id, invited_participant.id ].sort, json_response.pluck("id").sort
+    assert_equal "invited",
+      json_response.find { |participant| participant["id"] == invited_participant.id }.fetch("status")
     assert json_response.none? { |participant_json| participant_json.key?("email") }
     assert json_response.none? { |participant_json| participant_json.key?("invite_token") }
   end

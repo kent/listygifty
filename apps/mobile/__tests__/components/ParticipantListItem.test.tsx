@@ -33,7 +33,18 @@ describe("ParticipantListItem", () => {
     render(<ParticipantListItem participant={buildParticipant({ email: undefined })} />);
 
     expect(screen.getByText("Alex Parker")).toBeTruthy();
+    expect(screen.getByText("Needs to join")).toBeTruthy();
     expect(screen.queryByText("alex@example.com")).toBeNull();
+  });
+
+  it("shows when a roster participant has joined", () => {
+    render(
+      <ParticipantListItem
+        participant={buildParticipant({ email: undefined, status: "accepted" })}
+      />
+    );
+
+    expect(screen.getByText("Joined")).toBeTruthy();
   });
 
   it("renders wishlist count when requested", () => {

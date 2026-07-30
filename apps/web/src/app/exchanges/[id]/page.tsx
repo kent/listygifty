@@ -65,6 +65,17 @@ function getStatusIcon(status: string) {
   }
 }
 
+function getParticipantStatusLabel(status: ExchangeParticipant["status"]) {
+  switch (status) {
+    case "accepted":
+      return "Joined";
+    case "declined":
+      return "Declined";
+    default:
+      return "Needs to join";
+  }
+}
+
 function getStatusColor(status: string) {
   switch (status) {
     case "draft":
@@ -444,6 +455,18 @@ export default function ExchangeDetailPage({
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className={
+                            participant.status === "accepted"
+                              ? "border-green-500/40 text-green-600 dark:text-green-400"
+                              : participant.status === "declined"
+                                ? "border-red-500/40 text-red-600 dark:text-red-400"
+                                : "border-amber-500/40 text-amber-600 dark:text-amber-400"
+                          }
+                        >
+                          {getParticipantStatusLabel(participant.status)}
+                        </Badge>
                         {participant.wishlist_count > 0 && (
                           <Badge variant="outline" className="text-xs">
                             {participant.wishlist_count} items

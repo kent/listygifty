@@ -8,7 +8,6 @@ class ExchangeParticipantsController < ApplicationController
     if @gift_exchange.owner?(current_user)
       render json: ExchangeParticipantBlueprint.render(participants, view: :organizer)
     else
-      participants = participants.where(status: "accepted")
       render json: ExchangeParticipantBlueprint.render_roster_as_hash(participants)
     end
   end
