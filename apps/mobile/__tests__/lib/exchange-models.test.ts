@@ -238,14 +238,14 @@ describe("exchange model helpers", () => {
           can_start: false,
         })
       )
-    ).toBe("Add at least 3 participants to send invites before drawing matches.");
+    ).toBe("Add at least 2 participants before drawing matches.");
 
     expect(
       getExchangeStartBlocker(
         buildExchange({
           status: "inviting",
-          participant_count: 2,
-          accepted_count: 2,
+          participant_count: 1,
+          accepted_count: 1,
           can_start: false,
         })
       )
@@ -290,7 +290,7 @@ describe("exchange model helpers", () => {
     expect(getExchangeReadinessItems(exchange, 1)).toEqual([
       expect.objectContaining({
         complete: true,
-        detail: "3/3 minimum",
+        detail: "2/2 minimum",
         key: "participants",
         required: true,
       }),

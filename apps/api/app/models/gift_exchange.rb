@@ -1,5 +1,6 @@
 class GiftExchange < ApplicationRecord
   STATUSES = %w[draft inviting active completed].freeze
+  MIN_PARTICIPANTS = 2
 
   belongs_to :user
   belongs_to :workspace
@@ -38,7 +39,7 @@ class GiftExchange < ApplicationRecord
   end
 
   def can_publish?
-    status == "inviting" && exchange_participants.accepted.count >= 3
+    status == "inviting" && exchange_participants.accepted.count >= MIN_PARTICIPANTS
   end
 
   def editable?

@@ -41,6 +41,15 @@ class ExchangeMatchingServiceTest < ActiveSupport::TestCase
     assert_equal receivers.uniq.size, receivers.size, "Each receiver must be unique"
   end
 
+  test "two participants are matched to each other" do
+    @participants.drop(2).each(&:destroy!)
+
+    matches = ExchangeMatchingService.new(@exchange).perform!
+
+    assert_equal @participants.second.id, matches.fetch(@participants.first.id)
+    assert_equal @participants.first.id, matches.fetch(@participants.second.id)
+  end
+
   test "respects exclusion rules" do
     excluded_pair = @participants.first(2)
     @exchange.exchange_exclusions.create!(
@@ -105,12 +114,12 @@ class ExchangeMatchingServiceTest < ActiveSupport::TestCase
     assert_includes err.message, "inviting"
   end
 
-  test "raises when fewer than 3 accepted participants" do
-    @participants[2..].each(&:destroy!)
+  test "raises when fewer than 2 accepted participants" do
+    @participants.drop(1).each(&:destroy!)
     service = ExchangeMatchingService.new(@exchange)
 
     err = assert_raises(ExchangeMatchingService::MatchingError) { service.perform! }
-    assert_includes err.message, "3"
+    assert_includes err.message, "2"
   end
 
   test "raises when exclusions make matching impossible" do

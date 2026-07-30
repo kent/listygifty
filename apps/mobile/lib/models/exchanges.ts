@@ -12,6 +12,7 @@ import { runtimeConfig } from "@/lib/runtime-config";
 
 const EXCHANGE_INVITE_PATH = "/join/exchange";
 const DEFAULT_EXCHANGE_REMINDER_HOUR = 9;
+const MIN_EXCHANGE_PARTICIPANTS = 2;
 const FAMILY_BUDGET_MIN = "25";
 const FAMILY_BUDGET_MAX = "50";
 
@@ -194,11 +195,11 @@ export function getExchangeStartBlocker(exchange: GiftExchange): string | null {
   }
 
   if (exchange.status === "draft") {
-    return "Add at least 3 participants to send invites before drawing matches.";
+    return `Add at least ${MIN_EXCHANGE_PARTICIPANTS} participants before drawing matches.`;
   }
 
-  if (exchange.participant_count < 3) {
-    const remaining = 3 - exchange.participant_count;
+  if (exchange.participant_count < MIN_EXCHANGE_PARTICIPANTS) {
+    const remaining = MIN_EXCHANGE_PARTICIPANTS - exchange.participant_count;
     return `Add ${remaining} more participant${remaining === 1 ? "" : "s"} before drawing matches.`;
   }
 
@@ -222,7 +223,7 @@ export function getExchangeReadinessItems(
   const acceptedParticipants = exchange.exchange_participants.filter(
     (participant) => participant.status === "accepted"
   );
-  const participantsReady = participantCount >= 3;
+  const participantsReady = participantCount >= MIN_EXCHANGE_PARTICIPANTS;
   const acceptancesReady = participantsReady && acceptedParticipants.length === participantCount;
   const acceptedWishlists = acceptedParticipants.filter(
     (participant) => participant.wishlist_count > 0
@@ -235,7 +236,7 @@ export function getExchangeReadinessItems(
     {
       key: "participants",
       label: "Participants",
-      detail: `${Math.min(participantCount, 3)}/3 minimum`,
+      detail: `${Math.min(participantCount, MIN_EXCHANGE_PARTICIPANTS)}/${MIN_EXCHANGE_PARTICIPANTS} minimum`,
       complete: participantsReady,
       required: true,
     },

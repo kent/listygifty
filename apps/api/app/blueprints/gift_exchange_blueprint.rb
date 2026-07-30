@@ -20,7 +20,7 @@ class GiftExchangeBlueprint < ApplicationBlueprint
   field :can_publish do |exchange|
     participants = GiftExchangeBlueprint.participants_for(exchange)
     exchange.status == "inviting" &&
-      participants.count { |participant| participant.status == "accepted" } >= 3
+      participants.count { |participant| participant.status == "accepted" } >= GiftExchange::MIN_PARTICIPANTS
   end
 
   field :can_start do |exchange|

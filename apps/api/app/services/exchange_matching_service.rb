@@ -21,7 +21,9 @@ class ExchangeMatchingService
   def validate_can_match!
     valid_status = @redraw ? %w[active completed].include?(@exchange.status) : @exchange.status == "inviting"
     raise MatchingError, invalid_status_message unless valid_status
-    raise MatchingError, "Need at least 3 participants" if @participants.size < 3
+    if @participants.size < GiftExchange::MIN_PARTICIPANTS
+      raise MatchingError, "Need at least #{GiftExchange::MIN_PARTICIPANTS} participants"
+    end
     return if matching_possible?
 
     message = @redraw ?

@@ -81,7 +81,7 @@ e2e() {
   "${COMPOSE[@]}" exec -T api bin/rails runner \
     'failed_job_ids = SolidQueue::FailedExecution.pluck(:job_id); SolidQueue::FailedExecution.delete_all; SolidQueue::Job.where(id: failed_job_ids).delete_all; active_job_ids = [SolidQueue::ReadyExecution, SolidQueue::ScheduledExecution, SolidQueue::ClaimedExecution, SolidQueue::BlockedExecution].flat_map { |model| model.pluck(:job_id) }; SolidQueue::Job.where(finished_at: nil).where.not(id: active_job_ids).delete_all'
   "${COMPOSE[@]}" exec -T api bin/rails runner \
-    'GiftExchange.where("name LIKE ?", "Local E2E Gift Exchange%").destroy_all'
+    'GiftExchange.where("name LIKE ? OR name LIKE ?", "Local E2E Gift Exchange%", "Two Person E2E Exchange%").destroy_all'
   npm --workspace apps/web run test:e2e
   "${COMPOSE[@]}" exec -T api bin/rails runner \
     'abort "Local E2E produced failed background jobs" if SolidQueue::FailedExecution.exists?'

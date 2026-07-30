@@ -114,7 +114,7 @@ test("five users complete a private exchange lifecycle with real local mail", as
 
   await expect
     .poll(async () => (await mailpitMessages(request)).messages.filter((message) =>
-      message.Subject.includes("wants you in")
+      message.Subject.includes("wants you in") && message.Subject.includes(exchangeName)
     ).length)
     .toBe(4);
 
@@ -129,7 +129,7 @@ test("five users complete a private exchange lifecycle with real local mail", as
 
   await expect
     .poll(async () => (await mailpitMessages(request)).messages.filter((message) =>
-      message.Subject.includes("The names are in")
+      message.Subject.includes("The names are in") && message.Subject.includes(exchangeName)
     ).length)
     .toBe(5);
 
@@ -216,7 +216,7 @@ test("five users complete a private exchange lifecycle with real local mail", as
       const messages = await mailpitMessages(request);
       return {
         reveal: messages.messages.filter((message) =>
-          message.Subject.includes("The names are in")
+          message.Subject.includes("The names are in") && message.Subject.includes(exchangeName)
         ).length,
         update: messages.messages.filter((message) =>
           message.Subject.includes("Good news: your match added an idea")
@@ -243,7 +243,7 @@ test("five users complete a private exchange lifecycle with real local mail", as
   await expect(page.getByText("active", { exact: true })).toBeVisible();
   await expect
     .poll(async () => (await mailpitMessages(request)).messages.filter((message) =>
-      message.Subject.includes("The names are in")
+      message.Subject.includes("The names are in") && message.Subject.includes(exchangeName)
     ).length)
     .toBe(10);
 
@@ -264,7 +264,49 @@ test("five users complete a private exchange lifecycle with real local mail", as
 
   await expect
     .poll(async () => (await mailpitMessages(request)).messages.filter((message) =>
-      message.Subject.includes("The names are in")
+      message.Subject.includes("The names are in") && message.Subject.includes(exchangeName)
     ).length)
     .toBe(15);
+});
+
+test("two joined users can publish and are matched to each other", async ({
+  page,
+  browser,
+  request,
+}) => {
+  const runId = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
+  const exchangeName = `Two Person E2E Exchange ${runId}`;
+  const invitee = invitees[0];
+
+  await page.goto("/exchanges/new");
+  await page.getByLabel("Exchange Name *").fill(exchangeName);
+  await page.getByRole("button", { name: "Create Exchange" }).click();
+  await expect(page).toHaveURL(/\/exchanges\/two-person-e2e-exchange-/);
+  const exchangeUrl = page.url();
+
+  const inviteUrl = await addInvitee(page, invitee);
+  await joinExchange(browser, invitee, inviteUrl, exchangeName, 2);
+
+  await page.reload();
+  await expect(page.getByText("2/2 joined")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Publish Exchange" })).toBeVisible();
+  await page.getByRole("button", { name: "Publish Exchange" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Publish Exchange" }).click();
+  await expect(page.getByText("active", { exact: true })).toBeVisible();
+
+  await expect
+    .poll(async () => (await mailpitMessages(request)).messages.filter((message) =>
+      message.Subject.includes("The names are in") && message.Subject.includes(exchangeName)
+    ).length)
+    .toBe(2);
+
+  await page.goto(`${exchangeUrl}/my-match`);
+  await expect(page.locator("h1").filter({ hasText: `🎁 ${invitee.firstName}` })).toBeVisible();
+
+  const inviteeSession = await openAs(browser, invitee);
+  await inviteeSession.page.goto(`${exchangeUrl}/my-match`);
+  await expect(
+    inviteeSession.page.locator("h1").filter({ hasText: `🎁 ${E2E_USERS[0].firstName}` })
+  ).toBeVisible();
+  await inviteeSession.context.close();
 });

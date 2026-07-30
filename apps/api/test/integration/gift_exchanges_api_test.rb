@@ -311,22 +311,30 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
   # Exchange Start Tests
   # ============================================================================
 
-  test "start initiates the gift exchange matching" do
-    # Add more participants for valid matching
-    @exchange.exchange_participants.create!(
+  test "two joined participants can publish and are matched to each other" do
+    second_participant = @exchange.exchange_participants.create!(
       name: "Person Two",
       email: "two@example.com",
       status: "accepted"
     )
-    @exchange.exchange_participants.create!(
-      name: "Person Three",
-      email: "three@example.com",
-      status: "accepted"
-    )
+    @exchange.update!(status: "inviting")
 
     post start_gift_exchange_path(@exchange), headers: @auth_headers, as: :json
-    # May succeed or return validation error depending on state
-    assert_includes [ 200, 201, 422 ], response.status
+
+    assert_response :success
+    assert_equal "active", @exchange.reload.status
+    assert_equal second_participant.id, @participant.reload.matched_participant_id
+    assert_equal @participant.id, second_participant.reload.matched_participant_id
+  end
+
+  test "one joined participant cannot publish" do
+    @exchange.update!(status: "inviting")
+
+    post start_gift_exchange_path(@exchange), headers: @auth_headers, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal "inviting", @exchange.reload.status
+    assert_nil @participant.reload.matched_participant_id
   end
 
   test "owner can reopen a published exchange and edit it again" do
