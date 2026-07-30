@@ -39,6 +39,35 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     assert_equal @exchange.slug, json_response["slug"]
   end
 
+  test "joined participant sees the accepted participant roster" do
+    joined_user = users(:two)
+    joined_participant = @exchange.exchange_participants.create!(
+      user: joined_user,
+      name: "Joined Person",
+      email: joined_user.email,
+      status: "accepted"
+    )
+    invited_participant = @exchange.exchange_participants.create!(
+      name: "Pending Invite",
+      email: "pending@example.com",
+      status: "invited"
+    )
+
+    get gift_exchange_path(@exchange.slug), headers: auth_headers_for(joined_user), as: :json
+
+    assert_response :success
+    roster = json_response.fetch("exchange_participants")
+    assert_equal [ @participant.id, joined_participant.id ].sort, roster.pluck("id").sort
+    assert_equal joined_participant.id, json_response.dig("my_participant", "id")
+    refute_includes roster.pluck("id"), invited_participant.id
+    roster.each do |participant_json|
+      refute participant_json.key?("invite_token")
+      refute participant_json.key?("matched_participant_id")
+      refute participant_json.key?("matched_participant")
+      refute participant_json.key?("wishlist_items")
+    end
+  end
+
   test "create creates a gift exchange" do
     assert_difference("GiftExchange.count") do
       assert_difference("ExchangeParticipant.count") do
@@ -154,6 +183,30 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_kind_of Array, json_response
     assert json_response.any? { |p| p["id"] == @participant.id }
+  end
+
+  test "participants index only exposes accepted participants to non-owners" do
+    joined_user = users(:two)
+    joined_participant = @exchange.exchange_participants.create!(
+      user: joined_user,
+      name: "Joined Person",
+      email: joined_user.email,
+      status: "accepted"
+    )
+    invited_participant = @exchange.exchange_participants.create!(
+      name: "Pending Invite",
+      email: "pending@example.com",
+      status: "invited"
+    )
+
+    get gift_exchange_exchange_participants_path(@exchange),
+      headers: auth_headers_for(joined_user),
+      as: :json
+
+    assert_response :success
+    assert_equal [ @participant.id, joined_participant.id ].sort, json_response.pluck("id").sort
+    refute_includes json_response.pluck("id"), invited_participant.id
+    assert json_response.none? { |participant_json| participant_json.key?("invite_token") }
   end
 
   test "participants show returns a participant" do

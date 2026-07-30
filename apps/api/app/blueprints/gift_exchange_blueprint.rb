@@ -41,6 +41,13 @@ class GiftExchangeBlueprint < ApplicationBlueprint
   end
 
   view :with_my_participation do
+    field :exchange_participants do |exchange|
+      joined_participants = GiftExchangeBlueprint.participants_for(exchange).select do |participant|
+        participant.status == "accepted"
+      end
+
+      ExchangeParticipantBlueprint.render_as_hash(joined_participants)
+    end
   end
 
   def self.participants_for(exchange)

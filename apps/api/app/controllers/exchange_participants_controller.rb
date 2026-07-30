@@ -5,7 +5,13 @@ class ExchangeParticipantsController < ApplicationController
 
   def index
     participants = @gift_exchange.exchange_participants.includes(:user, :exchange_wishlist_items)
-    view = @gift_exchange.owner?(current_user) ? :organizer : :default
+    if @gift_exchange.owner?(current_user)
+      view = :organizer
+    else
+      participants = participants.where(status: "accepted")
+      view = :default
+    end
+
     render json: ExchangeParticipantBlueprint.render(participants, view: view)
   end
 

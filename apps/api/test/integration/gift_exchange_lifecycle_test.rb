@@ -275,7 +275,14 @@ class GiftExchangeLifecycleTest < ActionDispatch::IntegrationTest
       assert_equal matched_participant.id, json_response.dig("my_participant", "matched_participant_id")
       assert_equal matched_participant.display_name,
         json_response.dig("my_participant", "matched_participant", "display_name")
-      refute json_response.key?("exchange_participants")
+      roster = json_response.fetch("exchange_participants")
+      assert_equal participants.map(&:id).sort, roster.pluck("id").sort
+      roster.each do |participant_json|
+        refute participant_json.key?("invite_token")
+        refute participant_json.key?("matched_participant_id")
+        refute participant_json.key?("matched_participant")
+        refute participant_json.key?("wishlist_items")
+      end
 
       get gift_exchange_exchange_participant_path(exchange, matched_participant),
         headers: headers,
