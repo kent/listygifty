@@ -115,7 +115,7 @@ build_api_image() {
     --async \
     --format="value(id)" \
     --config="${ROOT_DIR}/infra/gcp/cloudbuild.api.yaml" \
-    --substitutions="_IMAGE=${API_IMAGE}")"
+    --substitutions="_IMAGE=${API_IMAGE},_CACHE_IMAGE=${IMAGE_REGISTRY}/${API_IMAGE_REPO}:buildcache,_CACHE_BUILDER=${IMAGE_REGISTRY}/${API_IMAGE_REPO}:buildcache-builder")"
   wait_for_cloud_build "${build_id}" "API"
 }
 
@@ -127,7 +127,7 @@ build_web_image() {
     --async \
     --format="value(id)" \
     --config="${ROOT_DIR}/infra/gcp/cloudbuild.web.yaml" \
-    --substitutions="_IMAGE=${WEB_IMAGE},_NEXT_PUBLIC_API_URL=https://${API_DOMAIN},_NEXT_PUBLIC_APP_URL=https://${APP_DOMAIN},_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY},_NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login,_NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup,_NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard,_NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard,_NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY:-},_NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST:-}")"
+    --substitutions="_IMAGE=${WEB_IMAGE},_CACHE_IMAGE=${IMAGE_REGISTRY}/${WEB_IMAGE_REPO}:buildcache,_CACHE_DEPS=${IMAGE_REGISTRY}/${WEB_IMAGE_REPO}:buildcache-deps,_NEXT_PUBLIC_API_URL=https://${API_DOMAIN},_NEXT_PUBLIC_APP_URL=https://${APP_DOMAIN},_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY},_NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login,_NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup,_NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard,_NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard,_NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY:-},_NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST:-}")"
   wait_for_cloud_build "${build_id}" "web"
 }
 

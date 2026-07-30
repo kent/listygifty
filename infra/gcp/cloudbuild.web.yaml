@@ -1,14 +1,42 @@
 options:
   substitutionOption: ALLOW_LOOSE
+  machineType: E2_HIGHCPU_8
 
+# Layer caching: the deps stage (npm ci) and final image are pushed as
+# :buildcache* tags with inline cache metadata, so unchanged lockfiles skip
+# npm ci entirely on the next deploy.
 steps:
   - name: gcr.io/cloud-builders/docker
+    env: ['DOCKER_BUILDKIT=1']
+    args:
+      - build
+      - -f
+      - apps/web/Dockerfile
+      - --target
+      - deps
+      - --build-arg
+      - BUILDKIT_INLINE_CACHE=1
+      - --cache-from
+      - ${_CACHE_DEPS}
+      - -t
+      - ${_CACHE_DEPS}
+      - .
+  - name: gcr.io/cloud-builders/docker
+    env: ['DOCKER_BUILDKIT=1']
     args:
       - build
       - -f
       - apps/web/Dockerfile
       - -t
       - ${_IMAGE}
+      - -t
+      - ${_CACHE_IMAGE}
+      - --build-arg
+      - BUILDKIT_INLINE_CACHE=1
+      - --cache-from
+      - ${_CACHE_DEPS}
+      - --cache-from
+      - ${_CACHE_IMAGE}
       - --build-arg
       - NEXT_PUBLIC_API_URL=${_NEXT_PUBLIC_API_URL}
       - --build-arg
@@ -30,3 +58,5 @@ steps:
       - .
 images:
   - ${_IMAGE}
+  - ${_CACHE_IMAGE}
+  - ${_CACHE_DEPS}

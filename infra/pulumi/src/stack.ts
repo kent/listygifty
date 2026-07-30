@@ -422,8 +422,8 @@ new command.local.Command(
 set -e
 api_url="$(gcloud run services describe ${apiServiceName} --project=${project} --region=${region} --format="value(status.url)")"
 web_url="$(gcloud run services describe ${webServiceName} --project=${project} --region=${region} --format="value(status.url)")"
-queue_worker="$(gcloud run services describe ${apiServiceName} --project=${project} --region=${region} --format="value(spec.template.spec.containers[0].env[?name=SOLID_QUEUE_IN_PUMA].value)")"
-[ "$queue_worker" = "true" ] || { echo "FAIL: Solid Queue worker is not enabled" >&2; exit 1; }
+queue_worker="$(gcloud run services describe ${apiServiceName} --project=${project} --region=${region} --format="yaml(spec.template.spec.containers[0].env)" | grep -A1 "name: SOLID_QUEUE_IN_PUMA" | grep -c "value: .true.")"
+[ "$queue_worker" = "1" ] || { echo "FAIL: Solid Queue worker is not enabled" >&2; exit 1; }
 echo "  ✓ Solid Queue worker enabled"
 check() {
   code="$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 "$2")"
