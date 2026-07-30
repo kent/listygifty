@@ -56,6 +56,17 @@ See `docs/mobile-release.md`.
 
 ## 3) Local development
 
+Boot an isolated PostgreSQL container plus the Rails and Next.js development
+servers:
+
+```bash
+bin/local-preview up
+```
+
+The web app runs at `http://localhost:3000` and the API at
+`http://localhost:3001`. Use `bin/local-preview status`, `test`, `logs`,
+`restart`, `down`, or `reset` to manage the stack.
+
 Run API:
 
 ```bash

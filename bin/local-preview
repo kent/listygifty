@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMPOSE_FILE="${ROOT_DIR}/compose.local.yml"
+COMPOSE=(docker compose -f "${COMPOSE_FILE}")
+API_URL="http://localhost:3001"
+WEB_URL="http://localhost:3000"
+
+wait_for_url() {
+  local name="$1"
+  local url="$2"
+
+  for _ in {1..90}; do
+    if curl --silent --fail --output /dev/null "${url}"; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "${name} did not become ready at ${url}." >&2
+  "${COMPOSE[@]}" logs --tail 80 >&2
+  return 1
+}
+
+check_docker() {
+  command -v docker >/dev/null || { echo "Docker is required." >&2; exit 1; }
+  docker info >/dev/null 2>&1 || { echo "Docker is not running." >&2; exit 1; }
+}
+
+up() {
+  check_docker
+  "${COMPOSE[@]}" up --build --detach
+  wait_for_url "Rails API" "${API_URL}/up"
+  wait_for_url "Next.js" "${WEB_URL}/login"
+
+  echo
+  echo "Listy Gifty is ready."
+  status
+}
+
+down() {
+  check_docker
+  "${COMPOSE[@]}" down
+}
+
+reset() {
+  check_docker
+  "${COMPOSE[@]}" down --volumes --remove-orphans
+  up
+}
+
+status() {
+  check_docker
+  "${COMPOSE[@]}" ps
+  echo
+  echo "Web: ${WEB_URL}"
+  echo "API: ${API_URL}"
+}
+
+test_stack() {
+  up
+  "${COMPOSE[@]}" exec -T api env \
+    RAILS_ENV=test \
+    DISABLE_DATABASE_ENVIRONMENT_CHECK=1 \
+    DATABASE_URL=postgresql://listygifty:listygifty@db:5432/niftygifty_test \
+    bin/rails db:drop db:create db:schema:load
+  "${COMPOSE[@]}" exec -T api env \
+    RAILS_ENV=test \
+    DATABASE_URL=postgresql://listygifty:listygifty@db:5432/niftygifty_test \
+    bin/rails test
+}
+
+case "${1:-up}" in
+  up) up ;;
+  down) down ;;
+  restart) down; up ;;
+  reset) reset ;;
+  status) status ;;
+  test) test_stack ;;
+  logs) "${COMPOSE[@]}" logs --follow ;;
+  open) up; open "${WEB_URL}" ;;
+  *)
+    echo "Usage: bin/local-preview [up|down|restart|reset|status|test|logs|open]" >&2
+    exit 1
+    ;;
+esac
