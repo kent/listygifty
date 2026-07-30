@@ -139,7 +139,11 @@ test("five users complete a private exchange lifecycle with real local mail", as
   const participantPage = await participantContext.newPage();
   await participantPage.goto(page.url());
   await expect(participantPage.getByText("5/5 joined")).toBeVisible();
+  const matchOverview = participantPage.getByTestId("match-overview");
   const participantRoster = participantPage.getByTestId("participant-roster");
+  await expect(matchOverview.getByText("Your match", { exact: true })).toBeVisible();
+  await expect(matchOverview.getByRole("link", { name: /^See .*'s wishlist$/ })).toBeVisible();
+  expect((await matchOverview.boundingBox())!.y).toBeLessThan((await participantRoster.boundingBox())!.y);
 
   for (const user of E2E_USERS) {
     await expect(
