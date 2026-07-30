@@ -19,7 +19,7 @@ class ExchangeMailer < ApplicationMailer
     @exchange_url = "#{@frontend_url}/exchanges/#{@exchange.slug}/my-match"
 
     mail(
-      to: participant.user&.email || participant.email,
+      to: participant.delivery_email,
       subject: "🎁 The names are in: #{@exchange.name}"
     )
   end
@@ -34,7 +34,7 @@ class ExchangeMailer < ApplicationMailer
     @exchange_url = "#{@frontend_url}/exchanges/#{@exchange.slug}/my-match"
 
     mail(
-      to: @participant.user&.email || @participant.email,
+      to: @participant.delivery_email,
       subject: "🎁 Good news: your match added an idea"
     )
   end
@@ -47,7 +47,7 @@ class ExchangeMailer < ApplicationMailer
     @wishlist_url = "#{@frontend_url}/exchanges/#{@exchange.slug}/my-wishlist"
 
     mail(
-      to: @participant.user&.email || @participant.email,
+      to: @participant.delivery_email,
       subject: "💡 Your Secret Santa needs a little help"
     )
   end

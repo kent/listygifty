@@ -44,6 +44,13 @@ class ExchangeParticipant < ApplicationRecord
     user&.first_name.presence || name
   end
 
+  # The exchange address is the address the organizer invited and the
+  # participant accepted. A Clerk-backed user can temporarily have a synthetic
+  # `@clerk.user` fallback address, so user.email is not safe for delivery.
+  def delivery_email
+    email
+  end
+
   def excluded_from?(other_participant)
     ExchangeExclusion.exists_between?(self, other_participant)
   end

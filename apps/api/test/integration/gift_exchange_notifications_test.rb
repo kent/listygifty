@@ -150,6 +150,41 @@ class GiftExchangeNotificationsTest < ActionDispatch::IntegrationTest
     assert_empty json_response
   end
 
+  test "exchange mail uses the accepted invitation address instead of a synthetic Clerk address" do
+    giver = @participants.first
+    recipient = @participants.second
+    giver.update!(matched_participant: recipient)
+    recipient.user.update!(email: "#{recipient.user.clerk_user_id}@clerk.user")
+    @exchange.update!(status: "active", published_at: Time.current)
+
+    invitation_mail = ExchangeMailer.invitation(recipient).deliver_now
+    assignment_mail = ExchangeMailer.match_assignment(recipient).deliver_now
+
+    perform_enqueued_jobs do
+      post nudge_match_gift_exchange_path(@exchange),
+        headers: auth_headers_for(giver.user),
+        as: :json
+    end
+
+    assert_response :created
+    nudge_mail = ActionMailer::Base.deliveries.find do |mail|
+      mail.subject.include?("Your Secret Santa needs a little help")
+    end
+
+    wishlist_item = giver.exchange_wishlist_items.create!(name: "A useful idea")
+    wishlist_notification = @exchange.exchange_notifications.create!(
+      recipient_participant: recipient,
+      exchange_wishlist_item: wishlist_item,
+      kind: "wishlist_item_added"
+    )
+    wishlist_mail = ExchangeMailer.wishlist_updated(wishlist_notification).deliver_now
+
+    [ invitation_mail, assignment_mail, nudge_mail, wishlist_mail ].each do |mail|
+      assert_equal [ recipient.email ], mail.to
+      refute_includes mail.to, recipient.user.email
+    end
+  end
+
   test "publishing with enough accepted participants closes pending invitations" do
     pending = @exchange.exchange_participants.create!(
       name: "Pending Person",
