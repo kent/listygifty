@@ -950,7 +950,7 @@ export interface ExchangeParticipant extends BaseEntity {
   gift_exchange_id: number;
   user_id: number | null;
   name: string;
-  email: string;
+  email?: string;
   status: ParticipantStatus;
   display_name: string;
   has_user: boolean;

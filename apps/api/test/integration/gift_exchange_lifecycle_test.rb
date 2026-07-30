@@ -278,6 +278,7 @@ class GiftExchangeLifecycleTest < ActionDispatch::IntegrationTest
       roster = json_response.fetch("exchange_participants")
       assert_equal participants.map(&:id).sort, roster.pluck("id").sort
       roster.each do |participant_json|
+        refute participant_json.key?("email")
         refute participant_json.key?("invite_token")
         refute participant_json.key?("matched_participant_id")
         refute participant_json.key?("matched_participant")

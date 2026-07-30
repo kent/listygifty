@@ -46,7 +46,7 @@ class GiftExchangeBlueprint < ApplicationBlueprint
         participant.status == "accepted"
       end
 
-      ExchangeParticipantBlueprint.render_as_hash(joined_participants)
+      ExchangeParticipantBlueprint.render_roster_as_hash(joined_participants)
     end
   end
 

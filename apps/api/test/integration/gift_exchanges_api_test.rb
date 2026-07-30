@@ -61,6 +61,7 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     assert_equal joined_participant.id, json_response.dig("my_participant", "id")
     refute_includes roster.pluck("id"), invited_participant.id
     roster.each do |participant_json|
+      refute participant_json.key?("email")
       refute participant_json.key?("invite_token")
       refute participant_json.key?("matched_participant_id")
       refute participant_json.key?("matched_participant")
@@ -206,6 +207,7 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal [ @participant.id, joined_participant.id ].sort, json_response.pluck("id").sort
     refute_includes json_response.pluck("id"), invited_participant.id
+    assert json_response.none? { |participant_json| participant_json.key?("email") }
     assert json_response.none? { |participant_json| participant_json.key?("invite_token") }
   end
 

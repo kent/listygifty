@@ -1465,7 +1465,7 @@ export const screenshotServices = {
             },
             participant: {
               name: participant.name,
-              email: participant.email,
+              email: participant.email || "",
               status: participant.status,
             },
           });

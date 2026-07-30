@@ -1,6 +1,10 @@
 class ExchangeParticipantBlueprint < ApplicationBlueprint
   fields :name, :email, :status, :created_at, :updated_at
 
+  def self.render_roster_as_hash(participants)
+    render_as_hash(participants).map { |participant| participant.except(:email, "email") }
+  end
+
   field :gift_exchange_id do |participant|
     participant.gift_exchange_id
   end

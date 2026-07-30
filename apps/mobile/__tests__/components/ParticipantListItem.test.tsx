@@ -29,6 +29,13 @@ describe("ParticipantListItem", () => {
     expect(screen.getByText("alex@example.com")).toBeTruthy();
   });
 
+  it("omits the email row when the roster response hides it", () => {
+    render(<ParticipantListItem participant={buildParticipant({ email: undefined })} />);
+
+    expect(screen.getByText("Alex Parker")).toBeTruthy();
+    expect(screen.queryByText("alex@example.com")).toBeNull();
+  });
+
   it("renders wishlist count when requested", () => {
     render(
       <ParticipantListItem

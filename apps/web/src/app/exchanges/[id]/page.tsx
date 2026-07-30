@@ -438,7 +438,9 @@ export default function ExchangeDetailPage({
                         {getStatusIcon(participant.status)}
                         <div>
                           <p className="text-slate-900 dark:text-white font-medium">{participant.display_name}</p>
-                          <p className="text-xs text-slate-500">{participant.email}</p>
+                          {participant.email && (
+                            <p className="text-xs text-slate-500">{participant.email}</p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

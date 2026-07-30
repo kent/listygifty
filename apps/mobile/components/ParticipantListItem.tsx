@@ -42,9 +42,11 @@ export function ParticipantListItem({
         <Text style={{ color: colors.text, fontSize: 16 }}>
           {participant.display_name || participant.name}
         </Text>
-        <Text style={{ color: colors.muted, fontSize: 12 }} numberOfLines={1}>
-          {participant.email}
-        </Text>
+        {participant.email ? (
+          <Text style={{ color: colors.muted, fontSize: 12 }} numberOfLines={1}>
+            {participant.email}
+          </Text>
+        ) : null}
       </View>
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
