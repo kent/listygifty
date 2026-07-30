@@ -16,7 +16,7 @@ export default function MyMatchPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params);
+  const { id: slug } = use(params);
   const { isAuthenticated, isLoading: authLoading, user, signOut } = useAuth();
   const router = useRouter();
   const [exchange, setExchange] = useState<GiftExchange | null>(null);
@@ -34,13 +34,13 @@ export default function MyMatchPage({
 
     async function loadData() {
       try {
-        const exchangeData = await giftExchangesService.getById(parseInt(id));
+        const exchangeData = await giftExchangesService.getBySlug(slug);
         setExchange(exchangeData);
 
         // Get my participant with match info
         if (exchangeData.my_participant?.matched_participant_id) {
           const matchData = await exchangeParticipantsService.getById(
-            parseInt(id),
+            exchangeData.id,
             exchangeData.my_participant.matched_participant_id
           );
           setMatch(matchData as ExchangeParticipantWithWishlist);
@@ -51,7 +51,7 @@ export default function MyMatchPage({
     }
 
     loadData();
-  }, [isAuthenticated, id]);
+  }, [isAuthenticated, slug]);
 
   if (authLoading || loading) {
     return (
@@ -83,7 +83,7 @@ export default function MyMatchPage({
           <p className="text-slate-600 dark:text-slate-400 mb-4">
             The exchange organizer has not started the matching yet.
           </p>
-          <Link href={`/exchanges/${id}`}>
+          <Link href={`/exchanges/${slug}`}>
             <Button>Back to Exchange</Button>
           </Link>
         </div>
@@ -96,7 +96,7 @@ export default function MyMatchPage({
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center">
           <p className="text-slate-600 dark:text-slate-400">Could not load your match</p>
-          <Link href={`/exchanges/${id}`}>
+          <Link href={`/exchanges/${slug}`}>
             <Button className="mt-4">Back to Exchange</Button>
           </Link>
         </div>
@@ -114,7 +114,7 @@ export default function MyMatchPage({
 
       <main className="relative z-10 container mx-auto px-4 py-8 max-w-3xl">
         <Link
-          href={`/exchanges/${id}`}
+          href={`/exchanges/${slug}`}
           className="inline-flex items-center text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />

@@ -11,6 +11,7 @@ module.exports = {
   ],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
+    "^@babel/runtime/(.*)$": "<rootDir>/node_modules/@babel/runtime/$1",
     "^@niftygifty/types$": "<rootDir>/../../packages/types/dist/index.js",
     "^@niftygifty/api-client$": "<rootDir>/../../packages/api-client/dist/index.js",
     "^@niftygifty/services$": "<rootDir>/../../packages/services/dist/index.js",

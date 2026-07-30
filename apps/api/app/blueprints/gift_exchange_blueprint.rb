@@ -1,5 +1,5 @@
 class GiftExchangeBlueprint < ApplicationBlueprint
-  fields :name, :exchange_date, :status, :budget_min, :budget_max, :created_at, :updated_at
+  fields :name, :slug, :exchange_date, :status, :budget_min, :budget_max, :created_at, :updated_at
 
   field :user_id do |exchange|
     exchange.user_id

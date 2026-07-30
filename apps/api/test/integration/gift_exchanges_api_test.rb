@@ -33,9 +33,10 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
   end
 
   test "show returns a gift exchange" do
-    get gift_exchange_path(@exchange), headers: @auth_headers, as: :json
+    get gift_exchange_path(@exchange.slug), headers: @auth_headers, as: :json
     assert_response :success
     assert_equal @exchange.name, json_response["name"]
+    assert_equal @exchange.slug, json_response["slug"]
   end
 
   test "create creates a gift exchange" do
@@ -58,6 +59,7 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     exchange = GiftExchange.last
     creator_participant = exchange.participant_for(@user)
     assert_equal "Holiday Gift Exchange", exchange.name
+    assert_equal "holiday-gift-exchange", json_response["slug"]
     assert_equal "accepted", creator_participant.status
     assert_equal @user.email, creator_participant.email
     assert_equal creator_participant.id, json_response.dig("my_participant", "id")
@@ -83,6 +85,16 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     assert_response :created
     assert_nil json_response["my_participant"]
     assert_equal 0, json_response["participant_count"]
+  end
+
+  test "create derives a unique slug from the exchange name" do
+    post gift_exchanges_path,
+      headers: @auth_headers,
+      params: { gift_exchange: { name: @exchange.name } },
+      as: :json
+
+    assert_response :created
+    assert_equal "secret-santa-2024-2", json_response["slug"]
   end
 
   test "create returns validation errors" do

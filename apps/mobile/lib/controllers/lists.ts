@@ -3,6 +3,7 @@ import { Alert, Share } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { summarizeGifts } from "@niftygifty/types";
 import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
 import { scheduleGiftListReminder } from "@/lib/notifications";
@@ -174,6 +175,14 @@ export function useGiftListDetailController() {
       }),
     [deferredSearch, resource.data.gifts, selectedStatusIds]
   );
+  const giftSummary = useMemo(
+    () => summarizeGifts(resource.data.gifts, resource.data.statuses),
+    [resource.data.gifts, resource.data.statuses]
+  );
+  const filteredGiftSummary = useMemo(
+    () => summarizeGifts(filteredGifts, resource.data.statuses),
+    [filteredGifts, resource.data.statuses]
+  );
 
   const hasActiveFilters = selectedStatusIds.length > 0 || search.trim().length > 0;
   const error = !isValidHolidayId ? "Invalid list ID" : resource.error;
@@ -206,11 +215,17 @@ export function useGiftListDetailController() {
       return;
     }
 
+    if (hasActiveFilters) {
+      setSelectedStatusIds([]);
+      setSearch("");
+      setShowFilters(false);
+    }
+
     router.push({
       pathname: "/(tabs)/lists/gifts/new",
       params: { holiday_id: holidayId.toString() },
     });
-  }, [holidayId, isValidHolidayId, router]);
+  }, [hasActiveFilters, holidayId, isValidHolidayId, router]);
 
   const openGift = useCallback(
     (giftId: number) => {
@@ -422,8 +437,10 @@ export function useGiftListDetailController() {
     closeShareModal,
     collaborators,
     error,
+    filteredGiftSummary,
     filteredGifts,
     getNextStatusForGift,
+    giftSummary,
     handleAdvanceGiftStatus: advanceGiftStatus,
     handleDeleteGift: deleteGift,
     handleGiftPress: openGift,

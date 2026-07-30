@@ -21,7 +21,7 @@ export function ExchangeCard({ exchange }: ExchangeCardProps) {
     : null;
 
   return (
-    <Link href={`/exchanges/${exchange.id}`}>
+    <Link href={`/exchanges/${exchange.slug}`}>
       <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm hover:bg-slate-800/50 hover:border-violet-500/50 transition-all cursor-pointer group">
         <CardContent className="p-5">
           <div className="flex items-start gap-4">

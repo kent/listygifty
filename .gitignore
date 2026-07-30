@@ -42,3 +42,7 @@ Thumbs.db
 
 # GitHub Actions Google auth credentials
 gha-creds-*.json
+
+# Migration secrets
+.claude/plans/migration-inputs.env
+.claude/plans/secrets/

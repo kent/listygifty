@@ -1,4 +1,10 @@
-import type { Gift, GiftStatus, Holiday, Person } from "@niftygifty/types";
+import {
+  summarizeGifts,
+  type Gift,
+  type GiftStatus,
+  type Holiday,
+  type Person,
+} from "@niftygifty/types";
 import {
   buildCreateGiftPayload,
   buildGiftFormValues,
@@ -180,6 +186,83 @@ describe("gift model helpers", () => {
         statusIds: [9],
       }).map((gift) => gift.id)
     ).toEqual([2]);
+  });
+
+  it("searches gift givers, statuses, links, and prices", () => {
+    const gifts = [
+      buildGift({
+        id: 1,
+        name: "Switch",
+        link: "https://amazon.com/dp/example",
+        cost: "299.99",
+        gift_status: buildStatus({ id: 3, name: "Purchased", position: 2 }),
+        gift_status_id: 3,
+        givers: [buildPerson({ id: 11, name: "Lee" })],
+      }),
+      buildGift({
+        id: 2,
+        name: "Coffee Beans",
+        link: "https://local.example/coffee",
+        cost: "18.00",
+        gift_status: buildStatus({ id: 1, name: "Idea", position: 1 }),
+        gift_status_id: 1,
+        givers: [buildPerson({ id: 12, name: "Sam" })],
+      }),
+    ];
+
+    expect(
+      filterGifts(gifts, { search: "lee", statusIds: [] }).map((gift) => gift.id)
+    ).toEqual([1]);
+    expect(
+      filterGifts(gifts, { search: "amazon", statusIds: [] }).map((gift) => gift.id)
+    ).toEqual([1]);
+    expect(
+      filterGifts(gifts, { search: "purchased", statusIds: [] }).map((gift) => gift.id)
+    ).toEqual([1]);
+    expect(
+      filterGifts(gifts, { search: "$299", statusIds: [] }).map((gift) => gift.id)
+    ).toEqual([1]);
+  });
+
+  it("summarizes progress, spend, and list hygiene", () => {
+    const statuses = [
+      buildStatus({ id: 1, name: "Idea", position: 1 }),
+      buildStatus({ id: 2, name: "Purchased", position: 2 }),
+      buildStatus({ id: 3, name: "Wrapped", position: 3 }),
+    ];
+    const gifts = [
+      buildGift({
+        id: 1,
+        cost: "10.00",
+        gift_status: statuses[2],
+        gift_status_id: statuses[2].id,
+      }),
+      buildGift({
+        id: 2,
+        cost: null,
+        gift_status: statuses[0],
+        gift_status_id: statuses[0].id,
+        recipients: [],
+      }),
+      buildGift({
+        id: 3,
+        cost: "25.50",
+        gift_status: statuses[1],
+        gift_status_id: statuses[1].id,
+      }),
+    ];
+
+    expect(summarizeGifts(gifts, statuses)).toMatchObject({
+      totalGifts: 3,
+      totalCost: 35.5,
+      pricedGiftCount: 2,
+      unpricedGiftCount: 1,
+      assignedGiftCount: 2,
+      unassignedGiftCount: 1,
+      completedGiftCount: 1,
+      remainingGiftCount: 2,
+      completionPercent: 33,
+    });
   });
 
   it("sorts gift statuses by position and name", () => {

@@ -46,7 +46,7 @@ export default function JoinExchangePage({
     try {
       const response = await exchangeInvitesService.acceptInvite(token);
       toast.success(response.message);
-      router.push(`/exchanges/${response.exchange.id}`);
+      router.push(`/exchanges/${response.exchange.slug}`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to accept invite";
       toast.error(message);
@@ -108,7 +108,7 @@ export default function JoinExchangePage({
             <p className="text-slate-600 dark:text-slate-400 mb-6">
               You have already joined {invite.exchange.name}.
             </p>
-            <Link href={`/exchanges/${invite.exchange.id}`}>
+            <Link href={`/exchanges/${invite.exchange.slug}`}>
               <Button className="bg-gradient-to-r from-violet-500 to-fuchsia-500">
                 Go to Exchange
               </Button>

@@ -3,6 +3,7 @@ export { CurrencyCell } from "./CurrencyCell";
 export { StatusCell } from "./StatusCell";
 export { PeopleCell } from "./PeopleCell";
 export { GiftGrid } from "./GiftGrid";
+export { GiftListSummaryBar } from "./GiftListSummaryBar";
 export { SortableGiftRow } from "./SortableGiftRow";
 export { MobileGiftCard } from "./MobileGiftCard";
 export { HolidayReports } from "./HolidayReports";

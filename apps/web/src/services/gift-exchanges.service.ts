@@ -11,8 +11,8 @@ class GiftExchangesService {
     return apiClient.get<GiftExchange[]>("/gift_exchanges");
   }
 
-  async getById(id: number): Promise<GiftExchangeWithParticipants> {
-    return apiClient.get<GiftExchangeWithParticipants>(`/gift_exchanges/${id}`);
+  async getBySlug(slug: string): Promise<GiftExchangeWithParticipants> {
+    return apiClient.get<GiftExchangeWithParticipants>(`/gift_exchanges/${slug}`);
   }
 
   async create(data: CreateGiftExchangeRequest["gift_exchange"]): Promise<GiftExchange> {

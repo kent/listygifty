@@ -1,18 +1,33 @@
 "use client";
 
-import { Users, Star, Clock, Heart, Plus, Share2 } from "lucide-react";
+import { Users, Star, Clock, Heart, Plus, Share2, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type PeopleSection = "all" | "favourites" | "recent" | "family" | "shared" | "new";
+export type PeopleSection =
+  | "all"
+  | "needs-gifts"
+  | "favourites"
+  | "recent"
+  | "family"
+  | "shared"
+  | "new";
 
 interface PeopleNavProps {
   activeSection: PeopleSection;
   onSectionChange: (section: PeopleSection) => void;
-  counts?: { all: number; favourites: number; recent: number; family: number; shared: number };
+  counts?: {
+    all: number;
+    needsGifts: number;
+    favourites: number;
+    recent: number;
+    family: number;
+    shared: number;
+  };
 }
 
 const NAV_ITEMS: { id: PeopleSection; label: string; icon: typeof Users }[] = [
   { id: "all", label: "All", icon: Users },
+  { id: "needs-gifts", label: "Needs Gifts", icon: Gift },
   { id: "favourites", label: "Favourites", icon: Star },
   { id: "recent", label: "Recent", icon: Clock },
   { id: "family", label: "Family", icon: Heart },
@@ -25,7 +40,10 @@ export function PeopleNav({ activeSection, onSectionChange, counts }: PeopleNavP
     <nav className="flex overflow-x-auto md:flex-col md:w-56 md:shrink-0 gap-1 pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-none">
       <ul className="flex md:flex-col gap-1 md:space-y-1">
         {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
-          const count = counts && id !== "new" ? counts[id] : null;
+          const count =
+            counts && id !== "new"
+              ? counts[id === "needs-gifts" ? "needsGifts" : id]
+              : null;
           return (
             <li key={id} className="shrink-0">
               <button
@@ -50,4 +68,3 @@ export function PeopleNav({ activeSection, onSectionChange, counts }: PeopleNavP
     </nav>
   );
 }
-

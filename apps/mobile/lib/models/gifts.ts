@@ -1,8 +1,9 @@
-import type {
-  CreateGiftRequest,
-  Gift,
-  GiftStatus,
-  UpdateGiftRequest,
+import {
+  giftMatchesSearch,
+  type CreateGiftRequest,
+  type Gift,
+  type GiftStatus,
+  type UpdateGiftRequest,
 } from "@niftygifty/types";
 import { parseOptionalDecimal, trim, trimOrUndefined } from "./inputs";
 import { normalizeExternalUrl } from "@/lib/url";
@@ -160,20 +161,9 @@ export function getPurchasedGiftStatus(statuses: GiftStatus[]): GiftStatus | nul
 }
 
 export function filterGifts(gifts: Gift[], filters: GiftFilterValues): Gift[] {
-  const normalizedSearch = filters.search.trim().toLowerCase();
-
   return gifts.filter((gift) => {
-    if (normalizedSearch) {
-      const matchesSearch =
-        gift.name.toLowerCase().includes(normalizedSearch) ||
-        gift.description?.toLowerCase().includes(normalizedSearch) ||
-        gift.recipients?.some((recipient) =>
-          recipient.name.toLowerCase().includes(normalizedSearch)
-        );
-
-      if (!matchesSearch) {
-        return false;
-      }
+    if (!giftMatchesSearch(gift, filters.search)) {
+      return false;
     }
 
     if (filters.statusIds.length > 0 && !filters.statusIds.includes(gift.gift_status_id)) {

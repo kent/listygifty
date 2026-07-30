@@ -400,6 +400,336 @@ export const DEFAULT_GIFT_FILTERS: GiftFilterState = {
 };
 
 // =============================================================================
+// Gift List Summary Helpers
+// =============================================================================
+
+export interface GiftStatusSummary {
+  statusId: number;
+  name: string;
+  count: number;
+  totalCost: number;
+}
+
+export interface GiftListSummary {
+  totalGifts: number;
+  totalCost: number;
+  pricedGiftCount: number;
+  unpricedGiftCount: number;
+  assignedGiftCount: number;
+  unassignedGiftCount: number;
+  completedGiftCount: number;
+  remainingGiftCount: number;
+  completionPercent: number;
+  statusCounts: GiftStatusSummary[];
+}
+
+const COMPLETE_STATUS_TERMS = [
+  "complete",
+  "completed",
+  "delivered",
+  "done",
+  "received",
+  "shipped",
+  "wrapped",
+] as const;
+
+function parseGiftCost(cost: string | null | undefined): number | null {
+  if (!cost) {
+    return null;
+  }
+
+  const parsed = Number.parseFloat(cost.replace(/[$,\s]/g, ""));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function sortStatusesByPosition(statuses: GiftStatus[]): GiftStatus[] {
+  return [...statuses].sort((left, right) => {
+    const positionDifference = left.position - right.position;
+    if (positionDifference !== 0) {
+      return positionDifference;
+    }
+
+    return left.name.localeCompare(right.name);
+  });
+}
+
+function getCompletionStatusIds(statuses: GiftStatus[]): Set<number> {
+  if (statuses.length < 2) {
+    return new Set();
+  }
+
+  const sortedStatuses = sortStatusesByPosition(statuses);
+  const lastPosition = sortedStatuses[sortedStatuses.length - 1]?.position;
+  return new Set(
+    sortedStatuses
+      .filter((status) => status.position === lastPosition)
+      .map((status) => status.id)
+  );
+}
+
+function isCompleteStatusName(statusName: string | null | undefined): boolean {
+  const normalizedName = statusName?.trim().toLowerCase() ?? "";
+  return COMPLETE_STATUS_TERMS.some((term) => normalizedName.includes(term));
+}
+
+export function isGiftComplete(gift: Gift, statuses: GiftStatus[] = []): boolean {
+  const completeStatusIds = getCompletionStatusIds(statuses);
+
+  if (completeStatusIds.size > 0) {
+    return completeStatusIds.has(gift.gift_status_id);
+  }
+
+  return isCompleteStatusName(gift.gift_status?.name);
+}
+
+export function summarizeGifts(gifts: Gift[], statuses: GiftStatus[] = []): GiftListSummary {
+  const statusCountsById = new Map<number, GiftStatusSummary>();
+
+  sortStatusesByPosition(statuses).forEach((status) => {
+    statusCountsById.set(status.id, {
+      statusId: status.id,
+      name: status.name,
+      count: 0,
+      totalCost: 0,
+    });
+  });
+
+  let totalCost = 0;
+  let pricedGiftCount = 0;
+  let assignedGiftCount = 0;
+  let completedGiftCount = 0;
+
+  gifts.forEach((gift) => {
+    const cost = parseGiftCost(gift.cost);
+    if (cost !== null) {
+      totalCost += cost;
+      pricedGiftCount += 1;
+    }
+
+    if (gift.recipients.length > 0) {
+      assignedGiftCount += 1;
+    }
+
+    if (isGiftComplete(gift, statuses)) {
+      completedGiftCount += 1;
+    }
+
+    const statusSummary =
+      statusCountsById.get(gift.gift_status_id) ??
+      {
+        statusId: gift.gift_status_id,
+        name: gift.gift_status?.name ?? "Unknown",
+        count: 0,
+        totalCost: 0,
+      };
+
+    statusSummary.count += 1;
+    statusSummary.totalCost += cost ?? 0;
+    statusCountsById.set(statusSummary.statusId, statusSummary);
+  });
+
+  const totalGifts = gifts.length;
+  const completionPercent =
+    totalGifts === 0 ? 0 : Math.round((completedGiftCount / totalGifts) * 100);
+
+  return {
+    totalGifts,
+    totalCost,
+    pricedGiftCount,
+    unpricedGiftCount: totalGifts - pricedGiftCount,
+    assignedGiftCount,
+    unassignedGiftCount: totalGifts - assignedGiftCount,
+    completedGiftCount,
+    remainingGiftCount: totalGifts - completedGiftCount,
+    completionPercent,
+    statusCounts: [...statusCountsById.values()].filter(
+      (summary) => summary.count > 0 || statuses.some((status) => status.id === summary.statusId)
+    ),
+  };
+}
+
+function normalizeGiftSearchValue(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function searchableGiftValues(gift: Gift): string[] {
+  return [
+    gift.name,
+    gift.description,
+    gift.link,
+    gift.cost,
+    gift.cost ? `$${gift.cost}` : null,
+    gift.gift_status?.name,
+    gift.holiday?.name,
+    gift.created_by?.safe_name,
+    gift.created_by?.email,
+    ...gift.recipients.flatMap((recipient) => [recipient.name, recipient.email]),
+    ...gift.givers.flatMap((giver) => [giver.name, giver.email]),
+  ].filter((value): value is string => Boolean(value));
+}
+
+export function giftMatchesSearch(gift: Gift, search: string): boolean {
+  const normalizedSearch = normalizeGiftSearchValue(search);
+  if (!normalizedSearch) {
+    return true;
+  }
+
+  const numericSearch = normalizedSearch.replace(/[$,\s]/g, "");
+  const cost = parseGiftCost(gift.cost);
+
+  if (
+    numericSearch &&
+    cost !== null &&
+    cost.toFixed(2).includes(numericSearch)
+  ) {
+    return true;
+  }
+
+  return searchableGiftValues(gift).some((value) =>
+    normalizeGiftSearchValue(value).includes(normalizedSearch)
+  );
+}
+
+// =============================================================================
+// People Summary Helpers
+// =============================================================================
+
+export interface PeopleSummary {
+  totalPeople: number;
+  withGiftsCount: number;
+  withoutGiftsCount: number;
+  sharedPeopleCount: number;
+  upcomingDateCount: number;
+  missingRelationshipCount: number;
+}
+
+function parseDateOnlyParts(dateString?: string | null): { monthIndex: number; day: number } | null {
+  if (!dateString) {
+    return null;
+  }
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const monthIndex = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const parsed = new Date(Date.UTC(year, monthIndex, day));
+
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== monthIndex ||
+    parsed.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return { monthIndex, day };
+}
+
+function getAnnualDateDistanceInDays(
+  dateString: string | null,
+  now: Date
+): number | null {
+  const parts = parseDateOnlyParts(dateString);
+  if (!parts) {
+    return null;
+  }
+
+  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  let targetUtc = Date.UTC(now.getFullYear(), parts.monthIndex, parts.day);
+
+  if (targetUtc < todayUtc) {
+    targetUtc = Date.UTC(now.getFullYear() + 1, parts.monthIndex, parts.day);
+  }
+
+  return Math.round((targetUtc - todayUtc) / 86_400_000);
+}
+
+export function personHasUpcomingDate(
+  person: Pick<Person, "birthday" | "milestone_date">,
+  now: Date = new Date(),
+  withinDays = 30
+): boolean {
+  const birthdayDistance = getAnnualDateDistanceInDays(person.birthday, now);
+  const milestoneDistance = getAnnualDateDistanceInDays(person.milestone_date, now);
+
+  return [birthdayDistance, milestoneDistance].some(
+    (distance): distance is number => distance !== null && distance <= withinDays
+  );
+}
+
+export function summarizePeople(
+  people: Person[],
+  now: Date = new Date()
+): PeopleSummary {
+  return people.reduce(
+    (summary, person) => {
+      summary.totalPeople += 1;
+
+      if (person.gift_count > 0) {
+        summary.withGiftsCount += 1;
+      } else {
+        summary.withoutGiftsCount += 1;
+      }
+
+      if (person.is_shared) {
+        summary.sharedPeopleCount += 1;
+      }
+
+      if (personHasUpcomingDate(person, now)) {
+        summary.upcomingDateCount += 1;
+      }
+
+      if (!person.relationship?.trim()) {
+        summary.missingRelationshipCount += 1;
+      }
+
+      return summary;
+    },
+    {
+      totalPeople: 0,
+      withGiftsCount: 0,
+      withoutGiftsCount: 0,
+      sharedPeopleCount: 0,
+      upcomingDateCount: 0,
+      missingRelationshipCount: 0,
+    } satisfies PeopleSummary
+  );
+}
+
+function normalizePersonSearchValue(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function searchablePersonValues(person: Person): string[] {
+  return [
+    person.name,
+    person.email,
+    person.relationship,
+    person.notes,
+    person.birthday,
+    person.milestone_label,
+    person.milestone_date,
+    person.gift_count > 0 ? `${person.gift_count} gifts` : "no gifts",
+    person.is_shared ? "shared" : null,
+  ].filter((value): value is string => Boolean(value));
+}
+
+export function personMatchesSearch(person: Person, search: string): boolean {
+  const normalizedSearch = normalizePersonSearchValue(search);
+  if (!normalizedSearch) {
+    return true;
+  }
+
+  return searchablePersonValues(person).some((value) =>
+    normalizePersonSearchValue(value).includes(normalizedSearch)
+  );
+}
+
+// =============================================================================
 // Billing
 // =============================================================================
 
@@ -599,6 +929,7 @@ export type ParticipantStatus = "invited" | "accepted" | "declined";
 
 export interface GiftExchange extends BaseEntity {
   name: string;
+  slug: string;
   exchange_date: string | null;
   status: ExchangeStatus;
   budget_min: string | null;
@@ -716,6 +1047,7 @@ export interface ExchangeInviteDetails {
   exchange: {
     id: number;
     name: string;
+    slug: string;
     exchange_date: string | null;
     budget_min: string | null;
     budget_max: string | null;
@@ -738,7 +1070,7 @@ export interface AcceptInviteResponse {
 export const EXCHANGE_API_ENDPOINTS = {
   // Gift Exchanges
   giftExchanges: "/gift_exchanges",
-  giftExchange: (id: number) => `/gift_exchanges/${id}`,
+  giftExchange: (slug: string) => `/gift_exchanges/${slug}`,
   startExchange: (id: number) => `/gift_exchanges/${id}/start`,
   
   // Participants

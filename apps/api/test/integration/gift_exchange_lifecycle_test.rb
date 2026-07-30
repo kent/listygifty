@@ -234,7 +234,7 @@ class GiftExchangeLifecycleTest < ActionDispatch::IntegrationTest
       assert_includes text, match.display_name
       assert_includes text, "$25 - $75"
       assert_includes text, @exchange_date.strftime("%B %d, %Y")
-      assert_includes text, "/exchanges/#{exchange.id}/my-match"
+      assert_includes text, "/exchanges/#{exchange.slug}/my-match"
       assert_includes text, "Keep it a secret"
       assert_includes html, "View Their Wishlist"
 

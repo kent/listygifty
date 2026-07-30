@@ -1,6 +1,11 @@
 import { useState, useMemo, useCallback } from "react";
-import type { Gift, GiftFilterState, CostRange } from "@niftygifty/types";
-import { DEFAULT_GIFT_FILTERS } from "@niftygifty/types";
+import {
+  DEFAULT_GIFT_FILTERS,
+  giftMatchesSearch,
+  type CostRange,
+  type Gift,
+  type GiftFilterState,
+} from "@niftygifty/types";
 
 interface CostRangeBounds {
   min: number | null;
@@ -29,16 +34,6 @@ function matchesCostRange(cost: string | null, range: CostRange | null): boolean
   return aboveMin && belowMax;
 }
 
-function matchesSearch(gift: Gift, search: string): boolean {
-  if (!search.trim()) return true;
-  const term = search.toLowerCase();
-  return (
-    gift.name.toLowerCase().includes(term) ||
-    gift.recipients.some((r) => r.name.toLowerCase().includes(term)) ||
-    gift.givers.some((g) => g.name.toLowerCase().includes(term))
-  );
-}
-
 export function useGiftFilters(gifts: Gift[]) {
   const [filters, setFilters] = useState<GiftFilterState>(DEFAULT_GIFT_FILTERS);
 
@@ -56,7 +51,7 @@ export function useGiftFilters(gifts: Gift[]) {
   const filteredGifts = useMemo(() => {
     return gifts.filter((gift) => {
       // Text search
-      if (!matchesSearch(gift, filters.search)) return false;
+      if (!giftMatchesSearch(gift, filters.search)) return false;
 
       // Status filter
       if (filters.statusIds.length > 0) {
@@ -115,5 +110,3 @@ export function useGiftFilters(gifts: Gift[]) {
     activeFilterCount,
   };
 }
-
-

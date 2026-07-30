@@ -217,6 +217,9 @@ const apiEnv: pulumi.Input<pulumi.Input<gcp.types.input.cloudrunv2.ServiceTempla
   plainEnv("RAILS_ENV", environment === "production" ? "production" : "staging"),
   plainEnv("RAILS_MAX_THREADS", "5"),
   plainEnv("RAILS_MIN_THREADS", "5"),
+  // Cloud Run has no separate long-running worker service. Keep Solid Queue
+  // attached to Puma so queued mail and other background jobs are processed.
+  plainEnv("SOLID_QUEUE_IN_PUMA", "true"),
   plainEnv("GOOGLE_CLOUD_PROJECT", project),
   plainEnv("ACTIVE_STORAGE_SERVICE", "google"),
   plainEnv("ACTIVE_STORAGE_BUCKET", activeStorageBucket.name),
@@ -419,6 +422,9 @@ new command.local.Command(
 set -e
 api_url="$(gcloud run services describe ${apiServiceName} --project=${project} --region=${region} --format="value(status.url)")"
 web_url="$(gcloud run services describe ${webServiceName} --project=${project} --region=${region} --format="value(status.url)")"
+queue_worker="$(gcloud run services describe ${apiServiceName} --project=${project} --region=${region} --format="value(spec.template.spec.containers[0].env[?name=SOLID_QUEUE_IN_PUMA].value)")"
+[ "$queue_worker" = "true" ] || { echo "FAIL: Solid Queue worker is not enabled" >&2; exit 1; }
+echo "  ✓ Solid Queue worker enabled"
 check() {
   code="$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 "$2")"
   [ "$code" = "$3" ] || { echo "FAIL: $1 expected $3 got $code ($2)" >&2; exit 1; }

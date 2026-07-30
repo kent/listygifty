@@ -66,10 +66,10 @@ class GiftExchangesController < ApplicationController
   private
 
   def set_gift_exchange
-    @gift_exchange = GiftExchange
-                     .for_user(current_user)
-                     .includes(exchange_participants: [ :matched_participant, :exchange_wishlist_items ])
-                     .find(params[:id])
+    exchanges = GiftExchange
+                .for_user(current_user)
+                .includes(exchange_participants: [ :matched_participant, :exchange_wishlist_items ])
+    @gift_exchange = exchanges.find_by(slug: params[:id]) || exchanges.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Gift exchange not found" }, status: :not_found
   end

@@ -85,7 +85,7 @@ export default function ExchangeDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params);
+  const { id: slug } = use(params);
   const { isAuthenticated, isLoading: authLoading, user, signOut } = useAuth();
   const router = useRouter();
   const [exchange, setExchange] = useState<GiftExchangeWithParticipants | null>(null);
@@ -110,10 +110,8 @@ export default function ExchangeDetailPage({
 
     async function loadData() {
       try {
-        const [exchangeData, exclusionsData] = await Promise.all([
-          giftExchangesService.getById(parseInt(id)),
-          exchangeExclusionsService.getAll(parseInt(id)).catch(() => []),
-        ]);
+        const exchangeData = await giftExchangesService.getBySlug(slug);
+        const exclusionsData = await exchangeExclusionsService.getAll(exchangeData.id).catch(() => []);
         setExchange(exchangeData);
         setExclusions(exclusionsData);
       } finally {
@@ -122,7 +120,7 @@ export default function ExchangeDetailPage({
     }
 
     loadData();
-  }, [isAuthenticated, id]);
+  }, [isAuthenticated, slug]);
 
   const handleAddParticipant = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,7 +128,8 @@ export default function ExchangeDetailPage({
 
     setAddingParticipant(true);
     try {
-      const participant = await exchangeParticipantsService.create(parseInt(id), {
+      if (!exchange) return;
+      const participant = await exchangeParticipantsService.create(exchange.id, {
         name: newParticipant.name.trim(),
         email: newParticipant.email.trim(),
       });
@@ -155,7 +154,8 @@ export default function ExchangeDetailPage({
 
   const handleResendInvite = async (participant: ExchangeParticipant) => {
     try {
-      await exchangeParticipantsService.resendInvite(parseInt(id), participant.id);
+      if (!exchange) return;
+      await exchangeParticipantsService.resendInvite(exchange.id, participant.id);
       toast.success(`Invitation resent to ${participant.email}`);
     } catch {
       toast.error("Failed to resend invitation");
@@ -164,7 +164,8 @@ export default function ExchangeDetailPage({
 
   const handleRemoveParticipant = async (participant: ExchangeParticipant) => {
     try {
-      await exchangeParticipantsService.delete(parseInt(id), participant.id);
+      if (!exchange) return;
+      await exchangeParticipantsService.delete(exchange.id, participant.id);
       setExchange((prev) =>
         prev
           ? {
@@ -185,7 +186,8 @@ export default function ExchangeDetailPage({
     if (!newExclusion.participant_a_id || !newExclusion.participant_b_id) return;
 
     try {
-      const exclusion = await exchangeExclusionsService.create(parseInt(id), {
+      if (!exchange) return;
+      const exclusion = await exchangeExclusionsService.create(exchange.id, {
         participant_a_id: parseInt(newExclusion.participant_a_id),
         participant_b_id: parseInt(newExclusion.participant_b_id),
       });
@@ -200,7 +202,8 @@ export default function ExchangeDetailPage({
 
   const handleRemoveExclusion = async (exclusion: ExchangeExclusion) => {
     try {
-      await exchangeExclusionsService.delete(parseInt(id), exclusion.id);
+      if (!exchange) return;
+      await exchangeExclusionsService.delete(exchange.id, exclusion.id);
       setExclusions((prev) => prev.filter((e) => e.id !== exclusion.id));
       toast.success("Exclusion rule removed");
     } catch {
@@ -211,7 +214,8 @@ export default function ExchangeDetailPage({
   const handleStartExchange = async () => {
     setStarting(true);
     try {
-      const updated = await giftExchangesService.start(parseInt(id));
+      if (!exchange) return;
+      const updated = await giftExchangesService.start(exchange.id);
       setExchange(updated);
       setShowStartDialog(false);
       toast.success("Exchange started! Matches have been sent to all participants.");
@@ -302,13 +306,13 @@ export default function ExchangeDetailPage({
 
           {!isOwner && myParticipant && exchange.status === "active" && (
             <div className="flex gap-2">
-              <Link href={`/exchanges/${id}/my-wishlist`}>
+              <Link href={`/exchanges/${slug}/my-wishlist`}>
                 <Button variant="outline" className="border-slate-200 dark:border-slate-700">
                   <List className="h-4 w-4 mr-2" />
                   My Wishlist
                 </Button>
               </Link>
-              <Link href={`/exchanges/${id}/my-match`}>
+              <Link href={`/exchanges/${slug}/my-match`}>
                 <Button className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600">
                   <Gift className="h-4 w-4 mr-2" />
                   View My Match
@@ -619,13 +623,13 @@ export default function ExchangeDetailPage({
                 </div>
                 {exchange.status === "active" && (
                   <div className="flex gap-2">
-                    <Link href={`/exchanges/${id}/my-wishlist`} className="flex-1">
+                    <Link href={`/exchanges/${slug}/my-wishlist`} className="flex-1">
                       <Button variant="outline" className="w-full border-slate-200 dark:border-slate-700">
                         <List className="h-4 w-4 mr-2" />
                         Edit Wishlist
                       </Button>
                     </Link>
-                    <Link href={`/exchanges/${id}/my-match`} className="flex-1">
+                    <Link href={`/exchanges/${slug}/my-match`} className="flex-1">
                       <Button className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500">
                         <Gift className="h-4 w-4 mr-2" />
                         View Match

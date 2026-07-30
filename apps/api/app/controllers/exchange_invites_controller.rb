@@ -8,6 +8,7 @@ class ExchangeInvitesController < ApplicationController
       exchange: {
         id: @participant.gift_exchange.id,
         name: @participant.gift_exchange.name,
+        slug: @participant.gift_exchange.slug,
         exchange_date: @participant.gift_exchange.exchange_date,
         budget_min: @participant.gift_exchange.budget_min,
         budget_max: @participant.gift_exchange.budget_max,

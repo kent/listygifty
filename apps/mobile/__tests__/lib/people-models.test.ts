@@ -1,4 +1,4 @@
-import type { Person } from "@niftygifty/types";
+import { personMatchesSearch, summarizePeople, type Person } from "@niftygifty/types";
 import {
   buildPersonFormValuesFromName,
   buildPersonFormValues,
@@ -62,6 +62,39 @@ describe("people model helpers", () => {
       expect(filterPeople(people, search, group).map((person) => person.id)).toEqual(expectedIds);
     }
   );
+
+  it("summarizes people who need coverage and upcoming dates", () => {
+    expect(
+      summarizePeople(
+        [
+          buildPerson({ gift_count: 2, is_shared: true, relationship: "family" }),
+          buildPerson({ id: 2, gift_count: 0, relationship: "", birthday: "1991-06-10" }),
+        ],
+        new Date("2026-05-26T12:00:00Z")
+      )
+    ).toEqual({
+      totalPeople: 2,
+      withGiftsCount: 1,
+      withoutGiftsCount: 1,
+      sharedPeopleCount: 1,
+      upcomingDateCount: 1,
+      missingRelationshipCount: 1,
+    });
+  });
+
+  it("searches people by notes, milestones, and gift coverage", () => {
+    const person = buildPerson({
+      name: "Jordan",
+      gift_count: 0,
+      milestone_label: "Work anniversary",
+      notes: "Loves coffee gear",
+    });
+
+    expect(personMatchesSearch(person, "coffee")).toBe(true);
+    expect(personMatchesSearch(person, "anniversary")).toBe(true);
+    expect(personMatchesSearch(person, "no gifts")).toBe(true);
+    expect(personMatchesSearch(person, "marie")).toBe(false);
+  });
 
   it("normalizes known relationship values when building form state", () => {
     const formValues = buildPersonFormValues(

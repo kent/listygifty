@@ -5,8 +5,9 @@ export { NewPersonModal } from "./NewPersonModal";
 export { RelationshipFilter, type RelationshipFilterValue } from "./RelationshipFilter";
 export { AllSection } from "./AllSection";
 export { FavouritesSection } from "./FavouritesSection";
+export { NeedsGiftsSection } from "./NeedsGiftsSection";
+export { PeopleSummaryBar } from "./PeopleSummaryBar";
 export { RecentSection } from "./RecentSection";
 export { FamilySection } from "./FamilySection";
 export { SharedSection } from "./SharedSection";
 export { ImportPeopleDialog } from "./ImportPeopleDialog";
-

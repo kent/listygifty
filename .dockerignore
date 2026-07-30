@@ -6,6 +6,13 @@
 **/dist
 **/coverage
 **/tmp
+.claude
+.turbo
+.vercel
+assets
+docs
+infra
 apps/mobile
+apps/api
 apps/api/tmp
 apps/api/log

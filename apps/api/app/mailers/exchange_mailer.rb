@@ -17,7 +17,7 @@ class ExchangeMailer < ApplicationMailer
     @exchange = participant.gift_exchange
     @match = participant.matched_participant
     @frontend_url = ENV.fetch("FRONTEND_URL", "https://listygifty.com")
-    @exchange_url = "#{@frontend_url}/exchanges/#{@exchange.id}/my-match"
+    @exchange_url = "#{@frontend_url}/exchanges/#{@exchange.slug}/my-match"
 
     mail(
       to: participant.user&.email || participant.email,

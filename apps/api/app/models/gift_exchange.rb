@@ -8,10 +8,13 @@ class GiftExchange < ApplicationRecord
   has_many :exchange_exclusions, dependent: :destroy
 
   validates :name, presence: true
+  validates :slug, presence: true, uniqueness: true
   validates :status, presence: true, inclusion: { in: STATUSES }
   validates :budget_min, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :budget_max, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validate :budget_max_greater_than_min
+
+  before_validation :assign_slug, if: :should_assign_slug?
 
   scope :owned_by, ->(user) { where(user: user) }
   scope :participating, ->(user) { joins(:exchange_participants).where(exchange_participants: { user: user }) }
@@ -38,6 +41,25 @@ class GiftExchange < ApplicationRecord
   end
 
   private
+
+  def should_assign_slug?
+    slug.blank? || will_save_change_to_name?
+  end
+
+  def assign_slug
+    base = name.to_s.parameterize.presence || "exchange"
+    base = base.first(240)
+    candidate = base
+    suffix = 2
+
+    while GiftExchange.where.not(id: id).exists?(slug: candidate)
+      suffix_text = "-#{suffix}"
+      candidate = "#{base.first(255 - suffix_text.length)}#{suffix_text}"
+      suffix += 1
+    end
+
+    self.slug = candidate
+  end
 
   def budget_max_greater_than_min
     return if budget_min.blank? || budget_max.blank?

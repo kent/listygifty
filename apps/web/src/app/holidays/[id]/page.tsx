@@ -11,7 +11,7 @@ import { captureWebEvent } from "@/lib/analytics";
 import { downloadIcsEvent } from "@/lib/calendar-download";
 import { AppHeader } from "@/components/layout";
 import { GiftFilters } from "@/components/filters";
-import { GiftGrid, HolidayReports, ImportGiftsDialog } from "@/components/gifts";
+import { GiftGrid, GiftListSummaryBar, HolidayReports, ImportGiftsDialog } from "@/components/gifts";
 import { ShareHolidayDialog } from "@/components/holidays";
 import { CursorOverlay } from "@/components/cursors";
 import { Button } from "@/components/ui/button";
@@ -435,6 +435,13 @@ export default function HolidayDetailPage() {
               </Link>
             </TabsList>
             <TabsContent value="gifts" className="space-y-4">
+              <GiftListSummaryBar
+                gifts={gifts}
+                filteredGifts={filteredGifts}
+                statuses={statuses}
+                holidayDate={holiday.date}
+                hasActiveFilters={hasActiveFilters}
+              />
               <GiftFilters
                 filters={filters}
                 statuses={statuses}
@@ -462,6 +469,8 @@ export default function HolidayDetailPage() {
                 defaultStatusId={statuses[0]?.id}
                 onGiftsChange={setGifts}
                 onPeopleChange={setPeople}
+                hasActiveFilters={hasActiveFilters}
+                onClearFilters={clearFilters}
               />
             </TabsContent>
             <TabsContent value="reports">

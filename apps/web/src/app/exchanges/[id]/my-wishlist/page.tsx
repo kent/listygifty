@@ -28,7 +28,7 @@ export default function MyWishlistPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params);
+  const { id: slug } = use(params);
   const { isAuthenticated, isLoading: authLoading, user, signOut } = useAuth();
   const router = useRouter();
   const [exchange, setExchange] = useState<GiftExchange | null>(null);
@@ -54,12 +54,12 @@ export default function MyWishlistPage({
 
     async function loadData() {
       try {
-        const exchangeData = await giftExchangesService.getById(parseInt(id));
+        const exchangeData = await giftExchangesService.getBySlug(slug);
         setExchange(exchangeData);
 
         if (exchangeData.my_participant) {
           const itemsData = await wishlistItemsService.getAll(
-            parseInt(id),
+            exchangeData.id,
             exchangeData.my_participant.id
           );
           setItems(itemsData);
@@ -70,7 +70,7 @@ export default function MyWishlistPage({
     }
 
     loadData();
-  }, [isAuthenticated, id]);
+  }, [isAuthenticated, slug]);
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +79,7 @@ export default function MyWishlistPage({
     setAdding(true);
     try {
       const item = await wishlistItemsService.create(
-        parseInt(id),
+        exchange.id,
         exchange.my_participant.id,
         {
           name: newItem.name.trim(),
@@ -103,7 +103,7 @@ export default function MyWishlistPage({
     if (!exchange?.my_participant) return;
 
     try {
-      await wishlistItemsService.delete(parseInt(id), exchange.my_participant.id, item.id);
+      await wishlistItemsService.delete(exchange.id, exchange.my_participant.id, item.id);
       setItems((prev) => prev.filter((i) => i.id !== item.id));
       toast.success("Item removed");
     } catch {
@@ -140,7 +140,7 @@ export default function MyWishlistPage({
 
       <main className="relative z-10 container mx-auto px-4 py-8 max-w-3xl">
         <Link
-          href={`/exchanges/${id}`}
+          href={`/exchanges/${slug}`}
           className="inline-flex items-center text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />

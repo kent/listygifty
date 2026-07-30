@@ -16,6 +16,7 @@ import { GiftItem } from "@/components/GiftItem";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { InlineError } from "@/components/InlineError";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
+import { GiftListSummaryStrip } from "@/components/GiftListSummaryStrip";
 import { getGiftStatusColors } from "@/lib/gift-status-colors";
 import {
   getHolidayCollaboratorInitials,
@@ -205,6 +206,12 @@ export default function GiftsScreen() {
             </ScrollView>
           </View>
         ) : null}
+
+        <GiftListSummaryStrip
+          summary={controller.giftSummary}
+          filteredSummary={controller.filteredGiftSummary}
+          hasActiveFilters={controller.hasActiveFilters}
+        />
       </View>
 
       {controller.error ? (

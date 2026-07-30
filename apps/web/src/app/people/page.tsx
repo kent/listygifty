@@ -4,20 +4,24 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { exportsService, peopleService, workspacesService } from "@/services";
 import { useWorkspaceData } from "@/hooks";
 import { useWorkspace } from "@/contexts/workspace-context";
+import { personMatchesSearch } from "@niftygifty/types";
 import { AppHeader } from "@/components/layout";
 import {
   PeopleNav,
   AllSection,
   FavouritesSection,
+  NeedsGiftsSection,
   RecentSection,
   FamilySection,
   SharedSection,
+  PeopleSummaryBar,
   NewPersonModal,
   ImportPeopleDialog,
   type PeopleSection,
 } from "@/components/people";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, Upload } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Download, Loader2, Search, Upload } from "lucide-react";
 import { captureWebEvent } from "@/lib/analytics";
 import { toast } from "sonner";
 import type { Person, WorkspaceMember } from "@niftygifty/types";
@@ -41,6 +45,7 @@ export default function PeoplePage() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceMember[]>([]);
   const [isExportingPeople, setIsExportingPeople] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (currentWorkspace) {
@@ -83,8 +88,13 @@ export default function PeoplePage() {
     }
   }, [currentWorkspace?.workspace_type, people.length]);
 
+  const searchedPeople = useMemo(() => {
+    return people.filter((person) => personMatchesSearch(person, search));
+  }, [people, search]);
+
   const counts = useMemo(() => ({
     all: people.length,
+    needsGifts: people.filter((p) => p.gift_count === 0).length,
     favourites: people.filter((p) => p.gift_count > 0).length,
     recent: people.length,
     family: people.filter((p) => p.relationship === "family").length,
@@ -145,6 +155,23 @@ export default function PeoplePage() {
           </div>
         </div>
 
+        <div className="mb-6 space-y-4">
+          <div className="relative max-w-xl">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search name, email, relationship, notes, or gift coverage..."
+              className="h-11 border-slate-200 bg-white/70 pl-9 text-slate-900 dark:border-slate-800 dark:bg-slate-900/60 dark:text-white"
+            />
+          </div>
+          <PeopleSummaryBar
+            people={people}
+            visiblePeople={searchedPeople}
+            hasSearch={search.trim().length > 0}
+          />
+        </div>
+
         <div className="flex flex-col md:flex-row md:gap-8">
           <PeopleNav
             activeSection={activeSection}
@@ -153,11 +180,12 @@ export default function PeoplePage() {
           />
 
           <div className="flex-1 min-w-0">
-            {activeSection === "all" && <AllSection people={people} />}
-            {activeSection === "favourites" && <FavouritesSection people={people} />}
-            {activeSection === "recent" && <RecentSection people={people} />}
-            {activeSection === "family" && <FamilySection people={people} />}
-            {activeSection === "shared" && <SharedSection people={people} />}
+            {activeSection === "all" && <AllSection people={searchedPeople} />}
+            {activeSection === "needs-gifts" && <NeedsGiftsSection people={searchedPeople} />}
+            {activeSection === "favourites" && <FavouritesSection people={searchedPeople} />}
+            {activeSection === "recent" && <RecentSection people={searchedPeople} />}
+            {activeSection === "family" && <FamilySection people={searchedPeople} />}
+            {activeSection === "shared" && <SharedSection people={searchedPeople} />}
           </div>
         </div>
       </main>

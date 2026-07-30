@@ -83,7 +83,7 @@ export default function NewExchangePage() {
         include_creator: formData.include_creator,
       });
       toast.success(`Created "${exchange.name}"`);
-      router.push(`/exchanges/${exchange.id}`);
+      router.push(`/exchanges/${exchange.slug}`);
     } catch {
       toast.error("Failed to create exchange");
     } finally {

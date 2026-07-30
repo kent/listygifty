@@ -67,6 +67,8 @@ interface GiftGridProps {
   defaultStatusId?: number;
   onGiftsChange: (gifts: Gift[]) => void;
   onPeopleChange: (people: Person[]) => void;
+  hasActiveFilters?: boolean;
+  onClearFilters?: () => void;
 }
 
 export function GiftGrid({
@@ -81,6 +83,8 @@ export function GiftGrid({
   defaultStatusId,
   onGiftsChange,
   onPeopleChange,
+  hasActiveFilters = false,
+  onClearFilters,
 }: GiftGridProps) {
   const [localState, setLocalState] = useState<Record<number, { _isNew?: boolean; _isSaving?: boolean }>>({});
   const [isPending, startTransition] = useTransition();
@@ -324,6 +328,7 @@ export function GiftGrid({
     const holidayId = getActiveHolidayId();
     const statusId = defaultStatusId || statuses[0]?.id;
     if (!holidayId || !statusId) return;
+    const shouldClearFilters = hasActiveFilters && Boolean(onClearFilters);
 
     startTransition(async () => {
       try {
@@ -339,6 +344,10 @@ export function GiftGrid({
         // Always refresh so ordering/positions stay consistent (especially when inserting at top).
         const refreshed = await refreshGiftList();
         onGiftsChangeRef.current(refreshed);
+        if (shouldClearFilters) {
+          onClearFilters?.();
+          toast("Filters cleared so the new gift is visible");
+        }
 
         // Refresh billing status after creating gift
         await refreshBillingStatus();
@@ -358,7 +367,15 @@ export function GiftGrid({
         }
       }
     });
-  }, [defaultStatusId, getActiveHolidayId, refreshBillingStatus, refreshGiftList, statuses]);
+  }, [
+    defaultStatusId,
+    getActiveHolidayId,
+    hasActiveFilters,
+    onClearFilters,
+    refreshBillingStatus,
+    refreshGiftList,
+    statuses,
+  ]);
 
   const insertGift = useCallback(async (referenceId: number, position: "above" | "below") => {
     const sorted = [...allGiftsRef.current].sort((a, b) => a.position - b.position);
