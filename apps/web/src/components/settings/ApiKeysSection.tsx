@@ -39,6 +39,7 @@ import {
 import { toast } from "sonner";
 import type { ApiKey } from "@niftygifty/types";
 import { BRAND_NAME } from "@/lib/brand";
+import { RUNNER_MCP_CONFIG } from "@/lib/mcp";
 
 export function ApiKeysSection() {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
@@ -185,7 +186,7 @@ export function ApiKeysSection() {
                   <DialogHeader>
                     <DialogTitle>Create API Key</DialogTitle>
                     <DialogDescription>
-                      Create a new API key for use with Claude Desktop, ChatGPT, or other MCP-compatible tools.
+                      Create a new API key for Runner or another MCP client that supports Bearer headers.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
@@ -193,7 +194,7 @@ export function ApiKeysSection() {
                       <Label htmlFor="keyName">Key Name</Label>
                       <Input
                         id="keyName"
-                        placeholder="e.g., Claude Desktop, My MacBook"
+                        placeholder="e.g., Runner on my MacBook"
                         value={newKeyName}
                         onChange={(e) => setNewKeyName(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleCreate()}
@@ -226,48 +227,41 @@ export function ApiKeysSection() {
       {/* MCP Instructions */}
       <div className="rounded-2xl border border-slate-200 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/30 backdrop-blur-xl overflow-hidden p-6">
         <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-3">
-          Use with Claude Desktop
+          Use an API key with Runner
         </h3>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-          Add this to your Claude Desktop config file:
+          Create a key, replace the placeholder below, and save this as{" "}
+          <code className="font-mono text-violet-600 dark:text-violet-400">
+            ~/.runner/mcp.json
+          </code>
+          . Start a new Runner conversation after saving the file.
         </p>
         <div className="relative group">
           <pre className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs overflow-x-auto">
-            <code className="text-slate-700 dark:text-slate-300">{`{
-  "mcpServers": {
-    "niftygifty": {
-      "command": "npx",
-      "args": ["@niftygifty/mcp-server"],
-      "env": {
-        "NIFTYGIFTY_API_URL": "https://api.listygifty.com",
-        "NIFTYGIFTY_API_KEY": "your_api_key_here"
-      }
-    }
-  }
-}`}</code>
+            <code className="text-slate-700 dark:text-slate-300">
+              {RUNNER_MCP_CONFIG}
+            </code>
           </pre>
           <Button
             variant="ghost"
             size="sm"
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() =>
-              handleCopy(`{
-  "mcpServers": {
-    "niftygifty": {
-      "command": "npx",
-      "args": ["@niftygifty/mcp-server"],
-      "env": {
-        "NIFTYGIFTY_API_URL": "https://api.listygifty.com",
-        "NIFTYGIFTY_API_KEY": "your_api_key_here"
-      }
-    }
-  }
-}`)
-            }
+            className="absolute top-2 right-2 bg-white/80 dark:bg-slate-900/80"
+            onClick={() => handleCopy(RUNNER_MCP_CONFIG)}
+            aria-label="Copy Runner MCP configuration"
           >
             <Copy className="h-4 w-4" />
           </Button>
         </div>
+        <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
+          Claude and other OAuth-capable clients do not need an API key. Use the{" "}
+          <a
+            href="/integrations"
+            className="font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
+          >
+            AI Integrations setup
+          </a>{" "}
+          and sign in when prompted.
+        </p>
       </div>
 
       {/* API Keys List */}

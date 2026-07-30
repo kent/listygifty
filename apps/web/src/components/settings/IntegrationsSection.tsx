@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Plug, ExternalLink, Trash2, RefreshCw, KeyRound } from "lucide-react";
 import type { OAuthConnection } from "@niftygifty/types";
 import { oauthConnectionsService } from "@/services";
+import { MCP_SERVER_URL, RUNNER_MCP_CONFIG } from "@/lib/mcp";
 
 function formatConnectionDate(value: string | null): string | null {
   if (!value) {
@@ -53,21 +54,6 @@ export function IntegrationsSection({ onOpenApiKeys }: IntegrationsSectionProps)
     }
   };
 
-  const mcpServerUrl = process.env.NEXT_PUBLIC_API_URL
-    ? `${process.env.NEXT_PUBLIC_API_URL}/mcp`
-    : "https://api.listygifty.com/mcp";
-  const runnerConfig = `{
-  "mcpServers": {
-    "listygifty": {
-      "type": "http",
-      "url": "${mcpServerUrl}",
-      "headers": {
-        "Authorization": "Bearer YOUR_LISTYGIFTY_API_KEY"
-      }
-    }
-  }
-}`;
-
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -95,13 +81,13 @@ export function IntegrationsSection({ onOpenApiKeys }: IntegrationsSectionProps)
             </p>
             <div className="flex items-center gap-3 mb-4">
               <code className="flex-1 px-4 py-2 rounded-lg bg-slate-900 dark:bg-slate-800 text-cyan-400 font-mono text-sm overflow-x-auto">
-                {mcpServerUrl}
+                {MCP_SERVER_URL}
               </code>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  navigator.clipboard.writeText(mcpServerUrl);
+                  navigator.clipboard.writeText(MCP_SERVER_URL);
                   toast.success("Copied to clipboard");
                 }}
               >
@@ -243,7 +229,7 @@ export function IntegrationsSection({ onOpenApiKeys }: IntegrationsSectionProps)
             size="sm"
             className="border-slate-700 bg-transparent text-white hover:bg-slate-800"
             onClick={() => {
-              navigator.clipboard.writeText(runnerConfig);
+              navigator.clipboard.writeText(RUNNER_MCP_CONFIG);
               toast.success("Runner configuration copied");
             }}
           >
@@ -251,7 +237,7 @@ export function IntegrationsSection({ onOpenApiKeys }: IntegrationsSectionProps)
           </Button>
         </div>
         <pre className="overflow-x-auto rounded-lg bg-black/30 p-4 text-xs text-cyan-300">
-          <code>{runnerConfig}</code>
+          <code>{RUNNER_MCP_CONFIG}</code>
         </pre>
       </div>
 
