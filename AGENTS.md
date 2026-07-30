@@ -332,18 +332,20 @@ source .gcp/listygifty-deploy.env
 
 ### Deploy commands
 
-Everything ships through Pulumi (`infra/pulumi/`). One command per environment:
+Everything ships through Pulumi (`infra/pulumi/`). Production only — staging
+is turned off pre-PMF (see `infra/pulumi/README.md` to re-enable):
 
 ```bash
 source .gcp/listygifty-deploy.env
-npm run deploy:staging
-npm run deploy:production
+npm run deploy              # web + API
+npm run deploy:mobile       # web + API + iOS EAS build
 ```
 
 Each command runs (parallel where independent): API + web image builds via
 Cloud Build, Cloud Run rollout, db:migrate via Cloud Run job, smoke tests
-(`/up`, `/holidays` → 401, web `/`, `/login`), then fires the EAS mobile
-build (`--no-wait --auto-submit`). Same git SHA twice → no-op redeploy.
+(`/up`, `/holidays` → 401, web `/`, `/login`). The EAS mobile build
+(`--no-wait --auto-submit`) only runs with `ENABLE_MOBILE=true` /
+`deploy:mobile`. Same git SHA twice → no-op redeploy.
 
 Pulumi state lives in `gs://listygifty-pulumi-state` (self-hosted GCS
 backend). See `infra/pulumi/README.md` for bootstrap, import-existing,

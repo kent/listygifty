@@ -7,9 +7,15 @@ resource in `src/stack.ts`. One command per environment runs the entire
 pipeline:
 
 ```bash
-npm run deploy:staging      # build → roll → migrate → smoke → EAS staging
-npm run deploy:production   # same, against prod stack
+npm run deploy              # build → roll → migrate → smoke (production)
+npm run deploy:mobile       # same, plus queue the iOS EAS build
 ```
+
+> **Staging is turned off** (stack destroyed 2026-07-30, pre-PMF speed mode).
+> To re-enable: restore `Pulumi.staging.yaml` from git history
+> (`git show 214b1ea:infra/pulumi/Pulumi.staging.yaml`), run
+> `pulumi stack init staging`, re-apply the config, and `pulumi up`. Staging
+> Secret Manager containers were retained on delete, so secrets still exist.
 
 State lives in **`gs://listygifty-pulumi-state`** (self-hosted GCS backend
 declared in `Pulumi.yaml`). No Pulumi Cloud account needed.
@@ -155,8 +161,7 @@ should be small or empty before the first `pulumi up`.
 ## Day-to-day deploy
 
 ```bash
-npm run deploy:staging
-npm run deploy:production
+npm run deploy
 ```
 
 ## Android App Links

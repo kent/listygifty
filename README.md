@@ -156,8 +156,8 @@ control.
 
 | Surface | What Ships | Owner | Primary Release Path |
 |---|---|---|---|
-| API | Rails API, migrations, runtime secrets, Cloud SQL connection | Pulumi + Cloud Run | `npm run deploy:staging` / `npm run deploy:production` |
-| Web | Next.js app, public web env, app-link metadata | Pulumi + Cloud Run | `npm run deploy:staging` / `npm run deploy:production` |
+| API | Rails API, migrations, runtime secrets, Cloud SQL connection | Pulumi + Cloud Run | `npm run deploy` |
+| Web | Next.js app, public web env, app-link metadata | Pulumi + Cloud Run | `npm run deploy` |
 | Mobile TestFlight | Expo iOS store build, production API/web URLs, app assets from `apps/mobile/app.json` | GitHub Actions + EAS | `npm run release -- patch` or `Mobile Release` workflow |
 | App Store Production | Promotion of a validated TestFlight build to App Review | GitHub Actions + App Store Connect | `Mobile Release` workflow with `app_store_review` |
 
@@ -175,9 +175,11 @@ Canonical deploy commands:
 gcloud config configurations activate listygifty
 source .gcp/listygifty-deploy.env
 
-npm run deploy:staging
-npm run deploy:production
+npm run deploy
 ```
+
+Staging is turned off pre-PMF (see `infra/pulumi/README.md` to re-enable).
+Tests run locally with `npm test` — there is no CI gate on deploys.
 
 Each Pulumi deploy:
 

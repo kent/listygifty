@@ -6,11 +6,11 @@
 # Usage: deploy.sh <staging|production>
 set -euo pipefail
 
-ENVIRONMENT="${1:-}"
+ENVIRONMENT="${1:-production}"
 case "${ENVIRONMENT}" in
-  staging|production) ;;
+  production) ;;
   *)
-    echo "Usage: $0 <staging|production>" >&2
+    echo "Usage: $0 [production] (staging is turned off pre-PMF — see infra/pulumi/README.md to re-enable)" >&2
     exit 1
     ;;
 esac
@@ -156,7 +156,7 @@ pulumi up \
   --skip-preview \
   --config "niftygifty:sourceSha=${SHA}"
 
-ENABLE_MOBILE="${ENABLE_MOBILE:-true}"
+ENABLE_MOBILE="${ENABLE_MOBILE:-false}"
 if [[ "${ENABLE_MOBILE}" == "false" || "${ENABLE_MOBILE}" == "0" ]]; then
   warn "Skipping mobile build because ENABLE_MOBILE=${ENABLE_MOBILE}"
 else

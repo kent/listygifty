@@ -34,12 +34,16 @@ source .gcp/listygifty-deploy.env
 
 ## Deploys
 
-Everything ships through Pulumi. One command per environment:
+Everything ships through Pulumi. Production only — staging is turned off
+pre-PMF (stack destroyed 2026-07-30; see `infra/pulumi/README.md` to
+re-enable). Tests run locally (`npm test`), never in the deploy path.
 
 ```bash
-npm run deploy:staging      # build → roll → migrate → smoke → EAS staging
-npm run deploy:production   # same, against prod stack
+npm run deploy              # build → roll → migrate → smoke (production)
+npm run deploy:mobile       # same, plus queue the iOS EAS build
 ```
+
+The iOS EAS build is opt-in (`ENABLE_MOBILE=true` or `deploy:mobile`).
 
 Pulumi state lives in `gs://listygifty-pulumi-state` (self-hosted GCS backend).
 The `infra/pulumi/` directory is the single source of truth for Cloud Run
