@@ -5,6 +5,9 @@
 **/.next
 **/dist
 **/coverage
+**/playwright/.clerk
+**/playwright-report
+**/test-results
 **/tmp
 .claude
 .turbo

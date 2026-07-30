@@ -72,6 +72,40 @@ test_stack() {
     bin/rails test
 }
 
+e2e() {
+  up
+  "${COMPOSE[@]}" exec -T api bin/rails runner \
+    'GiftExchange.where("name LIKE ?", "Local E2E Gift Exchange%").destroy_all'
+  npm --workspace apps/web run test:e2e
+}
+
+e2e_open() {
+  local role="${2:-owner}"
+  case "${role}" in
+    owner|participant-1|participant-2|participant-3|participant-4) ;;
+    *)
+      echo "Role must be owner or participant-1 through participant-4." >&2
+      exit 1
+      ;;
+  esac
+
+  up
+  local slug
+  slug="$("${COMPOSE[@]}" exec -T api bin/rails runner \
+    'print GiftExchange.where("name LIKE ?", "Local E2E Gift Exchange%").order(:created_at).last&.slug')"
+  if [[ -z "${slug}" ]]; then
+    echo "Run bin/local-preview e2e before opening an E2E user session." >&2
+    exit 1
+  fi
+
+  (
+    cd "${ROOT_DIR}/apps/web"
+    npx playwright open \
+      --load-storage "playwright/.clerk/${role}.json" \
+      "${WEB_URL}/exchanges/${slug}"
+  )
+}
+
 case "${1:-up}" in
   up) up ;;
   down) down ;;
@@ -79,10 +113,12 @@ case "${1:-up}" in
   reset) reset ;;
   status) status ;;
   test) test_stack ;;
+  e2e) e2e ;;
+  e2e-open) e2e_open "$@" ;;
   logs) "${COMPOSE[@]}" logs --follow ;;
   open) up; open "${WEB_URL}" ;;
   *)
-    echo "Usage: bin/local-preview [up|down|restart|reset|status|test|logs|open]" >&2
+    echo "Usage: bin/local-preview [up|down|restart|reset|status|test|e2e|e2e-open [role]|logs|open]" >&2
     exit 1
     ;;
 esac

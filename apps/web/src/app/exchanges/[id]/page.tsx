@@ -40,6 +40,7 @@ import {
   Send,
   Play,
   Check,
+  Copy,
   Clock,
   X,
   Ban,
@@ -171,6 +172,14 @@ export default function ExchangeDetailPage({
     } catch {
       toast.error("Failed to resend invitation");
     }
+  };
+
+  const handleCopyInvite = async (participant: ExchangeParticipant) => {
+    if (!participant.invite_token) return;
+
+    const inviteUrl = `${window.location.origin}/join/exchange/${participant.invite_token}`;
+    await navigator.clipboard.writeText(inviteUrl);
+    toast.success(`Invite link copied for ${participant.name}`);
   };
 
   const handleRemoveParticipant = async (participant: ExchangeParticipant) => {
@@ -376,7 +385,10 @@ export default function ExchangeDetailPage({
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Participants */}
-          <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+          <Card
+            data-testid="participant-roster"
+            className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50"
+          >
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-slate-900 dark:text-white flex items-center gap-2">
                 <Users className="h-5 w-5 text-violet-500 dark:text-violet-400" />
@@ -471,6 +483,17 @@ export default function ExchangeDetailPage({
                           <Badge variant="outline" className="text-xs">
                             {participant.wishlist_count} items
                           </Badge>
+                        )}
+                        {isOwner && participant.status === "invited" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleCopyInvite(participant)}
+                            aria-label={`Copy invite for ${participant.display_name}`}
+                            title="Copy invite"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
                         )}
                         {isOwner && participant.status === "invited" && (
                           <Button

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.39.3",
@@ -51,6 +52,9 @@
     "@tailwindcss/oxide-linux-x64-gnu": "^4"
   },
   "devDependencies": {
+    "@clerk/backend": "^3.14.0",
+    "@clerk/testing": "^2.2.15",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/canvas-confetti": "^1.9.0",
     "@types/google.maps": "^3.58.1",
