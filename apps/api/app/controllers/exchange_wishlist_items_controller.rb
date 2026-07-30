@@ -17,6 +17,7 @@ class ExchangeWishlistItemsController < ApplicationController
     item = @participant.exchange_wishlist_items.new(wishlist_item_params)
 
     if item.save
+      ExchangeNotificationService.wishlist_item_added!(item)
       render json: ExchangeWishlistItemBlueprint.render(item), status: :created
     else
       render json: { errors: item.errors.full_messages }, status: :unprocessable_entity

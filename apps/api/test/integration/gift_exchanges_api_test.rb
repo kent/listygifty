@@ -373,6 +373,7 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
   end
 
   test "exchange invite accept joins the exchange" do
+    @exchange.update!(status: "inviting")
     pending_participant = @exchange.exchange_participants.create!(
       name: "Invited Person",
       email: "invited@example.com",
@@ -389,6 +390,7 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
   end
 
   test "exchange invite decline rejects the invitation" do
+    @exchange.update!(status: "inviting")
     pending_participant = @exchange.exchange_participants.create!(
       name: "Invited Person",
       email: "decline@example.com",

@@ -8,7 +8,8 @@ import { giftExchangesService, exchangeParticipantsService, AUTH_ROUTES } from "
 import { AppHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Gift, DollarSign, ExternalLink, Image, Calendar, List } from "lucide-react";
+import { ArrowLeft, Gift, DollarSign, ExternalLink, Image, Calendar, List, MessageCircle } from "lucide-react";
+import { toast } from "sonner";
 import type { GiftExchange, ExchangeParticipantWithWishlist } from "@niftygifty/types";
 
 export default function MyMatchPage({
@@ -22,6 +23,7 @@ export default function MyMatchPage({
   const [exchange, setExchange] = useState<GiftExchange | null>(null);
   const [match, setMatch] = useState<ExchangeParticipantWithWishlist | null>(null);
   const [loading, setLoading] = useState(true);
+  const [nudging, setNudging] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -106,6 +108,18 @@ export default function MyMatchPage({
 
   const wishlistItems = match.wishlist_items || [];
 
+  const handleNudge = async () => {
+    setNudging(true);
+    try {
+      await giftExchangesService.nudgeMatch(exchange.id);
+      toast.success("Anonymous request sent");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not send request");
+    } finally {
+      setNudging(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-500/5 dark:from-violet-900/10 via-transparent to-transparent" />
@@ -157,6 +171,15 @@ export default function MyMatchPage({
             <List className="h-5 w-5 text-violet-500 dark:text-violet-400" />
             {match.display_name}&apos;s Wishlist
           </h2>
+          <Button
+            variant="outline"
+            onClick={handleNudge}
+            disabled={nudging}
+            aria-label={`Ask ${match.display_name} for more wishlist ideas anonymously`}
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            {nudging ? "Sending..." : "Ask for more ideas"}
+          </Button>
         </div>
 
         {wishlistItems.length === 0 ? (

@@ -2,6 +2,7 @@ class ExchangeExclusionsController < ApplicationController
   before_action :set_gift_exchange
   before_action :require_owner
   before_action :set_exclusion, only: %i[destroy]
+  before_action :require_editable, only: %i[create destroy]
 
   def index
     exclusions = @gift_exchange.exchange_exclusions.includes(:participant_a, :participant_b)
@@ -40,6 +41,12 @@ class ExchangeExclusionsController < ApplicationController
   def require_owner
     return if @gift_exchange.owner?(current_user)
     render json: { error: "Only the owner can manage exclusions" }, status: :forbidden
+  end
+
+  def require_editable
+    return if @gift_exchange.editable?
+
+    render_error("Published exchanges cannot be changed", status: :unprocessable_entity)
   end
 
   def exclusion_params

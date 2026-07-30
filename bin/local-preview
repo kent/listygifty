@@ -7,6 +7,7 @@ COMPOSE_FILE="${ROOT_DIR}/compose.local.yml"
 COMPOSE=(docker compose -f "${COMPOSE_FILE}")
 API_URL="http://localhost:3001"
 WEB_URL="http://localhost:3000"
+MAIL_URL="http://localhost:8025"
 
 wait_for_url() {
   local name="$1"
@@ -34,6 +35,7 @@ up() {
   "${COMPOSE[@]}" up --build --detach
   wait_for_url "Rails API" "${API_URL}/up"
   wait_for_url "Next.js" "${WEB_URL}/login"
+  wait_for_url "Mailpit" "${MAIL_URL}/api/v1/info"
 
   echo
   echo "Listy Gifty is ready."
@@ -57,6 +59,7 @@ status() {
   echo
   echo "Web: ${WEB_URL}"
   echo "API: ${API_URL}"
+  echo "Mail: ${MAIL_URL}"
 }
 
 test_stack() {
@@ -74,9 +77,14 @@ test_stack() {
 
 e2e() {
   up
+  curl --silent --request DELETE "${MAIL_URL}/api/v1/messages" >/dev/null
+  "${COMPOSE[@]}" exec -T api bin/rails runner \
+    'failed_job_ids = SolidQueue::FailedExecution.pluck(:job_id); SolidQueue::FailedExecution.delete_all; SolidQueue::Job.where(id: failed_job_ids).delete_all; active_job_ids = [SolidQueue::ReadyExecution, SolidQueue::ScheduledExecution, SolidQueue::ClaimedExecution, SolidQueue::BlockedExecution].flat_map { |model| model.pluck(:job_id) }; SolidQueue::Job.where(finished_at: nil).where.not(id: active_job_ids).delete_all'
   "${COMPOSE[@]}" exec -T api bin/rails runner \
     'GiftExchange.where("name LIKE ?", "Local E2E Gift Exchange%").destroy_all'
   npm --workspace apps/web run test:e2e
+  "${COMPOSE[@]}" exec -T api bin/rails runner \
+    'abort "Local E2E produced failed background jobs" if SolidQueue::FailedExecution.exists?'
 }
 
 e2e_open() {

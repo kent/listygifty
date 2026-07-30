@@ -2,6 +2,7 @@ class ExchangeParticipantsController < ApplicationController
   before_action :set_gift_exchange
   before_action :require_owner, only: %i[create update destroy resend_invite]
   before_action :set_participant, only: %i[show update destroy resend_invite]
+  before_action :require_editable, only: %i[create update destroy resend_invite]
 
   def index
     participants = @gift_exchange.exchange_participants.includes(:user, :exchange_wishlist_items)
@@ -75,6 +76,12 @@ class ExchangeParticipantsController < ApplicationController
   def require_owner
     return if @gift_exchange.owner?(current_user)
     render json: { error: "Only the owner can perform this action" }, status: :forbidden
+  end
+
+  def require_editable
+    return if @gift_exchange.editable?
+
+    render_error("Published exchanges cannot be changed", status: :unprocessable_entity)
   end
 
   def participant_response_view

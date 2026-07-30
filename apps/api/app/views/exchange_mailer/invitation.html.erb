@@ -1,17 +1,24 @@
-<% content_for :preview_text do %>You've been invited to join <%= @exchange.name %> gift exchange!<% end %>
+<% content_for :preview_text do %><%= @owner.safe_name %> saved you a spot. Join, add a few ideas, and we will handle the matching.<% end %>
 
 <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #18181b;">
-  You're Invited! 🎁
+  You&apos;re in. Well, almost.
 </h1>
 
 <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
-  <strong><%= @owner.safe_name %></strong> has invited you to join their gift exchange: <strong><%= @exchange.name %></strong>
+  <strong><%= @owner.safe_name %></strong> is putting together
+  <strong><%= @exchange.name %></strong> and saved you a spot.
+</p>
+
+<p style="margin: 0 0 24px 0; font-size: 14px; color: #52525b;">
+  Here&apos;s the deal: join the exchange, add a few things you would actually
+  enjoy, and Listy Gifty will handle the matching. No spreadsheet. No group-chat
+  archaeology. No accidentally ruining the surprise.
 </p>
 
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 24px;">
   <tr>
     <td style="background-color: #faf5ff; border-radius: 12px; padding: 20px;">
-      <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #7c3aed;">Exchange Details:</p>
+      <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #7c3aed;">The plan</p>
       <table role="presentation" cellspacing="0" cellpadding="0" border="0">
         <tr>
           <td style="padding: 6px 0; font-size: 14px; color: #52525b;">
@@ -41,23 +48,23 @@
 </table>
 
 <p style="margin: 0 0 16px 0; font-size: 14px; color: #52525b;">
-  When you join, you'll be able to:
+  Once you join:
 </p>
 
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 24px;">
   <tr>
     <td style="padding: 4px 0; font-size: 14px; color: #52525b;">
-      <span style="margin-right: 8px;">✨</span> Add items to your wishlist
+      <span style="margin-right: 8px;">✨</span> Add a few useful wishlist ideas
     </td>
   </tr>
   <tr>
     <td style="padding: 4px 0; font-size: 14px; color: #52525b;">
-      <span style="margin-right: 8px;">🎅</span> Get matched with someone to buy a gift for
+      <span style="margin-right: 8px;">🎅</span> Get one private match
     </td>
   </tr>
   <tr>
     <td style="padding: 4px 0; font-size: 14px; color: #52525b;">
-      <span style="margin-right: 8px;">🎁</span> See their wishlist to find the perfect gift
+      <span style="margin-right: 8px;">🎁</span> Spend less time guessing
     </td>
   </tr>
 </table>
@@ -66,12 +73,12 @@
   <tr>
     <td align="center">
       <a href="<%= @invite_url %>" class="button" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px;">
-        Join the Exchange
+        I&apos;m In
       </a>
     </td>
   </tr>
 </table>
 
-<p style="margin: 32px 0 0 0; font-size: 12px; color: #a1a1aa; text-align: center;">
-  This invitation was sent to <%= @participant.email %>
+<p style="margin: 24px 0 0 0; font-size: 12px; color: #a1a1aa; text-align: center;">
+  You were invited as <%= @participant.name %> at <%= @participant.email %>.
 </p>

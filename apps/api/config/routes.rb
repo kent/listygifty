@@ -68,6 +68,13 @@ Rails.application.routes.draw do
   resources :gift_exchanges do
     member do
       post :start
+      post :publish
+      post :nudge_match
+    end
+    resources :exchange_notifications, only: %i[index] do
+      member do
+        patch :read
+      end
     end
     resources :exchange_participants, only: %i[index show create update destroy] do
       member do

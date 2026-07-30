@@ -30,6 +30,14 @@ class GiftExchangesService {
   async start(id: number): Promise<GiftExchangeWithParticipants> {
     return apiClient.post<GiftExchangeWithParticipants>(`/gift_exchanges/${id}/start`);
   }
+
+  async publish(id: number): Promise<GiftExchangeWithParticipants> {
+    return apiClient.post<GiftExchangeWithParticipants>(`/gift_exchanges/${id}/publish`);
+  }
+
+  async nudgeMatch(id: number): Promise<void> {
+    return apiClient.post(`/gift_exchanges/${id}/nudge_match`);
+  }
 }
 
 export const giftExchangesService = new GiftExchangesService();

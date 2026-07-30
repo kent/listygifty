@@ -1,19 +1,24 @@
-<% content_for :preview_text do %>You're giving a gift to <%= @match.display_name %> for <%= @exchange.name %>!<% end %>
+<% content_for :preview_text do %>The work is done. The surprise is intact. Your private match is ready.<% end %>
 
 <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #18181b;">
-  Your Match is Ready! 🎅
+  The names are in.
 </h1>
 
 <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
-  The matches for <strong><%= @exchange.name %></strong> are in! Here's who you're getting a gift for:
+  Hi <strong><%= @participant.display_name %></strong>. The matching for
+  <strong><%= @exchange.name %></strong> is done. The surprise is intact.
+</p>
+
+<p style="margin: 0 0 24px 0; font-size: 14px; color: #52525b;">
+  We kept the name out of this email. Not because we want to make you click
+  another button. Because secrets are the whole point.
 </p>
 
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 24px;">
   <tr>
     <td style="background-color: #fef3c7; border-radius: 12px; padding: 24px; text-align: center;">
-      <p style="margin: 0 0 8px 0; font-size: 14px; color: #92400e;">You're buying a gift for:</p>
       <p style="margin: 0; font-size: 28px; font-weight: 700; color: #78350f;">
-        🎁 <%= @match.display_name %>
+        🎁 Your match is one click away
       </p>
     </td>
   </tr>
@@ -42,12 +47,12 @@
   <tr>
     <td align="center">
       <a href="<%= @exchange_url %>" class="button" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px;">
-        View Their Wishlist
+        Show Me My Match
       </a>
     </td>
   </tr>
 </table>
 
 <p style="margin: 32px 0 0 0; font-size: 14px; color: #71717a; text-align: center;">
-  Remember: Keep it a secret! 🤫
+  Keep it quiet. Make it thoughtful.
 </p>

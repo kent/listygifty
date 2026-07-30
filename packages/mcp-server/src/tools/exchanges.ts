@@ -223,8 +223,7 @@ export const exchangeTools: Tool[] = [
   },
   {
     name: "niftygifty_start_exchange_matching",
-    description:
-      "Start the matching process. All participants will be assigned who to give a gift to.",
+    description: "Compatibility alias for publishing an exchange.",
     inputSchema: {
       type: "object",
       properties: {
@@ -234,6 +233,134 @@ export const exchangeTools: Tool[] = [
         },
       },
       required: ["exchange_id"],
+    },
+  },
+  {
+    name: "niftygifty_publish_gift_exchange",
+    description:
+      "Publish an exchange, close pending invites, match accepted participants, and email them to sign in.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        exchange_id: { type: "number", description: "The exchange ID" },
+      },
+      required: ["exchange_id"],
+    },
+  },
+  {
+    name: "niftygifty_accept_exchange_invite",
+    description: "Accept a private gift exchange invitation as the authenticated user.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        invite_token: { type: "string", description: "Private invitation token" },
+      },
+      required: ["invite_token"],
+    },
+  },
+  {
+    name: "niftygifty_decline_exchange_invite",
+    description: "Decline a private gift exchange invitation as the authenticated user.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        invite_token: { type: "string", description: "Private invitation token" },
+      },
+      required: ["invite_token"],
+    },
+  },
+  {
+    name: "niftygifty_nudge_exchange_match",
+    description:
+      "Anonymously ask only your assigned recipient to add more wishlist ideas.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        exchange_id: { type: "number", description: "The exchange ID" },
+      },
+      required: ["exchange_id"],
+    },
+  },
+  {
+    name: "niftygifty_list_exchange_notifications",
+    description: "List private notifications for your participation in an exchange.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        exchange_id: { type: "number", description: "The exchange ID" },
+      },
+      required: ["exchange_id"],
+    },
+  },
+  {
+    name: "niftygifty_mark_exchange_notification_read",
+    description: "Mark one of your private exchange notifications as read.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        exchange_id: { type: "number", description: "The exchange ID" },
+        notification_id: { type: "number", description: "The notification ID" },
+      },
+      required: ["exchange_id", "notification_id"],
+    },
+  },
+  {
+    name: "niftygifty_list_exchange_wishlist_items",
+    description:
+      "List your own exchange wishlist or the wishlist of your assigned recipient.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        exchange_id: { type: "number", description: "The exchange ID" },
+        participant_id: { type: "number", description: "The participant ID" },
+      },
+      required: ["exchange_id", "participant_id"],
+    },
+  },
+  {
+    name: "niftygifty_create_exchange_wishlist_item",
+    description: "Add an item to your own exchange wishlist.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        exchange_id: { type: "number", description: "The exchange ID" },
+        participant_id: { type: "number", description: "Your participant ID" },
+        name: { type: "string", description: "Gift idea" },
+        description: { type: "string", description: "Optional details" },
+        link: { type: "string", description: "Optional product URL" },
+        price: { type: "number", description: "Optional approximate price" },
+      },
+      required: ["exchange_id", "participant_id", "name"],
+    },
+  },
+  {
+    name: "niftygifty_update_exchange_wishlist_item",
+    description: "Update an item on your own exchange wishlist.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        exchange_id: { type: "number", description: "The exchange ID" },
+        participant_id: { type: "number", description: "Your participant ID" },
+        item_id: { type: "number", description: "The wishlist item ID" },
+        name: { type: "string", description: "Gift idea" },
+        description: { type: "string", description: "Optional details" },
+        link: { type: "string", description: "Optional product URL" },
+        price: { type: "number", description: "Optional approximate price" },
+      },
+      required: ["exchange_id", "participant_id", "item_id"],
+    },
+  },
+  {
+    name: "niftygifty_delete_exchange_wishlist_item",
+    description: "Delete an item from your own exchange wishlist.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        exchange_id: { type: "number", description: "The exchange ID" },
+        participant_id: { type: "number", description: "Your participant ID" },
+        item_id: { type: "number", description: "The wishlist item ID" },
+      },
+      required: ["exchange_id", "participant_id", "item_id"],
     },
   },
   {
@@ -397,13 +524,80 @@ export async function handleExchangeTool(
     case "niftygifty_start_exchange_matching": {
       const exchangeId = args.exchange_id as number;
       const exchange = await client.post<GiftExchangeWithParticipants>(
-        `/gift_exchanges/${exchangeId}/start`
+        `/gift_exchanges/${exchangeId}/publish`
       );
       return {
-        message: `Matching complete! ${exchange.participant_count} participants have been assigned.`,
+        message: `Exchange published! ${exchange.accepted_count} participants have been assigned.`,
         exchange,
       };
     }
+
+    case "niftygifty_publish_gift_exchange": {
+      const exchangeId = args.exchange_id as number;
+      const exchange = await client.post<GiftExchangeWithParticipants>(
+        `/gift_exchanges/${exchangeId}/publish`
+      );
+      return {
+        message: `Exchange published! ${exchange.accepted_count} participants have been assigned.`,
+        exchange,
+      };
+    }
+
+    case "niftygifty_accept_exchange_invite":
+      return client.post(`/exchange_invite/${args.invite_token as string}/accept`);
+
+    case "niftygifty_decline_exchange_invite":
+      return client.post(`/exchange_invite/${args.invite_token as string}/decline`);
+
+    case "niftygifty_nudge_exchange_match":
+      return client.post(`/gift_exchanges/${args.exchange_id as number}/nudge_match`);
+
+    case "niftygifty_list_exchange_notifications":
+      return client.get(
+        `/gift_exchanges/${args.exchange_id as number}/exchange_notifications`
+      );
+
+    case "niftygifty_mark_exchange_notification_read":
+      return client.patch(
+        `/gift_exchanges/${args.exchange_id as number}/exchange_notifications/${args.notification_id as number}/read`
+      );
+
+    case "niftygifty_list_exchange_wishlist_items":
+      return client.get(
+        `/gift_exchanges/${args.exchange_id as number}/exchange_participants/${args.participant_id as number}/exchange_wishlist_items`
+      );
+
+    case "niftygifty_create_exchange_wishlist_item":
+      return client.post(
+        `/gift_exchanges/${args.exchange_id as number}/exchange_participants/${args.participant_id as number}/exchange_wishlist_items`,
+        {
+          wishlist_item: {
+            name: args.name,
+            description: args.description,
+            link: args.link,
+            price: args.price,
+          },
+        }
+      );
+
+    case "niftygifty_update_exchange_wishlist_item":
+      return client.patch(
+        `/gift_exchanges/${args.exchange_id as number}/exchange_participants/${args.participant_id as number}/exchange_wishlist_items/${args.item_id as number}`,
+        {
+          wishlist_item: {
+            name: args.name,
+            description: args.description,
+            link: args.link,
+            price: args.price,
+          },
+        }
+      );
+
+    case "niftygifty_delete_exchange_wishlist_item":
+      await client.delete(
+        `/gift_exchanges/${args.exchange_id as number}/exchange_participants/${args.participant_id as number}/exchange_wishlist_items/${args.item_id as number}`
+      );
+      return { message: "Exchange wishlist item deleted" };
 
     case "niftygifty_get_my_match": {
       const exchangeId = args.exchange_id as number;

@@ -8,6 +8,7 @@ import {
   giftExchangesService,
   exchangeParticipantsService,
   exchangeExclusionsService,
+  exchangeNotificationsService,
   AUTH_ROUTES,
 } from "@/services";
 import { AppHeader } from "@/components/layout";
@@ -47,12 +48,14 @@ import {
   Trash2,
   Gift,
   List,
+  Bell,
 } from "lucide-react";
 import { toast } from "sonner";
 import type {
   GiftExchangeWithParticipants,
   ExchangeParticipant,
   ExchangeExclusion,
+  ExchangeNotification,
 } from "@niftygifty/types";
 
 function getStatusIcon(status: string) {
@@ -102,6 +105,7 @@ export default function ExchangeDetailPage({
   const router = useRouter();
   const [exchange, setExchange] = useState<GiftExchangeWithParticipants | null>(null);
   const [exclusions, setExclusions] = useState<ExchangeExclusion[]>([]);
+  const [notifications, setNotifications] = useState<ExchangeNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [addingParticipant, setAddingParticipant] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -124,8 +128,12 @@ export default function ExchangeDetailPage({
       try {
         const exchangeData = await giftExchangesService.getBySlug(slug);
         const exclusionsData = await exchangeExclusionsService.getAll(exchangeData.id).catch(() => []);
+        const notificationsData = exchangeData.my_participant
+          ? await exchangeNotificationsService.getAll(exchangeData.id).catch(() => [])
+          : [];
         setExchange(exchangeData);
         setExclusions(exclusionsData);
+        setNotifications(notificationsData);
       } finally {
         setLoading(false);
       }
@@ -235,12 +243,12 @@ export default function ExchangeDetailPage({
     setStarting(true);
     try {
       if (!exchange) return;
-      const updated = await giftExchangesService.start(exchange.id);
+      const updated = await giftExchangesService.publish(exchange.id);
       setExchange(updated);
       setShowStartDialog(false);
-      toast.success("Exchange started! Matches have been sent to all participants.");
+      toast.success("Exchange published! Participants have been emailed to reveal their matches.");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to start exchange";
+      const message = err instanceof Error ? err.message : "Failed to publish exchange";
       toast.error(message);
     } finally {
       setStarting(false);
@@ -324,7 +332,7 @@ export default function ExchangeDetailPage({
             </div>
           </div>
 
-          {!isOwner && myParticipant && exchange.status === "active" && (
+          {myParticipant && exchange.status === "active" && (
             <div className="flex gap-2">
               <Link href={`/exchanges/${slug}/my-wishlist`}>
                 <Button variant="outline" className="border-slate-200 dark:border-slate-700">
@@ -346,22 +354,24 @@ export default function ExchangeDetailPage({
               <DialogTrigger asChild>
                 <Button className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
                   <Play className="h-4 w-4 mr-2" />
-                  Start Exchange
+                  Publish Exchange
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                 <DialogHeader>
-                  <DialogTitle className="text-slate-900 dark:text-white">Start Gift Exchange?</DialogTitle>
+                  <DialogTitle className="text-slate-900 dark:text-white">Publish Gift Exchange?</DialogTitle>
                 </DialogHeader>
                 <div className="py-4">
                   <p className="text-slate-600 dark:text-slate-400">
-                    This will randomly match all participants and send them their assignments via
-                    email. This action cannot be undone.
+                    This will match all joined participants and email them to sign in and privately
+                    reveal their assignments. Pending invitations will be closed. This action cannot
+                    be undone.
                   </p>
                   <div className="mt-4 p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                    <p className="text-sm text-slate-900 dark:text-white font-medium mb-2">Ready to start:</p>
+                    <p className="text-sm text-slate-900 dark:text-white font-medium mb-2">Ready to publish:</p>
                     <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
-                      <li>• {participants.length} participants</li>
+                      <li>• {exchange.accepted_count} joined participants</li>
+                      <li>• {exchange.participant_count - exchange.accepted_count} pending invitations will close</li>
                       <li>• {exclusions.length} exclusion rules</li>
                     </ul>
                   </div>
@@ -375,7 +385,7 @@ export default function ExchangeDetailPage({
                     disabled={starting}
                     className="bg-gradient-to-r from-green-500 to-emerald-500"
                   >
-                    {starting ? "Starting..." : "Start Exchange"}
+                    {starting ? "Publishing..." : "Publish Exchange"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -642,6 +652,49 @@ export default function ExchangeDetailPage({
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {myParticipant && notifications.length > 0 && (
+            <Card
+              data-testid="exchange-notifications"
+              className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50"
+            >
+              <CardHeader>
+                <CardTitle className="text-slate-900 dark:text-white flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-violet-500 dark:text-violet-400" />
+                  Notifications
+                  {notifications.some((notification) => !notification.read_at) && (
+                    <Badge>New</Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {notifications.map((notification) => (
+                  <button
+                    key={notification.id}
+                    type="button"
+                    className="w-full text-left p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
+                    onClick={async () => {
+                      if (notification.read_at) return;
+                      const updated = await exchangeNotificationsService.markRead(
+                        exchange.id,
+                        notification.id
+                      );
+                      setNotifications((current) =>
+                        current.map((item) => (item.id === updated.id ? updated : item))
+                      );
+                    }}
+                  >
+                    <span className={notification.read_at ? "text-slate-500" : "text-slate-900 dark:text-white"}>
+                      {notification.message}
+                    </span>
+                    {!notification.read_at && (
+                      <span className="ml-2 text-xs text-violet-500">Mark read</span>
+                    )}
+                  </button>
+                ))}
               </CardContent>
             </Card>
           )}

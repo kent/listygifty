@@ -712,7 +712,7 @@ class McpController < ApplicationController
         scope: "write",
         schema: exchange_schema(required: [ "exchange_id" ], include_exchange_id: true),
         handler: ->(args) {
-          exchange = find_owned_exchange(args["exchange_id"])
+          exchange = ensure_exchange_editable!(find_owned_exchange(args["exchange_id"]))
           exchange.update!(slice_args(args, exchange_attributes))
           serialize_exchange(exchange.reload)
         }
@@ -732,8 +732,42 @@ class McpController < ApplicationController
         schema: tool_schema({ exchange_id: id_property("Gift exchange ID or slug") }, [ "exchange_id" ]),
         handler: ->(args) {
           exchange = find_exchange(args["exchange_id"])
-          view = exchange.owner?(@current_user) ? :organizer : :default
-          ExchangeParticipantBlueprint.render_as_hash(exchange.exchange_participants, view: view)
+          if exchange.owner?(@current_user)
+            ExchangeParticipantBlueprint.render_as_hash(exchange.exchange_participants, view: :organizer)
+          else
+            ExchangeParticipantBlueprint.render_roster_as_hash(exchange.exchange_participants)
+          end
+        }
+      },
+      "accept_exchange_invite" => {
+        description: "Accept a gift exchange invitation using its private invite token",
+        scope: "write",
+        schema: tool_schema({ invite_token: string_property("Private invitation token") }, [ "invite_token" ]),
+        handler: ->(args) {
+          participant = ExchangeParticipant.find_by!(invite_token: args["invite_token"])
+          participant.gift_exchange.with_lock do
+            participant.reload
+            raise ArgumentError, "This exchange has already been published" unless participant.gift_exchange.status == "inviting"
+            raise ArgumentError, "This invite has already been accepted" if participant.status == "accepted"
+            raise ArgumentError, "This invite has been declined" if participant.status == "declined"
+            participant.accept!(@current_user)
+          end
+          serialize_exchange(participant.gift_exchange.reload)
+        }
+      },
+      "decline_exchange_invite" => {
+        description: "Decline a gift exchange invitation using its private invite token",
+        scope: "write",
+        schema: tool_schema({ invite_token: string_property("Private invitation token") }, [ "invite_token" ]),
+        handler: ->(args) {
+          participant = ExchangeParticipant.find_by!(invite_token: args["invite_token"])
+          participant.gift_exchange.with_lock do
+            participant.reload
+            raise ArgumentError, "This exchange has already been published" unless participant.gift_exchange.status == "inviting"
+            raise ArgumentError, "This invite has already been responded to" unless participant.status == "invited"
+            participant.decline!
+          end
+          { declined: true, exchange_id: participant.gift_exchange_id }
         }
       },
       "add_exchange_participant" => {
@@ -745,7 +779,7 @@ class McpController < ApplicationController
           email: string_property("Participant email")
         }, %w[exchange_id name email]),
         handler: ->(args) {
-          exchange = find_owned_exchange(args["exchange_id"])
+          exchange = ensure_exchange_editable!(find_owned_exchange(args["exchange_id"]))
           participant = exchange.exchange_participants.create!(name: args["name"], email: args["email"])
           exchange.update!(status: "inviting") if exchange.status == "draft"
           ExchangeMailer.invitation(participant).deliver_later
@@ -762,7 +796,9 @@ class McpController < ApplicationController
           email: string_property
         }, %w[exchange_id participant_id]),
         handler: ->(args) {
-          participant = find_owned_exchange(args["exchange_id"]).exchange_participants.find(args["participant_id"])
+          participant = ensure_exchange_editable!(
+            find_owned_exchange(args["exchange_id"])
+          ).exchange_participants.find(args["participant_id"])
           participant.update!(slice_args(args, %w[name email]))
           ExchangeParticipantBlueprint.render_as_hash(participant, view: :organizer)
         }
@@ -772,7 +808,9 @@ class McpController < ApplicationController
         scope: "write",
         schema: participant_reference_schema,
         handler: ->(args) {
-          find_owned_exchange(args["exchange_id"]).exchange_participants.find(args["participant_id"]).destroy!
+          ensure_exchange_editable!(
+            find_owned_exchange(args["exchange_id"])
+          ).exchange_participants.find(args["participant_id"]).destroy!
           { deleted: true }
         }
       },
@@ -781,7 +819,9 @@ class McpController < ApplicationController
         scope: "write",
         schema: participant_reference_schema,
         handler: ->(args) {
-          participant = find_owned_exchange(args["exchange_id"]).exchange_participants.find(args["participant_id"])
+          participant = ensure_exchange_editable!(
+            find_owned_exchange(args["exchange_id"])
+          ).exchange_participants.find(args["participant_id"])
           raise ArgumentError, "Participant has already accepted" if participant.status == "accepted"
           ExchangeMailer.invitation(participant).deliver_later
           { sent: true, participant_id: participant.id }
@@ -805,7 +845,7 @@ class McpController < ApplicationController
           participant_b_id: integer_property("Second participant ID")
         }, %w[exchange_id participant_a_id participant_b_id]),
         handler: ->(args) {
-          exchange = find_owned_exchange(args["exchange_id"])
+          exchange = ensure_exchange_editable!(find_owned_exchange(args["exchange_id"]))
           exclusion = exchange.exchange_exclusions.create!(
             participant_a_id: args["participant_a_id"],
             participant_b_id: args["participant_b_id"]
@@ -821,12 +861,20 @@ class McpController < ApplicationController
           exclusion_id: integer_property("Exclusion ID")
         }, %w[exchange_id exclusion_id]),
         handler: ->(args) {
-          find_owned_exchange(args["exchange_id"]).exchange_exclusions.find(args["exclusion_id"]).destroy!
+          ensure_exchange_editable!(
+            find_owned_exchange(args["exchange_id"])
+          ).exchange_exclusions.find(args["exclusion_id"]).destroy!
           { deleted: true }
         }
       },
       "start_gift_exchange" => {
-        description: "Run matching for an owned exchange after at least three participants have accepted",
+        description: "Compatibility alias for publish_gift_exchange",
+        scope: "write",
+        schema: tool_schema({ exchange_id: id_property("Gift exchange ID or slug") }, [ "exchange_id" ]),
+        handler: ->(args) { start_exchange(args["exchange_id"]) }
+      },
+      "publish_gift_exchange" => {
+        description: "Publish an owned exchange, close pending invites, assign accepted participants, and email them to sign in",
         scope: "write",
         schema: tool_schema({ exchange_id: id_property("Gift exchange ID or slug") }, [ "exchange_id" ]),
         handler: ->(args) { start_exchange(args["exchange_id"]) }
@@ -859,6 +907,7 @@ class McpController < ApplicationController
         handler: ->(args) {
           participant = find_owned_exchange_participant(args)
           item = participant.exchange_wishlist_items.create!(slice_args(args, exchange_wishlist_item_attributes))
+          ExchangeNotificationService.wishlist_item_added!(item)
           ExchangeWishlistItemBlueprint.render_as_hash(item)
         }
       },
@@ -884,6 +933,48 @@ class McpController < ApplicationController
         handler: ->(args) {
           find_owned_exchange_participant(args).exchange_wishlist_items.find(args["item_id"]).destroy!
           { deleted: true }
+        }
+      },
+      "nudge_exchange_match" => {
+        description: "Anonymously ask only the current user's assigned recipient to add more wishlist ideas",
+        scope: "write",
+        schema: tool_schema({ exchange_id: id_property("Gift exchange ID or slug") }, [ "exchange_id" ]),
+        handler: ->(args) {
+          participant = find_exchange(args["exchange_id"]).participant_for(@current_user)
+          raise ActiveRecord::RecordNotFound unless participant
+          notification = ExchangeNotificationService.nudge_match!(participant)
+          ExchangeNotificationBlueprint.render_as_hash(notification)
+        }
+      },
+      "list_exchange_notifications" => {
+        description: "List the current participant's private exchange notifications",
+        scope: "read",
+        schema: tool_schema({ exchange_id: id_property("Gift exchange ID or slug") }, [ "exchange_id" ]),
+        handler: ->(args) {
+          exchange = find_exchange(args["exchange_id"])
+          participant = exchange.participant_for(@current_user)
+          raise ActiveRecord::RecordNotFound unless participant
+          notifications = exchange.exchange_notifications
+            .where(recipient_participant: participant)
+            .recent_first
+          ExchangeNotificationBlueprint.render_as_hash(notifications)
+        }
+      },
+      "mark_exchange_notification_read" => {
+        description: "Mark one of the current participant's exchange notifications as read",
+        scope: "write",
+        schema: tool_schema({
+          exchange_id: id_property("Gift exchange ID or slug"),
+          notification_id: integer_property("Notification ID")
+        }, %w[exchange_id notification_id]),
+        handler: ->(args) {
+          exchange = find_exchange(args["exchange_id"])
+          participant = exchange.participant_for(@current_user)
+          raise ActiveRecord::RecordNotFound unless participant
+          notification = exchange.exchange_notifications
+            .where(recipient_participant: participant)
+            .find(args["notification_id"])
+          ExchangeNotificationBlueprint.render_as_hash(notification.mark_read!)
         }
       }
     }
@@ -1000,14 +1091,13 @@ class McpController < ApplicationController
   end
 
   def exchange_attributes
-    %w[name exchange_date status budget_min budget_max]
+    %w[name exchange_date budget_min budget_max]
   end
 
   def exchange_schema(required:, include_workspace: false, include_creator: false, include_exchange_id: false)
     properties = {
       name: string_property("Exchange name"),
       exchange_date: string_property("Exchange date in YYYY-MM-DD format"),
-      status: enum_property(GiftExchange::STATUSES),
       budget_min: { type: "number" },
       budget_max: { type: "number" }
     }
@@ -1150,10 +1240,10 @@ class McpController < ApplicationController
 
   def start_exchange(exchange_id)
     exchange = find_owned_exchange(exchange_id)
-    raise ArgumentError, "Exchange is not ready to start" unless exchange.can_start?
+    raise ArgumentError, "Exchange is not ready to publish" unless exchange.can_publish?
 
     ExchangeMatchingService.new(exchange).perform!
-    exchange.exchange_participants.includes(:user).each do |participant|
+    exchange.exchange_participants.accepted.includes(:user).each do |participant|
       ExchangeMailer.match_assignment(participant).deliver_later
     end
     serialize_exchange(exchange.reload)
@@ -1165,6 +1255,12 @@ class McpController < ApplicationController
     participant = find_exchange(args["exchange_id"]).exchange_participants.find(args["participant_id"])
     raise ActiveRecord::RecordNotFound unless participant.user_id == @current_user.id
     participant
+  end
+
+  def ensure_exchange_editable!(exchange)
+    raise ArgumentError, "Published exchanges cannot be changed" unless exchange.editable?
+
+    exchange
   end
 
   def find_exchange_participant_for_wishlist(args)

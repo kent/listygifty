@@ -47,10 +47,10 @@ export async function handleToolCall(
       result = await handlePeopleTool(client, toolName, args);
     } else if (toolName.includes("suggestion")) {
       result = await handleSuggestionTool(client, toolName, args);
-    } else if (toolName.includes("wishlist")) {
-      result = await handleWishlistTool(client, toolName, args);
     } else if (toolName.includes("exchange")) {
       result = await handleExchangeTool(client, toolName, args);
+    } else if (toolName.includes("wishlist")) {
+      result = await handleWishlistTool(client, toolName, args);
     } else if (toolName.includes("export")) {
       result = await handleExportTool(client, toolName, args);
     } else if (toolName.includes("status")) {

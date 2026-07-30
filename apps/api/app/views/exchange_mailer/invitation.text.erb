@@ -1,18 +1,20 @@
-You're Invited!
+You're in. Well, almost.
 
-<%= @owner.safe_name %> has invited you to join their gift exchange: <%= @exchange.name %>
+<%= @owner.safe_name %> is putting together <%= @exchange.name %> and saved you a spot.
 
-Exchange Details:
+Here's the deal: join the exchange, add a few things you would actually enjoy, and Listy Gifty will handle the matching. No spreadsheet. No group-chat archaeology. No accidentally ruining the surprise.
+
+The plan:
 - Date: <%= @exchange.exchange_date ? @exchange.exchange_date.strftime("%B %d, %Y") : "TBD" %>
 <% if @exchange.budget_min || @exchange.budget_max %>
 - Budget: <% if @exchange.budget_min && @exchange.budget_max %>$<%= @exchange.budget_min.to_i %> - $<%= @exchange.budget_max.to_i %><% elsif @exchange.budget_max %>Up to $<%= @exchange.budget_max.to_i %><% else %>At least $<%= @exchange.budget_min.to_i %><% end %>
 <% end %>
 
-When you join, you'll be able to:
-- Add items to your wishlist
-- Get matched with someone to buy a gift for
-- See their wishlist to find the perfect gift
+Once you join:
+- Add a few useful wishlist ideas
+- Get one private match
+- Spend less time guessing
 
-Join the exchange: <%= @invite_url %>
+I'm in: <%= @invite_url %>
 
-This invitation was sent to <%= @participant.email %>
+You were invited as <%= @participant.name %> at <%= @participant.email %>.

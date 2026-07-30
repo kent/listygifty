@@ -108,7 +108,7 @@ class GiftExchangeLifecycleTest < ActionDispatch::IntegrationTest
 
   def assert_invitation_emails_are_complete(exchange, participants)
     invitation_emails = ActionMailer::Base.deliveries.select do |mail|
-      mail.subject.include?("You're invited to #{exchange.name}")
+      mail.subject.include?("wants you in: #{exchange.name}")
     end
     assert_equal participants.size, invitation_emails.size
 
@@ -120,12 +120,12 @@ class GiftExchangeLifecycleTest < ActionDispatch::IntegrationTest
       html = body_part(mail, "text/html")
       assert_includes text, exchange.name
       assert_includes text, participant.invite_token
-      assert_includes text, "Add items to your wishlist"
-      assert_includes text, "Get matched with someone"
+      assert_includes text, "Add a few useful wishlist ideas"
+      assert_includes text, "Get one private match"
       assert_includes text, "$25 - $75"
       assert_includes text, @exchange_date.strftime("%B %d, %Y")
       refute_includes text, "You're buying a gift for"
-      assert_includes html, "Join the Exchange"
+      assert_includes html, "I&apos;m In"
       assert_includes html, participant.invite_token
     end
   end
@@ -219,7 +219,7 @@ class GiftExchangeLifecycleTest < ActionDispatch::IntegrationTest
 
   def assert_match_emails_are_complete(exchange, participants)
     match_emails = ActionMailer::Base.deliveries.select do |mail|
-      mail.subject.include?("Your Secret Santa match for #{exchange.name}")
+      mail.subject.include?("The names are in: #{exchange.name}")
     end
     assert_equal participants.size, match_emails.size
 
@@ -231,14 +231,15 @@ class GiftExchangeLifecycleTest < ActionDispatch::IntegrationTest
 
       text = body_part(mail, "text/plain")
       html = body_part(mail, "text/html")
-      assert_includes text, match.display_name
+      refute_includes text, match.display_name
+      assert_includes text, "Because secrets are the whole point"
       assert_includes text, "$25 - $75"
       assert_includes text, @exchange_date.strftime("%B %d, %Y")
       assert_includes text, "/exchanges/#{exchange.slug}/my-match"
-      assert_includes text, "Keep it a secret"
-      assert_includes html, "View Their Wishlist"
+      assert_includes text, "Keep it quiet"
+      assert_includes html, "Show Me My Match"
 
-      secret_names = participants.map(&:display_name) - [ match.display_name ]
+      secret_names = participants.map(&:display_name) - [ participant.display_name ]
       secret_names.each do |name|
         refute_includes text, name
       end

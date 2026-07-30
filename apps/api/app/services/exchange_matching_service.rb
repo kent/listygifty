@@ -4,21 +4,22 @@ class ExchangeMatchingService
 
   def initialize(gift_exchange)
     @exchange = gift_exchange
-    @participants = gift_exchange.exchange_participants.accepted.to_a
-    @exclusions = build_exclusion_set
   end
 
   def perform!
-    validate_can_match!
-    matches = find_valid_matching
-    apply_matches!(matches)
-    matches
+    @exchange.with_lock do
+      @participants = @exchange.exchange_participants.accepted.to_a
+      @exclusions = build_exclusion_set
+      validate_can_match!
+      matches = find_valid_matching
+      apply_matches!(matches)
+      matches
+    end
   end
 
   def validate_can_match!
     raise MatchingError, "Exchange is not in inviting status" unless @exchange.status == "inviting"
     raise MatchingError, "Need at least 3 participants" if @participants.size < 3
-    raise MatchingError, "Not all participants have accepted" unless @exchange.all_accepted?
     raise ImpossibleMatchError, "No valid matching exists" unless matching_possible?
   end
 
@@ -95,12 +96,11 @@ class ExchangeMatchingService
   end
 
   def apply_matches!(matches)
-    GiftExchange.transaction do
-      @participants.each do |participant|
-        matched_id = matches[participant.id]
-        participant.update!(matched_participant_id: matched_id)
-      end
-      @exchange.update!(status: "active")
+    @exchange.exchange_participants.invited.update_all(status: "declined", updated_at: Time.current)
+    @participants.each do |participant|
+      matched_id = matches[participant.id]
+      participant.update!(matched_participant_id: matched_id)
     end
+    @exchange.update!(status: "active", published_at: Time.current)
   end
 end

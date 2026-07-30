@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_30_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_30_211000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -118,6 +118,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_30_000000) do
     t.index ["participant_b_id"], name: "index_exchange_exclusions_on_participant_b_id"
   end
 
+  create_table "exchange_notifications", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "exchange_wishlist_item_id"
+    t.bigint "gift_exchange_id", null: false
+    t.string "kind", null: false
+    t.datetime "read_at"
+    t.bigint "recipient_participant_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["exchange_wishlist_item_id"], name: "index_exchange_notifications_on_exchange_wishlist_item_id"
+    t.index ["gift_exchange_id"], name: "index_exchange_notifications_on_gift_exchange_id"
+    t.index ["recipient_participant_id", "kind", "created_at"], name: "index_exchange_notifications_for_delivery"
+    t.index ["recipient_participant_id"], name: "index_exchange_notifications_on_recipient_participant_id"
+  end
+
   create_table "exchange_participants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
@@ -171,6 +185,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_30_000000) do
     t.datetime "created_at", null: false
     t.date "exchange_date"
     t.string "name", null: false
+    t.datetime "published_at"
     t.string "slug", null: false
     t.string "status", default: "draft", null: false
     t.datetime "updated_at", null: false
@@ -520,8 +535,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_30_000000) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.string "clerk_user_id", null: false
     t.datetime "clerk_profile_synced_at"
+    t.string "clerk_user_id", null: false
     t.datetime "created_at", null: false
     t.boolean "digest_enabled", default: true, null: false
     t.string "email", null: false
@@ -653,6 +668,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_30_000000) do
   add_foreign_key "exchange_exclusions", "exchange_participants", column: "participant_a_id"
   add_foreign_key "exchange_exclusions", "exchange_participants", column: "participant_b_id"
   add_foreign_key "exchange_exclusions", "gift_exchanges"
+  add_foreign_key "exchange_notifications", "exchange_participants", column: "recipient_participant_id"
+  add_foreign_key "exchange_notifications", "exchange_wishlist_items"
+  add_foreign_key "exchange_notifications", "gift_exchanges"
   add_foreign_key "exchange_participants", "exchange_participants", column: "matched_participant_id"
   add_foreign_key "exchange_participants", "gift_exchanges"
   add_foreign_key "exchange_participants", "users"

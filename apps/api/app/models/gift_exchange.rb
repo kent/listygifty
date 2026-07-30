@@ -6,6 +6,7 @@ class GiftExchange < ApplicationRecord
   has_many :exchange_participants, dependent: :destroy
   has_many :users, through: :exchange_participants
   has_many :exchange_exclusions, dependent: :destroy
+  has_many :exchange_notifications, dependent: :destroy
 
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true
@@ -36,8 +37,41 @@ class GiftExchange < ApplicationRecord
     exchange_participants.where.not(status: "accepted").empty?
   end
 
-  def can_start?
-    status == "inviting" && all_accepted? && exchange_participants.count >= 3
+  def can_publish?
+    status == "inviting" && exchange_participants.accepted.count >= 3
+  end
+
+  def editable?
+    %w[draft inviting].include?(status)
+  end
+
+  alias_method :can_start?, :can_publish?
+
+  def role_for(check_user)
+    return "organizer" if owner?(check_user)
+    return nil unless participant_for(check_user)
+
+    %w[active completed].include?(status) ? "giver" : "participant"
+  end
+
+  def roles_for(check_user)
+    roles = []
+    roles.concat(%w[owner organizer]) if owner?(check_user)
+    participant = participant_for(check_user)
+    roles << "participant" if participant
+    roles << "matcher" if participant&.matched_participant_id.present? && %w[active completed].include?(status)
+    roles
+  end
+
+  def capabilities_for(check_user)
+    participant = participant_for(check_user)
+    {
+      organize: owner?(check_user),
+      participate: participant.present?,
+      view_match: participant&.matched_participant_id.present? && %w[active completed].include?(status),
+      nudge_match: participant&.matched_participant_id.present? && %w[active completed].include?(status),
+      publish: owner?(check_user) && can_publish?
+    }
   end
 
   private

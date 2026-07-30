@@ -1,8 +1,9 @@
 class GiftExchangesController < ApplicationController
   include WorkspaceScoped
 
-  before_action :set_gift_exchange, only: %i[show update destroy start]
-  before_action :require_owner, only: %i[update destroy start]
+  before_action :set_gift_exchange, only: %i[show update destroy start publish nudge_match]
+  before_action :require_owner, only: %i[update destroy start publish]
+  before_action :require_editable, only: :update
 
   def index
     workspace_exchange_ids = current_workspace.gift_exchanges.for_user(current_user).select(:id)
@@ -48,18 +49,32 @@ class GiftExchangesController < ApplicationController
   end
 
   def start
-    return render_error("Exchange is not ready to start", status: :unprocessable_entity) unless @gift_exchange.can_start?
+    publish
+  end
+
+  def publish
+    return render_error("Exchange is not ready to publish", status: :unprocessable_entity) unless @gift_exchange.can_publish?
 
     service = ExchangeMatchingService.new(@gift_exchange)
     service.perform!
 
     # Send match assignment emails
-    @gift_exchange.exchange_participants.includes(:user).each do |participant|
+    @gift_exchange.exchange_participants.accepted.includes(:user).each do |participant|
       ExchangeMailer.match_assignment(participant).deliver_later
     end
 
     render json: GiftExchangeBlueprint.render(@gift_exchange.reload, current_user: current_user, view: :with_participants)
   rescue ExchangeMatchingService::MatchingError => e
+    render_error(e.message, status: :unprocessable_entity)
+  end
+
+  def nudge_match
+    participant = @gift_exchange.participant_for(current_user)
+    return render_error("You are not a participant", status: :forbidden) unless participant
+
+    notification = ExchangeNotificationService.nudge_match!(participant)
+    render json: ExchangeNotificationBlueprint.render(notification), status: :created
+  rescue ExchangeNotificationService::NudgeError => e
     render_error(e.message, status: :unprocessable_entity)
   end
 
@@ -79,11 +94,16 @@ class GiftExchangesController < ApplicationController
     render json: { error: "Only the owner can perform this action" }, status: :forbidden
   end
 
+  def require_editable
+    return if @gift_exchange.editable?
+
+    render_error("Published exchanges cannot be changed", status: :unprocessable_entity)
+  end
+
   def gift_exchange_params
     params.require(:gift_exchange).permit(
       :name,
       :exchange_date,
-      :status,
       :budget_min,
       :budget_max,
       :include_creator

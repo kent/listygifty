@@ -24,16 +24,18 @@ class ExchangeInvitesController < ApplicationController
 
   # POST /exchange_invite/:token/accept - Requires auth, links user to participant
   def accept
-    return render_error("This invite has already been accepted") if @participant.status == "accepted"
-    return render_error("This invite has been declined") if @participant.status == "declined"
+    @participant.gift_exchange.with_lock do
+      @participant.reload
+      return render_error("This exchange has already been published") unless @participant.gift_exchange.status == "inviting"
+      return render_error("This invite has already been accepted") if @participant.status == "accepted"
+      return render_error("This invite has been declined") if @participant.status == "declined"
 
-    # Check if the email matches (or allow any authenticated user to accept)
-    if @participant.email.downcase != current_user.email.downcase
-      # Allow accepting with a different email, but warn
-      Rails.logger.info "User #{current_user.email} accepting invite for #{@participant.email}"
+      if @participant.email.downcase != current_user.email.downcase
+        Rails.logger.info "User #{current_user.email} accepting invite for #{@participant.email}"
+      end
+
+      @participant.accept!(current_user)
     end
-
-    @participant.accept!(current_user)
 
     render json: {
       message: "You have joined the gift exchange!",
@@ -44,9 +46,13 @@ class ExchangeInvitesController < ApplicationController
 
   # POST /exchange_invite/:token/decline - Requires auth
   def decline
-    return render_error("This invite has already been responded to") if @participant.status != "invited"
+    @participant.gift_exchange.with_lock do
+      @participant.reload
+      return render_error("This exchange has already been published") unless @participant.gift_exchange.status == "inviting"
+      return render_error("This invite has already been responded to") if @participant.status != "invited"
 
-    @participant.decline!
+      @participant.decline!
+    end
     render json: { message: "You have declined the invitation" }
   end
 

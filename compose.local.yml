@@ -29,6 +29,8 @@ services:
       DATABASE_URL: postgresql://listygifty:listygifty@db:5432/niftygifty_development
       FRONTEND_URL: http://localhost:3000
       CORS_ORIGINS: http://localhost:3000
+      SMTP_ADDRESS: mailpit
+      SMTP_PORT: "1025"
       PORT: "3001"
     ports:
       - "3001:3001"
@@ -37,11 +39,41 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:3001/up"]
       interval: 3s
       timeout: 3s
       retries: 30
+
+  worker:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+    container_name: listygifty-local-worker
+    command: bin/jobs
+    env_file:
+      - ./apps/api/.env
+    environment:
+      DATABASE_URL: postgresql://listygifty:listygifty@db:5432/niftygifty_development
+      FRONTEND_URL: http://localhost:3000
+      SMTP_ADDRESS: mailpit
+      SMTP_PORT: "1025"
+    volumes:
+      - ./apps/api:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    container_name: listygifty-local-mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 
   web:
     build:

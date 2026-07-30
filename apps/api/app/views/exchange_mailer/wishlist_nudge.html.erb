@@ -1,0 +1,25 @@
+<% content_for :preview_text do %>Someone wants to get this right. Give them one or two more ideas.<% end %>
+
+<h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #18181b;">
+  Your Secret Santa needs a little help.
+</h1>
+<p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
+  Turns out, &ldquo;surprise me&rdquo; is not much of a shopping strategy.
+</p>
+<p style="margin: 0 0 24px 0; font-size: 14px; color: #52525b;">
+  Someone in <strong><%= @exchange.name %></strong> wants to get this right. Give
+  them one or two more ideas. The request is anonymous, and adding something will
+  not reveal who sent it.
+</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td align="center">
+      <a href="<%= @wishlist_url %>" class="button" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px;">
+        Add an Idea
+      </a>
+    </td>
+  </tr>
+</table>
+<p style="margin: 32px 0 0 0; font-size: 14px; color: #71717a; text-align: center;">
+  A size, a colour, or a link takes 30 seconds and saves a lot of guessing.
+</p>

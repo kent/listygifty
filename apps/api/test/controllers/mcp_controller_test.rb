@@ -172,6 +172,10 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     assert json["result"]["tools"].any? { |t| t["name"] == "claim_wishlist_item" }
     assert json["result"]["tools"].any? { |t| t["name"] == "create_gift_exchange" }
     assert json["result"]["tools"].any? { |t| t["name"] == "start_gift_exchange" }
+    assert json["result"]["tools"].any? { |t| t["name"] == "publish_gift_exchange" }
+    assert json["result"]["tools"].any? { |t| t["name"] == "accept_exchange_invite" }
+    assert json["result"]["tools"].any? { |t| t["name"] == "nudge_exchange_match" }
+    assert json["result"]["tools"].any? { |t| t["name"] == "list_exchange_notifications" }
     assert json["result"]["tools"].any? { |t| t["name"] == "create_exchange_wishlist_item" }
   end
 
@@ -266,6 +270,133 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     }))
     assert_equal 1, participants.length
     assert participants.first["invite_token"].present?
+  end
+
+  test "runs the private five-user exchange lifecycle through MCP roles" do
+    exchange_json = tool_payload(call_tool("create_gift_exchange", {
+      workspace_id: @workspace.id,
+      name: "MCP Five User Exchange",
+      include_creator: true
+    }))
+    exchange = GiftExchange.find(exchange_json.fetch("id"))
+
+    participant_users = 4.times.map do |index|
+      create_test_user(
+        email: "mcp-participant-#{index}@example.com",
+        clerk_id: "user_mcp_participant_#{index}"
+      )
+    end
+    participant_headers = participant_users.map do |user|
+      key = ApiKey.generate_for(user, name: "Exchange lifecycle", scopes: %w[read write])
+      auth_headers(key.raw_key)
+    end
+
+    invited = participant_users.map.with_index do |user, index|
+      tool_payload(call_tool("add_exchange_participant", {
+        exchange_id: exchange.id,
+        name: "Participant #{index + 1}",
+        email: user.email
+      }))
+    end
+
+    invited.zip(participant_headers).each do |participant, headers|
+      accepted_exchange = tool_payload(call_tool(
+        "accept_exchange_invite",
+        { invite_token: participant.fetch("invite_token") },
+        headers: headers
+      ))
+      assert_equal "participant", accepted_exchange["role"]
+      assert accepted_exchange.dig("capabilities", "participate")
+      refute accepted_exchange.dig("capabilities", "organize")
+    end
+
+    all_participants = exchange.reload.exchange_participants.order(:id).to_a
+    [ [ 0, 1 ], [ 2, 3 ] ].each do |left_index, right_index|
+      tool_payload(call_tool("add_exchange_exclusion", {
+        exchange_id: exchange.id,
+        participant_a_id: all_participants[left_index].id,
+        participant_b_id: all_participants[right_index].id
+      }))
+    end
+
+    published = tool_payload(call_tool("publish_gift_exchange", { exchange_id: exchange.id }))
+    assert_equal "active", published["status"]
+    assert_equal "organizer", published["role"]
+    assert_equal %w[owner organizer participant matcher], published["roles"]
+    assert published["published_at"].present?
+
+    exclusions = tool_payload(call_tool("list_exchange_exclusions", {
+      exchange_id: exchange.id
+    }))
+    assert_equal 2, exclusions.size
+
+    late_invite = call_tool("add_exchange_participant", {
+      exchange_id: exchange.id,
+      name: "Too Late",
+      email: "too-late-mcp@example.com"
+    })
+    assert late_invite["isError"]
+    assert_equal "Published exchanges cannot be changed", tool_payload(late_invite)["error"]
+
+    late_update = call_tool("update_gift_exchange", {
+      exchange_id: exchange.id,
+      name: "Changed After Publish"
+    })
+    assert late_update["isError"]
+    assert_equal "Published exchanges cannot be changed", tool_payload(late_update)["error"]
+
+    participant_roster = tool_payload(call_tool(
+      "list_exchange_participants",
+      { exchange_id: exchange.id },
+      headers: participant_headers.first
+    ))
+    participant_roster.each do |participant|
+      refute participant.key?("email")
+      refute participant.key?("invite_token")
+      refute participant.key?("matched_participant_id")
+    end
+
+    exchange.reload
+    giver = exchange.exchange_participants.find_by!(user: participant_users.first)
+    recipient = giver.matched_participant
+    recipient_headers = if recipient.user_id == @user.id
+      api_key_headers
+    else
+      participant_headers.fetch(participant_users.index(recipient.user))
+    end
+
+    tool_payload(call_tool(
+      "create_exchange_wishlist_item",
+      {
+        exchange_id: exchange.id,
+        participant_id: recipient.id,
+        name: "MCP wishlist idea"
+      },
+      headers: recipient_headers
+    ))
+
+    giver_notifications = tool_payload(call_tool(
+      "list_exchange_notifications",
+      { exchange_id: exchange.id },
+      headers: participant_headers.first
+    ))
+    assert_equal [ "wishlist_item_added" ], giver_notifications.pluck("kind")
+
+    tool_payload(call_tool(
+      "nudge_exchange_match",
+      { exchange_id: exchange.id },
+      headers: participant_headers.first
+    ))
+    recipient_notifications = tool_payload(call_tool(
+      "list_exchange_notifications",
+      { exchange_id: exchange.id },
+      headers: recipient_headers
+    ))
+    assert_includes recipient_notifications.pluck("kind"), "wishlist_nudge"
+    recipient_notifications.each do |notification|
+      refute notification.key?("actor_id")
+      refute notification.key?("recipient_participant_id")
+    end
   end
 
   test "returns MCP tool errors without leaking exceptions" do

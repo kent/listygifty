@@ -938,7 +938,18 @@ export interface GiftExchange extends BaseEntity {
   is_owner: boolean;
   participant_count: number;
   accepted_count: number;
+  published_at: string | null;
+  can_publish: boolean;
   can_start: boolean;
+  role: "organizer" | "participant" | "giver" | null;
+  roles: Array<"owner" | "organizer" | "participant" | "matcher">;
+  capabilities: {
+    organize: boolean;
+    participate: boolean;
+    view_match: boolean;
+    nudge_match: boolean;
+    publish: boolean;
+  };
   my_participant?: ExchangeParticipant | null;
 }
 
@@ -988,6 +999,16 @@ export interface ExchangeExclusion extends BaseEntity {
   };
 }
 
+export type ExchangeNotificationKind = "wishlist_item_added" | "wishlist_nudge";
+
+export interface ExchangeNotification extends BaseEntity {
+  gift_exchange_id: number;
+  kind: ExchangeNotificationKind;
+  message: string;
+  wishlist_item_id: number | null;
+  read_at: string | null;
+}
+
 // Request types
 export interface CreateGiftExchangeRequest {
   gift_exchange: {
@@ -1000,9 +1021,7 @@ export interface CreateGiftExchangeRequest {
 }
 
 export interface UpdateGiftExchangeRequest {
-  gift_exchange: Partial<CreateGiftExchangeRequest["gift_exchange"]> & {
-    status?: ExchangeStatus;
-  };
+  gift_exchange: Partial<CreateGiftExchangeRequest["gift_exchange"]>;
 }
 
 export interface CreateExchangeParticipantRequest {

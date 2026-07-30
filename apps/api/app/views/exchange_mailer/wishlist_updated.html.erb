@@ -1,0 +1,24 @@
+<% content_for :preview_text do %>One less guess. There is something new on your match's wishlist.<% end %>
+
+<h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #18181b;">
+  Your job just got easier.
+</h1>
+<p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
+  Hi <strong><%= @participant.display_name %></strong>. Your match in
+  <strong><%= @exchange.name %></strong> added a new idea. One less guess.
+</p>
+<div style="margin: 0 0 24px 0; padding: 16px; border-radius: 10px; background-color: #faf5ff; color: #581c87; font-weight: 600; text-align: center;">
+  <%= @item.name %>
+</div>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td align="center">
+      <a href="<%= @exchange_url %>" class="button" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px;">
+        See What They Added
+      </a>
+    </td>
+  </tr>
+</table>
+<p style="margin: 32px 0 0 0; font-size: 14px; color: #71717a; text-align: center;">
+  You still get credit for the thoughtful part.
+</p>

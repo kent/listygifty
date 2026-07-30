@@ -3,10 +3,22 @@ class ExchangeParticipant < ApplicationRecord
 
   belongs_to :gift_exchange
   belongs_to :user, optional: true
-  belongs_to :matched_participant, class_name: "ExchangeParticipant", optional: true
+  belongs_to :matched_participant,
+    class_name: "ExchangeParticipant",
+    optional: true,
+    inverse_of: :matched_by_participants
+  has_many :matched_by_participants,
+    class_name: "ExchangeParticipant",
+    foreign_key: :matched_participant_id,
+    dependent: :nullify,
+    inverse_of: :matched_participant
   has_many :exchange_wishlist_items, dependent: :destroy
   has_many :exclusions_as_a, class_name: "ExchangeExclusion", foreign_key: :participant_a_id, dependent: :destroy
   has_many :exclusions_as_b, class_name: "ExchangeExclusion", foreign_key: :participant_b_id, dependent: :destroy
+  has_many :exchange_notifications,
+    foreign_key: :recipient_participant_id,
+    dependent: :destroy,
+    inverse_of: :recipient_participant
 
   validates :name, presence: true
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }

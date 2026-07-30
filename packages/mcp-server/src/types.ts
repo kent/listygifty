@@ -194,6 +194,7 @@ export type ParticipantStatus = "invited" | "accepted" | "declined";
 
 export interface GiftExchange extends BaseEntity {
   name: string;
+  slug: string;
   exchange_date: string | null;
   status: ExchangeStatus;
   budget_min: string | null;
@@ -202,7 +203,18 @@ export interface GiftExchange extends BaseEntity {
   is_owner: boolean;
   participant_count: number;
   accepted_count: number;
+  published_at: string | null;
+  can_publish: boolean;
   can_start: boolean;
+  role: "organizer" | "participant" | "giver" | null;
+  roles: Array<"owner" | "organizer" | "participant" | "matcher">;
+  capabilities: {
+    organize: boolean;
+    participate: boolean;
+    view_match: boolean;
+    nudge_match: boolean;
+    publish: boolean;
+  };
   my_participant?: ExchangeParticipant | null;
 }
 
