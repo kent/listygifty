@@ -78,6 +78,7 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
     post share_wishlist_path(@wishlist), headers: @auth_headers, as: :json
     assert_response :success
     assert @wishlist.reload.share_token.present?
+    assert_equal "shared", @wishlist.visibility
   end
 
   test "revoke_share removes share token" do

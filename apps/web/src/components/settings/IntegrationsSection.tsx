@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Plug, ExternalLink, Trash2, RefreshCw } from "lucide-react";
+import { Plug, ExternalLink, Trash2, RefreshCw, KeyRound } from "lucide-react";
 import type { OAuthConnection } from "@niftygifty/types";
 import { oauthConnectionsService } from "@/services";
 
@@ -20,7 +20,11 @@ function formatConnectionDate(value: string | null): string | null {
   });
 }
 
-export function IntegrationsSection() {
+interface IntegrationsSectionProps {
+  onOpenApiKeys: () => void;
+}
+
+export function IntegrationsSection({ onOpenApiKeys }: IntegrationsSectionProps) {
   const [connectedApps, setConnectedApps] = useState<OAuthConnection[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -52,13 +56,24 @@ export function IntegrationsSection() {
   const mcpServerUrl = process.env.NEXT_PUBLIC_API_URL
     ? `${process.env.NEXT_PUBLIC_API_URL}/mcp`
     : "https://api.listygifty.com/mcp";
+  const runnerConfig = `{
+  "mcpServers": {
+    "listygifty": {
+      "type": "http",
+      "url": "${mcpServerUrl}",
+      "headers": {
+        "Authorization": "Bearer YOUR_LISTYGIFTY_API_KEY"
+      }
+    }
+  }
+}`;
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-          Assistant Integrations
+          AI Integrations
         </h2>
         <p className="text-slate-600 dark:text-slate-400">
           Connect MCP-compatible assistants to help update lists, review budgets, and keep gift work moving.
@@ -76,7 +91,7 @@ export function IntegrationsSection() {
               Connect Your Assistant
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Use this MCP server URL to connect Claude, ChatGPT, or any MCP-compatible assistant:
+              Paste this URL into an OAuth-capable MCP client, then sign in to Listy Gifty when prompted:
             </p>
             <div className="flex items-center gap-3 mb-4">
               <code className="flex-1 px-4 py-2 rounded-lg bg-slate-900 dark:bg-slate-800 text-cyan-400 font-mono text-sm overflow-x-auto">
@@ -104,12 +119,36 @@ export function IntegrationsSection() {
         </div>
       </div>
 
+      {/* Authentication */}
+      <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
+            <KeyRound className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-900 dark:text-white">Two easy ways to authenticate</h3>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Claude and other OAuth-capable clients open a secure Listy Gifty sign-in automatically.
+              Runner currently uses an API key in its MCP configuration.
+            </p>
+            <Link
+              href="/settings?tab=api-keys"
+              onClick={onOpenApiKeys}
+              className="inline-flex items-center gap-2 mt-3 text-sm text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-medium"
+            >
+              Create a Runner API key
+              <ExternalLink className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </div>
+
       {/* Quick Connect Cards */}
       <div>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
           Quick Connect
         </h3>
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 gap-4">
           {/* Claude */}
           <div className="p-5 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 transition-colors">
             <div className="w-10 h-10 mb-3 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
@@ -152,6 +191,25 @@ export function IntegrationsSection() {
             </a>
           </div>
 
+          {/* Runner */}
+          <div className="p-5 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+            <div className="w-10 h-10 mb-3 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+              R
+            </div>
+            <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Runner</h4>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+              Add Listy Gifty as a remote MCP server
+            </p>
+            <a
+              href="https://guides.runner.now/connections/connect-your-own-mcp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+            >
+              Runner setup guide
+            </a>
+          </div>
+
           {/* Other MCP */}
           <div className="p-5 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 hover:border-violet-300 dark:hover:border-violet-700 transition-colors">
             <div className="w-10 h-10 mb-3 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
@@ -169,6 +227,32 @@ export function IntegrationsSection() {
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* Runner configuration */}
+      <div className="p-6 rounded-2xl bg-slate-950 text-white border border-slate-800">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-lg font-semibold">Runner configuration</h3>
+            <p className="text-sm text-slate-400 mt-1">
+              Save this as <code className="text-cyan-400">~/.runner/mcp.json</code>, replace the placeholder with your API key, then start a new Runner conversation.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-slate-700 bg-transparent text-white hover:bg-slate-800"
+            onClick={() => {
+              navigator.clipboard.writeText(runnerConfig);
+              toast.success("Runner configuration copied");
+            }}
+          >
+            Copy
+          </Button>
+        </div>
+        <pre className="overflow-x-auto rounded-lg bg-black/30 p-4 text-xs text-cyan-300">
+          <code>{runnerConfig}</code>
+        </pre>
       </div>
 
       {/* Connected Apps */}

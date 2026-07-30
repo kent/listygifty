@@ -164,7 +164,7 @@ export default function SettingsPage() {
               <ApiKeysSection />
             )}
             {activeSection === "integrations" && (
-              <IntegrationsSection />
+              <IntegrationsSection onOpenApiKeys={() => setActiveSection("api-keys")} />
             )}
             {activeSection === "billing" && (
               <BillingSection />

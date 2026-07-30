@@ -31,7 +31,7 @@ class Wishlist < ApplicationRecord
 
   def regenerate_share_link!
     regenerate_share_token
-    self.visibility = "shared" if visibility == "private"
+    self.visibility = "shared"
     save!
   end
 

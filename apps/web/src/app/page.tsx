@@ -610,7 +610,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Assistant Integrations Section */}
+        {/* AI Integrations Section */}
         <section id="ai-integrations" className="container mx-auto px-4 py-20">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
@@ -838,7 +838,7 @@ export default function HomePage() {
 
             <div className="flex items-center gap-6">
               <Link href="/integrations" className="text-sm text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
-                Assistant Integrations
+                AI Integrations
               </Link>
               <Link href="/support" className="text-sm text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
                 Support

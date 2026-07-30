@@ -10,9 +10,9 @@ import { createPageMetadata } from "@/lib/seo";
 export const metadata: Metadata = createPageMetadata({
   title: "AI Assistant and MCP Integrations",
   description:
-    "Connect Listy Gifty to Claude, ChatGPT, and other MCP-compatible assistants so they can help manage your gift lists with scoped OAuth access.",
+    "Connect Listy Gifty to Claude, ChatGPT, Runner, and other MCP-compatible assistants so they can manage gifts, wishlists, and exchanges.",
   path: "/integrations",
-  keywords: ["MCP gift planning", "ChatGPT gift planner", "Claude gift planning", "AI assistant integrations"],
+  keywords: ["MCP gift planning", "ChatGPT gift planner", "Claude gift planning", "Runner MCP", "AI integrations"],
 });
 
 const mcpTools = [
@@ -54,6 +54,16 @@ const mcpTools = [
   {
     name: "create_person",
     description: "Add new people to your contacts",
+    scope: "write",
+  },
+  {
+    name: "create_wishlist",
+    description: "Create and administer wishlists and their items",
+    scope: "write",
+  },
+  {
+    name: "create_gift_exchange",
+    description: "Create exchanges and manage participants, exclusions, matching, and wishlists",
     scope: "write",
   },
 ];
@@ -105,6 +115,20 @@ const aiClients = [
       "Add Listy Gifty as a connected service",
       "Authorize access to your account",
       "Ask ChatGPT to help with your gift planning",
+    ],
+  },
+  {
+    name: "Runner",
+    icon: (
+      <div className="text-2xl font-bold" aria-hidden="true">R</div>
+    ),
+    gradient: "from-blue-500 to-indigo-600",
+    description: "Let Runner manage gift planning alongside your other connected work.",
+    steps: [
+      "Create a read/write API key in Listy Gifty settings",
+      "Add a remote HTTP server to ~/.runner/mcp.json",
+      "Use https://api.listygifty.com/mcp and send the API key as a Bearer header",
+      "Start a new Runner conversation to load the tools",
     ],
   },
 ];
@@ -176,7 +200,7 @@ export default function IntegrationsPage() {
             </h1>
 
             <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Connect Claude, ChatGPT, or any MCP-compatible tool to help update lists, review budgets, and find the gifts that still need a next step.
+              Connect Claude, ChatGPT, Runner, or any MCP-compatible tool to manage gifts, wishlists, and exchanges.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -228,7 +252,7 @@ export default function IntegrationsPage() {
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {aiClients.map((client) => (
               <div
                 key={client.name}

@@ -47,6 +47,29 @@ claude mcp add listygifty https://api.listygifty.com/mcp
 # Follow the prompts to log in and authorize
 ```
 
+## For Runner Users
+
+Runner loads custom MCP servers from `mcp.json`. Create a Listy Gifty API key
+with `read` and `write` scopes, then save this as `~/.runner/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "listygifty": {
+      "type": "http",
+      "url": "https://api.listygifty.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ng_your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+Start a new Runner conversation after saving the file. Runner does not currently
+start OAuth for hand-written `mcp.json` entries, so the API key header is required.
+See [Runner's custom MCP guide](https://guides.runner.now/connections/connect-your-own-mcp).
+
 ## Example Prompts
 
 Once connected, try these prompts:
@@ -60,6 +83,9 @@ Once connected, try these prompts:
 - "Add Mom's birthday on March 15th"
 - "Create a gift idea: cozy blanket for Sarah"
 - "Add John to my contacts"
+- "Create a birthday wishlist and add noise-cancelling headphones"
+- "Set up a Secret Santa, invite these people, and add the exclusion rules"
+- "Start the exchange once everyone has accepted"
 
 ### Review planning gaps
 - "Which gifts still need a recipient?"

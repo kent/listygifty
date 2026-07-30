@@ -33,6 +33,22 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     { "Authorization" => "Bearer #{@api_key_result.raw_key}" }
   end
 
+  def call_tool(name, arguments = {}, headers: auth_headers)
+    post "/mcp", params: {
+      jsonrpc: "2.0",
+      method: "tools/call",
+      params: { name: name, arguments: arguments },
+      id: 1
+    }.to_json, headers: headers.merge("Content-Type" => "application/json")
+
+    assert_response :success
+    JSON.parse(response.body).fetch("result")
+  end
+
+  def tool_payload(result)
+    JSON.parse(result.fetch("content").first.fetch("text"))
+  end
+
   # Authentication tests
   test "returns 401 without authentication" do
     post "/mcp", params: {
@@ -123,7 +139,7 @@ class McpControllerTest < ActionDispatch::IntegrationTest
       jsonrpc: "2.0",
       method: "initialize",
       params: {
-        protocolVersion: "2024-11-05",
+        protocolVersion: "2025-06-18",
         capabilities: {},
         clientInfo: { name: "test", version: "1.0" }
       },
@@ -132,7 +148,7 @@ class McpControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     json = JSON.parse(response.body)
-    assert_equal "2024-11-05", json["result"]["protocolVersion"]
+    assert_equal "2025-06-18", json["result"]["protocolVersion"]
     # capabilities is returned as empty hash {} since we declare tools/resources support
     assert json["result"]["capabilities"].is_a?(Hash)
     assert json["result"]["serverInfo"]["name"].present?
@@ -149,6 +165,14 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     json = JSON.parse(response.body)
     assert json["result"]["tools"].is_a?(Array)
     assert json["result"]["tools"].any? { |t| t["name"] == "list_workspaces" }
+    assert json["result"]["tools"].any? { |t| t["name"] == "update_holiday" }
+    assert json["result"]["tools"].any? { |t| t["name"] == "update_gift" }
+    assert json["result"]["tools"].any? { |t| t["name"] == "update_person" }
+    assert json["result"]["tools"].any? { |t| t["name"] == "create_wishlist" }
+    assert json["result"]["tools"].any? { |t| t["name"] == "claim_wishlist_item" }
+    assert json["result"]["tools"].any? { |t| t["name"] == "create_gift_exchange" }
+    assert json["result"]["tools"].any? { |t| t["name"] == "start_gift_exchange" }
+    assert json["result"]["tools"].any? { |t| t["name"] == "create_exchange_wishlist_item" }
   end
 
   test "handles resources/list" do
@@ -180,6 +204,78 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     json = JSON.parse(response.body)
     assert json["result"]["content"].is_a?(Array)
     assert_equal "text", json["result"]["content"].first["type"]
+  end
+
+  test "creates and administers a wishlist and its items" do
+    wishlist = tool_payload(call_tool("create_wishlist", {
+      workspace_id: @workspace.id,
+      name: "MCP Birthday List",
+      visibility: "workspace",
+      anti_spoiler_enabled: true
+    }))
+
+    item = tool_payload(call_tool("create_wishlist_item", {
+      wishlist_id: wishlist.fetch("id"),
+      name: "Noise-cancelling headphones",
+      price_min: 200,
+      priority: 2,
+      quantity: 1
+    }))
+
+    assert_equal "Noise-cancelling headphones", item["name"]
+
+    updated = tool_payload(call_tool("update_wishlist_item", {
+      wishlist_id: wishlist.fetch("id"),
+      item_id: item.fetch("id"),
+      notes: "Black"
+    }))
+    assert_equal "Black", updated["notes"]
+
+    shared = tool_payload(call_tool("share_wishlist", { wishlist_id: wishlist.fetch("id") }))
+    assert_equal "shared", shared["visibility"]
+    assert shared["share_url"].present?
+  end
+
+  test "creates and administers a gift exchange" do
+    exchange = tool_payload(call_tool("create_gift_exchange", {
+      workspace_id: @workspace.id,
+      name: "MCP Secret Santa",
+      exchange_date: "2026-12-20",
+      budget_max: 75,
+      include_creator: false
+    }))
+
+    assert_equal "MCP Secret Santa", exchange["name"]
+
+    participant = tool_payload(call_tool("add_exchange_participant", {
+      exchange_id: exchange.fetch("id"),
+      name: "Taylor",
+      email: "taylor-mcp@example.com"
+    }))
+    assert_equal "Taylor", participant["name"]
+
+    updated = tool_payload(call_tool("update_exchange_participant", {
+      exchange_id: exchange.fetch("id"),
+      participant_id: participant.fetch("id"),
+      name: "Taylor Updated"
+    }))
+    assert_equal "Taylor Updated", updated["name"]
+
+    participants = tool_payload(call_tool("list_exchange_participants", {
+      exchange_id: exchange.fetch("id")
+    }))
+    assert_equal 1, participants.length
+    assert participants.first["invite_token"].present?
+  end
+
+  test "returns MCP tool errors without leaking exceptions" do
+    result = call_tool("get_gift_exchange", { exchange_id: "not-a-real-exchange" })
+
+    assert result["isError"]
+    assert_equal(
+      "The requested record was not found or is not accessible",
+      tool_payload(result)["error"]
+    )
   end
 
   # Resource reads

@@ -229,6 +229,17 @@ The MCP server provides tools for managing gifts:
 
 ### Wishlist Tools
 - `list_wishlists` - List wishlists in a workspace
+- `get_wishlist`, `create_wishlist`, `update_wishlist`, `delete_wishlist`
+- `share_wishlist`, `revoke_wishlist_share`, `reveal_wishlist_claims`
+- `list_wishlist_items`, `create_wishlist_item`, `update_wishlist_item`, `delete_wishlist_item`
+- `claim_wishlist_item`, `unclaim_wishlist_item`, `mark_wishlist_item_purchased`
+
+### Gift Exchange Tools
+- `list_gift_exchanges`, `get_gift_exchange`, `create_gift_exchange`, `update_gift_exchange`, `delete_gift_exchange`
+- `list_exchange_participants`, `add_exchange_participant`, `update_exchange_participant`, `remove_exchange_participant`
+- `resend_exchange_invite`, `start_gift_exchange`, `get_my_exchange_match`
+- `list_exchange_exclusions`, `add_exchange_exclusion`, `remove_exchange_exclusion`
+- `list_exchange_wishlist_items`, `create_exchange_wishlist_item`, `update_exchange_wishlist_item`, `delete_exchange_wishlist_item`
 
 ## MCP Resources
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_27_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_30_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -171,11 +171,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_27_000000) do
     t.datetime "created_at", null: false
     t.date "exchange_date"
     t.string "name", null: false
+    t.string "slug", null: false
     t.string "status", default: "draft", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.bigint "workspace_id", null: false
     t.index ["exchange_date"], name: "index_gift_exchanges_on_exchange_date"
+    t.index ["slug"], name: "index_gift_exchanges_on_slug", unique: true
     t.index ["status"], name: "index_gift_exchanges_on_status"
     t.index ["user_id"], name: "index_gift_exchanges_on_user_id"
     t.index ["workspace_id", "user_id"], name: "index_gift_exchanges_on_workspace_id_and_user_id"
