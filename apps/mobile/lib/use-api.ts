@@ -11,6 +11,7 @@ import {
   exchangeExclusionsService,
   wishlistItemsService,
   exchangeInvitesService,
+  exchangeJoinsService,
 } from "./api";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { screenshotServices } from "@/lib/screenshot-mocks";
@@ -44,6 +45,7 @@ export function useServices() {
       exchangeExclusions: typeof exchangeExclusionsService;
       wishlistItems: typeof wishlistItemsService;
       exchangeInvites: typeof exchangeInvitesService;
+      exchangeJoins: typeof exchangeJoinsService;
     };
   }
 
@@ -60,6 +62,7 @@ export function useServices() {
       exchangeExclusions: exchangeExclusionsService,
       wishlistItems: wishlistItemsService,
       exchangeInvites: exchangeInvitesService,
+      exchangeJoins: exchangeJoinsService,
     }),
     []
   );

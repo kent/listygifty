@@ -8,12 +8,13 @@ import {
   useSSO,
   useUser,
 } from "@clerk/clerk-expo";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { getClerkRedirectUrl, shouldUseNativeAppleAuth } from "@/lib/clerk-sso";
 import { completeSocialAuthSession } from "@/lib/controllers/auth-session";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { screenshotProfile } from "@/lib/screenshot-mocks";
+import { normalizeAuthReturnPath } from "@/lib/auth-return";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -50,6 +51,11 @@ function useBrowserWarmup() {
   }, []);
 }
 
+function useAuthReturnPath() {
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string | string[] }>();
+  return normalizeAuthReturnPath(returnTo);
+}
+
 export function useSessionController() {
   const { signOut } = useAuth();
   const router = useRouter();
@@ -69,6 +75,7 @@ export function useLoginController() {
   const { startSSOFlow } = useSSO();
   const { startAppleAuthenticationFlow } = useSignInWithApple();
   const redirectUrl = getClerkRedirectUrl();
+  const returnTo = useAuthReturnPath();
   useBrowserWarmup();
 
   const [email, setEmail] = useState("");
@@ -191,6 +198,7 @@ export function useLoginController() {
     handlePasswordSignIn,
     loading,
     password,
+    returnTo,
     setEmail,
     setPassword,
   };
@@ -201,6 +209,7 @@ export function useSignupController() {
   const { startSSOFlow } = useSSO();
   const { startAppleAuthenticationFlow } = useSignInWithApple();
   const redirectUrl = getClerkRedirectUrl();
+  const returnTo = useAuthReturnPath();
   useBrowserWarmup();
 
   const [email, setEmail] = useState("");
@@ -348,6 +357,7 @@ export function useSignupController() {
     loading,
     password,
     pendingVerification,
+    returnTo,
     setCode,
     setEmail,
     setPassword,

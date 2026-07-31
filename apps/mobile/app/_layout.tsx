@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Slot, usePathname, useRouter, useSegments } from "expo-router";
+import { Slot, useGlobalSearchParams, usePathname, useRouter, useSegments } from "expo-router";
 import { ClerkProvider, ClerkLoaded, useAuth } from "@clerk/clerk-expo";
 import { PostHogProvider } from "posthog-react-native";
 import { LogBox } from "react-native";
@@ -9,6 +9,7 @@ import { ThemeProvider, useTheme } from "@/lib/theme";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { clearCachedResources } from "@/lib/api";
+import { normalizeAuthReturnPath } from "@/lib/auth-return";
 import {
   getActiveScreenshotRouteName,
   getScreenshotRouteTarget,
@@ -51,6 +52,7 @@ function ScreenshotRouter() {
 function AuthRouter() {
   const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
+  const { returnTo } = useGlobalSearchParams<{ returnTo?: string | string[] }>();
   const router = useRouter();
   const { isDark } = useTheme();
 
@@ -59,6 +61,8 @@ function AuthRouter() {
 
     const inAuthGroup = segments[0] === "auth";
     const inJoinGroup = segments[0] === "join"; // Deep link routes
+    const inSharedExchangeGroup = segments[0] === "e";
+    const authReturnPath = normalizeAuthReturnPath(returnTo);
 
     if (runtimeConfig.screenshotMode) {
       if (inAuthGroup) {
@@ -72,11 +76,11 @@ function AuthRouter() {
     }
 
     if (isSignedIn && inAuthGroup) {
-      router.replace("/(tabs)/lists");
-    } else if (!isSignedIn && !inAuthGroup && !inJoinGroup) {
+      router.replace(authReturnPath || "/(tabs)/lists");
+    } else if (!isSignedIn && !inAuthGroup && !inJoinGroup && !inSharedExchangeGroup) {
       router.replace("/auth/login");
     }
-  }, [isLoaded, isSignedIn, segments]);
+  }, [isLoaded, isSignedIn, returnTo, router, segments]);
 
   if (!isLoaded) {
     return <ScreenLoader />;

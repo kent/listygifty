@@ -4,7 +4,7 @@ export const APPLE_APP_SITE_ASSOCIATION = {
     details: [
       {
         appID: "PS5W7BFTQ2.com.ewakened.niftygifty",
-        paths: ["/join/exchange/*"],
+        paths: ["/join/exchange/*", "/e/*"],
       },
     ],
   },

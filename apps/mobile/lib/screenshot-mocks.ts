@@ -2,6 +2,8 @@ import type {
   AcceptInviteResponse,
   ExchangeExclusion,
   ExchangeInviteDetails,
+  ExchangeJoinDetails,
+  ExchangeJoinResponse,
   ExchangeParticipant,
   Gift,
   GiftExchange,
@@ -15,6 +17,26 @@ import type {
 } from "@niftygifty/types";
 
 const nowIso = "2026-03-03T00:00:00.000Z";
+
+const ownerExchangeCapabilities = {
+  organize: true,
+  participate: true,
+  view_match: true,
+  nudge_match: true,
+  publish: true,
+  redo: true,
+  delete: true,
+};
+
+const participantExchangeCapabilities = {
+  organize: false,
+  participate: true,
+  view_match: false,
+  nudge_match: false,
+  publish: false,
+  redo: false,
+  delete: false,
+};
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -443,6 +465,7 @@ let exchangesStore: GiftExchange[] = [
   {
     id: 301,
     name: "Family Secret Santa",
+    slug: "family-secret-santa",
     exchange_date: "2026-12-20",
     status: "active",
     budget_min: "30.0",
@@ -451,14 +474,21 @@ let exchangesStore: GiftExchange[] = [
     is_owner: true,
     participant_count: 8,
     accepted_count: 7,
+    published_at: nowIso,
+    can_publish: false,
     can_start: false,
+    role: "organizer",
+    roles: ["owner", "organizer", "participant"],
+    capabilities: ownerExchangeCapabilities,
     my_participant: null,
+    share_url: "https://listygifty.com/e/family-secret-santa/review-family-301",
     created_at: nowIso,
     updated_at: nowIso,
   },
   {
     id: 302,
     name: "Design Team Gift Swap",
+    slug: "design-team-gift-swap",
     exchange_date: "2026-11-14",
     status: "inviting",
     budget_min: "20.0",
@@ -467,7 +497,12 @@ let exchangesStore: GiftExchange[] = [
     is_owner: false,
     participant_count: 6,
     accepted_count: 4,
+    published_at: nowIso,
+    can_publish: false,
     can_start: false,
+    role: "participant",
+    roles: ["participant"],
+    capabilities: participantExchangeCapabilities,
     my_participant: null,
     created_at: nowIso,
     updated_at: nowIso,
@@ -475,6 +510,7 @@ let exchangesStore: GiftExchange[] = [
   {
     id: 303,
     name: "Neighbors Winter Exchange",
+    slug: "neighbors-winter-exchange",
     exchange_date: "2026-12-08",
     status: "completed",
     budget_min: "15.0",
@@ -483,7 +519,12 @@ let exchangesStore: GiftExchange[] = [
     is_owner: true,
     participant_count: 10,
     accepted_count: 10,
+    published_at: nowIso,
+    can_publish: false,
     can_start: false,
+    role: "organizer",
+    roles: ["owner", "organizer"],
+    capabilities: ownerExchangeCapabilities,
     my_participant: null,
     created_at: nowIso,
     updated_at: nowIso,
@@ -1145,9 +1186,11 @@ export const screenshotServices = {
       return clone(buildExchangeWithParticipants(exchange));
     },
     async create(data: Partial<GiftExchange> & { include_creator?: boolean }) {
+      const exchangeId = nextExchangeId++;
       const exchange: GiftExchange = {
-        id: nextExchangeId++,
+        id: exchangeId,
         name: data.name || "New Exchange",
+        slug: `new-exchange-${exchangeId}`,
         exchange_date: data.exchange_date ?? null,
         status: "draft",
         budget_min: data.budget_min ?? null,
@@ -1156,7 +1199,12 @@ export const screenshotServices = {
         is_owner: true,
         participant_count: 0,
         accepted_count: 0,
+        published_at: null,
+        can_publish: false,
         can_start: false,
+        role: "organizer",
+        roles: ["owner", "organizer"],
+        capabilities: ownerExchangeCapabilities,
         my_participant: null,
         created_at: nowIso,
         updated_at: nowIso,
@@ -1446,6 +1494,68 @@ export const screenshotServices = {
       return clone(item);
     },
   },
+  exchangeJoins: {
+    async getDetails(shareToken: string): Promise<ExchangeJoinDetails> {
+      const exchange = exchangesStore.find((item) => item.share_url?.endsWith(`/${shareToken}`));
+
+      if (!exchange) {
+        throw new Error("Join link not found");
+      }
+
+      return clone({
+        exchange: {
+          name: exchange.name,
+          slug: exchange.slug,
+          exchange_date: exchange.exchange_date,
+          budget_min: exchange.budget_min,
+          budget_max: exchange.budget_max,
+          owner_name: exchange.is_owner ? "Marie Reviewer" : "Gift Exchange Host",
+          accepted_count: exchange.accepted_count,
+        },
+        join_open: exchange.status === "draft" || exchange.status === "inviting",
+        closed_reason:
+          exchange.status === "draft" || exchange.status === "inviting"
+            ? null
+            : "This exchange is no longer accepting participants.",
+      });
+    },
+    async join(shareToken: string, name?: string): Promise<ExchangeJoinResponse> {
+      const exchange = exchangesStore.find((item) => item.share_url?.endsWith(`/${shareToken}`));
+
+      if (!exchange || (exchange.status !== "draft" && exchange.status !== "inviting")) {
+        throw new Error("Join link not found");
+      }
+
+      const participants = getExchangeParticipants(exchange.id);
+      if (!participants.some((participant) => participant.user_id === 1)) {
+        exchangeParticipantsStore = {
+          ...exchangeParticipantsStore,
+          [exchange.id]: [
+            ...participants,
+            {
+              id: nextExchangeParticipantId++,
+              gift_exchange_id: exchange.id,
+              user_id: 1,
+              name: name?.trim() || `${screenshotProfile.firstName} ${screenshotProfile.lastName}`,
+              email: screenshotProfile.email,
+              status: "accepted",
+              display_name: name?.trim() || screenshotProfile.firstName,
+              has_user: true,
+              wishlist_count: 0,
+              matched_participant_id: null,
+              created_at: nowIso,
+              updated_at: nowIso,
+            },
+          ],
+        };
+      }
+
+      return clone({
+        message: "You joined the gift exchange",
+        exchange: buildExchangeSummary(exchange),
+      });
+    },
+  },
   exchangeInvites: {
     async getByToken(token: string): Promise<ExchangeInviteDetails> {
       for (const exchange of exchangesStore) {
@@ -1458,6 +1568,7 @@ export const screenshotServices = {
             exchange: {
               id: exchange.id,
               name: exchange.name,
+              slug: exchange.slug,
               exchange_date: exchange.exchange_date,
               budget_min: exchange.budget_min,
               budget_max: exchange.budget_max,

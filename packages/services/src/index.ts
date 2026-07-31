@@ -17,6 +17,7 @@ export {
 } from "./exchange-exclusions.service";
 export { createWishlistItemsService, type WishlistItemsService } from "./wishlist-items.service";
 export { createExchangeInvitesService, type ExchangeInvitesService } from "./exchange-invites.service";
+export { createExchangeJoinsService, type ExchangeJoinsService } from "./exchange-joins.service";
 
 // Standalone Wishlists
 export { createWishlistsService, type WishlistsService } from "./wishlists.service";

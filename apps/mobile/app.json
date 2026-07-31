@@ -44,8 +44,18 @@
             },
             {
               "scheme": "https",
+              "host": "listygifty.com",
+              "pathPrefix": "/e/"
+            },
+            {
+              "scheme": "https",
               "host": "staging.listygifty.com",
               "pathPrefix": "/join/exchange"
+            },
+            {
+              "scheme": "https",
+              "host": "staging.listygifty.com",
+              "pathPrefix": "/e/"
             }
           ],
           "category": [

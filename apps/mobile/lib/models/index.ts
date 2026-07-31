@@ -1,5 +1,6 @@
 export type {
   ExchangeInviteDetails,
+  ExchangeJoinDetails,
   ExchangeExclusion,
   ExchangeParticipant,
   Gift,

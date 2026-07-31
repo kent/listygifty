@@ -203,9 +203,9 @@ export function getExchangeStartBlocker(exchange: GiftExchange): string | null {
     return `Add ${remaining} more participant${remaining === 1 ? "" : "s"} before drawing matches.`;
   }
 
-  if (exchange.accepted_count < exchange.participant_count) {
-    const pending = exchange.participant_count - exchange.accepted_count;
-    return `${pending} participant${pending === 1 ? "" : "s"} still need to accept.`;
+  if (exchange.accepted_count < MIN_EXCHANGE_PARTICIPANTS) {
+    const pending = MIN_EXCHANGE_PARTICIPANTS - exchange.accepted_count;
+    return `${pending} more participant${pending === 1 ? " needs" : "s need"} to accept.`;
   }
 
   return "Review participants before drawing matches.";
@@ -224,7 +224,7 @@ export function getExchangeReadinessItems(
     (participant) => participant.status === "accepted"
   );
   const participantsReady = participantCount >= MIN_EXCHANGE_PARTICIPANTS;
-  const acceptancesReady = participantsReady && acceptedParticipants.length === participantCount;
+  const acceptancesReady = acceptedParticipants.length >= MIN_EXCHANGE_PARTICIPANTS;
   const acceptedWishlists = acceptedParticipants.filter(
     (participant) => participant.wishlist_count > 0
   ).length;
@@ -242,8 +242,8 @@ export function getExchangeReadinessItems(
     },
     {
       key: "acceptances",
-      label: "Accepted invites",
-      detail: `${acceptedParticipants.length}/${participantCount || 0} accepted`,
+      label: "Accepted participants",
+      detail: `${Math.min(acceptedParticipants.length, MIN_EXCHANGE_PARTICIPANTS)}/${MIN_EXCHANGE_PARTICIPANTS} minimum`,
       complete: acceptancesReady,
       required: true,
     },

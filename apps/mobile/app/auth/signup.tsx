@@ -235,7 +235,13 @@ export default function SignUpScreen() {
 
         <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 24 }}>
           <Text style={{ color: colors.textTertiary }}>Already have an account? </Text>
-          <Link href="/auth/login" asChild>
+          <Link
+            href={{
+              pathname: "/auth/login",
+              params: controller.returnTo ? { returnTo: controller.returnTo } : {},
+            }}
+            asChild
+          >
             <TouchableOpacity>
               <Text style={{ color: colors.primary, fontWeight: "600" }}>Sign In</Text>
             </TouchableOpacity>

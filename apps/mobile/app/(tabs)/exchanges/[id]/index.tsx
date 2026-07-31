@@ -112,6 +112,72 @@ export default function ExchangeDetailScreen() {
         ) : null}
       </View>
 
+      {controller.canShareJoinLink ? (
+        <View
+          style={{
+            backgroundColor: colors.card,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+            padding: 16,
+            marginBottom: 16,
+            gap: 12,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Ionicons name="link-outline" size={22} color={colors.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: "700" }}>
+                Invite with a link
+              </Text>
+              <Text style={{ color: colors.textTertiary, fontSize: 13, marginTop: 2 }}>
+                Anyone with the link can preview and join this exchange.
+              </Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <TouchableOpacity
+              onPress={controller.shareExchangeJoinLink}
+              style={{
+                flex: 1,
+                backgroundColor: colors.primary,
+                borderRadius: 10,
+                padding: 12,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+              }}
+            >
+              <Ionicons name="share-outline" size={18} color={colors.textInverse} />
+              <Text style={{ color: colors.textInverse, fontSize: 14, fontWeight: "700" }}>
+                Share
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={controller.copyExchangeJoinLink}
+              style={{
+                flex: 1,
+                backgroundColor: colors.primarySurface,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: colors.primary,
+                padding: 12,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+              }}
+            >
+              <Ionicons name="copy-outline" size={18} color={colors.primary} />
+              <Text style={{ color: colors.primary, fontSize: 14, fontWeight: "700" }}>
+                Copy
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : null}
+
       {shouldShowParticipantActions ? (
         <View style={{ gap: 12, marginBottom: 24 }}>
           {canManageWishlist ? (

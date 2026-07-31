@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Share } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -9,6 +9,7 @@ import { runtimeConfig } from "@/lib/runtime-config";
 import { useServices } from "@/lib/use-api";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import { scheduleExchangeReminder } from "@/lib/notifications";
+import { normalizeAuthReturnPath } from "@/lib/auth-return";
 import {
   buildCreateExchangePayload,
   buildCreateExchangeExclusionPayload,
@@ -34,6 +35,7 @@ import {
   type ExchangeParticipantFormValues,
   type ExchangeFormValues,
   type ExchangeInviteDetails,
+  type ExchangeJoinDetails,
   type ExchangeParticipant,
   type GiftExchange,
   type GiftExchangeWithParticipants,
@@ -280,6 +282,52 @@ export function useExchangeDetailController() {
     }
   }, [resource.data, track]);
 
+  const shareExchangeJoinLink = useCallback(async () => {
+    const exchange = resource.data;
+    if (!exchange?.share_url) {
+      Alert.alert("Link Unavailable", "Refresh the exchange and try again.");
+      return;
+    }
+
+    try {
+      await Share.share({
+        message: `Join "${exchange.name}" on Listy Gifty: ${exchange.share_url}`,
+        url: exchange.share_url,
+      });
+      track("mobile_exchange_join_link_shared", {
+        exchange_id: exchange.id,
+        source: "exchange_detail",
+      });
+      await haptics.selection();
+    } catch (shareError) {
+      console.error("Failed to share exchange join link", shareError);
+      await haptics.error();
+      Alert.alert("Share Failed", "Could not share this exchange link.");
+    }
+  }, [resource.data, track]);
+
+  const copyExchangeJoinLink = useCallback(async () => {
+    const exchange = resource.data;
+    if (!exchange?.share_url) {
+      Alert.alert("Link Unavailable", "Refresh the exchange and try again.");
+      return;
+    }
+
+    try {
+      await Clipboard.setStringAsync(exchange.share_url);
+      track("mobile_exchange_join_link_copied", {
+        exchange_id: exchange.id,
+        source: "exchange_detail",
+      });
+      await haptics.selection();
+      Alert.alert("Join Link Copied", "Anyone with this link can preview and join the exchange.");
+    } catch (copyError) {
+      console.error("Failed to copy exchange join link", copyError);
+      await haptics.error();
+      Alert.alert("Copy Failed", "Could not copy this exchange link.");
+    }
+  }, [resource.data, track]);
+
   const copyParticipantInvite = useCallback(
     async (participant: ExchangeParticipant) => {
       if (!participant.invite_token) {
@@ -455,11 +503,18 @@ export function useExchangeDetailController() {
   }, [exclusionsResource, resource]);
 
   return {
+    canShareJoinLink: Boolean(
+      resource.data?.is_owner &&
+        resource.data.share_url &&
+        (resource.data.status === "draft" || resource.data.status === "inviting")
+    ),
     canStartExchange: resource.data ? canStartExchange(resource.data) : false,
     canScheduleReminder: resource.data ? canScheduleExchangeReminder(resource.data) : false,
     canManageExclusions,
     canSaveExclusion,
     closeExclusionModal,
+    copyExchangeJoinLink,
+    copyParticipantInvite,
     createExclusion,
     error: !isValidExchangeId ? "Invalid exchange ID" : resource.error,
     exclusionForm,
@@ -483,8 +538,8 @@ export function useExchangeDetailController() {
       : [],
     removeExclusion,
     retryLoad: resource.reload,
+    shareExchangeJoinLink,
     shareParticipantInvite,
-    copyParticipantInvite,
     savingExclusion,
     schedulingReminder,
     starting,
@@ -751,6 +806,97 @@ export function useNewWishlistItemController() {
   };
 }
 
+export function useExchangeShareJoinController() {
+  const { slug, shareToken } = useLocalSearchParams<{
+    slug?: string;
+    shareToken?: string;
+  }>();
+  const router = useRouter();
+  const clerkAuth = useAuth();
+  const isSignedIn = runtimeConfig.screenshotMode ? false : clerkAuth.isSignedIn;
+  const isLoaded = runtimeConfig.screenshotMode ? true : clerkAuth.isLoaded;
+  const { exchangeJoins } = useServices();
+  const track = useAnalytics();
+  const [name, setName] = useState("");
+  const [joining, setJoining] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const hasRouteParams = Boolean(slug && shareToken);
+
+  const resource = useFocusResource({
+    enabled: hasRouteParams,
+    errorMessage: "This join link is invalid or has expired",
+    initialValue: null as ExchangeJoinDetails | null,
+    key: hasRouteParams ? `${slug}:${shareToken}` : null,
+    load: () => exchangeJoins.getDetails(shareToken as string),
+  });
+
+  const canonicalPath = resource.data && shareToken
+    ? (`/e/${resource.data.exchange.slug}/${shareToken}` as const)
+    : null;
+
+  useEffect(() => {
+    if (canonicalPath && slug !== resource.data?.exchange.slug) {
+      router.replace(canonicalPath);
+    }
+  }, [canonicalPath, resource.data?.exchange.slug, router, slug]);
+
+  const routeToAuth = useCallback(
+    (pathname: "/auth/login" | "/auth/signup") => {
+      const returnTo = normalizeAuthReturnPath(canonicalPath || undefined);
+      router.push({
+        pathname,
+        params: returnTo ? { returnTo } : {},
+      });
+    },
+    [canonicalPath, router]
+  );
+
+  const handleJoin = useCallback(async () => {
+    if (!shareToken || !isSignedIn || !resource.data?.join_open || joining) {
+      return;
+    }
+
+    setJoining(true);
+    setActionError(null);
+
+    try {
+      const result = await exchangeJoins.join(shareToken, name.trim() || undefined);
+      track("mobile_exchange_share_link_joined", {
+        exchange_id: result.exchange.id,
+        source: "shared_exchange_link",
+      });
+      await haptics.success();
+      router.replace(`/(tabs)/exchanges/${result.exchange.id}`);
+    } catch (joinError) {
+      console.error("Failed to join shared exchange", joinError);
+      await haptics.error();
+      setActionError("Could not join this exchange. Check the link and try again.");
+    } finally {
+      setJoining(false);
+    }
+  }, [exchangeJoins, isSignedIn, joining, name, resource.data?.join_open, router, shareToken, track]);
+
+  return {
+    actionError,
+    details: resource.data,
+    error: !hasRouteParams ? "This join link is invalid" : resource.error,
+    handleJoin,
+    isLoaded,
+    isSignedIn,
+    joining,
+    loading: !isLoaded || (hasRouteParams && resource.loading),
+    name,
+    retryLoad: resource.reload,
+    routeToExchanges: () => router.replace("/(tabs)/exchanges"),
+    routeToLogin: () => routeToAuth("/auth/login"),
+    routeToSignup: () => routeToAuth("/auth/signup"),
+    setName: (value: string) => {
+      setActionError(null);
+      setName(value);
+    },
+  };
+}
+
 export function useExchangeInviteController() {
   const { token } = useLocalSearchParams<{ token: string }>();
   const router = useRouter();
@@ -760,6 +906,9 @@ export function useExchangeInviteController() {
   const { exchangeInvites } = useServices();
   const [actionLoading, setActionLoading] = useState(false);
   const hasToken = Boolean(token);
+  const authReturnPath = normalizeAuthReturnPath(
+    token ? `/join/exchange/${token}` : undefined
+  );
 
   const resource = useFocusResource({
     enabled: hasToken,
@@ -809,6 +958,7 @@ export function useExchangeInviteController() {
 
   return {
     actionLoading,
+    authReturnPath,
     error: !hasToken ? "Invalid invite link" : resource.error,
     handleAccept,
     handleDecline,

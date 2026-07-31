@@ -10,6 +10,7 @@ import {
   createExchangeExclusionsService,
   createWishlistItemsService,
   createExchangeInvitesService,
+  createExchangeJoinsService,
 } from "@niftygifty/services";
 import { runtimeConfig } from "@/lib/runtime-config";
 import {
@@ -49,6 +50,7 @@ const baseExchangeExclusionsService = createExchangeExclusionsService(apiClient)
 const baseBootstrapService = createBootstrapService(apiClient);
 export const wishlistItemsService = createWishlistItemsService(apiClient);
 export const exchangeInvitesService = createExchangeInvitesService(apiClient);
+const baseExchangeJoinsService = createExchangeJoinsService(apiClient);
 
 let bootstrapPromise: Promise<void> | null = null;
 let bootstrapExpiresAt = 0;
@@ -300,7 +302,7 @@ export const giftExchangesService = {
 
   getById(id: number) {
     return readCachedResource(`gift-exchanges:${id}`, CACHE_TTL_MS.exchange, () =>
-      baseGiftExchangesService.getById(id)
+      baseGiftExchangesService.getBySlug(String(id))
     );
   },
 
@@ -317,6 +319,19 @@ export const giftExchangesService = {
     invalidateCachedResources("gift-exchanges:");
     invalidateCachedResources(`gift-exchanges:${id}`);
     return exchange;
+  },
+};
+
+export const exchangeJoinsService = {
+  getDetails(shareToken: string) {
+    return baseExchangeJoinsService.getDetails(shareToken);
+  },
+
+  async join(shareToken: string, name?: string) {
+    const result = await baseExchangeJoinsService.join(shareToken, name);
+    resetBootstrapState();
+    invalidateCachedResources("gift-exchanges:");
+    return result;
   },
 };
 

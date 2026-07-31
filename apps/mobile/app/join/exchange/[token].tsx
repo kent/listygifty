@@ -217,7 +217,13 @@ export default function ExchangeInviteScreen() {
             Sign in to respond to this invitation
           </Text>
 
-          <Link href="/auth/login" asChild>
+          <Link
+            href={{
+              pathname: "/auth/login",
+              params: controller.authReturnPath ? { returnTo: controller.authReturnPath } : {},
+            }}
+            asChild
+          >
             <TouchableOpacity
               style={{
                 backgroundColor: colors.primary,
@@ -230,7 +236,13 @@ export default function ExchangeInviteScreen() {
             </TouchableOpacity>
           </Link>
 
-          <Link href="/auth/signup" asChild>
+          <Link
+            href={{
+              pathname: "/auth/signup",
+              params: controller.authReturnPath ? { returnTo: controller.authReturnPath } : {},
+            }}
+            asChild
+          >
             <TouchableOpacity
               style={{
                 backgroundColor: colors.card,

@@ -20,6 +20,7 @@ function buildExchange(overrides: Partial<GiftExchange> = {}): GiftExchange {
   return {
     id: overrides.id || 1,
     name: overrides.name || "Family Exchange",
+    slug: overrides.slug || "family-exchange",
     exchange_date: overrides.exchange_date ?? "2026-12-25",
     status: overrides.status || "draft",
     budget_min: overrides.budget_min ?? null,
@@ -28,7 +29,20 @@ function buildExchange(overrides: Partial<GiftExchange> = {}): GiftExchange {
     is_owner: overrides.is_owner ?? true,
     participant_count: overrides.participant_count || 0,
     accepted_count: overrides.accepted_count || 0,
+    published_at: overrides.published_at ?? null,
+    can_publish: overrides.can_publish ?? false,
     can_start: overrides.can_start ?? false,
+    role: overrides.role ?? "organizer",
+    roles: overrides.roles ?? ["owner", "organizer"],
+    capabilities: overrides.capabilities ?? {
+      organize: true,
+      participate: false,
+      view_match: false,
+      nudge_match: false,
+      publish: false,
+      redo: false,
+      delete: true,
+    },
     my_participant: overrides.my_participant ?? null,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
@@ -257,10 +271,21 @@ describe("exchange model helpers", () => {
           status: "inviting",
           participant_count: 4,
           accepted_count: 2,
+          can_start: true,
+        })
+      )
+    ).toBeNull();
+
+    expect(
+      getExchangeStartBlocker(
+        buildExchange({
+          status: "inviting",
+          participant_count: 4,
+          accepted_count: 1,
           can_start: false,
         })
       )
-    ).toBe("2 participants still need to accept.");
+    ).toBe("1 more participant needs to accept.");
 
     expect(
       getExchangeStartBlocker(
@@ -295,8 +320,8 @@ describe("exchange model helpers", () => {
         required: true,
       }),
       expect.objectContaining({
-        complete: false,
-        detail: "2/3 accepted",
+        complete: true,
+        detail: "2/2 minimum",
         key: "acceptances",
         required: true,
       }),

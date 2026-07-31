@@ -1,0 +1,55 @@
+{
+  "spec_id": "mobile-exchange-share-parity",
+  "slug": "mobile-exchange-share-parity",
+  "title": "Mobile Exchange Share Parity",
+  "stage": "done",
+  "spec_path": "../specs/mobile-exchange-share-parity.md",
+  "created_at": "2026-07-31T14:19:58Z",
+  "started_at": "2026-07-31T14:19:58Z",
+  "updated_at": "2026-07-31T14:33:29Z",
+  "completed_at": "2026-07-31T14:33:29Z",
+  "summary": "Completed mobile parity for canonical exchange share links, safe auth return, organizer sharing, and current shared contracts.",
+  "next_action": "No implementation work remains; changes are ready for review and a future mobile release.",
+  "blockers": [],
+  "reference_examples": ["docs/spectacula/specs/gift-exchange-share-join-experience.md"],
+  "review_policy": { "final_vetting": "off" },
+  "verification": {
+    "format": "passed",
+    "lint": "skipped",
+    "typecheck": "passed",
+    "build": "passed",
+    "tests": "passed",
+    "spec_review": "passed",
+    "final_vetting": "skipped",
+    "notes": "Root build passed; Expo Doctor passed 18/18; mobile TypeScript passed; 24 suites and 173 tests passed; Expo exported iOS, Android, and web bundles. npm audit retains 32 high advisories in Expo/React Native/Jest tooling that require breaking framework upgrades."
+  },
+  "resume_context": {
+    "last_completed_step": "Completed implementation, dependency maintenance, full validation, and spec self-review.",
+    "pending_steps": [],
+    "open_questions": [],
+    "last_reviewed_sections": ["1-10"],
+    "artifacts": [
+      "docs/spectacula/specs/mobile-exchange-share-parity.md",
+      "apps/mobile/app/e/[slug]/[shareToken].tsx",
+      "apps/mobile/lib/auth-return.ts",
+      "packages/services/src/exchange-joins.service.ts"
+    ],
+    "notes": "Implementation is complete and locally verified; no deploy or TestFlight release was requested."
+  },
+  "history": [
+    {
+      "at": "2026-07-31T14:19:58Z",
+      "event": "spec_created",
+      "from_stage": null,
+      "to_stage": "inprogress",
+      "note": "Implementation began immediately after the mobile audit."
+    },
+    {
+      "at": "2026-07-31T14:33:29Z",
+      "event": "implementation_completed",
+      "from_stage": "inprogress",
+      "to_stage": "done",
+      "note": "All acceptance checks and validation gates passed."
+    }
+  ]
+}
