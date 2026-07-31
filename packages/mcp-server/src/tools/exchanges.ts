@@ -26,7 +26,7 @@ export const exchangeTools: Tool[] = [
   {
     name: "niftygifty_get_gift_exchange",
     description:
-      "Get details of a gift exchange including participants and their statuses.",
+      "Get details of a gift exchange including participants and their statuses. Owners also receive share_url, a public link anyone can use to sign up and join while the exchange is still open.",
     inputSchema: {
       type: "object",
       properties: {
@@ -40,7 +40,8 @@ export const exchangeTools: Tool[] = [
   },
   {
     name: "niftygifty_create_gift_exchange",
-    description: "Create a new gift exchange (Secret Santa style).",
+    description:
+      "Create a new gift exchange (Secret Santa style). The response includes share_url, a public join link the organizer can drop into a group chat instead of inviting people by email.",
     inputSchema: {
       type: "object",
       properties: {

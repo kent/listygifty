@@ -9,6 +9,8 @@ class GiftExchange < ApplicationRecord
   has_many :exchange_exclusions, dependent: :destroy
   has_many :exchange_notifications, dependent: :destroy
 
+  has_secure_token :share_token
+
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true
   validates :status, presence: true, inclusion: { in: STATUSES }
@@ -44,6 +46,14 @@ class GiftExchange < ApplicationRecord
 
   def editable?
     %w[draft inviting].include?(status)
+  end
+
+  # The share link joins people while the roster is still open; it dies at
+  # publish and revives if the exchange is reopened.
+  alias_method :join_open?, :editable?
+
+  def share_url
+    "#{ENV.fetch("FRONTEND_URL", "https://listygifty.com")}/join/x/#{share_token}"
   end
 
   alias_method :can_start?, :can_publish?

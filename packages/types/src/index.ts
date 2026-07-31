@@ -953,6 +953,26 @@ export interface GiftExchange extends BaseEntity {
     delete: boolean;
   };
   my_participant?: ExchangeParticipant | null;
+  share_url?: string | null;
+}
+
+export interface ExchangeJoinDetails {
+  exchange: {
+    name: string;
+    slug: string;
+    exchange_date: string | null;
+    budget_min: string | null;
+    budget_max: string | null;
+    owner_name: string;
+    accepted_count: number;
+  };
+  join_open: boolean;
+  closed_reason: string | null;
+}
+
+export interface ExchangeJoinResponse {
+  message: string;
+  exchange: GiftExchange;
 }
 
 export interface GiftExchangeWithParticipants extends GiftExchange {

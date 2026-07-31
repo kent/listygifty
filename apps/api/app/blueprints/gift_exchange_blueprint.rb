@@ -39,6 +39,11 @@ class GiftExchangeBlueprint < ApplicationBlueprint
     options[:current_user] ? exchange.capabilities_for(options[:current_user]) : {}
   end
 
+  field :share_url,
+        if: ->(_name, exchange, options) { options[:current_user] && exchange.owner?(options[:current_user]) } do |exchange|
+    exchange.share_url
+  end
+
   field :my_participant do |exchange, options|
     user = options[:current_user]
     participant = user ? GiftExchangeBlueprint.participant_for(exchange, user) : nil

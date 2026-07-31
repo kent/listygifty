@@ -196,6 +196,13 @@ export default function ExchangeDetailPage({
     toast.success(`Invite link copied for ${participant.name}`);
   };
 
+  const handleCopyJoinLink = async () => {
+    if (!exchange?.share_url) return;
+
+    await navigator.clipboard.writeText(exchange.share_url);
+    toast.success("Join link copied — drop it in the group chat");
+  };
+
   const handleRemoveParticipant = async (participant: ExchangeParticipant) => {
     try {
       if (!exchange) return;
@@ -561,6 +568,19 @@ export default function ExchangeDetailPage({
                 Participants
               </CardTitle>
               {isOwner && exchange.status !== "active" && exchange.status !== "completed" && (
+                <div className="flex items-center gap-2">
+                  {exchange.share_url && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-slate-200 dark:border-slate-700"
+                      onClick={handleCopyJoinLink}
+                      data-testid="copy-join-link"
+                    >
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copy join link
+                    </Button>
+                  )}
                 <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                   <DialogTrigger asChild>
                     <Button size="sm" variant="outline" className="border-slate-200 dark:border-slate-700">
@@ -609,6 +629,7 @@ export default function ExchangeDetailPage({
                     </form>
                   </DialogContent>
                 </Dialog>
+                </div>
               )}
             </CardHeader>
             <CardContent>

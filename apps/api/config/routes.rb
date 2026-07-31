@@ -91,6 +91,10 @@ Rails.application.routes.draw do
   post "exchange_invite/:token/accept" => "exchange_invites#accept"
   post "exchange_invite/:token/decline" => "exchange_invites#decline"
 
+  # Exchange share-link join endpoints (exchange-level token)
+  get "exchange_join/:share_token" => "exchange_joins#show"
+  post "exchange_join/:share_token/join" => "exchange_joins#join"
+
   # Wishlists (authenticated)
   resources :wishlists do
     member do

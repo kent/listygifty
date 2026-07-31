@@ -696,13 +696,13 @@ class McpController < ApplicationController
         }
       },
       "get_gift_exchange" => {
-        description: "Get a gift exchange, including organizer details or the current user's match as permitted",
+        description: "Get a gift exchange, including organizer details or the current user's match as permitted. Owners also receive share_url, a public link anyone can use to sign up and join while the exchange is still open.",
         scope: "read",
         schema: tool_schema({ exchange_id: id_property("Gift exchange ID or slug") }, [ "exchange_id" ]),
         handler: ->(args) { serialize_exchange(find_exchange(args["exchange_id"])) }
       },
       "create_gift_exchange" => {
-        description: "Create a gift exchange, optionally adding the current user as an accepted participant",
+        description: "Create a gift exchange, optionally adding the current user as an accepted participant. The response includes share_url, a public join link the organizer can drop into a group chat instead of inviting people by email.",
         scope: "write",
         schema: exchange_schema(required: %w[workspace_id name], include_workspace: true, include_creator: true),
         handler: ->(args) { create_exchange(args) }
