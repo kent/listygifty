@@ -12,6 +12,30 @@ class ExchangeMailer < ApplicationMailer
     )
   end
 
+  def joined_organizer(participant)
+    @participant = participant
+    @exchange = participant.gift_exchange
+    @owner = @exchange.user
+    @exchange_url = exchange_url(@exchange)
+
+    mail(
+      to: @owner.email,
+      subject: "🎁 #{@participant.display_name} joined #{@exchange.name}"
+    )
+  end
+
+  def join_confirmation(participant)
+    @participant = participant
+    @exchange = participant.gift_exchange
+    @owner = @exchange.user
+    @exchange_url = exchange_url(@exchange)
+
+    mail(
+      to: @participant.delivery_email,
+      subject: "🎁 You're in: #{@exchange.name}"
+    )
+  end
+
   def match_assignment(participant)
     @participant = participant
     @exchange = participant.gift_exchange
@@ -63,5 +87,11 @@ class ExchangeMailer < ApplicationMailer
       to: @participant.delivery_email,
       subject: "💡 Your Secret Santa needs a little help"
     )
+  end
+
+  private
+
+  def exchange_url(exchange)
+    "#{ENV.fetch("FRONTEND_URL", "https://listygifty.com")}/exchanges/#{exchange.slug}"
   end
 end

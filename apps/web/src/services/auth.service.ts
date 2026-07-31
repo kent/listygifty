@@ -20,6 +20,7 @@ export const PUBLIC_ROUTES = [
   ...PUBLIC_STATIC_TEXT_ROUTES,
   "/.well-known(.*)",
   "/apple-app-site-association",
+  "/e(.*)",
   "/join(.*)",
   "/login(.*)",
   "/manifest.webmanifest",

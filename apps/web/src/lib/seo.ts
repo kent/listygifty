@@ -102,6 +102,7 @@ export const PRIVATE_CRAWL_DISALLOW_ROUTES = [
   "/claim",
   "/w/",
   "/email-preferences",
+  "/e/",
 ] as const;
 
 export const AI_CRAWLER_USER_AGENTS = [

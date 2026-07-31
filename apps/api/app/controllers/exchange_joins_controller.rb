@@ -21,12 +21,16 @@ class ExchangeJoinsController < ApplicationController
 
   # POST /exchange_join/:share_token/join - Requires auth, self-serve join
   def join
+    newly_joined = false
+    participant = nil
+
     @exchange.with_lock do
       @exchange.reload
       return render_error(closed_reason) unless @exchange.join_open?
 
       participant = @exchange.exchange_participants.find_by(user: current_user) ||
                     @exchange.exchange_participants.where("LOWER(email) = ?", current_user.email.downcase).first
+      newly_joined = participant.nil? || participant.status != "accepted"
 
       if participant
         participant.update!(
@@ -35,7 +39,7 @@ class ExchangeJoinsController < ApplicationController
           name: join_name.presence || participant.name
         )
       else
-        @exchange.exchange_participants.create!(
+        participant = @exchange.exchange_participants.create!(
           user: current_user,
           email: current_user.email,
           name: join_name.presence || current_user.safe_name,
@@ -44,6 +48,11 @@ class ExchangeJoinsController < ApplicationController
       end
 
       @exchange.update!(status: "inviting") if @exchange.status == "draft"
+    end
+
+    if newly_joined
+      ExchangeMailer.joined_organizer(participant).deliver_later
+      ExchangeMailer.join_confirmation(participant).deliver_later
     end
 
     render json: {

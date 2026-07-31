@@ -1,0 +1,26 @@
+<% content_for :preview_text do %>You joined <%= @exchange.name %>. Add a few ideas so your eventual match has somewhere to start.<% end %>
+
+<h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #18181b;">
+  You&apos;re in.
+</h1>
+<p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
+  Hi <strong><%= @participant.display_name %></strong>. You joined
+  <strong><%= @exchange.name %></strong>, organized by
+  <strong><%= @owner.safe_name %></strong>.
+</p>
+<p style="margin: 0 0 24px 0; font-size: 14px; color: #52525b;">
+  Add a few things you would genuinely enjoy to your exchange wishlist. When the
+  organizer draws names, your match will have somewhere useful to start.
+</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td align="center">
+      <a href="<%= @exchange_url %>" class="button" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px;">
+        Open My Exchange
+      </a>
+    </td>
+  </tr>
+</table>
+<p style="margin: 32px 0 0 0; font-size: 14px; color: #71717a; text-align: center;">
+  Your match stays private. That&apos;s the fun part.
+</p>

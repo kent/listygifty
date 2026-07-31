@@ -1,0 +1,64 @@
+{
+  "spec_id": "gift-exchange-share-join-experience",
+  "slug": "gift-exchange-share-join-experience",
+  "title": "Gift Exchange Share and Join Experience",
+  "stage": "done",
+  "spec_path": "../specs/gift-exchange-share-join-experience.md",
+  "created_at": "2026-07-31T13:13:34Z",
+  "started_at": "2026-07-31T13:13:34Z",
+  "updated_at": "2026-07-31T13:50:10Z",
+  "completed_at": "2026-07-31T13:26:17Z",
+  "summary": "Implemented and verified canonical slug share URLs, rich invitation previews, authenticated join return, and first-join email notifications.",
+  "next_action": "Review the completed change and deploy it when ready.",
+  "blockers": [],
+  "reference_examples": ["docs/spectacula/specs/gift-exchange-full-lifecycle.md"],
+  "review_policy": { "final_vetting": "off" },
+  "verification": {
+    "format": "passed",
+    "lint": "passed",
+    "typecheck": "passed",
+    "build": "passed",
+    "tests": "passed",
+    "spec_review": "passed",
+    "final_vetting": "skipped",
+    "notes": "git diff --check; RuboCop on 4 touched Ruby files; full web ESLint; Next TypeScript and production build; full monorepo build; 338 Rails tests / 1396 assertions; runtime 308, canonical metadata, 1200x630 PNG, and visual page/image checks all passed."
+  },
+  "resume_context": {
+    "last_completed_step": "Completed verification and self-review against the canonical spec.",
+    "pending_steps": [],
+    "open_questions": [],
+    "last_reviewed_sections": ["1-13"],
+    "artifacts": [
+      "docs/spectacula/specs/gift-exchange-share-join-experience.md",
+      "apps/api/app/controllers/exchange_joins_controller.rb",
+      "apps/api/app/mailers/exchange_mailer.rb",
+      "apps/web/src/app/e/[slug]/[shareToken]/page.tsx",
+      "apps/web/src/app/e/[slug]/[shareToken]/opengraph-image.tsx",
+      "apps/web/src/components/exchanges/JoinExchangeCard.tsx"
+    ],
+    "notes": "User explicitly authorized autonomous product decisions. Token-only links are preserved as 308 compatibility redirects. Temporary QA exchange 19 was removed after visual validation."
+  },
+  "history": [
+    {
+      "at": "2026-07-31T13:13:34Z",
+      "event": "spec_created",
+      "from_stage": null,
+      "to_stage": "inprogress",
+      "note": "User requested immediate implementation and autonomous decisions."
+    },
+    {
+      "at": "2026-07-31T13:26:17Z",
+      "event": "implementation_completed",
+      "from_stage": "inprogress",
+      "to_stage": "done",
+      "note": "All code, automated checks, runtime metadata checks, email tests, visual QA, and spec self-review passed."
+    },
+    {
+      "at": "2026-07-31T13:50:10Z",
+      "event": "spec_updated",
+      "from_stage": "done",
+      "to_stage": "done",
+      "note": "Shortened the canonical exchange route from /join/gift-exchange/:slug/:token to /e/:slug/:token at user request."
+    }
+  ]
+}

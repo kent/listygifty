@@ -53,7 +53,7 @@ class GiftExchange < ApplicationRecord
   alias_method :join_open?, :editable?
 
   def share_url
-    "#{ENV.fetch("FRONTEND_URL", "https://listygifty.com")}/join/x/#{share_token}"
+    "#{ENV.fetch("FRONTEND_URL", "https://listygifty.com")}/e/#{slug}/#{share_token}"
   end
 
   alias_method :can_start?, :can_publish?

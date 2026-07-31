@@ -10,6 +10,10 @@ Rails.application.configure do
   # Show full error reports.
   config.consider_all_requests_local = true
 
+  # Allow the Next.js container to use the Compose service name for server-side
+  # rendering while keeping the browser-facing API URL on localhost.
+  config.hosts << "api"
+
   # Enable server timing.
   config.server_timing = true
 

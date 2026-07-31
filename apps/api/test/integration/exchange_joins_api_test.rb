@@ -1,7 +1,13 @@
 require "test_helper"
 
 class ExchangeJoinsApiTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
   setup do
+    @old_queue_adapter = ActiveJob::Base.queue_adapter
+    ActiveJob::Base.queue_adapter = :test
+    ActionMailer::Base.deliveries.clear
+    clear_enqueued_jobs
     @owner = users(:one)
     @owner_headers = auth_headers_for(@owner)
     @joiner = users(:two)
@@ -12,6 +18,12 @@ class ExchangeJoinsApiTest < ActionDispatch::IntegrationTest
       name: "Share Link Santa",
       status: "inviting"
     )
+  end
+
+  teardown do
+    ActionMailer::Base.deliveries.clear
+    clear_enqueued_jobs
+    ActiveJob::Base.queue_adapter = @old_queue_adapter
   end
 
   test "show is public and reports an open exchange" do
@@ -41,9 +53,11 @@ class ExchangeJoinsApiTest < ActionDispatch::IntegrationTest
   end
 
   test "join creates an accepted participant with a custom name" do
-    assert_difference("ExchangeParticipant.count", 1) do
-      post "/exchange_join/#{@exchange.share_token}/join",
-        headers: @joiner_headers, params: { name: "Cool Uncle" }, as: :json
+    assert_enqueued_emails 2 do
+      assert_difference("ExchangeParticipant.count", 1) do
+        post "/exchange_join/#{@exchange.share_token}/join",
+          headers: @joiner_headers, params: { name: "Cool Uncle" }, as: :json
+      end
     end
     assert_response :success
 
@@ -57,11 +71,35 @@ class ExchangeJoinsApiTest < ActionDispatch::IntegrationTest
   test "join is idempotent" do
     post "/exchange_join/#{@exchange.share_token}/join", headers: @joiner_headers, as: :json
     assert_response :success
+    clear_enqueued_jobs
 
-    assert_no_difference("ExchangeParticipant.count") do
-      post "/exchange_join/#{@exchange.share_token}/join", headers: @joiner_headers, as: :json
+    assert_no_enqueued_emails do
+      assert_no_difference("ExchangeParticipant.count") do
+        post "/exchange_join/#{@exchange.share_token}/join", headers: @joiner_headers, as: :json
+      end
     end
     assert_response :success
+  end
+
+  test "first join emails the organizer and joiner with exchange links" do
+    perform_enqueued_jobs do
+      post "/exchange_join/#{@exchange.share_token}/join",
+        headers: @joiner_headers, params: { name: "Happy Joiner" }, as: :json
+    end
+
+    assert_response :success
+    assert_equal 2, ActionMailer::Base.deliveries.size
+
+    organizer_mail = ActionMailer::Base.deliveries.find { |mail| mail.to == [ @owner.email ] }
+    joiner_mail = ActionMailer::Base.deliveries.find { |mail| mail.to == [ @joiner.email ] }
+
+    assert organizer_mail
+    assert joiner_mail
+    assert_includes organizer_mail.subject, "Happy Joiner"
+    assert_includes organizer_mail.subject, @exchange.name
+    assert_includes joiner_mail.subject, @exchange.name
+    assert_includes organizer_mail.body.encoded, "/exchanges/#{@exchange.slug}"
+    assert_includes joiner_mail.body.encoded, "/exchanges/#{@exchange.slug}"
   end
 
   test "join claims a pre-invited participant row with a matching email" do
@@ -69,8 +107,10 @@ class ExchangeJoinsApiTest < ActionDispatch::IntegrationTest
       name: "Pre Invited", email: @joiner.email.upcase, status: "invited"
     )
 
-    assert_no_difference("ExchangeParticipant.count") do
-      post "/exchange_join/#{@exchange.share_token}/join", headers: @joiner_headers, as: :json
+    assert_enqueued_emails 2 do
+      assert_no_difference("ExchangeParticipant.count") do
+        post "/exchange_join/#{@exchange.share_token}/join", headers: @joiner_headers, as: :json
+      end
     end
     assert_response :success
     invited.reload
@@ -109,7 +149,7 @@ class ExchangeJoinsApiTest < ActionDispatch::IntegrationTest
 
     get "/gift_exchanges/#{@exchange.slug}", headers: @owner_headers, as: :json
     assert_response :success
-    assert_includes json_response["share_url"], "/join/x/#{@exchange.share_token}"
+    assert_includes json_response["share_url"], "/e/#{@exchange.slug}/#{@exchange.share_token}"
 
     get "/gift_exchanges/#{@exchange.slug}", headers: @joiner_headers, as: :json
     assert_response :success
