@@ -96,7 +96,8 @@ export const exchangeTools: Tool[] = [
   },
   {
     name: "niftygifty_delete_gift_exchange",
-    description: "Delete a gift exchange. Must be the owner.",
+    description:
+      "Permanently delete a gift exchange. Must be the owner. Participants of inviting or active exchanges are emailed a cancellation notice; matches, invites, and exchange wishlists are destroyed.",
     inputSchema: {
       type: "object",
       properties: {

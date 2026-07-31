@@ -718,11 +718,11 @@ class McpController < ApplicationController
         }
       },
       "delete_gift_exchange" => {
-        description: "Permanently delete an owned gift exchange",
+        description: "Permanently delete an owned gift exchange. Participants of inviting or active exchanges are emailed a cancellation notice; matches, invites, and exchange wishlists are destroyed.",
         scope: "write",
         schema: tool_schema({ exchange_id: id_property("Gift exchange ID or slug") }, [ "exchange_id" ]),
         handler: ->(args) {
-          find_owned_exchange(args["exchange_id"]).destroy!
+          ExchangeDeletionService.delete!(find_owned_exchange(args["exchange_id"]))
           { deleted: true }
         }
       },

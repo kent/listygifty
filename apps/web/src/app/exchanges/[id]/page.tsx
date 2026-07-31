@@ -114,7 +114,9 @@ export default function ExchangeDetailPage({
   const [showExclusionDialog, setShowExclusionDialog] = useState(false);
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [showRedoDialog, setShowRedoDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [redoingMode, setRedoingMode] = useState<"reopen" | "redraw" | null>(null);
   const [newParticipant, setNewParticipant] = useState({ name: "", email: "" });
   const [newExclusion, setNewExclusion] = useState({ participant_a_id: "", participant_b_id: "" });
@@ -277,6 +279,20 @@ export default function ExchangeDetailPage({
       toast.error(message);
     } finally {
       setRedoingMode(null);
+    }
+  };
+
+  const handleDeleteExchange = async () => {
+    if (!exchange) return;
+    setDeleting(true);
+    try {
+      await giftExchangesService.delete(exchange.id);
+      toast.success(`Deleted ${exchange.name}`);
+      router.push("/exchanges");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to delete exchange";
+      toast.error(message);
+      setDeleting(false);
     }
   };
 
@@ -459,6 +475,65 @@ export default function ExchangeDetailPage({
                     disabled={redoingMode !== null}
                   >
                     Cancel
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {exchange.capabilities.delete && (
+            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  data-testid="delete-exchange"
+                  className="border-red-400/40 text-red-600 hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete exchange
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                <DialogHeader>
+                  <DialogTitle className="text-slate-900 dark:text-white">
+                    Delete {exchange.name}?
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="py-2">
+                  {exchange.status === "inviting" || exchange.status === "active" ? (
+                    <>
+                      <p className="text-slate-600 dark:text-slate-400">
+                        This exchange is {exchange.status === "active" ? "active" : "still inviting people"},
+                        so deleting it has real consequences:
+                      </p>
+                      <div className="mt-4 p-4 rounded-lg bg-red-500/5 border border-red-400/30">
+                        <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                          {exchange.status === "active" && (
+                            <li>• Everyone&apos;s match is destroyed, along with exchange wishlists</li>
+                          )}
+                          <li>• {exchange.participant_count} participant{exchange.participant_count === 1 ? "" : "s"} lose access and pending invite links stop working</li>
+                          <li>• Participants will be emailed that the exchange was cancelled</li>
+                          <li>• This cannot be undone</li>
+                        </ul>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-slate-600 dark:text-slate-400">
+                      This permanently removes the exchange{exchange.status === "completed" ? " and its history" : ""}. This cannot be undone.
+                    </p>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="ghost" onClick={() => setShowDeleteDialog(false)} disabled={deleting}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleDeleteExchange}
+                    disabled={deleting}
+                    data-testid="confirm-delete-exchange"
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    {deleting ? "Deleting…" : "Delete exchange"}
                   </Button>
                 </DialogFooter>
               </DialogContent>

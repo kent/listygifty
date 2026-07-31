@@ -1,7 +1,13 @@
 require "test_helper"
 
 class GiftExchangesApiTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
   setup do
+    @old_queue_adapter = ActiveJob::Base.queue_adapter
+    ActiveJob::Base.queue_adapter = :test
+    ActionMailer::Base.deliveries.clear
+    clear_enqueued_jobs
     @user = users(:one)
     @auth_headers = auth_headers_for(@user)
     @workspace = workspaces(:one)
@@ -19,6 +25,12 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
       email: @user.email,
       status: "accepted"
     )
+  end
+
+  teardown do
+    ActionMailer::Base.deliveries.clear
+    clear_enqueued_jobs
+    ActiveJob::Base.queue_adapter = @old_queue_adapter
   end
 
   # ============================================================================
@@ -159,6 +171,46 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
       delete gift_exchange_path(@exchange), headers: @auth_headers, as: :json
     end
     assert_response :success
+  end
+
+  test "destroy of a draft exchange sends no cancellation email" do
+    assert_no_enqueued_emails do
+      delete gift_exchange_path(@exchange), headers: @auth_headers, as: :json
+    end
+    assert_response :success
+  end
+
+  test "destroy of an active exchange emails non-declined participants except the organizer" do
+    @exchange.exchange_participants.create!(
+      name: "Joined", email: "joined@example.com", status: "accepted"
+    )
+    @exchange.exchange_participants.create!(
+      name: "Invited", email: "invited@example.com", status: "invited"
+    )
+    @exchange.exchange_participants.create!(
+      name: "Declined", email: "declined@example.com", status: "declined"
+    )
+    @exchange.update!(status: "active")
+
+    assert_enqueued_emails 2 do
+      delete gift_exchange_path(@exchange), headers: @auth_headers, as: :json
+    end
+    assert_response :success
+    assert_not GiftExchange.exists?(@exchange.id)
+
+    perform_enqueued_jobs
+    recipients = ActionMailer::Base.deliveries.flat_map(&:to)
+    assert_includes recipients, "joined@example.com"
+    assert_includes recipients, "invited@example.com"
+    assert_not_includes recipients, "declined@example.com"
+    assert_not_includes recipients, @user.email
+    assert ActionMailer::Base.deliveries.all? { |mail| mail.subject.include?(@exchange.name) }
+  end
+
+  test "show exposes delete capability to the owner only" do
+    get gift_exchange_path(@exchange.slug), headers: @auth_headers, as: :json
+    assert_response :success
+    assert_equal true, json_response.dig("capabilities", "delete")
   end
 
   test "cannot access exchange from another workspace" do

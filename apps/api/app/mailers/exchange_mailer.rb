@@ -39,6 +39,19 @@ class ExchangeMailer < ApplicationMailer
     )
   end
 
+  # Plain string args only: by the time this delivers, the exchange and its
+  # participants have already been destroyed.
+  def cancellation(email:, participant_name:, exchange_name:, owner_name:)
+    @participant_name = participant_name
+    @exchange_name = exchange_name
+    @owner_name = owner_name
+
+    mail(
+      to: email,
+      subject: "🎁 Cancelled: #{exchange_name}"
+    )
+  end
+
   def wishlist_nudge(notification)
     @notification = notification
     @participant = notification.recipient_participant

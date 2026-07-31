@@ -44,7 +44,7 @@ class GiftExchangesController < ApplicationController
   end
 
   def destroy
-    @gift_exchange.destroy!
+    ExchangeDeletionService.delete!(@gift_exchange)
     head :no_content
   end
 
