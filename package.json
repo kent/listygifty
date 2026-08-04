@@ -49,7 +49,7 @@
   "overrides": {
     "@hono/node-server": "1.19.14",
     "express-rate-limit": "8.5.2",
-    "hono": "4.12.23",
+    "hono": "4.13.0",
     "ip-address": "10.2.0",
     "postcss": "8.5.15",
     "react-test-renderer": "19.2.0"
