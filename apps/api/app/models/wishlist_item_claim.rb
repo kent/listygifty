@@ -8,7 +8,9 @@ class WishlistItemClaim < ApplicationRecord
 
   validates :status, presence: true, inclusion: { in: STATUSES }
   validates :quantity, numericality: { greater_than: 0 }
-  validates :claimer_email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
+  validates :claimer_email, length: { maximum: 254 }, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
+  validates :claimer_name, length: { maximum: 200 }, allow_blank: true
+  validates :message, length: { maximum: 2_000 }, allow_blank: true
   validate :user_or_guest_present
   validate :quantity_available, on: :create
 

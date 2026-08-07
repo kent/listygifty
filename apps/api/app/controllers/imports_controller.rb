@@ -3,6 +3,10 @@
 class ImportsController < ApplicationController
   include WorkspaceScoped
 
+  before_action :require_workspace_admin, only: :people
+  rescue_from CsvImportLimits::PayloadTooLarge, with: :render_import_too_large
+  rescue_from CsvImportLimits::TooManyRows, with: :render_import_row_limit
+
   def people
     unless params[:file].present?
       return render json: { error: "No file provided" }, status: :bad_request
@@ -35,7 +39,7 @@ class ImportsController < ApplicationController
       return render json: { error: "No file provided" }, status: :bad_request
     end
 
-    holiday = current_workspace.holidays.find_by(id: params[:holiday_id])
+    holiday = current_workspace.holidays.where(id: current_user.holiday_ids).find_by(id: params[:holiday_id])
     return render json: { error: "Holiday not found" }, status: :not_found unless holiday
 
     result = CsvGiftImportService.import_gifts(
@@ -51,5 +55,15 @@ class ImportsController < ApplicationController
       errors: result[:errors],
       gifts: GiftBlueprint.render_as_hash(result[:gifts], current_user: current_user)
     }
+  end
+
+  private
+
+  def render_import_too_large(error)
+    render json: { error: error.message }, status: :content_too_large
+  end
+
+  def render_import_row_limit(error)
+    render json: { error: error.message }, status: :unprocessable_entity
   end
 end

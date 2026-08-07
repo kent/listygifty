@@ -10,6 +10,7 @@ module Admin
       def validate!(value, schema, path, depth)
         raise ArgumentError, "Invalid arguments at #{path}: nesting is too deep" if depth > MAX_DEPTH
 
+        validate_one_of!(value, schema["oneOf"], path, depth) if schema["oneOf"]
         validate_type!(value, schema["type"], path) if schema["type"]
         validate_enum!(value, schema["enum"], path) if schema["enum"]
 
@@ -23,6 +24,17 @@ module Admin
       end
 
       private
+
+      def validate_one_of!(value, schemas, path, depth)
+        matches = schemas.count do |candidate|
+          validate!(value, candidate, path, depth + 1)
+        rescue ArgumentError
+          false
+        end
+        return if matches == 1
+
+        raise ArgumentError, "Invalid arguments at #{path}: expected exactly one allowed shape"
+      end
 
       def validate_type!(value, expected, path)
         types = Array(expected)
@@ -74,6 +86,10 @@ module Admin
         end
         if schema.key?("maxItems") && value.length > schema["maxItems"]
           raise ArgumentError, "Invalid arguments at #{path}: too many items"
+        end
+
+        if schema["uniqueItems"] && value.uniq.length != value.length
+          raise ArgumentError, "Invalid arguments at #{path}: duplicate items"
         end
 
         item_schema = schema["items"]

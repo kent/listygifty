@@ -59,6 +59,19 @@ class OauthClientTest < ActiveSupport::TestCase
     assert_empty client.errors[:redirect_uris]
   end
 
+  test "resolves loopback redirect URIs with an ephemeral port only" do
+    client = OauthClient.new(
+      name: "Loopback client",
+      client_id: SecureRandom.hex(16),
+      redirect_uris: [ "http://localhost:3000/callback", "https://example.com/callback" ]
+    )
+
+    assert_equal "http://localhost:54321/callback", client.resolve_redirect_uri("http://localhost:54321/callback")
+    assert_nil client.resolve_redirect_uri("http://127.0.0.1:54321/callback")
+    assert_nil client.resolve_redirect_uri("http://localhost:54321/other")
+    assert_nil client.resolve_redirect_uri("https://example.com:443/callback")
+  end
+
   test "validates scopes" do
     client = OauthClient.new(
       name: "Test",

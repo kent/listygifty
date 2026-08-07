@@ -19,11 +19,7 @@ class GiftStatusesApiTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     updated_name = "Updated Idea #{SecureRandom.hex(4)}"
-    patch gift_status_path(@status),
-      headers: @auth_headers,
-      params: { gift_status: { name: updated_name } },
-      as: :json
-    assert_response :success
+    @status.update!(name: updated_name)
 
     get gift_statuses_path, headers: @auth_headers, as: :json
     assert_response :success
@@ -36,35 +32,50 @@ class GiftStatusesApiTest < ActionDispatch::IntegrationTest
     assert_equal @status.name, json_response["name"]
   end
 
-  test "create creates a gift status" do
-    assert_difference("GiftStatus.count") do
+  test "ordinary users cannot mutate global gift statuses" do
+    assert_no_difference("GiftStatus.count") do
       post gift_statuses_path,
         headers: @auth_headers,
-        params: { gift_status: { name: "Shipped #{SecureRandom.hex(4)}", position: 99 } },
+        params: { gift_status: { name: "Tenant status", position: 99 } },
+        as: :json
+    end
+    assert_response :forbidden
+
+    patch gift_status_path(@status),
+      headers: @auth_headers,
+      params: { gift_status: { name: "Tenant rename" } },
+      as: :json
+    assert_response :forbidden
+    assert_not_equal "Tenant rename", @status.reload.name
+
+    assert_no_difference("GiftStatus.count") do
+      delete gift_status_path(@status), headers: @auth_headers, as: :json
+    end
+    assert_response :forbidden
+  end
+
+  test "allowlisted Clerk admins can mutate statuses but API keys cannot" do
+    previous = ENV["ADMIN_EMAILS"]
+    ENV["ADMIN_EMAILS"] = @user.email
+
+    assert_difference("GiftStatus.count", 1) do
+      post gift_statuses_path,
+        headers: @auth_headers,
+        params: { gift_status: { name: "Admin status #{SecureRandom.hex(4)}", position: 99 } },
         as: :json
     end
     assert_response :created
-  end
 
-  test "update modifies a gift status" do
-    # Create a new status to update to avoid uniqueness conflicts
-    new_status = GiftStatus.create!(name: "Test Status #{SecureRandom.hex(4)}", position: 98)
-
-    patch gift_status_path(new_status),
-      headers: @auth_headers,
-      params: { gift_status: { name: "Updated Status #{SecureRandom.hex(4)}" } },
-      as: :json
-    assert_response :success
-  end
-
-  test "destroy removes a gift status" do
-    # Create a new status to delete (not used by any gifts)
-    new_status = GiftStatus.create!(name: "To Delete #{SecureRandom.hex(4)}", position: 97)
-
-    assert_difference("GiftStatus.count", -1) do
-      delete gift_status_path(new_status), headers: @auth_headers, as: :json
+    api_key = ApiKey.generate_for(@user, name: "Non-admin REST mutation", scopes: [ "write" ])
+    assert_no_difference("GiftStatus.count") do
+      post gift_statuses_path,
+        headers: { "Authorization" => "Bearer #{api_key.raw_key}" },
+        params: { gift_status: { name: "API-key status", position: 100 } },
+        as: :json
     end
-    assert_response :success
+    assert_response :unauthorized
+  ensure
+    previous.nil? ? ENV.delete("ADMIN_EMAILS") : ENV["ADMIN_EMAILS"] = previous
   end
 
   test "requires authentication" do

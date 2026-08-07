@@ -31,8 +31,9 @@ class CsvGiftImportService
   end
 
   def import
-    csv_content = @file.respond_to?(:read) ? @file.read : @file.tempfile.read
+    csv_content = CsvImportLimits.read(@file)
     csv = CSV.parse(csv_content, headers: true, header_converters: ->(header) { normalize_header(header) })
+    CsvImportLimits.validate_rows!(csv)
 
     validate_headers!(csv.headers)
     return error_result if @errors.any?
@@ -75,22 +76,28 @@ class CsvGiftImportService
       return
     end
 
-    gift = @holiday.gifts.build(
+    gift = Gifts::MutationService.new(@created_by).create(
+      holiday_id: @holiday.id,
       name: name,
       description: row["description"]&.strip.presence,
       cost: parse_cost(row["cost"], index),
       link: row["link"]&.strip.presence,
-      gift_status: gift_status_for(row),
-      created_by: @created_by
+      gift_status_id: gift_status_for(row)&.id
     )
-
-    if gift.save
-      assign_person(gift, row, index, :recipient)
-      assign_person(gift, row, index, :giver)
-      @created << gift
-    else
-      @errors << "Row #{index + 2}: #{gift.errors.full_messages.join(', ')}"
-    end
+    recipient = person_for(row, index, :recipient)
+    giver = person_for(row, index, :giver)
+    Gifts::MutationService.new(@created_by).update(
+      gift,
+      recipient_ids: Array(recipient&.id),
+      giver_ids: Array(giver&.id)
+    )
+    @created << gift
+  rescue Gifts::MutationService::LimitExceeded => e
+    @errors << "Row #{index + 2}: #{e.message}"
+  rescue ActiveRecord::RecordInvalid => e
+    @errors << "Row #{index + 2}: #{e.record.errors.full_messages.join(', ')}"
+  rescue ActiveRecord::RecordNotFound
+    @errors << "Row #{index + 2}: Holiday, gift status, or person is not accessible"
   end
 
   def parse_cost(value, index)
@@ -111,15 +118,6 @@ class CsvGiftImportService
 
   def default_status
     @default_status ||= GiftStatus.order(:position, :id).first
-  end
-
-  def assign_person(gift, row, index, role)
-    person = person_for(row, index, role)
-    return unless person
-
-    role == :recipient ? gift.recipients << person : gift.givers << person
-  rescue ActiveRecord::RecordInvalid => e
-    @errors << "Row #{index + 2}: #{role.to_s.humanize} #{e.record.errors.full_messages.join(', ')}"
   end
 
   def person_for(row, index, role)

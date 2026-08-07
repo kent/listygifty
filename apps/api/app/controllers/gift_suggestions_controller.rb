@@ -1,10 +1,11 @@
 class GiftSuggestionsController < ApplicationController
   before_action :set_person, only: %i[index create refine]
+  before_action :require_person_editor!, only: %i[create refine]
   before_action :set_suggestion, only: %i[accept destroy]
   before_action :require_premium!, only: %i[create refine]
 
   def index
-    suggestions = @person.gift_suggestions.includes(:holiday).order(created_at: :desc)
+    suggestions = visible_suggestions_for(@person).includes(:holiday).order(created_at: :desc)
     render json: GiftSuggestionBlueprint.render(suggestions)
   end
 
@@ -20,10 +21,12 @@ class GiftSuggestionsController < ApplicationController
   # Refines selected suggestions for a specific holiday
   def refine
     holiday = current_user.holidays.find(params[:holiday_id])
-    suggestion_ids = params[:suggestion_ids] || []
-
-    if suggestion_ids.empty?
-      return render_error("No suggestions selected", status: :bad_request)
+    suggestion_ids = params[:suggestion_ids]
+    unless suggestion_ids.is_a?(Array) && suggestion_ids.length.between?(1, GiftSuggestionService::MAX_REFINEMENT_SUGGESTIONS)
+      return render_error(
+        "Select between 1 and #{GiftSuggestionService::MAX_REFINEMENT_SUGGESTIONS} suggestions",
+        status: :bad_request
+      )
     end
 
     service = GiftSuggestionService.new(@person, current_user)
@@ -36,24 +39,34 @@ class GiftSuggestionsController < ApplicationController
   end
 
   def accept
-    gift_status = GiftStatus.find_by(name: "Idea") || GiftStatus.first
-    holiday = @suggestion.holiday || params[:holiday_id]&.then { |id| current_user.holidays.find(id) } || current_user.holidays.first
-
-    gift = Gift.new(
-      name: @suggestion.name,
-      description: @suggestion.description,
-      cost: parse_price(@suggestion.approximate_price),
-      holiday: holiday,
-      gift_status: gift_status
-    )
-
-    if gift.save
-      gift.recipients << @suggestion.person
+    gift = GiftSuggestion.transaction do
+      @suggestion.lock!
+      holiday_id = @suggestion.holiday_id || params[:holiday_id] || current_user.holiday_ids.first
+      gift_status = GiftStatus.find_by(name: "Idea") || GiftStatus.by_position.first
+      created = Gifts::MutationService.new(current_user).create(
+        holiday_id: holiday_id,
+        name: @suggestion.name,
+        description: @suggestion.description,
+        cost: parse_price(@suggestion.approximate_price),
+        gift_status_id: gift_status&.id,
+        recipient_ids: [ @suggestion.person_id ]
+      )
       @suggestion.destroy!
-      render json: GiftBlueprint.render(gift), status: :created
-    else
-      render json: { errors: gift.errors.full_messages }, status: :unprocessable_entity
+      created
     end
+
+    render json: GiftBlueprint.render(gift, current_user: current_user), status: :created
+  rescue Gifts::MutationService::LimitExceeded => e
+    render json: {
+      error: "Gift limit reached",
+      message: e.message,
+      gifts_remaining: 0,
+      upgrade_required: true
+    }, status: :payment_required
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Suggestion, holiday, or person not found" }, status: :not_found
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
   end
 
   def destroy
@@ -64,22 +77,39 @@ class GiftSuggestionsController < ApplicationController
   private
 
   def set_person
-    # First try to find in own people
-    @person = current_user.people.find_by(id: params[:person_id])
-    return if @person
-
-    # Then check if it's a shared person (accessible via shared holidays)
     @person = Person.find_by(id: params[:person_id])
-    return render json: { error: "Person not found" }, status: :not_found unless @person
-    render json: { error: "Person not found" }, status: :not_found unless @person.accessible_by?(current_user)
+    return if @person&.accessible_by?(current_user)
+
+    render json: { error: "Person not found" }, status: :not_found
+  end
+
+  def require_person_editor!
+    return if @person.editable_by?(current_user)
+
+    render json: { error: "Externally shared people are read-only" }, status: :forbidden
   end
 
   def set_suggestion
-    @suggestion = GiftSuggestion.joins(:person)
-                                .where(people: { user_id: current_user.id })
-                                .find(params[:id])
+    candidate = GiftSuggestion.find(params[:id])
+    owned_person = candidate.person
+    raise ActiveRecord::RecordNotFound unless owned_person.user_id == current_user.id
+    raise ActiveRecord::RecordNotFound unless owned_person.accessible_by?(current_user)
+    raise ActiveRecord::RecordNotFound unless owned_person.editable_by?(current_user)
+
+    @suggestion = visible_suggestions_for(owned_person).find(candidate.id)
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Suggestion not found" }, status: :not_found
+  end
+
+  def visible_suggestions_for(person)
+    suggestions = person.gift_suggestions
+    holiday_ids = if person.workspace.member?(current_user)
+      current_user.holiday_ids
+    else
+      person.shared_holidays.where(id: current_user.holiday_ids).ids
+    end
+    visible = suggestions.where(holiday_id: holiday_ids)
+    person.workspace.member?(current_user) ? visible.or(suggestions.where(holiday_id: nil)) : visible
   end
 
   def require_premium!

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_07_000100) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_07_000500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -67,6 +67,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_000100) do
     t.datetime "consumed_at"
     t.datetime "created_at", null: false
     t.datetime "expires_at", null: false
+    t.bigint "oauth_access_token_id"
     t.jsonb "payload", default: {}, null: false
     t.bigint "target_id", null: false
     t.string "target_label", null: false
@@ -76,6 +77,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_000100) do
     t.index ["api_key_id"], name: "index_admin_action_confirmations_on_api_key_id"
     t.index ["confirmation_digest"], name: "index_admin_action_confirmations_on_confirmation_digest", unique: true
     t.index ["expires_at", "consumed_at"], name: "index_admin_action_confirmations_on_expires_at_and_consumed_at"
+    t.index ["oauth_access_token_id"], name: "index_admin_action_confirmations_on_oauth_access_token_id"
     t.index ["target_type", "target_id"], name: "index_admin_action_confirmations_on_target_type_and_target_id"
   end
 
@@ -100,6 +102,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_000100) do
     t.datetime "created_at", null: false
     t.bigint "created_by_id", null: false
     t.datetime "expires_at", null: false
+    t.bigint "oauth_access_token_id"
     t.datetime "queued_at"
     t.string "recipient_email", null: false
     t.bigint "recipient_id", null: false
@@ -109,6 +112,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_000100) do
     t.index ["confirmation_digest"], name: "index_admin_email_drafts_on_confirmation_digest", unique: true
     t.index ["created_by_id"], name: "index_admin_email_drafts_on_created_by_id"
     t.index ["expires_at", "queued_at"], name: "index_admin_email_drafts_on_expires_at_and_queued_at"
+    t.index ["oauth_access_token_id"], name: "index_admin_email_drafts_on_oauth_access_token_id"
     t.index ["recipient_id"], name: "index_admin_email_drafts_on_recipient_id"
   end
 
@@ -488,10 +492,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_000100) do
 
   create_table "oauth_access_tokens", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.integer "credential_version", default: 1, null: false
     t.datetime "expires_at", null: false
     t.string "ip_address"
     t.datetime "last_used_at"
+    t.bigint "oauth_authorization_code_id"
     t.bigint "oauth_client_id", null: false
+    t.bigint "oauth_refresh_grant_id"
     t.datetime "refresh_token_expires_at"
     t.string "refresh_token_hash"
     t.string "resource"
@@ -501,8 +508,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_000100) do
     t.datetime "updated_at", null: false
     t.string "user_agent"
     t.bigint "user_id", null: false
+    t.index ["credential_version"], name: "index_oauth_access_tokens_on_credential_version"
     t.index ["expires_at"], name: "index_oauth_access_tokens_on_expires_at"
+    t.index ["oauth_authorization_code_id"], name: "index_oauth_access_tokens_on_oauth_authorization_code_id", unique: true
     t.index ["oauth_client_id"], name: "index_oauth_access_tokens_on_oauth_client_id"
+    t.index ["oauth_refresh_grant_id"], name: "index_oauth_access_tokens_on_oauth_refresh_grant_id"
     t.index ["refresh_token_hash"], name: "index_oauth_access_tokens_on_refresh_token_hash", unique: true, where: "(refresh_token_hash IS NOT NULL)"
     t.index ["token_hash"], name: "index_oauth_access_tokens_on_token_hash", unique: true
     t.index ["user_id", "revoked_at"], name: "idx_oauth_tokens_user_active"
@@ -514,6 +524,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_000100) do
     t.string "code_challenge_method"
     t.string "code_hash", null: false
     t.datetime "created_at", null: false
+    t.integer "credential_version", default: 1, null: false
     t.datetime "expires_at", null: false
     t.bigint "oauth_client_id", null: false
     t.string "redirect_uri", null: false
@@ -524,9 +535,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_000100) do
     t.datetime "used_at"
     t.bigint "user_id", null: false
     t.index ["code_hash"], name: "index_oauth_authorization_codes_on_code_hash", unique: true
+    t.index ["credential_version"], name: "index_oauth_authorization_codes_on_credential_version"
     t.index ["expires_at"], name: "index_oauth_authorization_codes_on_expires_at"
     t.index ["oauth_client_id"], name: "index_oauth_authorization_codes_on_oauth_client_id"
     t.index ["user_id"], name: "index_oauth_authorization_codes_on_user_id"
+  end
+
+  create_table "oauth_authorization_requests", force: :cascade do |t|
+    t.string "code_challenge", null: false
+    t.string "code_challenge_method", null: false
+    t.datetime "consumed_at"
+    t.datetime "created_at", null: false
+    t.string "decision"
+    t.datetime "expires_at", null: false
+    t.bigint "oauth_client_id", null: false
+    t.string "redirect_uri", null: false
+    t.string "request_digest", null: false
+    t.string "resource", null: false
+    t.jsonb "scopes", default: [], null: false
+    t.string "state"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["expires_at", "consumed_at"], name: "idx_oauth_authorization_requests_pending"
+    t.index ["oauth_client_id"], name: "index_oauth_authorization_requests_on_oauth_client_id"
+    t.index ["request_digest"], name: "index_oauth_authorization_requests_on_request_digest", unique: true
+    t.index ["user_id"], name: "index_oauth_authorization_requests_on_user_id"
   end
 
   create_table "oauth_clients", force: :cascade do |t|
@@ -548,8 +581,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_000100) do
     t.datetime "updated_at", null: false
     t.bigint "user_id"
     t.index ["client_id"], name: "index_oauth_clients_on_client_id", unique: true
+    t.index ["created_at"], name: "idx_oauth_clients_dynamic_created_at", where: "(is_dynamic = true)"
     t.index ["is_system"], name: "index_oauth_clients_on_is_system"
     t.index ["user_id"], name: "index_oauth_clients_on_user_id"
+  end
+
+  create_table "oauth_refresh_grants", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.string "family_id", null: false
+    t.datetime "last_rotated_at"
+    t.bigint "oauth_client_id", null: false
+    t.string "resource", null: false
+    t.datetime "revoked_at"
+    t.integer "rotation_count", default: 0, null: false
+    t.jsonb "scopes", default: [], null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["expires_at"], name: "index_oauth_refresh_grants_on_expires_at"
+    t.index ["family_id"], name: "index_oauth_refresh_grants_on_family_id", unique: true
+    t.index ["oauth_client_id"], name: "index_oauth_refresh_grants_on_oauth_client_id"
+    t.index ["user_id", "revoked_at"], name: "index_oauth_refresh_grants_on_user_id_and_revoked_at"
+    t.index ["user_id"], name: "index_oauth_refresh_grants_on_user_id"
   end
 
   create_table "people", force: :cascade do |t|
@@ -695,6 +748,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_000100) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "stripe_webhook_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "event_type", null: false
+    t.string "stripe_checkout_session_id", null: false
+    t.string "stripe_event_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["stripe_checkout_session_id"], name: "index_stripe_webhook_events_on_stripe_checkout_session_id", unique: true
+    t.index ["stripe_event_id"], name: "index_stripe_webhook_events_on_stripe_event_id", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "clerk_profile_synced_at"
     t.string "clerk_user_id", null: false
@@ -825,9 +888,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_000100) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "addresses", "company_profiles"
   add_foreign_key "admin_action_confirmations", "api_keys", on_delete: :nullify
+  add_foreign_key "admin_action_confirmations", "oauth_access_tokens", on_delete: :nullify
   add_foreign_key "admin_action_confirmations", "users", column: "actor_id"
   add_foreign_key "admin_audit_events", "users", column: "actor_id"
   add_foreign_key "admin_email_drafts", "api_keys", on_delete: :nullify
+  add_foreign_key "admin_email_drafts", "oauth_access_tokens", on_delete: :nullify
   add_foreign_key "admin_email_drafts", "users", column: "created_by_id"
   add_foreign_key "admin_email_drafts", "users", column: "recipient_id"
   add_foreign_key "analytics_events", "analytics_visitors"
@@ -874,11 +939,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_000100) do
   add_foreign_key "match_slots", "match_arrangements"
   add_foreign_key "match_slots", "people"
   add_foreign_key "notification_preferences", "users"
+  add_foreign_key "oauth_access_tokens", "oauth_authorization_codes", on_delete: :nullify
   add_foreign_key "oauth_access_tokens", "oauth_clients"
+  add_foreign_key "oauth_access_tokens", "oauth_refresh_grants", on_delete: :nullify
   add_foreign_key "oauth_access_tokens", "users"
   add_foreign_key "oauth_authorization_codes", "oauth_clients"
   add_foreign_key "oauth_authorization_codes", "users"
+  add_foreign_key "oauth_authorization_requests", "oauth_clients"
+  add_foreign_key "oauth_authorization_requests", "users"
   add_foreign_key "oauth_clients", "users"
+  add_foreign_key "oauth_refresh_grants", "oauth_clients"
+  add_foreign_key "oauth_refresh_grants", "users"
   add_foreign_key "people", "addresses", column: "default_shipping_address_id"
   add_foreign_key "people", "users"
   add_foreign_key "people", "workspaces"

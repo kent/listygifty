@@ -40,6 +40,43 @@ class PeopleApiTest < ActionDispatch::IntegrationTest
     assert_equal "Updated Name", person.reload.name
   end
 
+  test "ordinary workspace members can edit contact fields but only admins can assign addresses" do
+    owner = users(:one)
+    member = users(:two)
+    workspace = Workspace.create!(
+      name: "Address policy workspace",
+      workspace_type: "business",
+      created_by_user: owner
+    )
+    workspace.workspace_memberships.create!(user: owner, role: "owner")
+    workspace.workspace_memberships.create!(user: member, role: "member")
+    profile = workspace.create_company_profile!(name: "Address Policy Co")
+    address = profile.addresses.create!(
+      label: "Admin-only address",
+      street_line_1: "10 Admin Way",
+      city: "Toronto",
+      postal_code: "M5V 4D4",
+      country: "CA"
+    )
+    person = workspace.people.create!(name: "Workspace contact", user: owner)
+    member_headers = auth_headers_for(member, workspace: workspace)
+
+    patch person_path(person), headers: member_headers,
+      params: { person: { name: "Member-edited contact" } }, as: :json
+    assert_response :success
+    assert_equal "Member-edited contact", person.reload.name
+
+    patch person_path(person), headers: member_headers,
+      params: { person: { default_shipping_address_id: address.id } }, as: :json
+    assert_response :forbidden
+    assert_nil person.reload.default_shipping_address_id
+
+    patch person_path(person), headers: auth_headers_for(owner, workspace: workspace),
+      params: { person: { default_shipping_address_id: address.id } }, as: :json
+    assert_response :success
+    assert_equal address.id, person.reload.default_shipping_address_id
+  end
+
   test "destroy removes a person" do
     # Create a person without gifts attached
     workspace = workspaces(:one)
@@ -72,17 +109,17 @@ class PeopleApiTest < ActionDispatch::IntegrationTest
     assert_equal false, json_response["is_mine"]
   end
 
-  test "collaborator can edit shared person" do
+  test "external collaborator cannot edit a shared person's PII" do
     user_two = users(:two)
     user_two_headers = auth_headers_for(user_two)
     mom = people(:mom)
 
     patch person_path(mom),
       headers: user_two_headers,
-      params: { person: { name: "Mama" } },
+      params: { person: { name: "Mama", default_shipping_address_id: 123_456 } },
       as: :json
-    assert_response :success
-    assert_equal "Mama", mom.reload.name
+    assert_response :forbidden
+    assert_equal "Mom", mom.reload.name
   end
 
   test "collaborator cannot delete shared person" do
@@ -110,6 +147,35 @@ class PeopleApiTest < ActionDispatch::IntegrationTest
     # User two should see shared "mom" and "dad" from christmas (via holiday collaboration)
     assert_includes names, "Mom"
     assert_includes names, "Dad"
+  end
+
+  test "person gift details and counts include only holidays the caller joined" do
+    owner = users(:two)
+    workspace = workspaces(:two)
+    person = workspace.people.create!(name: "Gift-scoped contact", user: owner)
+    visible_holiday = workspace.holidays.create!(name: "Visible person gifts")
+    visible_holiday.holiday_users.create!(user: owner, role: "owner")
+    visible_holiday.holiday_users.create!(user: @user, role: "collaborator")
+    HolidayPerson.create!(holiday: visible_holiday, person: person)
+    hidden_holiday = workspace.holidays.create!(name: "Hidden person gifts")
+    hidden_holiday.holiday_users.create!(user: owner, role: "owner")
+    status = GiftStatus.by_position.first!
+    visible_gift = visible_holiday.gifts.create!(name: "Visible child gift", gift_status: status, created_by: owner)
+    hidden_gift = hidden_holiday.gifts.create!(name: "Hidden child gift", gift_status: status, created_by: owner)
+    visible_gift.recipients << person
+    hidden_gift.recipients << person
+
+    get person_path(person, include: "gifts"), headers: @auth_headers, as: :json
+    assert_response :success
+    assert_equal [ visible_gift.id ], json_response.fetch("gifts_received").pluck("id")
+    assert_equal 1, json_response["gift_count"]
+
+    workspace.workspace_memberships.create!(user: @user, role: "member")
+    get person_path(person, include: "gifts"),
+      headers: auth_headers_for(@user, workspace: workspace), as: :json
+    assert_response :success
+    assert_equal [ visible_gift.id ], json_response.fetch("gifts_received").pluck("id")
+    assert_equal 1, json_response["gift_count"]
   end
 
   test "user cannot access person from non-shared holiday" do
@@ -143,7 +209,7 @@ class PeopleApiTest < ActionDispatch::IntegrationTest
     get person_path(new_person), headers: user_two_headers, as: :json
     assert_response :not_found
 
-    # After invitation, user two can see and edit the person
+    # After invitation, user two can see but cannot edit the owner's person
     new_holiday.holiday_users.create!(user: user_two, role: "collaborator")
 
     get person_path(new_person), headers: user_two_headers, as: :json
@@ -154,8 +220,18 @@ class PeopleApiTest < ActionDispatch::IntegrationTest
       headers: user_two_headers,
       params: { person: { name: "Work Buddy" } },
       as: :json
-    assert_response :success
-    assert_equal "Work Buddy", new_person.reload.name
+    assert_response :forbidden
+    assert_equal "Colleague", new_person.reload.name
+  end
+
+  test "index with holiday_id hides same-workspace holidays the caller has not joined" do
+    hidden = workspaces(:one).holidays.create!(name: "Hidden people holiday")
+    hidden.holiday_users.create!(user: users(:two), role: "owner")
+    external_person = workspaces(:two).people.create!(name: "Hidden shared contact", user: users(:two))
+    HolidayPerson.create!(holiday: hidden, person: external_person)
+
+    get people_path(holiday_id: hidden.id), headers: @auth_headers, as: :json
+    assert_response :not_found
   end
 
   test "index with holiday_id returns people for that holiday" do

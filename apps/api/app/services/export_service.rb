@@ -43,7 +43,7 @@ class ExportService
       gifts.each do |gift|
         gift_recipients = gift.gift_recipients.to_a
 
-        csv << [
+        csv << safe_csv_row([
           gift.name,
           gift.description,
           gift.cost&.to_f,
@@ -53,7 +53,7 @@ class ExportService
           gift_recipients.map { |recipient| recipient.shipping_address&.formatted_address_single_line }.compact_blank.join(" | "),
           gift.givers.map(&:name).join(", "),
           gift.link
-        ]
+        ])
       end
     end
   end
@@ -67,7 +67,7 @@ class ExportService
       people.each do |person|
         address = person.default_shipping_address
 
-        csv << [
+        csv << safe_csv_row([
           person.name,
           person.email,
           person.relationship,
@@ -85,8 +85,18 @@ class ExportService
           address&.postal_code,
           address&.country,
           address&.is_default?
-        ]
+        ])
       end
     end
+  end
+  def self.safe_csv_row(values)
+    values.map { |value| safe_csv_cell(value) }
+  end
+
+  def self.safe_csv_cell(value)
+    return value unless value.is_a?(String)
+    return value unless value.match?(/\A(?:[\t\r]|[\p{Z}\p{Cc}\s]*[=+@-])/)
+
+    "'#{value}"
   end
 end

@@ -3,6 +3,7 @@
 class GiftRecipientsController < ApplicationController
   before_action :set_gift
   before_action :set_gift_recipient
+  before_action :authorize_address_management!
 
   def update
     if @gift_recipient.update(gift_recipient_params)
@@ -24,6 +25,12 @@ class GiftRecipientsController < ApplicationController
     @gift_recipient = @gift.gift_recipients.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Recipient not found" }, status: :not_found
+  end
+
+  def authorize_address_management!
+    return if @gift.holiday.workspace.admin?(current_user)
+
+    render json: { error: "Only workspace admins can manage shipping addresses" }, status: :forbidden
   end
 
   def gift_recipient_params

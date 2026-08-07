@@ -142,7 +142,7 @@ class BootstrapPayloadService
     Person.where(id: workspace_people_ids)
           .or(Person.where(id: shared_people_ids))
           .distinct
-          .includes(:default_shipping_address, :gift_recipients, :gift_givers, { shared_holidays: :holiday_users })
+          .includes(:default_shipping_address, { shared_holidays: :holiday_users })
           .order(:name)
   end
 

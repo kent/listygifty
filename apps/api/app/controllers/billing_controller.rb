@@ -1,11 +1,9 @@
 class BillingController < ApplicationController
-  skip_before_action :authenticate!, only: [ :webhook ]
+  skip_before_action :authenticate!
+  before_action :authenticate_clerk_session!, except: :webhook
   skip_before_action :verify_authenticity_token, only: [ :webhook ], raise: false
 
-  PRICES = {
-    yearly: { amount: 2500, currency: "cad", interval: "year", years: 1 },
-    two_year: { amount: 4000, currency: "cad", interval: "year", years: 2 }
-  }.freeze
+  PRICES = Billing::PlanCatalog::PRICES
 
   # GET /billing/status
   def status
@@ -96,12 +94,10 @@ class BillingController < ApplicationController
       return head :bad_request
     end
 
-    case event.type
-    when "checkout.session.completed"
-      handle_checkout_completed(event.data.object)
-    end
-
+    Billing::CheckoutCompletionService.process!(event) if event.type == Billing::CheckoutCompletionService::EVENT_TYPE
     head :ok
+  rescue ArgumentError, ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound
+    head :unprocessable_entity
   end
 
   private
@@ -117,18 +113,6 @@ class BillingController < ApplicationController
       current_user.update!(stripe_customer_id: customer.id)
       customer
     end
-  end
-
-  def handle_checkout_completed(session)
-    user_id = session.metadata.user_id
-    years = session.metadata.years.to_i
-    user = User.find(user_id)
-
-    # Calculate expiration from current expiration (if active) or now
-    base_date = user.premium? ? user.subscription_expires_at : Time.current
-    expires_at = base_date + years.years
-
-    user.activate_premium!(expires_at: expires_at)
   end
 
   def frontend_url

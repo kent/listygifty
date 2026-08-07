@@ -24,6 +24,7 @@ export const PUBLIC_ROUTES = [
   "/join(.*)",
   "/login(.*)",
   "/manifest.webmanifest",
+  "/oauth/authorize(.*)",
   "/robots.txt",
   "/sitemap.xml",
   "/signup(.*)",

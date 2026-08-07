@@ -44,9 +44,10 @@ The OAuth flow allows users to authorize Claude or other MCP-compatible clients 
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /.well-known/oauth-protected-resource` | Protected Resource Metadata (RFC 9728) |
+| `GET /.well-known/oauth-protected-resource/mcp` | User MCP Protected Resource Metadata (RFC 9728) |
+| `GET /.well-known/oauth-protected-resource/admin/mcp` | Admin MCP Protected Resource Metadata (RFC 9728) |
+| `GET /.well-known/oauth-protected-resource` | Legacy user-MCP metadata alias |
 | `GET /.well-known/oauth-authorization-server` | Authorization Server Metadata (RFC 8414) |
-| `GET /.well-known/openid-configuration` | OpenID Connect Discovery (compatibility) |
 
 ### OAuth Authorization
 
@@ -63,8 +64,7 @@ The OAuth flow allows users to authorize Claude or other MCP-compatible clients 
 | Endpoint | Description |
 |----------|-------------|
 | `POST /mcp` | Streamable HTTP MCP endpoint |
-| `GET /mcp` | SSE connection endpoint (legacy) |
-| `POST /mcp/messages` | SSE message endpoint (legacy) |
+| `GET /mcp` | Returns 405; this stateless server does not hold SSE connections |
 
 ## OAuth Flow
 
@@ -73,7 +73,7 @@ The OAuth flow allows users to authorize Claude or other MCP-compatible clients 
 Clients discover the authorization server by fetching the protected resource metadata:
 
 ```bash
-curl https://api.listygifty.com/.well-known/oauth-protected-resource
+curl https://api.listygifty.com/.well-known/oauth-protected-resource/mcp
 ```
 
 Response:
@@ -81,7 +81,7 @@ Response:
 {
   "resource": "https://api.listygifty.com/mcp",
   "authorization_servers": ["https://api.listygifty.com"],
-  "scopes_supported": ["read", "write", "admin"],
+  "scopes_supported": ["read", "write"],
   "bearer_methods_supported": ["header"]
 }
 ```
@@ -104,20 +104,19 @@ GET /oauth/authorize?
 
 ```bash
 curl -X POST https://api.listygifty.com/oauth/token \
-  -H "Content-Type: application/json" \
-  -d '{
-    "grant_type": "authorization_code",
-    "code": "AUTH_CODE",
-    "client_id": "claude-ai",
-    "redirect_uri": "https://claude.ai/api/mcp/auth_callback",
-    "code_verifier": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
-  }'
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=authorization_code" \
+  --data-urlencode "code=AUTH_CODE" \
+  --data-urlencode "client_id=claude-ai" \
+  --data-urlencode "redirect_uri=https://claude.ai/api/mcp/auth_callback" \
+  --data-urlencode "code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk" \
+  --data-urlencode "resource=https://api.listygifty.com/mcp"
 ```
 
 Response:
 ```json
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "access_token": "opaque_short_lived_access_token",
   "token_type": "Bearer",
   "expires_in": 3600,
   "refresh_token": "8xLOxBtZp8",
@@ -129,7 +128,7 @@ Response:
 
 ```bash
 curl -X POST https://api.listygifty.com/mcp \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..." \
+  -H "Authorization: Bearer opaque_short_lived_access_token" \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
@@ -140,18 +139,25 @@ curl -X POST https://api.listygifty.com/mcp \
 
 ## Security
 
+The Streamable HTTP endpoint accepts bounded `application/json` POSTs, rejects long-lived GET/SSE connections, validates any browser `Origin` against `MCP_ALLOWED_ORIGINS`, and returns `202 Accepted` for notification-only messages.
+
+### First-party browser login and consent
+
+The authorization endpoint validates the client, exact redirect URI, resource, scope, and S256 challenge, then freezes them in a short-lived one-time authorization transaction. It redirects to `https://listygifty.com/oauth/authorize`, where Clerk authenticates the Listy Gifty account and the user approves or denies a first-party consent screen. The browser returns only to the redirect URI registered before login; posted scope or resource changes are ignored.
+
 ### PKCE Required
 
-All OAuth clients MUST use PKCE (Proof Key for Code Exchange) with S256 challenge method. This prevents authorization code interception attacks.
+All clients, including pre-registered system clients, MUST use PKCE with the S256 challenge method. Authorization transactions and codes expire after 10 minutes and work once.
 
 ### Token Audience Validation
 
-Access tokens are bound to the MCP server resource URI. The server validates that tokens were specifically issued for `https://api.listygifty.com/mcp`.
+Access tokens are opaque, hashed at rest, and bound to one exact MCP resource URI. User tokens target `https://api.listygifty.com/mcp`; admin tokens target `https://api.listygifty.com/admin/mcp`. The authorization and token requests must both carry that exact `resource` value, and the two token types are not interchangeable.
+Credential version 2 is enforced in both the raw credential prefix and the database row. Pre-v2 or in-flight credentials written by an older application revision remain stored only to keep the schema rollout backward-compatible; the new resource servers never authenticate them.
 
 ### Token Lifetimes
 
 - **Access tokens**: 1 hour
-- **Refresh tokens**: 30 days (rotated on each refresh)
+- **Refresh tokens**: non-sliding 30-day grant lifetime; rotated on each refresh, with family-wide revocation on replay
 - **Authorization codes**: 10 minutes (one-time use)
 
 ### Scopes
@@ -160,7 +166,7 @@ Access tokens are bound to the MCP server resource URI. The server validates tha
 |-------|-------------|
 | `read` | Read access to holidays, gifts, people, wishlists |
 | `write` | Create, update, delete resources |
-| `admin` | Administrative actions |
+| `admin` | Global, audited admin MCP access; valid only for the admin resource and an allowlisted administrator |
 
 ## Pre-registered Clients
 
@@ -184,7 +190,8 @@ The following AI clients are pre-registered:
 
 ## Dynamic Client Registration
 
-New clients can register dynamically:
+New clients can register dynamically. Dynamic metadata is self-asserted and is displayed as **unverified** on the consent page; users must verify the exact registered callback URI rather than trusting the supplied name or website. Pre-registered consumer clients remain limited to ordinary read/write MCP access.
+
 
 ```bash
 curl -X POST https://api.listygifty.com/oauth/register \
@@ -201,11 +208,16 @@ Response:
   "client_id": "abc123...",
   "client_name": "My AI App",
   "redirect_uris": ["https://myapp.com/callback"],
-  "grant_types": ["authorization_code"],
+  "grant_types": ["authorization_code", "refresh_token"],
   "response_types": ["code"],
-  "token_endpoint_auth_method": "none"
+  "token_endpoint_auth_method": "none",
+  "scope": "read write admin"
 }
 ```
+
+## Admin MCP OAuth
+
+The global admin MCP is a separate high-risk protected resource at `https://api.listygifty.com/admin/mcp`. Its metadata advertises only the `admin` scope. Consent and every request re-check `ADMIN_EMAILS`; the consent page displays a prominent administrator warning. Dedicated 30-day admin API keys remain available only as a break-glass fallback. See [Admin MCP](admin-mcp.md).
 
 ## MCP Tools
 
@@ -248,13 +260,12 @@ The MCP server provides tools for managing gifts:
 
 ## Deployment
 
-### Staging
-- API: `https://api-staging.listygifty.com`
-- MCP: `https://api-staging.listygifty.com/mcp`
+Production is the only enabled environment pre-PMF:
 
-### Production
 - API: `https://api.listygifty.com`
 - MCP: `https://api.listygifty.com/mcp`
+
+Staging is disabled. Follow `infra/pulumi/README.md` before re-enabling it; do not target the historical staging hostnames as live services.
 
 ## Connecting Claude
 
@@ -286,7 +297,7 @@ Authorization: Bearer ng_your_api_key_here
 
 ### OAuth Token
 ```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+Authorization: Bearer opaque_short_lived_access_token
 ```
 
 Both authentication methods work interchangeably with the MCP server.

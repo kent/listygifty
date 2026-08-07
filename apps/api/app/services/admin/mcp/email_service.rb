@@ -1,9 +1,9 @@
 module Admin
   module Mcp
     class EmailService
-      def initialize(actor:, api_key:, request_id: nil)
+      def initialize(actor:, credential:, request_id: nil)
         @actor = actor
-        @api_key = api_key
+        @credential = Admin::Credential.wrap(credential)
         @request_id = request_id
       end
 
@@ -16,7 +16,7 @@ module Admin
           draft, token = AdminEmailDraft.create_with_confirmation!(
             created_by: @actor,
             recipient: recipient,
-            api_key: @api_key,
+            credential: @credential,
             subject: subject,
             body: body
           )
@@ -48,7 +48,7 @@ module Admin
 
         draft.with_lock do
           raise ArgumentError, "This email confirmation belongs to another administrator" unless draft.created_by_id == @actor.id
-          raise ArgumentError, "This email confirmation belongs to another API key" unless draft.api_key_id == @api_key.id
+          raise ArgumentError, "This email confirmation belongs to another #{@credential.label}" unless @credential.matches?(draft)
           raise ArgumentError, "This email confirmation has expired" if draft.expired?
           raise ArgumentError, "This email has already been queued" if draft.consumed?
 
@@ -74,7 +74,7 @@ module Admin
       private
 
       def audit_metadata(metadata)
-        metadata.merge(api_key_id: @api_key.id, request_id: @request_id).compact
+        metadata.merge(@credential.audit_metadata).merge(request_id: @request_id).compact
       end
     end
   end

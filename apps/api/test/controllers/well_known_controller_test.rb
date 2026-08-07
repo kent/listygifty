@@ -1,51 +1,56 @@
 require "test_helper"
 
 class WellKnownControllerTest < ActionDispatch::IntegrationTest
-  test "returns oauth protected resource metadata" do
+  test "returns ordinary MCP protected resource metadata at the RFC 9728 path" do
+    get "/.well-known/oauth-protected-resource/mcp"
+
+    assert_response :success
+    assert_equal "http://www.example.com/mcp", json_response["resource"]
+    assert_equal %w[read write], json_response["scopes_supported"]
+    assert_equal [ "header" ], json_response["bearer_methods_supported"]
+    assert_equal [ "http://www.example.com" ], json_response["authorization_servers"]
+    assert_not_includes json_response["scopes_supported"], "admin"
+    assert_nil json_response["resource_signing_alg_values_supported"]
+  end
+
+  test "returns admin MCP protected resource metadata at the RFC 9728 path" do
+    get "/.well-known/oauth-protected-resource/admin/mcp"
+
+    assert_response :success
+    assert_equal "http://www.example.com/admin/mcp", json_response["resource"]
+    assert_equal [ "admin" ], json_response["scopes_supported"]
+    assert_equal "Listy Gifty Admin MCP Server", json_response["resource_name"]
+  end
+
+  test "keeps the root protected resource endpoint as ordinary MCP compatibility metadata" do
     get "/.well-known/oauth-protected-resource"
 
     assert_response :success
-    json = JSON.parse(response.body)
-
-    assert json["resource"].present?
-    assert json["authorization_servers"].is_a?(Array)
-    assert json["scopes_supported"].is_a?(Array)
-    assert_includes json["scopes_supported"], "read"
-    assert_includes json["scopes_supported"], "write"
-    assert_equal [ "header" ], json["bearer_methods_supported"]
+    assert_equal "http://www.example.com/mcp", json_response["resource"]
+    assert_equal %w[read write], json_response["scopes_supported"]
   end
 
-  test "returns oauth authorization server metadata" do
+  test "returns oauth authorization server metadata for both resources" do
     get "/.well-known/oauth-authorization-server"
 
     assert_response :success
-    json = JSON.parse(response.body)
-
-    assert json["issuer"].present?
-    assert json["authorization_endpoint"].include?("/oauth/authorize")
-    assert json["token_endpoint"].include?("/oauth/token")
-    assert json["registration_endpoint"].include?("/oauth/register")
-    assert json["revocation_endpoint"].include?("/oauth/revoke")
-
-    assert_includes json["response_types_supported"], "code"
-    assert_includes json["grant_types_supported"], "authorization_code"
-    assert_includes json["grant_types_supported"], "refresh_token"
-    assert_includes json["code_challenge_methods_supported"], "S256"
-    assert_includes json["token_endpoint_auth_methods_supported"], "none"
-
-    # Client ID Metadata Document support
-    assert json["client_id_metadata_document_supported"]
+    assert json_response["authorization_endpoint"].end_with?("/oauth/authorize")
+    assert json_response["token_endpoint"].end_with?("/oauth/token")
+    assert json_response["registration_endpoint"].end_with?("/oauth/register")
+    assert json_response["revocation_endpoint"].end_with?("/oauth/revoke")
+    assert_equal [ "S256" ], json_response["code_challenge_methods_supported"]
+    assert_includes json_response["grant_types_supported"], "refresh_token"
+    assert_includes json_response["token_endpoint_auth_methods_supported"], "none"
+    assert_equal OauthClient::VALID_AUTH_METHODS, json_response["revocation_endpoint_auth_methods_supported"]
+    assert_equal [
+      "http://www.example.com/mcp",
+      "http://www.example.com/admin/mcp"
+    ], json_response["protected_resources"]
   end
 
-  test "returns openid configuration for compatibility" do
+  test "does not advertise an OpenID Provider document" do
     get "/.well-known/openid-configuration"
 
-    assert_response :success
-    json = JSON.parse(response.body)
-
-    assert json["issuer"].present?
-    assert json["authorization_endpoint"].present?
-    assert json["token_endpoint"].present?
-    assert_includes json["code_challenge_methods_supported"], "S256"
+    assert_response :not_found
   end
 end

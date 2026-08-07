@@ -3,9 +3,9 @@ module Admin
     class UnknownToolError < StandardError; end
 
     class ToolRegistry
-      def initialize(actor:, api_key:, request_id: nil)
+      def initialize(actor:, credential:, request_id: nil)
         @actor = actor
-        @api_key = api_key
+        @credential = Admin::Credential.wrap(credential)
         @request_id = request_id
         @catalog = ResourceCatalog.new
       end
@@ -304,11 +304,11 @@ module Admin
       end
 
       def email_service
-        @email_service ||= EmailService.new(actor: @actor, api_key: @api_key, request_id: @request_id)
+        @email_service ||= EmailService.new(actor: @actor, credential: @credential, request_id: @request_id)
       end
 
       def deletion_service
-        @deletion_service ||= UserDeletionService.new(actor: @actor, api_key: @api_key, request_id: @request_id)
+        @deletion_service ||= UserDeletionService.new(actor: @actor, credential: @credential, request_id: @request_id)
       end
 
       def analytics_service
@@ -454,7 +454,7 @@ module Admin
           resource: resource,
           resource_type: resource_type,
           resource_id: resource_id,
-          metadata: metadata.merge(api_key_id: @api_key.id, request_id: @request_id).compact
+          metadata: metadata.merge(@credential.audit_metadata).merge(request_id: @request_id).compact
         )
       end
 

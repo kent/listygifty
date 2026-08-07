@@ -129,10 +129,7 @@ Restart Claude Desktop and start asking about your gifts:
 - `niftygifty_get_my_match` - See who I'm giving to
 
 ### Gift Statuses
-- `niftygifty_list_gift_statuses` - List statuses
-- `niftygifty_create_gift_status` - Create custom status
-- `niftygifty_update_gift_status` - Update status
-- `niftygifty_delete_gift_status` - Delete status
+- `niftygifty_list_gift_statuses` - List canonical statuses (read-only)
 
 ### Exports
 - `niftygifty_export_gifts_csv` - Export gifts as CSV

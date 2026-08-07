@@ -56,4 +56,34 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "admin" ], json_response.dig("api_key", "scopes")
     assert Time.iso8601(json_response.dig("api_key", "expires_at")) <= 30.days.from_now + 1.minute
   end
+  test "API keys cannot inspect, create, or revoke credentials" do
+    admin = User.create!(
+      email: Admin::Authorization::DEFAULT_ADMIN_EMAIL,
+      clerk_user_id: "api_key_escalation_admin",
+      subscription_plan: "free"
+    )
+    credentials = [
+      ApiKey.generate_for(@user, name: "Read key", scopes: [ "read" ]).raw_key,
+      ApiKey.generate_for(@user, name: "Write key", scopes: %w[read write]).raw_key,
+      ApiKey.generate_for(@user, name: "Admin key", scopes: [ "admin" ]).raw_key,
+      ApiKey.generate_for(admin, name: "Allowlisted user key", scopes: [ "read" ]).raw_key
+    ]
+    target = ApiKey.generate_for(@user, name: "Target key", scopes: [ "read" ]).api_key
+
+    credentials.each do |credential|
+      headers = { "Authorization" => "Bearer #{credential}" }
+      get "/api_keys", headers: headers, as: :json
+      assert_response :unauthorized
+
+      assert_no_difference("ApiKey.count") do
+        post "/api_keys", params: { api_key: { name: "Escalated", scopes: [ "admin" ] } },
+          headers: headers, as: :json
+      end
+      assert_response :unauthorized
+
+      delete "/api_keys/#{target.id}", headers: headers, as: :json
+      assert_response :unauthorized
+      assert target.reload.revoked_at.nil?
+    end
+  end
 end

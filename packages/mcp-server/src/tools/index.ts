@@ -10,6 +10,37 @@ import { exchangeTools, handleExchangeTool } from "./exchanges.js";
 import { exportTools, handleExportTool } from "./exports.js";
 import { statusTools, handleStatusTool } from "./statuses.js";
 
+type ToolHandler = (
+  client: ApiClient,
+  toolName: string,
+  args: Record<string, unknown>
+) => Promise<unknown>;
+
+export const toolGroups: ReadonlyArray<readonly [readonly Tool[], ToolHandler]> = [
+  [workspaceTools, handleWorkspaceTool],
+  [holidayTools, handleHolidayTool],
+  [giftTools, handleGiftTool],
+  [peopleTools, handlePeopleTool],
+  [suggestionTools, handleSuggestionTool],
+  [wishlistTools, handleWishlistTool],
+  [exchangeTools, handleExchangeTool],
+  [exportTools, handleExportTool],
+  [statusTools, handleStatusTool],
+];
+
+export const toolHandlerRegistry: ReadonlyMap<string, ToolHandler> = (() => {
+  const registry = new Map<string, ToolHandler>();
+  for (const [tools, handler] of toolGroups) {
+    for (const tool of tools) {
+      if (registry.has(tool.name)) {
+        throw new Error(`Duplicate MCP tool name: ${tool.name}`);
+      }
+      registry.set(tool.name, handler);
+    }
+  }
+  return registry;
+})();
+
 // Combine all tools
 export const allTools: Tool[] = [
   ...workspaceTools,
@@ -32,32 +63,11 @@ export async function handleToolCall(
   try {
     let result: unknown;
 
-    // Route based on tool name prefix
-    if (toolName.startsWith("niftygifty_") && toolName.includes("workspace")) {
-      result = await handleWorkspaceTool(client, toolName, args);
-    } else if (toolName.includes("holiday") || toolName.includes("template")) {
-      result = await handleHolidayTool(client, toolName, args);
-    } else if (
-      toolName.includes("gift") &&
-      !toolName.includes("suggestion") &&
-      !toolName.includes("exchange")
-    ) {
-      result = await handleGiftTool(client, toolName, args);
-    } else if (toolName.includes("person") || toolName.includes("people")) {
-      result = await handlePeopleTool(client, toolName, args);
-    } else if (toolName.includes("suggestion")) {
-      result = await handleSuggestionTool(client, toolName, args);
-    } else if (toolName.includes("exchange")) {
-      result = await handleExchangeTool(client, toolName, args);
-    } else if (toolName.includes("wishlist")) {
-      result = await handleWishlistTool(client, toolName, args);
-    } else if (toolName.includes("export")) {
-      result = await handleExportTool(client, toolName, args);
-    } else if (toolName.includes("status")) {
-      result = await handleStatusTool(client, toolName, args);
-    } else {
+    const handler = toolHandlerRegistry.get(toolName);
+    if (!handler) {
       throw new Error(`Unknown tool: ${toolName}`);
     }
+    result = await handler(client, toolName, args);
 
     return {
       content: [

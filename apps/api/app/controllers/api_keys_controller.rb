@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class ApiKeysController < ApplicationController
+  skip_before_action :authenticate!
+  before_action :authenticate_clerk_session!
+
   def index
     api_keys = current_user.api_keys.active.order(created_at: :desc)
     render json: api_keys.map { |key| api_key_json(key) }

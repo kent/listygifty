@@ -9,7 +9,11 @@ require "rails/test_help"
 
 module ActiveSupport
   class TestCase
-    parallelize(workers: :number_of_processors)
+    # All workers share one PostgreSQL test database and fixture IDs. Process
+    # parallelism races fixture reloads with explicit User row-lock concurrency
+    # regressions, producing nondeterministic deadlocks and FK failures. Keep the
+    # documented default deterministic; individual tests still exercise threads.
+    parallelize(workers: ENV.fetch("PARALLEL_WORKERS", "1").to_i)
     fixtures :all
   end
 end

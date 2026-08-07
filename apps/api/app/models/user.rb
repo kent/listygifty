@@ -17,6 +17,8 @@ class User < ApplicationRecord
   has_many :wishlist_item_claims, dependent: :nullify
   has_many :api_keys, dependent: :destroy
   has_many :oauth_access_tokens, dependent: :destroy
+  has_many :oauth_refresh_grants, dependent: :destroy
+  has_many :oauth_authorization_requests, dependent: :destroy
   has_many :oauth_authorization_codes, dependent: :destroy
   has_many :oauth_clients, dependent: :nullify
   has_many :admin_audit_events, foreign_key: :actor_id, dependent: :restrict_with_error
@@ -47,9 +49,10 @@ class User < ApplicationRecord
 
   public
 
-  # Gift counting - counts all gifts across user's holidays
+  # Free-plan quota is charged to the creator, not every collaborator who can
+  # see a shared holiday. Locking this user then serializes their own quota.
   def gift_count
-    Gift.joins(:holiday).where(holidays: { id: holiday_ids }).count
+    Gift.where(created_by_user_id: id).count
   end
 
   def gifts_remaining

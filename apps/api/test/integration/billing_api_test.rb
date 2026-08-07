@@ -78,6 +78,40 @@ class BillingApiTest < ActionDispatch::IntegrationTest
     assert_response :unauthorized
   end
 
+  test "webhook records a paid Stripe event and ignores sequential retries" do
+    stripe_event = Stripe::Event.construct_from(
+      id: "evt_billing_api_duplicate",
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_billing_api_duplicate",
+          payment_status: "paid",
+          metadata: { user_id: @user.id.to_s, plan: "yearly", years: "1" }
+        }
+      }
+    )
+
+    payload = stripe_event.to_json
+    timestamp = Time.current.to_i
+    secret = "whsec_test_billing"
+    signature = OpenSSL::HMAC.hexdigest("SHA256", secret, "#{timestamp}.#{payload}")
+    previous_secret = ENV["STRIPE_WEBHOOK_SECRET"]
+    ENV["STRIPE_WEBHOOK_SECRET"] = secret
+    2.times do
+      post "/billing/webhook",
+        params: payload,
+        headers: {
+          "Content-Type" => "application/json",
+          "Stripe-Signature" => "t=#{timestamp},v1=#{signature}"
+        }
+      assert_response :success
+    end
+  ensure
+    ENV["STRIPE_WEBHOOK_SECRET"] = previous_secret
+    assert_in_delta 1.year.from_now.to_f, @user.reload.subscription_expires_at.to_f, 5
+    assert_equal 1, StripeWebhookEvent.where(stripe_event_id: stripe_event.id).count
+  end
+
   test "webhook endpoint is public" do
     # Webhook doesn't require auth but needs valid signature
     # This tests that it doesn't return unauthorized

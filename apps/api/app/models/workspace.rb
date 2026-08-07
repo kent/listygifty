@@ -13,7 +13,7 @@ class Workspace < ApplicationRecord
   has_many :gift_exchanges, dependent: :destroy
   has_many :wishlists, dependent: :destroy
 
-  validates :name, presence: true
+  validates :name, presence: true, length: { maximum: 200 }
   validates :workspace_type, presence: true, inclusion: { in: TYPES }
 
   scope :personal, -> { where(workspace_type: "personal") }

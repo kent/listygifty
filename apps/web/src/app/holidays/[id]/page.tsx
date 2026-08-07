@@ -77,7 +77,11 @@ export default function HolidayDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [importGiftsOpen, setImportGiftsOpen] = useState(false);
 
-  const showAddresses = (currentWorkspace?.show_gift_addresses && currentWorkspace?.workspace_type === "business") ?? false;
+  const showAddresses = Boolean(
+    currentWorkspace?.is_admin &&
+    currentWorkspace.show_gift_addresses &&
+    currentWorkspace.workspace_type === "business"
+  );
 
   const {
     filters,
@@ -111,7 +115,7 @@ export default function HolidayDetailPage() {
         ];
 
         // Load addresses if enabled for business workspaces
-        if (workspace.show_gift_addresses && workspace.workspace_type === "business") {
+        if (workspace.is_admin && workspace.show_gift_addresses && workspace.workspace_type === "business") {
           promises.push(workspacesService.getAddresses(workspace.id));
         }
 
@@ -133,8 +137,10 @@ export default function HolidayDetailPage() {
         setCollaborators(collaboratorsData);
 
         // Set addresses if loaded (only for business workspaces)
-        if (workspace.show_gift_addresses && workspace.workspace_type === "business" && results[6]) {
+        if (workspace.is_admin && workspace.show_gift_addresses && workspace.workspace_type === "business" && results[6]) {
           setAddresses(results[6] as Address[]);
+        } else {
+          setAddresses([]);
         }
       } catch {
         setError("Failed to load gift list. Please try again.");

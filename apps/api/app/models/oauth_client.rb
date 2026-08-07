@@ -3,16 +3,20 @@
 class OauthClient < ApplicationRecord
   VALID_GRANT_TYPES = %w[authorization_code refresh_token].freeze
   VALID_RESPONSE_TYPES = %w[code].freeze
-  VALID_AUTH_METHODS = %w[none client_secret_basic client_secret_post private_key_jwt].freeze
+  VALID_AUTH_METHODS = %w[none client_secret_basic client_secret_post].freeze
   VALID_SCOPES = %w[read write admin].freeze
 
   belongs_to :user, optional: true
+  has_many :oauth_authorization_requests, dependent: :destroy
+  has_many :oauth_refresh_grants, dependent: :destroy
   has_many :oauth_authorization_codes, dependent: :destroy
   has_many :oauth_access_tokens, dependent: :destroy
 
   validates :client_id, presence: true, uniqueness: true
-  validates :name, presence: true
-  validates :redirect_uris, presence: true
+  validates :name, presence: true, length: { maximum: 200 }
+  validates :description, length: { maximum: 2_000 }, allow_nil: true
+  validates :client_uri, :logo_uri, length: { maximum: 2_000 }, allow_nil: true
+  validates :redirect_uris, :grant_types, :response_types, :scopes, presence: true
   validate :valid_redirect_uris
   validate :valid_grant_types_list
   validate :valid_response_types_list
@@ -65,16 +69,17 @@ class OauthClient < ApplicationRecord
       logo_uri: metadata[:logo_uri],
       client_uri: metadata[:client_uri],
       redirect_uris: Array(metadata[:redirect_uris]),
-      grant_types: metadata[:grant_types] || [ "authorization_code" ],
+      grant_types: metadata[:grant_types] || [ "authorization_code", "refresh_token" ],
       response_types: metadata[:response_types] || [ "code" ],
       token_endpoint_auth_method: metadata[:token_endpoint_auth_method] || "none",
-      scopes: metadata[:scopes] || %w[read write],
+      scopes: metadata[:scopes] || VALID_SCOPES,
       is_dynamic: true
     )
   end
 
   def verify_secret(secret)
-    return false unless client_secret_hash.present? && secret.present?
+    return false unless client_secret_hash.present? &&
+      secret.is_a?(String) && secret.bytesize.between?(1, 1_024)
 
     ActiveSupport::SecurityUtils.secure_compare(Digest::SHA256.hexdigest(secret), client_secret_hash)
   end
@@ -108,7 +113,31 @@ class OauthClient < ApplicationRecord
   end
 
   def valid_redirect_uri?(uri)
-    redirect_uris.include?(uri)
+    resolve_redirect_uri(uri).present?
+  end
+
+  # RFC 8252 loopback redirects use an ephemeral listener port. HTTPS and
+  # non-loopback redirects still require exact string equality.
+  def resolve_redirect_uri(uri)
+    return uri if uri.is_a?(String) && redirect_uris.include?(uri)
+    return nil unless uri.is_a?(String)
+
+    requested = URI.parse(uri)
+    return nil unless safe_loopback_redirect?(requested)
+
+    registered = redirect_uris.find do |registered_uri|
+      candidate = URI.parse(registered_uri)
+      safe_loopback_redirect?(candidate) &&
+        candidate.scheme == requested.scheme &&
+        candidate.host == requested.host &&
+        candidate.path == requested.path &&
+        candidate.query == requested.query
+    rescue URI::InvalidURIError
+      false
+    end
+    registered ? uri : nil
+  rescue URI::InvalidURIError
+    nil
   end
 
   def can_request_scope?(scope)
@@ -132,36 +161,37 @@ class OauthClient < ApplicationRecord
 
   private
 
+  def safe_loopback_redirect?(uri)
+    uri.scheme == "http" &&
+      %w[localhost 127.0.0.1 ::1 [::1]].include?(uri.host) &&
+      uri.absolute? && uri.userinfo.nil? && uri.fragment.nil?
+  end
+
   def valid_redirect_uris
     return if redirect_uris.blank?
+    unless redirect_uris.is_a?(Array) && redirect_uris.length <= 20 && redirect_uris.all? { |uri| uri.is_a?(String) && uri.bytesize <= 2_000 }
+      errors.add(:redirect_uris, "must be an array of at most 20 URI strings")
+      return
+    end
 
     redirect_uris.each do |uri|
-      begin
-        parsed = URI.parse(uri)
-        # Allow localhost and 127.0.0.1 for development
-        if parsed.host == "localhost" || parsed.host == "127.0.0.1"
-          next
-        end
-        # Require HTTPS for non-localhost URIs
-        unless parsed.scheme == "https"
-          errors.add(:redirect_uris, "must use HTTPS for non-localhost URIs: #{uri}")
-        end
-      rescue URI::InvalidURIError
-        errors.add(:redirect_uris, "contains invalid URI: #{uri}")
+      parsed = URI.parse(uri)
+      valid_loopback = %w[localhost 127.0.0.1 ::1 [::1]].include?(parsed.host) && parsed.scheme == "http"
+      valid_https = parsed.scheme == "https" && parsed.host.present?
+      if !parsed.absolute? || parsed.userinfo.present? || parsed.fragment.present? || (!valid_loopback && !valid_https)
+        errors.add(:redirect_uris, "must be an absolute HTTPS URI or HTTP loopback URI without userinfo or fragments: #{uri}")
       end
+    rescue URI::InvalidURIError
+      errors.add(:redirect_uris, "contains invalid URI: #{uri}")
     end
   end
 
   def valid_grant_types_list
-    return if grant_types.blank?
-    invalid = grant_types - VALID_GRANT_TYPES
-    errors.add(:grant_types, "contains invalid types: #{invalid.join(', ')}") if invalid.any?
+    validate_metadata_list(:grant_types, VALID_GRANT_TYPES)
   end
 
   def valid_response_types_list
-    return if response_types.blank?
-    invalid = response_types - VALID_RESPONSE_TYPES
-    errors.add(:response_types, "contains invalid types: #{invalid.join(', ')}") if invalid.any?
+    validate_metadata_list(:response_types, VALID_RESPONSE_TYPES)
   end
 
   def valid_auth_method
@@ -172,8 +202,18 @@ class OauthClient < ApplicationRecord
   end
 
   def valid_scopes_list
-    return if scopes.blank?
-    invalid = scopes - VALID_SCOPES
-    errors.add(:scopes, "contains invalid scopes: #{invalid.join(', ')}") if invalid.any?
+    validate_metadata_list(:scopes, VALID_SCOPES)
+  end
+
+  def validate_metadata_list(attribute, allowed_values)
+    values = public_send(attribute)
+    return if values.blank?
+    unless values.is_a?(Array) && values.length <= 20 && values.all?(String)
+      errors.add(attribute, "must be an array of at most 20 strings")
+      return
+    end
+
+    invalid = values - allowed_values
+    errors.add(attribute, "contains invalid values: #{invalid.join(', ')}") if invalid.any?
   end
 end

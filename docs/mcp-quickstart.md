@@ -70,6 +70,18 @@ Start a new Runner conversation after saving the file. Runner does not currently
 start OAuth for hand-written `mcp.json` entries, so the API key header is required.
 See [Runner's custom MCP guide](https://guides.runner.now/connections/connect-your-own-mcp).
 
+## Connecting the Admin MCP
+
+The admin analytics/control-plane server is a separate connection:
+
+```text
+https://api.listygifty.com/admin/mcp
+```
+
+An OAuth-capable HTTP MCP client will discover Listy Gifty's authorization server, open the first-party browser login, and show a red administrator consent warning. Only the allowlisted `kent.fenwick@gmail.com` account can approve or use this connection. Do not substitute the ordinary `/mcp` URL; its tokens intentionally cannot access admin tools.
+
+Clients that cannot launch remote OAuth may temporarily use a dedicated, expiring admin API key as documented in [Admin MCP](admin-mcp.md).
+
 ## Example Prompts
 
 Once connected, try these prompts:

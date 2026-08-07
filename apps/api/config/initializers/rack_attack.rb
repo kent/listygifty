@@ -12,14 +12,29 @@ class Rack::Attack
     req.ip unless req.path.start_with?("/assets") || dedicated_limit
   end
 
-  # Throttle OAuth credential exchange and dynamic client registration.
+  # Dynamic registration is anonymous and persistent, so constrain it much
+  # more tightly than short-lived authorization/token traffic.
+  throttle("oauth_registration/ip", limit: 10, period: 1.hour) do |req|
+    req.ip if req.post? && RequestBodyLimiter::OAUTH_REGISTRATION_PATH.match?(req.path)
+  end
+
   throttle("oauth/ip", limit: 20, period: 1.minute) do |req|
-    req.ip if req.post? && req.path.match?(%r{\A/oauth/(token|register|revoke)\z})
+    req.ip if RequestBodyLimiter::OAUTH_PATH.match?(req.path) &&
+      !RequestBodyLimiter::OAUTH_REGISTRATION_PATH.match?(req.path)
   end
 
   # Throttle billing endpoints (10 per minute per IP)
   throttle("billing/ip", limit: 10, period: 1.minute) do |req|
     req.ip if req.path.start_with?("/billing") && req.post?
+  end
+
+  throttle("exchange_photos/ip", limit: 20, period: 1.hour) do |req|
+    multipart = req.media_type.to_s.start_with?("multipart/form-data")
+    req.ip if req.patch? && multipart && RequestBodyLimiter::EXCHANGE_PHOTO_PATH.match?(req.path)
+  end
+
+  throttle("imports/ip", limit: 5, period: 1.hour) do |req|
+    req.ip if req.post? && RequestBodyLimiter::IMPORT_PATH.match?(req.path)
   end
 
   # Analytics clients send small batches and may flush during rapid route
@@ -29,14 +44,14 @@ class Rack::Attack
   end
 
   throttle("admin_mcp/ip", limit: 30, period: 1.minute) do |req|
-    req.ip if req.post? && RequestBodyLimiter::ADMIN_PATH.match?(req.path)
+    req.ip if RequestBodyLimiter::ADMIN_PATH.match?(req.path)
   end
 
   throttle("admin_mcp/credential", limit: 60, period: 1.minute) do |req|
-    next unless req.post? && RequestBodyLimiter::ADMIN_PATH.match?(req.path)
+    next unless RequestBodyLimiter::ADMIN_PATH.match?(req.path)
 
-    authorization = req.get_header("HTTP_AUTHORIZATION")
-    Digest::SHA256.hexdigest(authorization) if authorization&.match?(/\ABearer ng_[A-Za-z0-9_-]{43}\z/)
+    raw_token = BearerTokenExtractor.extract(req.get_header("HTTP_AUTHORIZATION"))
+    Digest::SHA256.hexdigest(raw_token) if raw_token
   end
 
   # Token-based public links are intentionally unauthenticated; keep guessing

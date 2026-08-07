@@ -4,7 +4,10 @@ class WishlistItem < ApplicationRecord
   belongs_to :wishlist
   has_many :claims, class_name: "WishlistItemClaim", dependent: :destroy
 
-  validates :name, presence: true
+  validates :name, presence: true, length: { maximum: 500 }
+  validates :notes, length: { maximum: 5_000 }, allow_blank: true
+  validates :url, length: { maximum: 2_048 }, allow_blank: true
+  validates :image_url, length: { maximum: 2_048 }, allow_blank: true
   validates :price_min, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :price_max, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :quantity, numericality: { greater_than: 0 }

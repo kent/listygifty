@@ -1,7 +1,8 @@
 class AdminMcpController < ApplicationController
-  SUPPORTED_PROTOCOL_VERSIONS = %w[2025-06-18 2025-03-26 2024-11-05].freeze
+  include McpTransportSecurity
+
+  SUPPORTED_PROTOCOL_VERSIONS = McpTransportSecurity::SUPPORTED_PROTOCOL_VERSIONS
   MAX_REQUEST_BYTES = 256.kilobytes
-  MAX_BATCH_SIZE = 20
   MAX_JSON_DEPTH = 32
   MAX_METHOD_LENGTH = 100
 
@@ -10,8 +11,14 @@ class AdminMcpController < ApplicationController
   before_action :ensure_admin_mcp_enabled!
   before_action :validate_content_type!
   before_action :validate_origin!
-  before_action :authenticate_admin_api_key!
+  before_action :validate_mcp_protocol_version!
+  before_action :authenticate_admin_credential!
   after_action :set_security_headers
+
+  def connect
+    response.headers["Allow"] = "POST"
+    head :method_not_allowed
+  end
 
   def handle
     raw_body = bounded_request_body
@@ -19,13 +26,10 @@ class AdminMcpController < ApplicationController
 
     body = JSON.parse(raw_body, max_nesting: MAX_JSON_DEPTH)
     if body.is_a?(Array)
-      return render json: jsonrpc_error(nil, -32600, "Invalid Request") unless body.length.between?(1, MAX_BATCH_SIZE)
-
-      responses = body.filter_map { |item| process_request(item) }
-      responses.any? ? render(json: responses) : head(:no_content)
+      render json: jsonrpc_error(nil, -32600, "Batch requests are not supported"), status: :bad_request
     else
       response = process_request(body)
-      response ? render(json: response) : head(:no_content)
+      response ? render(json: response) : head(:accepted)
     end
   rescue JSON::ParserError, JSON::NestingError
     render json: jsonrpc_error(nil, -32700, "Parse error")
@@ -33,47 +37,82 @@ class AdminMcpController < ApplicationController
 
   private
 
-  def authenticate_admin_api_key!
-    raw_key = extract_admin_api_key
-    unless raw_key
-      response.headers["WWW-Authenticate"] = %(Bearer realm="listygifty-admin-mcp")
-      return render json: { error: "Admin API key required" }, status: :unauthorized
-    end
+  def authenticate_admin_credential!
+    raw_token = extract_admin_bearer_token
+    return render_admin_unauthorized("Admin OAuth login or API key required") unless raw_token
 
-    @admin_api_key = ApiKey.find_by_raw_key(raw_key)
-    unless @admin_api_key
-      response.headers["WWW-Authenticate"] = %(Bearer realm="listygifty-admin-mcp")
-      return render json: { error: "Invalid or expired admin API key" }, status: :unauthorized
-    end
+    credential_record = ApiKey.find_by_raw_key(raw_token) || OauthAccessToken.find_by_token(raw_token)
+    return render_admin_unauthorized("Invalid or expired admin credential", invalid_token: true) unless credential_record
 
-    @current_user = @admin_api_key.user
-    unless @admin_api_key.admin_compliant? && Admin::Authorization.allowed?(@current_user)
-      AdminAuditEvent.record!(
-        actor: @current_user,
-        action: "admin_mcp.authorization_denied",
-        resource: @admin_api_key,
-        metadata: { request_id: request.request_id }
-      )
+    @current_user = credential_record.user
+    unless valid_admin_credential?(credential_record, raw_token)
+      audit_authorization_denied(credential_record)
+      if credential_record.is_a?(OauthAccessToken)
+        return render_admin_unauthorized("OAuth token is not valid for the admin MCP", invalid_token: true)
+      end
       return render json: { error: "This API key is not authorized for Listy Gifty administration" }, status: :forbidden
     end
 
+    unless Admin::Authorization.allowed?(@current_user)
+      audit_authorization_denied(credential_record)
+      return render json: { error: "This account is not authorized for Listy Gifty administration" }, status: :forbidden
+    end
+
+    credential_record.touch_last_used! if credential_record.is_a?(OauthAccessToken)
+    @admin_credential = Admin::Credential.new(credential_record)
     Current.user = @current_user
     AdminAuditEvent.record!(
       actor: @current_user,
       action: "admin_mcp.authenticate",
-      resource: @admin_api_key,
-      metadata: { request_id: request.request_id }
+      resource: credential_record,
+      metadata: @admin_credential.audit_metadata.merge(request_id: request.request_id)
     )
   end
 
-  def extract_admin_api_key
-    authorization = request.headers["Authorization"]
-    authorization.delete_prefix("Bearer ") if authorization&.match?(/\ABearer ng_[A-Za-z0-9_-]{43}\z/)
+  def extract_admin_bearer_token
+    BearerTokenExtractor.extract(request.headers["Authorization"])
+  end
+
+  def valid_admin_credential?(credential_record, raw_token)
+    if credential_record.is_a?(ApiKey)
+      credential_record.admin_compliant?
+    else
+      OauthAccessToken.hardened_access_token?(raw_token) &&
+        credential_record.resource == admin_oauth_resource.uri && credential_record.scopes == [ "admin" ]
+    end
+  end
+
+  def admin_oauth_resource
+    @admin_oauth_resource ||= Oauth::ResourceRegistry.new(base_url: request.base_url).admin_mcp
+  end
+
+  def admin_resource_metadata_url
+    base_url = ENV.fetch("API_BASE_URL") { request.base_url }.delete_suffix("/")
+    "#{base_url}#{admin_oauth_resource.metadata_path}"
+  end
+
+  def render_admin_unauthorized(message, invalid_token: false)
+    challenge = %(Bearer resource_metadata="#{admin_resource_metadata_url}", scope="admin")
+    challenge += %(, error="invalid_token") if invalid_token
+    response.headers["WWW-Authenticate"] = challenge
+    render json: { error: message }, status: :unauthorized
+  end
+
+  def audit_authorization_denied(credential_record)
+    credential = Admin::Credential.new(credential_record)
+    AdminAuditEvent.record!(
+      actor: @current_user,
+      action: "admin_mcp.authorization_denied",
+      resource: credential_record,
+      metadata: credential.audit_metadata.merge(request_id: request.request_id)
+    )
   end
 
   def process_request(message)
     unless valid_message?(message)
-      return jsonrpc_error(message.is_a?(Hash) ? message["id"] : nil, -32600, "Invalid Request")
+      candidate_id = message.is_a?(Hash) ? message["id"] : nil
+      id = valid_request_id?(candidate_id) ? candidate_id : nil
+      return jsonrpc_error(id, -32600, "Invalid Request")
     end
 
     notification = !message.key?("id")
@@ -129,7 +168,7 @@ class AdminMcpController < ApplicationController
   end
 
   def tool_registry
-    @tool_registry ||= Admin::Mcp::ToolRegistry.new(actor: @current_user, api_key: @admin_api_key, request_id: request.request_id)
+    @tool_registry ||= Admin::Mcp::ToolRegistry.new(actor: @current_user, credential: @admin_credential, request_id: request.request_id)
   end
 
   def tool_error(message)
@@ -178,6 +217,8 @@ class AdminMcpController < ApplicationController
   end
 
   def validate_content_type!
+    return unless request.post?
+
     render json: { error: "Content-Type must be application/json" }, status: :unsupported_media_type unless request.media_type == "application/json"
   end
 

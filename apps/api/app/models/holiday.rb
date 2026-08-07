@@ -11,7 +11,8 @@ class Holiday < ApplicationRecord
   has_many :gift_suggestions, dependent: :nullify
   has_many :match_arrangements, dependent: :destroy
 
-  validates :name, presence: true
+  validates :name, presence: true, length: { maximum: 200 }
+  validates :icon, length: { maximum: 50 }, allow_blank: true
 
   scope :templates, -> { where(is_template: true) }
   scope :user_holidays, -> { where(is_template: false) }

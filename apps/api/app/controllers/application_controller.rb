@@ -11,9 +11,32 @@ class ApplicationController < ActionController::API
   def authenticate!
     if api_key_request?
       authenticate_api_key!
+      authorize_api_key_http_method! unless performed?
     else
       authenticate_clerk_user!
     end
+  end
+
+  def authorize_api_key_http_method!
+    required_scope = request.get? || request.head? || request.options? ? "read" : "write"
+    return if @api_key&.can?(required_scope)
+
+    render json: {
+      error: "Insufficient permissions. Required scope: #{required_scope}"
+    }, status: :forbidden
+  end
+
+  # Credential-management and browser-consent endpoints require an interactive
+  # Clerk session. API keys and OAuth credentials must never bootstrap or
+  # replace other credentials.
+  def authenticate_clerk_session!
+    token = extract_bearer_token
+    if token.blank? || ApiKey::RAW_KEY_PATTERN.match?(token) ||
+        OauthAccessToken.hardened_access_token?(token) || OauthAccessToken.hardened_refresh_token?(token)
+      return render_unauthorized("A Clerk browser session is required")
+    end
+
+    authenticate_clerk_user!
   end
 
   def authenticate_clerk_user!

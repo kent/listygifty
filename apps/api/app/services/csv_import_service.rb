@@ -25,8 +25,9 @@ class CsvImportService
   end
 
   def import
-    csv_content = @file.respond_to?(:read) ? @file.read : @file.tempfile.read
+    csv_content = CsvImportLimits.read(@file)
     csv = CSV.parse(csv_content, headers: true, header_converters: ->(header) { normalize_header(header) })
+    CsvImportLimits.validate_rows!(csv)
 
     validate_headers!(csv.headers)
     return error_result if @errors.any?

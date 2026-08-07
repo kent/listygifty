@@ -21,7 +21,11 @@ module Niftygifty
     # API-only mode
     config.api_only = true
 
-    config.middleware.insert_before 0, RequestBodyLimiter
+    # Rack::Attack's railtie appends its middleware late. Insert the body limiter
+    # immediately afterward so rate limits run first while parameters are still unparsed.
+    initializer "niftygifty.request_body_limiter", after: "rack-attack.middleware" do |app|
+      app.middleware.insert_after Rack::Attack, RequestBodyLimiter
+    end
 
     # Middleware for Clerk session handling
     config.middleware.use ActionDispatch::Cookies

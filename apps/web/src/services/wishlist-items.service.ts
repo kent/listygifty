@@ -56,20 +56,10 @@ class WishlistItemsService {
     const formData = new FormData();
     formData.append("wishlist_item[photo]", file);
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}${this.buildUrl(exchangeId, participantId, itemId)}`,
-      {
-        method: "PATCH",
-        body: formData,
-        // Note: Don't set Content-Type header - browser will set it with boundary
-      }
+    return apiClient.patchFormData<WishlistItem>(
+      this.buildUrl(exchangeId, participantId, itemId),
+      formData
     );
-
-    if (!response.ok) {
-      throw new Error("Failed to upload photo");
-    }
-
-    return response.json();
   }
 }
 

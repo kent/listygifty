@@ -8,7 +8,8 @@ class Wishlist < ApplicationRecord
 
   has_secure_token :share_token
 
-  validates :name, presence: true
+  validates :name, presence: true, length: { maximum: 200 }
+  validates :description, length: { maximum: 5_000 }, allow_blank: true
   validates :visibility, presence: true, inclusion: { in: VISIBILITIES }
 
   scope :visible_to, ->(user, workspace) {

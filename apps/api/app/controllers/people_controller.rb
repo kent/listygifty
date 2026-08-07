@@ -9,7 +9,7 @@ class PeopleController < ApplicationController
   # Without holiday_id: returns all accessible people in workspace (+ shared via any holiday)
   def index
     if params[:holiday_id].present?
-      holiday = current_workspace.holidays.find_by(id: params[:holiday_id])
+      holiday = current_workspace.holidays.where(id: current_user.holiday_ids).find_by(id: params[:holiday_id])
       return render json: { error: "Holiday not found" }, status: :not_found unless holiday
 
       # Workspace people + people shared to this holiday (from any collaborator)
@@ -23,11 +23,20 @@ class PeopleController < ApplicationController
   end
 
   def show
+    options = { current_user: current_user, current_workspace: current_workspace }
+    person = PersonBlueprint.render_as_hash(@person, **options)
     if params[:include] == "gifts"
-      render json: PersonBlueprint.render(@person, view: :with_gifts, current_user: current_user, current_workspace: current_workspace)
-    else
-      render json: PersonBlueprint.render(@person, current_user: current_user, current_workspace: current_workspace)
+      visible_holiday_ids = current_user.holiday_ids
+      person[:gifts_received] = GiftBlueprint.render_as_hash(
+        @person.gifts_received.where(holiday_id: visible_holiday_ids),
+        current_user: current_user
+      )
+      person[:gifts_given] = GiftBlueprint.render_as_hash(
+        @person.gifts_given.where(holiday_id: visible_holiday_ids),
+        current_user: current_user
+      )
     end
+    render json: person
   end
 
   def create
@@ -42,7 +51,15 @@ class PeopleController < ApplicationController
   end
 
   def update
-    if @person.update(person_params)
+    attributes = person_params
+    unless @person.editable_by?(current_user)
+      return render json: { error: "Externally shared people are read-only" }, status: :forbidden
+    end
+    if attributes.key?(:default_shipping_address_id) && !@person.shipping_address_editable_by?(current_user)
+      return render json: { error: "Only workspace admins can manage shipping addresses" }, status: :forbidden
+    end
+
+    if @person.update(attributes)
       render json: PersonBlueprint.render(@person, current_user: current_user, current_workspace: current_workspace)
     else
       render json: { errors: @person.errors.full_messages }, status: :unprocessable_entity
@@ -110,6 +127,6 @@ class PeopleController < ApplicationController
   end
 
   def preload_people(scope)
-    scope.includes(:default_shipping_address, :gift_recipients, :gift_givers, { shared_holidays: :holiday_users }).order(:name)
+    scope.includes(:default_shipping_address, { shared_holidays: :holiday_users }).order(:name)
   end
 end

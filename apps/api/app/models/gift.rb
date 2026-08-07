@@ -9,7 +9,9 @@ class Gift < ApplicationRecord
   has_many :gift_changes, dependent: :destroy
   has_many :match_slots, dependent: :destroy
 
-  validates :name, presence: true
+  validates :name, presence: true, length: { maximum: 500 }
+  validates :description, length: { maximum: 5_000 }, allow_blank: true
+  validates :link, length: { maximum: 2_048 }, allow_blank: true
 
   # NOTE: Explicitly use `by_position` scope where ordering is needed
   # Avoid default_scope as it causes unexpected behavior in joins/associations

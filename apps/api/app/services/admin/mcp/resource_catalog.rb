@@ -35,6 +35,9 @@ module Admin
       }.freeze
 
       IMMUTABLE_ATTRIBUTES = %w[id created_at updated_at].freeze
+      MAX_LIST_RESPONSE_BYTES = 256 * 1024
+      MAX_BULK_RECORD_BYTES = 64 * 1024
+      MAX_BULK_STRING_BYTES = 4_000
       SECRET_ATTRIBUTE_PATTERN = /(token|secret|password|key_hash|digest|jti)/i
       SENSITIVE_ATTRIBUTES = {
         "exchange_participants" => %w[matched_participant_id],
@@ -59,15 +62,31 @@ module Admin
         limit = normalize_limit(limit)
         relation = entry.model.where(filters).order(id: :asc)
         relation = relation.where("id > ?", normalize_cursor(after_id)) if after_id.present?
-        records = relation.limit(limit + 1).to_a
-        has_more = records.length > limit
-        records = records.first(limit)
+        candidates = relation.limit(limit + 1).to_a
+        has_more = candidates.length > limit
+        candidates = candidates.first(limit)
+        serialized_records = []
+        response_bytes = 0
+        last_id = nil
+
+        candidates.each do |record|
+          serialized = bounded_bulk_record(entry.name, record)
+          record_bytes = JSON.generate(serialized).bytesize
+          if serialized_records.any? && response_bytes + record_bytes > MAX_LIST_RESPONSE_BYTES
+            has_more = true
+            break
+          end
+
+          serialized_records << serialized
+          response_bytes += record_bytes
+          last_id = record.id
+        end
 
         {
           resource: entry.name,
-          records: records.map { |record| serialize(entry.name, record, bulk: true) },
-          count: records.length,
-          next_after_id: has_more ? records.last&.id : nil
+          records: serialized_records,
+          count: serialized_records.length,
+          next_after_id: has_more ? last_id : nil
         }
       end
 
@@ -140,6 +159,32 @@ module Admin
       end
 
       private
+
+      def bounded_bulk_record(name, record)
+        serialized = deep_truncate_bulk(serialize(name, record, bulk: true))
+        return serialized if JSON.generate(serialized).bytesize <= MAX_BULK_RECORD_BYTES
+
+        {
+          "id" => record.id,
+          "_truncated" => true,
+          "_truncated_fields" => serialized.keys.reject { |key| key == "id" }.sort
+        }
+      end
+
+      def deep_truncate_bulk(value, depth = 0)
+        return "[truncated]" if depth > 8
+
+        case value
+        when String
+          value.bytesize > MAX_BULK_STRING_BYTES ? value.byteslice(0, MAX_BULK_STRING_BYTES).scrub + "…" : value
+        when Hash
+          value.first(100).to_h.transform_values { |child| deep_truncate_bulk(child, depth + 1) }
+        when Array
+          value.first(100).map { |child| deep_truncate_bulk(child, depth + 1) }
+        else
+          value
+        end
+      end
 
       def fetch(name)
         normalized = name.to_s

@@ -1,5 +1,9 @@
 class GiftSuggestionService
   SUGGESTION_COUNT = 7
+  MAX_REFINEMENT_SUGGESTIONS = SUGGESTION_COUNT
+  MAX_NAME_BYTES = 500
+  MAX_DESCRIPTION_BYTES = 5_000
+  MAX_PRICE_BYTES = 100
 
   def initialize(person, user)
     @person = person
@@ -8,9 +12,14 @@ class GiftSuggestionService
 
   # Generate general suggestions (no holiday context)
   def generate
-    previous_gifts = @person.gifts_received.includes(:holiday).limit(20)
+    previous_gifts = @person.gifts_received
+      .where(holiday_id: @user.holiday_ids)
+      .includes(:holiday)
+      .limit(20)
     prompt = build_prompt(nil, previous_gifts)
-    suggestions_data = call_openai(prompt)
+    suggestions_data = validate_suggestions_data!(
+      call_openai(prompt), expected_count: SUGGESTION_COUNT
+    )
 
     suggestions_data.map do |data|
       @person.gift_suggestions.create!(
@@ -24,11 +33,18 @@ class GiftSuggestionService
 
   # Refine existing suggestions for a specific holiday
   def refine_for_holiday(suggestion_ids, holiday)
-    suggestions = @person.gift_suggestions.where(id: suggestion_ids)
-    return [] if suggestions.empty?
+    raw_ids = Array(suggestion_ids)
+    unless raw_ids.length.between?(1, MAX_REFINEMENT_SUGGESTIONS)
+      raise ArgumentError, "Select between 1 and #{MAX_REFINEMENT_SUGGESTIONS} suggestions"
+    end
+    requested_ids = raw_ids.map { |id| Integer(id) }.uniq
+    suggestions = visible_suggestions.where(id: requested_ids)
+    raise ActiveRecord::RecordNotFound unless suggestions.count == requested_ids.length
 
     prompt = build_refine_prompt(suggestions, holiday)
-    refined_data = call_openai(prompt)
+    refined_data = validate_suggestions_data!(
+      call_openai(prompt), expected_count: suggestions.count
+    )
 
     # Create new refined suggestions tied to holiday, delete originals
     GiftSuggestion.transaction do
@@ -46,6 +62,32 @@ class GiftSuggestionService
   end
 
   private
+
+  def validate_suggestions_data!(data, expected_count:)
+    valid = data.is_a?(Array) && data.length == expected_count && data.all? do |suggestion|
+      suggestion.is_a?(Hash) &&
+        suggestion["name"].is_a?(String) && suggestion["name"].present? &&
+        suggestion["name"].bytesize <= MAX_NAME_BYTES &&
+        suggestion["description"].is_a?(String) &&
+        suggestion["description"].bytesize <= MAX_DESCRIPTION_BYTES &&
+        suggestion["approximate_price"].is_a?(String) &&
+        suggestion["approximate_price"].bytesize <= MAX_PRICE_BYTES
+    end
+    raise ArgumentError, "Gift suggestion response was invalid" unless valid
+
+    data
+  end
+
+  def visible_suggestions
+    suggestions = @person.gift_suggestions
+    holiday_ids = if @person.workspace.member?(@user)
+      @user.holiday_ids
+    else
+      @person.shared_holidays.where(id: @user.holiday_ids).ids
+    end
+    visible = suggestions.where(holiday_id: holiday_ids)
+    @person.workspace.member?(@user) ? visible.or(suggestions.where(holiday_id: nil)) : visible
+  end
 
   def build_prompt(holiday, previous_gifts)
     age_info = @person.age ? "#{@person.age} years old" : "unknown age"

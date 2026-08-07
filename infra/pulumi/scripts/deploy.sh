@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Single-command, Pulumi-driven deploy. Everything from image build to mobile
-# kickoff lives inside the Pulumi program — this wrapper just computes the
-# source SHA, runs `pulumi up`, and prints timing.
+# Single-command production deploy. This wrapper builds API/web images, invokes
+# Pulumi for the ordered rollout/migration/smoke graph, and optionally queues
+# mobile only after Pulumi succeeds.
 #
 # Usage: deploy.sh <staging|production>
 set -euo pipefail
@@ -165,12 +165,29 @@ if [[ "${API_BUILD_STATUS}" -ne 0 || "${WEB_BUILD_STATUS}" -ne 0 ]]; then
   exit 1
 fi
 
+# Pulumi's --config flag rewrites the tracked stack YAML. Preserve its exact
+# pre-deploy contents on success, failure, and interruption; deployed inputs
+# remain recorded in the remote Pulumi state.
+STACK_CONFIG_FILE="${PULUMI_DIR}/Pulumi.${ENVIRONMENT}.yaml"
+STACK_CONFIG_BACKUP="$(mktemp)"
+cp -p "${STACK_CONFIG_FILE}" "${STACK_CONFIG_BACKUP}"
+restore_stack_config() {
+  if [[ -n "${STACK_CONFIG_BACKUP:-}" && -f "${STACK_CONFIG_BACKUP}" ]]; then
+    cp -p "${STACK_CONFIG_BACKUP}" "${STACK_CONFIG_FILE}"
+    rm -f "${STACK_CONFIG_BACKUP}"
+    STACK_CONFIG_BACKUP=""
+  fi
+}
+trap restore_stack_config EXIT
+
 # Pulumi engine handles parallelism, dependency ordering, and idempotency.
 pulumi up \
   --stack "${ENVIRONMENT}" \
   --yes \
   --skip-preview \
-  --config "niftygifty:sourceSha=${SHA}"
+  --config "niftygifty:sourceSha=${SHA}" \
+  --config "niftygifty:legacyRollback=false"
+restore_stack_config
 
 ENABLE_MOBILE="${ENABLE_MOBILE:-false}"
 if [[ "${ENABLE_MOBILE}" == "false" || "${ENABLE_MOBILE}" == "0" ]]; then

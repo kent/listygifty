@@ -19,6 +19,23 @@ class AdminMcpControllerTest < ActionDispatch::IntegrationTest
     @secondary_admin_key = ApiKey.generate_for(@admin, name: "Secondary Admin MCP", scopes: [ "admin" ])
     @read_key = ApiKey.generate_for(@admin, name: "Read MCP", scopes: [ "read", "write" ])
     @other_admin_key = ApiKey.generate_for(users(:one), name: "Wrong Admin", scopes: [ "admin" ])
+    @oauth_client = OauthClient.dynamic_register(
+      client_name: "Admin OAuth Test Client",
+      redirect_uris: [ "https://example.com/callback" ],
+      scopes: [ "admin" ]
+    )
+    @admin_oauth = OauthAccessToken.generate_for(
+      client: @oauth_client,
+      user: @admin,
+      scopes: [ "admin" ],
+      resource: "http://www.example.com/admin/mcp"
+    )
+    @secondary_admin_oauth = OauthAccessToken.generate_for(
+      client: @oauth_client,
+      user: @admin,
+      scopes: [ "admin" ],
+      resource: "http://www.example.com/admin/mcp"
+    )
   end
 
   def teardown
@@ -26,12 +43,19 @@ class AdminMcpControllerTest < ActionDispatch::IntegrationTest
     clear_performed_jobs
   end
 
-  test "requires an allowlisted admin-scoped API key and rejects OAuth-style bearer tokens" do
+  test "advertises OAuth login and accepts OAuth or a break-glass admin API key" do
     post_admin_mcp(method: "ping", headers: { "Content-Type" => "application/json" })
     assert_response :unauthorized
+    assert_includes response.headers["WWW-Authenticate"], 'resource_metadata="http://www.example.com/.well-known/oauth-protected-resource/admin/mcp"'
+    assert_includes response.headers["WWW-Authenticate"], 'scope="admin"'
 
-    post_admin_mcp(method: "ping", token: "oauth-token")
+    get "/admin/mcp"
     assert_response :unauthorized
+    assert_includes response.headers["WWW-Authenticate"], "resource_metadata"
+
+    post_admin_mcp(method: "ping", token: "invalid-oauth-token-value")
+    assert_response :unauthorized
+    assert_includes response.headers["WWW-Authenticate"], "invalid_token"
 
     post_admin_mcp(method: "ping", token: @read_key.raw_key)
     assert_response :forbidden
@@ -39,12 +63,89 @@ class AdminMcpControllerTest < ActionDispatch::IntegrationTest
     post_admin_mcp(method: "ping", token: @other_admin_key.raw_key)
     assert_response :forbidden
 
+    post_admin_mcp(method: "ping", token: @admin_oauth.token)
+    assert_response :success
+    assert json_response.dig("result", "pong")
+    oauth_audit = AdminAuditEvent.where(actor: @admin, action: "admin_mcp.authenticate").order(:id).last
+    assert_equal @admin_oauth.access_token.id, oauth_audit.resource_id
+    assert_equal "oauth", oauth_audit.metadata["authentication_method"]
+
     post_admin_mcp(method: "ping")
     assert_response :success
     assert json_response.dig("result", "pong")
-    assert AdminAuditEvent.exists?(actor: @admin, action: "admin_mcp.authenticate")
-    audit = AdminAuditEvent.where(actor: @admin, action: "admin_mcp.authenticate").order(:id).last
-    assert_equal @admin_key.api_key.id, audit.resource_id
+    key_audit = AdminAuditEvent.where(actor: @admin, action: "admin_mcp.authenticate").order(:id).last
+    assert_equal @admin_key.api_key.id, key_audit.resource_id
+    assert_equal "api_key", key_audit.metadata["authentication_method"]
+  end
+
+  test "parses admin Bearer authentication strictly and case-insensitively" do
+    post_admin_mcp(
+      method: "ping",
+      headers: { "Authorization" => "bEaReR #{@admin_oauth.token}", "Content-Type" => "application/json" }
+    )
+    assert_response :success
+
+    post_admin_mcp(
+      method: "ping",
+      headers: { "Authorization" => "Bearer junk #{@admin_oauth.token}", "Content-Type" => "application/json" }
+    )
+    assert_response :unauthorized
+  end
+
+  test "rejects legacy admin-scoped OAuth tokens that predate the hardened consent flow" do
+    legacy_raw = SecureRandom.urlsafe_base64(32)
+    OauthAccessToken.create!(
+      oauth_client: @oauth_client,
+      user: @admin,
+      token_hash: Digest::SHA256.hexdigest(legacy_raw),
+      scopes: [ "admin" ],
+      resource: "http://www.example.com/admin/mcp",
+      expires_at: 1.hour.from_now
+    )
+
+    post_admin_mcp(method: "ping", token: legacy_raw)
+    assert_response :unauthorized
+    assert_includes response.headers["WWW-Authenticate"], "invalid_token"
+  end
+
+  test "rejects OAuth tokens with the wrong audience, scope, lifecycle, or user" do
+    wrong_resource = OauthAccessToken.generate_for(
+      client: @oauth_client,
+      user: @admin,
+      scopes: [ "admin" ],
+      resource: "http://www.example.com/mcp"
+    )
+    post_admin_mcp(method: "ping", token: wrong_resource.token)
+    assert_response :unauthorized
+
+    wrong_scope = OauthAccessToken.generate_for(
+      client: @oauth_client,
+      user: @admin,
+      scopes: [ "admin" ],
+      resource: "http://www.example.com/admin/mcp"
+    )
+    wrong_scope.access_token.update_column(:scopes, [ "read" ])
+    post_admin_mcp(method: "ping", token: wrong_scope.token)
+    assert_response :unauthorized
+
+    revoked = OauthAccessToken.generate_for(
+      client: @oauth_client,
+      user: @admin,
+      scopes: [ "admin" ],
+      resource: "http://www.example.com/admin/mcp"
+    )
+    revoked.access_token.revoke!
+    post_admin_mcp(method: "ping", token: revoked.token)
+    assert_response :unauthorized
+
+    non_admin = OauthAccessToken.generate_for(
+      client: @oauth_client,
+      user: users(:one),
+      scopes: [ "admin" ],
+      resource: "http://www.example.com/admin/mcp"
+    )
+    post_admin_mcp(method: "ping", token: non_admin.token)
+    assert_response :forbidden
   end
 
   test "accepts only bearer credentials and applies the endpoint kill switch" do
@@ -119,26 +220,57 @@ class AdminMcpControllerTest < ActionDispatch::IntegrationTest
     assert_includes resources, "gift_suggestions"
   end
 
-  test "handles JSON-RPC parse errors and batches" do
+  test "validates MCP-Protocol-Version before admin dispatch" do
+    invalid_headers = admin_headers.merge("MCP-Protocol-Version" => "2099-01-01")
+    assert_no_difference("GiftStatus.count") do
+      post "/admin/mcp", params: {
+        jsonrpc: "2.0",
+        method: "tools/call",
+        params: {
+          name: "admin_create_record",
+          arguments: { resource: "gift_statuses", attributes: { name: "Wrong version", position: 999 } }
+        },
+        id: 1
+      }.to_json, headers: invalid_headers
+    end
+    assert_response :bad_request
+
+    get "/admin/mcp", headers: invalid_headers
+    assert_response :bad_request
+
+    post_admin_mcp(
+      method: "ping",
+      headers: admin_headers.merge(
+        "MCP-Protocol-Version" => McpTransportSecurity::SUPPORTED_PROTOCOL_VERSIONS.first
+      )
+    )
+    assert_response :success
+  end
+
+  test "handles JSON-RPC parse errors and rejects every batch without execution" do
     post "/admin/mcp", params: "not-json", headers: admin_headers
     assert_response :success
     assert_equal(-32700, json_response.dig("error", "code"))
 
-    post "/admin/mcp", params: [
-      { jsonrpc: "2.0", method: "ping", id: 1 },
-      { jsonrpc: "2.0", method: "notifications/initialized" },
-      { jsonrpc: "2.0", method: "tools/list", id: 2 }
-    ].to_json, headers: admin_headers
-    assert_response :success
-    assert_equal [ 1, 2 ], json_response.pluck("id")
-
-    post "/admin/mcp", params: [].to_json, headers: admin_headers
+    assert_no_difference("GiftStatus.count") do
+      post "/admin/mcp", params: [
+        {
+          jsonrpc: "2.0",
+          method: "tools/call",
+          params: {
+            name: "admin_create_record",
+            arguments: { resource: "gift_statuses", attributes: { name: "Batch mutation", position: 999 } }
+          },
+          id: 1
+        },
+        { jsonrpc: "2.0", method: "notifications/initialized" }
+      ].to_json, headers: admin_headers
+    end
+    assert_response :bad_request
     assert_equal(-32600, json_response.dig("error", "code"))
 
-    oversized_batch = Array.new(AdminMcpController::MAX_BATCH_SIZE + 1) do |index|
-      { jsonrpc: "2.0", method: "ping", id: index }
-    end
-    post "/admin/mcp", params: oversized_batch.to_json, headers: admin_headers
+    post "/admin/mcp", params: [].to_json, headers: admin_headers
+    assert_response :bad_request
     assert_equal(-32600, json_response.dig("error", "code"))
 
     nested = "{\"jsonrpc\":\"2.0\",\"method\":\"ping\",\"id\":1,\"params\":" + ("{\"x\":" * 33) + "null" + ("}" * 33) + "}"
@@ -163,7 +295,7 @@ class AdminMcpControllerTest < ActionDispatch::IntegrationTest
         }
       }.to_json, headers: admin_headers
     end
-    assert_response :no_content
+    assert_response :accepted
   end
 
   test "enforces advertised tool schemas before invoking handlers" do
@@ -293,6 +425,34 @@ class AdminMcpControllerTest < ActionDispatch::IntegrationTest
 
     assert_enqueued_emails 1 do
       call_tool("admin_confirm_email", confirmation_token: preview.fetch("confirmation_token"))
+    end
+  end
+
+  test "binds OAuth previews to the exact short-lived OAuth credential" do
+    preview = call_tool(
+      "admin_preview_email",
+      { user_id: users(:one).id, subject: "OAuth bound", body: "Send only with the approving token" },
+      token: @admin_oauth.token
+    )
+    draft = AdminEmailDraft.find(preview.fetch("draft_id"))
+    assert_nil draft.api_key_id
+    assert_equal @admin_oauth.access_token.id, draft.oauth_access_token_id
+
+    wrong_token = call_tool_result(
+      "admin_confirm_email",
+      { confirmation_token: preview.fetch("confirmation_token") },
+      token: @secondary_admin_oauth.token
+    )
+    assert wrong_token["isError"]
+    assert_includes wrong_token.dig("content", 0, "text"), "another OAuth access token"
+    assert_no_enqueued_emails
+
+    assert_enqueued_emails 1 do
+      call_tool(
+        "admin_confirm_email",
+        { confirmation_token: preview.fetch("confirmation_token") },
+        token: @admin_oauth.token
+      )
     end
   end
 

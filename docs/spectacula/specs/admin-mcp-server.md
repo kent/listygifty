@@ -1,5 +1,8 @@
 # Listy Gifty Admin MCP Server Specification
 
+> **Historical note:** This completed specification records the original API-key-only launch. The admin MCP now also supports first-party OAuth 2.1 with exact admin resource/scope binding; see [`docs/admin-mcp.md`](../../admin-mcp.md). Dedicated API keys remain a break-glass fallback.
+
+
 Status: Approved for implementation
 Purpose: Define a production-capable, HTTP-based MCP control plane for inspecting and administering all Listy Gifty customer data, with guarded email and user-deletion workflows.
 Audience: Listy Gifty engineering and the sole product administrator.

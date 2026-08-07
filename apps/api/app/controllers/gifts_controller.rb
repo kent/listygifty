@@ -1,6 +1,5 @@
 class GiftsController < ApplicationController
   before_action :set_gift, only: %i[show update destroy reorder]
-  before_action :check_gift_limit, only: [ :create ]
 
   def index
     gifts = scoped_gifts
@@ -13,23 +12,23 @@ class GiftsController < ApplicationController
   end
 
   def create
-    gift = Gift.new(gift_params)
-
-    if gift.save
-      auto_share_people(gift)
-      render_gift(gift, status: :created)
-    else
-      render json: { errors: gift.errors.full_messages }, status: :unprocessable_entity
-    end
+    gift = Gifts::MutationService.new(current_user).create(gift_params)
+    render_gift(gift, status: :created)
+  rescue Gifts::MutationService::LimitExceeded => e
+    render_gift_limit(e.message)
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Holiday, gift status, or person not found" }, status: :not_found
   end
 
   def update
-    if @gift.update(gift_params)
-      auto_share_people(@gift)
-      render_gift(@gift)
-    else
-      render json: { errors: @gift.errors.full_messages }, status: :unprocessable_entity
-    end
+    Gifts::MutationService.new(current_user).update(@gift, gift_params)
+    render_gift(@gift)
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Holiday, gift status, or person not found" }, status: :not_found
   end
 
   def destroy
@@ -76,24 +75,12 @@ class GiftsController < ApplicationController
     params.require(:gift).permit(:name, :description, :link, :cost, :holiday_id, :gift_status_id, :position, recipient_ids: [], giver_ids: [])
   end
 
-  def check_gift_limit
-    return if current_user.can_create_gift?
-
+  def render_gift_limit(message)
     render json: {
       error: "Gift limit reached",
-      message: "You've used all #{User::FREE_GIFT_LIMIT} free gifts. Upgrade to Premium for unlimited gift tracking.",
+      message: message,
       gifts_remaining: 0,
       upgrade_required: true
     }, status: :payment_required
-  end
-
-  # Auto-share people to the holiday when they're assigned as recipients or givers
-  def auto_share_people(gift)
-    holiday = gift.holiday
-    person_ids = (gift.recipient_ids + gift.giver_ids).uniq
-
-    person_ids.each do |person_id|
-      HolidayPerson.find_or_create_by(holiday_id: holiday.id, person_id: person_id)
-    end
   end
 end

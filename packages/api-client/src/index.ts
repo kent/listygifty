@@ -243,7 +243,19 @@ export class ApiClient {
     return this.request<T>("DELETE", endpoint, options);
   }
 
-  async postFormData<T>(endpoint: string, formData: FormData): Promise<T> {
+  postFormData<T>(endpoint: string, formData: FormData): Promise<T> {
+    return this.formDataRequest<T>("POST", endpoint, formData);
+  }
+
+  patchFormData<T>(endpoint: string, formData: FormData): Promise<T> {
+    return this.formDataRequest<T>("PATCH", endpoint, formData);
+  }
+
+  private async formDataRequest<T>(
+    method: "POST" | "PATCH",
+    endpoint: string,
+    formData: FormData
+  ): Promise<T> {
     const headers: Record<string, string> = {
       Accept: "application/json",
     };
@@ -259,15 +271,13 @@ export class ApiClient {
       headers["X-Workspace-ID"] = String(this.workspaceId);
     }
 
-    const url = `${this.baseUrl}${endpoint}`;
-
-    const response = await fetch(url, {
-      method: "POST",
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method,
       headers,
       body: formData,
     });
 
-    this.log("info", `POST (FormData) ${endpoint}`, {
+    this.log("info", `${method} (FormData) ${endpoint}`, {
       status: response.status,
     });
 

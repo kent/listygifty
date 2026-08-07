@@ -1,4 +1,6 @@
 class GiftStatusesController < ApplicationController
+  before_action :authenticate_clerk_session!, only: %i[create update destroy]
+  before_action :require_global_admin!, only: %i[create update destroy]
   before_action :set_gift_status, only: %i[show update destroy]
 
   def index
@@ -33,6 +35,12 @@ class GiftStatusesController < ApplicationController
   end
 
   private
+
+  def require_global_admin!
+    return if Admin::Authorization.allowed?(current_user)
+
+    render json: { error: "Global gift statuses are administrator-managed" }, status: :forbidden
+  end
 
   def set_gift_status
     @gift_status = GiftStatus.find(params[:id])

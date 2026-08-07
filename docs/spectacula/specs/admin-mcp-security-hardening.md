@@ -1,5 +1,8 @@
 # Admin MCP Security Hardening Specification
 
+> **Historical note:** This completed specification records the original API-key-only launch. The admin MCP now also supports first-party OAuth 2.1 with exact admin resource/scope binding; see [`docs/admin-mcp.md`](../../admin-mcp.md). Dedicated API keys remain a break-glass fallback.
+
+
 Status: Approved for implementation under the user's delegated security judgment
 Purpose: Harden the global Listy Gifty admin MCP, constrain and validate its HTTP/JSON-RPC boundary, strengthen administrator key lifecycle, and safely issue a dedicated credential.
 Audience: Listy Gifty engineering and the sole administrator, `kent.fenwick@gmail.com`.

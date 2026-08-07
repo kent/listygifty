@@ -61,6 +61,57 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
     assert address.is_default?
   end
 
+  test "ordinary workspace members cannot bulk-import people or assign owners" do
+    member = users(:two)
+    WorkspaceMembership.create!(workspace: @workspace, user: member, role: "member")
+    csv_content = "name,email\nInjected Contact,injected@example.com"
+    file = Rack::Test::UploadedFile.new(StringIO.new(csv_content), "text/csv", original_filename: "people.csv")
+
+    assert_no_difference("Person.count") do
+      post "/imports/people",
+        headers: auth_headers_for(member, workspace: @workspace).except("Content-Type"),
+        params: { file: file, owner_id: @user.id }
+    end
+    assert_response :forbidden
+  end
+
+  test "people imports reject oversized files and excessive rows before writing" do
+    oversized = Rack::Test::UploadedFile.new(
+      StringIO.new("name\n" + ("x" * (CsvImportLimits::MAX_FILE_BYTES + 1))),
+      "text/csv",
+      original_filename: "oversized.csv"
+    )
+    assert_no_difference("Person.count") do
+      post "/imports/people", headers: @auth_headers.except("Content-Type"), params: { file: oversized }
+    end
+    assert_response :content_too_large
+
+    rows = ([ "name,email" ] + Array.new(CsvImportLimits::MAX_ROWS + 1) do |index|
+      "Contact #{index},contact-#{index}@example.com"
+    end).join("\n")
+    too_many = Rack::Test::UploadedFile.new(StringIO.new(rows), "text/csv", original_filename: "rows.csv")
+    assert_no_difference("Person.count") do
+      post "/imports/people", headers: @auth_headers.except("Content-Type"), params: { file: too_many }
+    end
+    assert_response :unprocessable_entity
+    assert_match(/data rows/, json_response["error"])
+  end
+
+  test "gift imports reject excessive rows before writing" do
+    rows = ([ "name,status" ] + Array.new(CsvImportLimits::MAX_ROWS + 1) do |index|
+      "Gift #{index},Idea"
+    end).join("\n")
+    file = Rack::Test::UploadedFile.new(StringIO.new(rows), "text/csv", original_filename: "gifts.csv")
+
+    assert_no_difference("Gift.count") do
+      post "/imports/gifts",
+        headers: @auth_headers.except("Content-Type"),
+        params: { file: file, holiday_id: @holiday.id }
+    end
+    assert_response :unprocessable_entity
+    assert_match(/data rows/, json_response["error"])
+  end
+
   test "imports people handles invalid CSV" do
     invalid_csv = "this,is,not,valid"
     file = Rack::Test::UploadedFile.new(
@@ -112,6 +163,35 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
     assert_equal "jamie@example.com", gift.recipients.first.email
   end
 
+  test "gift import enforces the serialized free-plan cap" do
+    @user.update!(subscription_plan: "free", subscription_expires_at: nil)
+    status = GiftStatus.by_position.first!
+    missing = [ User::FREE_GIFT_LIMIT - @user.gift_count, 0 ].max
+    now = Time.current
+    Gift.insert_all!(Array.new(missing) do |index|
+      {
+        holiday_id: @holiday.id,
+        gift_status_id: status.id,
+        created_by_user_id: @user.id,
+        name: "Import limit filler #{index}",
+        position: index,
+        created_at: now,
+        updated_at: now
+      }
+    end) if missing.positive?
+    csv_content = "name,status\nOver-limit import,Idea"
+    file = Rack::Test::UploadedFile.new(StringIO.new(csv_content), "text/csv", original_filename: "gifts.csv")
+
+    assert_no_difference("Gift.count") do
+      post "/imports/gifts",
+        headers: @auth_headers.except("Content-Type"),
+        params: { file: file, holiday_id: @holiday.id }
+    end
+    assert_response :success
+    assert_equal 0, json_response["created"]
+    assert_match(/used all/, json_response.fetch("errors").join(" "))
+  end
+
   # ============================================================================
   # Export Tests
   # ============================================================================
@@ -142,6 +222,44 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
     sweater = csv.find { |row| row["Name"] == "Wool Sweater" }
     assert_equal "mom@example.com", sweater["Recipient Emails"]
     assert_includes sweater["Shipping Addresses"], "123 Maple Street"
+  end
+
+  test "gift import and export hide same-workspace holidays the caller has not joined" do
+    hidden = @workspace.holidays.create!(name: "Hidden workspace holiday")
+    hidden.holiday_users.create!(user: users(:two), role: "owner")
+
+    get "/exports/gifts", headers: @auth_headers, params: { holiday_id: hidden.id }
+    assert_response :not_found
+
+    csv_content = "name,status\nUnauthorized gift,Idea"
+    file = Rack::Test::UploadedFile.new(StringIO.new(csv_content), "text/csv", original_filename: "hidden.csv")
+    assert_no_difference("Gift.count") do
+      post "/imports/gifts",
+        headers: @auth_headers.except("Content-Type"),
+        params: { file: file, holiday_id: hidden.id }
+    end
+    assert_response :not_found
+  end
+
+  test "exports neutralize spreadsheet formulas in every user-controlled string cell" do
+    gift = gifts(:sweater)
+    person = people(:mom)
+    gift.update!(name: %q(  =HYPERLINK("https://evil.example")), description: "+cmd", link: "\t@payload")
+    person.update!(name: "-2+3", notes: "\r=cmd")
+
+    get "/exports/gifts", headers: @auth_headers, params: { holiday_id: @holiday.id }
+    assert_response :success
+    gift_row = CSV.parse(response.body, headers: true).first
+    assert gift_row["Name"].start_with?("'")
+    assert gift_row["Description"].start_with?("'")
+    assert gift_row["Recipients"].start_with?("'")
+    assert gift_row["Link"].start_with?("'")
+
+    get "/exports/people", headers: @auth_headers
+    assert_response :success
+    person_row = CSV.parse(response.body, headers: true).find { |row| row["Name"].include?("-2+3") }
+    assert person_row["Name"].start_with?("'")
+    assert person_row["Notes"].start_with?("'")
   end
 
   test "exports gifts returns 404 without holiday_id" do

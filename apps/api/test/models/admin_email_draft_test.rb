@@ -6,7 +6,7 @@ class AdminEmailDraftTest < ActiveSupport::TestCase
     draft, token = AdminEmailDraft.create_with_confirmation!(
       created_by: users(:one),
       recipient: users(:two),
-      api_key: api_key,
+      credential: api_key,
       subject: "Subject",
       body: "Body"
     )

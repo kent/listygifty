@@ -15,25 +15,15 @@ module ApiKeyAuthenticatable
   end
 
   def extract_api_key
-    # Support both Authorization: Bearer ng_xxx and X-API-Key: ng_xxx headers
-    auth_header = request.headers["Authorization"]
-    if auth_header&.start_with?("Bearer ng_")
-      return auth_header.split(" ", 2).last
-    end
+    bearer_token = BearerTokenExtractor.extract(request.headers["Authorization"])
+    return bearer_token if bearer_token&.start_with?(ApiKey::KEY_PREFIX)
 
     api_key_header = request.headers["X-API-Key"]
-    if api_key_header&.start_with?("ng_")
-      return api_key_header
-    end
-
-    nil
+    api_key_header if api_key_header&.start_with?(ApiKey::KEY_PREFIX)
   end
 
   def api_key_request?
-    auth_header = request.headers["Authorization"]
-    api_key_header = request.headers["X-API-Key"]
-
-    auth_header&.start_with?("Bearer ng_") || api_key_header&.start_with?("ng_")
+    extract_api_key.present?
   end
 
   def require_scope(scope)

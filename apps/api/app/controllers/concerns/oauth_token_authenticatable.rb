@@ -25,6 +25,7 @@ module OauthTokenAuthenticatable
     token_string = extract_bearer_token
     return false unless token_string
     return false if token_string.start_with?("ng_") # API key, not OAuth token
+    return false unless OauthAccessToken.hardened_access_token?(token_string)
 
     @current_oauth_token = OauthAccessToken.find_by_token(token_string)
     return false unless @current_oauth_token
@@ -36,9 +37,7 @@ module OauthTokenAuthenticatable
   end
 
   def extract_bearer_token
-    auth_header = request.headers["Authorization"]
-    return nil unless auth_header&.start_with?("Bearer ")
-    auth_header.split(" ", 2).last
+    BearerTokenExtractor.extract(request.headers["Authorization"])
   end
 
   def www_authenticate_header
@@ -54,7 +53,8 @@ module OauthTokenAuthenticatable
   end
 
   def resource_metadata_url
-    "#{request.base_url}/.well-known/oauth-protected-resource"
+    base_url = ENV.fetch("API_BASE_URL") { request.base_url }.delete_suffix("/")
+    "#{base_url}/.well-known/oauth-protected-resource"
   end
 
   def require_oauth_scope(scope)

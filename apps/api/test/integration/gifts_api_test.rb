@@ -84,6 +84,48 @@ class GiftsApiTest < ActionDispatch::IntegrationTest
     assert_equal address, gift.gift_recipients.find_by!(person: person).shipping_address
   end
 
+  test "create rejects a missing holiday and inaccessible people" do
+    assert_no_difference("Gift.count") do
+      post gifts_path,
+        headers: @auth_headers,
+        params: { gift: { name: "Missing holiday", gift_status_id: @status.id } },
+        as: :json
+    end
+    assert_response :not_found
+
+    victim = users(:two)
+    victim_workspace = workspaces(:two)
+    victim_person = victim_workspace.people.create!(name: "Victim contact", user: victim)
+    assert_no_difference("Gift.count") do
+      post gifts_path,
+        headers: @auth_headers,
+        params: {
+          gift: {
+            name: "Cross-tenant person",
+            holiday_id: @holiday.id,
+            gift_status_id: @status.id,
+            recipient_ids: [ victim_person.id ]
+          }
+        },
+        as: :json
+    end
+    assert_response :not_found
+  end
+
+  test "update cannot move a gift to an inaccessible holiday" do
+    gift = gifts(:sweater)
+    victim = users(:two)
+    victim_holiday = workspaces(:two).holidays.create!(name: "Victim holiday")
+    victim_holiday.holiday_users.create!(user: victim, role: "owner")
+
+    patch gift_path(gift),
+      headers: @auth_headers,
+      params: { gift: { holiday_id: victim_holiday.id } },
+      as: :json
+    assert_response :not_found
+    assert_equal @holiday.id, gift.reload.holiday_id
+  end
+
   test "update modifies a gift" do
     gift = gifts(:sweater)
     patch gift_path(gift),
@@ -146,6 +188,67 @@ class GiftsApiTest < ActionDispatch::IntegrationTest
       as: :json
     # May succeed or fail based on address access
     assert_includes [ 200, 403, 422 ], response.status
+  end
+
+  test "external holiday collaborators cannot read or change workspace shipping addresses" do
+    owner = users(:one)
+    collaborator = users(:two)
+    workspace = Workspace.create!(
+      name: "Private address workspace",
+      workspace_type: "business",
+      created_by_user: owner
+    )
+    workspace.workspace_memberships.create!(user: owner, role: "owner")
+    profile = workspace.create_company_profile!(name: "Private Co")
+    first_address = profile.addresses.create!(
+      label: "First",
+      street_line_1: "1 Private Road",
+      city: "Toronto",
+      postal_code: "M5V 3C3",
+      country: "CA"
+    )
+    second_address = profile.addresses.create!(
+      label: "Second",
+      street_line_1: "2 Private Road",
+      city: "Toronto",
+      postal_code: "M5V 3C4",
+      country: "CA"
+    )
+    holiday = workspace.holidays.create!(name: "Shared business holiday")
+    holiday.holiday_users.create!(user: owner, role: "owner")
+    holiday.holiday_users.create!(user: collaborator, role: "collaborator")
+    person = workspace.people.create!(name: "Private recipient", user: owner, default_shipping_address: first_address)
+    HolidayPerson.create!(holiday: holiday, person: person)
+    gift = holiday.gifts.create!(name: "Shared gift", gift_status: @status, created_by: owner)
+    recipient = gift.gift_recipients.create!(person: person)
+
+    patch gift_gift_recipient_path(gift, recipient),
+      headers: auth_headers_for(collaborator),
+      params: { gift_recipient: { shipping_address_id: second_address.id } },
+      as: :json
+    assert_response :forbidden
+    assert_equal first_address.id, recipient.reload.shipping_address_id
+
+    get gift_path(gift), headers: auth_headers_for(collaborator), as: :json
+    assert_response :success
+    serialized_recipient = json_response.fetch("gift_recipients").first
+    assert_nil serialized_recipient["shipping_address_id"]
+    assert_nil serialized_recipient["shipping_address"]
+
+    workspace.workspace_memberships.create!(user: collaborator, role: "member")
+    patch gift_gift_recipient_path(gift, recipient),
+      headers: auth_headers_for(collaborator, workspace: workspace),
+      params: { gift_recipient: { shipping_address_id: second_address.id } },
+      as: :json
+    assert_response :forbidden
+    assert_equal first_address.id, recipient.reload.shipping_address_id
+
+    patch gift_gift_recipient_path(gift, recipient),
+      headers: auth_headers_for(owner, workspace: workspace),
+      params: { gift_recipient: { shipping_address_id: second_address.id } },
+      as: :json
+    assert_response :success
+    assert_equal second_address.id, recipient.reload.shipping_address_id
   end
 
   test "gift recipient update clears shipping address" do

@@ -41,6 +41,7 @@ const androidAppLinkSha256CertFingerprints =
 // is a no-op redeploy. Required so the program is honest about which commit
 // is rolling out.
 const sourceSha = nfg.require("sourceSha");
+const legacyRollback = nfg.getBoolean("legacyRollback") ?? false;
 
 // =============================================================================
 // Provider
@@ -165,6 +166,12 @@ const activeStorageBucket = new gcp.storage.Bucket(
     uniformBucketLevelAccess: true,
     publicAccessPrevention: "enforced",
     versioning: { enabled: true },
+    lifecycleRules: [
+      {
+        action: { type: "Delete" },
+        condition: { daysSinceNoncurrentTime: 7, sendAgeIfZero: false },
+      },
+    ],
   },
   {
     ...providerOpts,
@@ -208,84 +215,6 @@ function secretEnv(envVar: string, fullSecretName: string) {
 function plainEnv(name: string, value: pulumi.Input<string>) {
   return { name, value };
 }
-
-// =============================================================================
-// Cloud Run: API
-// =============================================================================
-
-const apiEnv: pulumi.Input<pulumi.Input<gcp.types.input.cloudrunv2.ServiceTemplateContainerEnv>[]> = [
-  plainEnv("RAILS_ENV", environment === "production" ? "production" : "staging"),
-  plainEnv("RAILS_MAX_THREADS", "5"),
-  plainEnv("RAILS_MIN_THREADS", "5"),
-  // Cloud Run has no separate long-running worker service. Keep Solid Queue
-  // attached to Puma so queued mail and other background jobs are processed.
-  plainEnv("SOLID_QUEUE_IN_PUMA", "true"),
-  plainEnv("GOOGLE_CLOUD_PROJECT", project),
-  plainEnv("ACTIVE_STORAGE_SERVICE", "google"),
-  plainEnv("ACTIVE_STORAGE_BUCKET", activeStorageBucket.name),
-  plainEnv("ADMIN_EMAILS", "kent.fenwick@gmail.com"),
-  plainEnv("ADMIN_MCP_ENABLED", "true"),
-  secretEnv("DATABASE_URL", `${secretPrefix}database-url`),
-  secretEnv("SECRET_KEY_BASE", railsKeySecretName),
-  secretEnv("ALLOWED_HOSTS", `${secretPrefix}allowed-hosts`),
-  secretEnv("CLERK_SECRET_KEY", `${secretPrefix}clerk-secret-key`),
-  secretEnv("STRIPE_SECRET_KEY", `${secretPrefix}stripe-secret-key`),
-  secretEnv("STRIPE_WEBHOOK_SECRET", `${secretPrefix}stripe-webhook-secret`),
-  secretEnv("POSTMARK_API_TOKEN", `${secretPrefix}postmark-api-token`),
-  secretEnv("OPENAI_API_KEY", `${secretPrefix}openai-api-key`),
-  secretEnv("CORS_ORIGINS", `${secretPrefix}cors-origins`),
-  secretEnv("FRONTEND_URL", `${secretPrefix}frontend-url`),
-];
-
-const apiServiceResource = new gcp.cloudrunv2.Service(
-  "api-service",
-  {
-    name: apiServiceName,
-    location: region,
-    ingress: "INGRESS_TRAFFIC_ALL",
-    deletionProtection: environment === "production",
-    template: {
-      serviceAccount: defaultComputeSa,
-      timeout: "300s",
-      maxInstanceRequestConcurrency: apiConcurrency,
-      scaling: {
-        minInstanceCount: apiMinInstances,
-        maxInstanceCount: apiMaxInstances,
-      },
-      containers: [
-        {
-          image: apiImageUri,
-          ports: { containerPort: apiPort },
-          // Puma also supervises Solid Queue in this service. Rails plus the
-          // dispatcher, worker, and scheduler exceeds 512 MiB during normal
-          // mail delivery and was repeatedly OOM-killed in production.
-          resources: { limits: { cpu: "1", memory: "1Gi" }, cpuIdle: false },
-          envs: apiEnv,
-        },
-      ],
-      volumes: [
-        {
-          name: "cloudsql",
-          cloudSqlInstance: { instances: [sqlInstance.connectionName] },
-        },
-      ],
-    },
-    traffics: [{ type: "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST", percent: 100 }],
-  },
-  providerOpts
-);
-
-new gcp.cloudrunv2.ServiceIamMember(
-  "api-public",
-  {
-    project,
-    location: region,
-    name: apiServiceResource.name,
-    role: "roles/run.invoker",
-    member: "allUsers",
-  },
-  providerOpts
-);
 
 // =============================================================================
 // Cloud Run: Web
@@ -349,7 +278,40 @@ new gcp.cloudrunv2.ServiceIamMember(
 );
 
 // =============================================================================
-// Migration job — db:migrate runs after API service updates
+// Cloud Run: API
+// =============================================================================
+
+const apiEnv: pulumi.Input<pulumi.Input<gcp.types.input.cloudrunv2.ServiceTemplateContainerEnv>[]> = [
+  plainEnv("RAILS_ENV", environment === "production" ? "production" : "staging"),
+  plainEnv("RAILS_MAX_THREADS", "5"),
+  plainEnv("RAILS_MIN_THREADS", "5"),
+  // Cloud Run has no separate long-running worker service. Keep Solid Queue
+  // attached to Puma so queued mail and other background jobs are processed.
+  plainEnv("SOLID_QUEUE_IN_PUMA", "true"),
+  plainEnv("GOOGLE_CLOUD_PROJECT", project),
+  plainEnv("API_BASE_URL", `https://${apiDomain}`),
+  plainEnv("MCP_SERVER_URI", `https://${apiDomain}/mcp`),
+  plainEnv("ADMIN_MCP_SERVER_URI", `https://${apiDomain}/admin/mcp`),
+  plainEnv("ACTIVE_STORAGE_SERVICE", "google"),
+  plainEnv("ACTIVE_STORAGE_BUCKET", activeStorageBucket.name),
+  plainEnv("ADMIN_EMAILS", "kent.fenwick@gmail.com"),
+  plainEnv("ADMIN_MCP_ENABLED", "true"),
+  plainEnv("OAUTH_ISSUANCE_ENABLED", "true"),
+  plainEnv("MCP_ALLOWED_ORIGINS", ""),
+  secretEnv("DATABASE_URL", `${secretPrefix}database-url`),
+  secretEnv("SECRET_KEY_BASE", railsKeySecretName),
+  secretEnv("ALLOWED_HOSTS", `${secretPrefix}allowed-hosts`),
+  secretEnv("CLERK_SECRET_KEY", `${secretPrefix}clerk-secret-key`),
+  secretEnv("STRIPE_SECRET_KEY", `${secretPrefix}stripe-secret-key`),
+  secretEnv("STRIPE_WEBHOOK_SECRET", `${secretPrefix}stripe-webhook-secret`),
+  secretEnv("POSTMARK_API_TOKEN", `${secretPrefix}postmark-api-token`),
+  secretEnv("OPENAI_API_KEY", `${secretPrefix}openai-api-key`),
+  secretEnv("CORS_ORIGINS", `${secretPrefix}cors-origins`),
+  secretEnv("FRONTEND_URL", `${secretPrefix}frontend-url`),
+];
+
+// =============================================================================
+// Migration job — db:migrate gates API service traffic
 // =============================================================================
 
 const migrationJobResource = new gcp.cloudrunv2.Job(
@@ -400,7 +362,57 @@ const runMigrations = new command.local.Command(
     triggers: [sourceSha],
     environment: { CLOUDSDK_CORE_PROJECT: project },
   },
-  { dependsOn: [migrationJobResource, apiServiceResource] }
+  { dependsOn: [migrationJobResource, webServiceResource] }
+);
+
+const apiServiceResource = new gcp.cloudrunv2.Service(
+  "api-service",
+  {
+    name: apiServiceName,
+    location: region,
+    ingress: "INGRESS_TRAFFIC_ALL",
+    deletionProtection: environment === "production",
+    template: {
+      serviceAccount: defaultComputeSa,
+      timeout: "300s",
+      maxInstanceRequestConcurrency: apiConcurrency,
+      scaling: {
+        minInstanceCount: apiMinInstances,
+        maxInstanceCount: apiMaxInstances,
+      },
+      containers: [
+        {
+          image: apiImageUri,
+          ports: { containerPort: apiPort },
+          // Puma also supervises Solid Queue in this service. Rails plus the
+          // dispatcher, worker, and scheduler exceeds 512 MiB during normal
+          // mail delivery and was repeatedly OOM-killed in production.
+          resources: { limits: { cpu: "1", memory: "1Gi" }, cpuIdle: false },
+          envs: apiEnv,
+        },
+      ],
+      volumes: [
+        {
+          name: "cloudsql",
+          cloudSqlInstance: { instances: [sqlInstance.connectionName] },
+        },
+      ],
+    },
+    traffics: [{ type: "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST", percent: 100 }],
+  },
+  { ...providerOpts, dependsOn: [runMigrations, webServiceResource] }
+);
+
+new gcp.cloudrunv2.ServiceIamMember(
+  "api-public",
+  {
+    project,
+    location: region,
+    name: apiServiceResource.name,
+    role: "roles/run.invoker",
+    member: "allUsers",
+  },
+  providerOpts
 );
 
 // =============================================================================
@@ -422,7 +434,8 @@ new command.local.Command(
   "smoke-tests",
   {
     create: pulumi.interpolate`bash -c '
-set -e
+set -euo pipefail
+legacy_rollback="${legacyRollback}"
 api_url="$(gcloud run services describe ${apiServiceName} --project=${project} --region=${region} --format="value(status.url)")"
 web_url="$(gcloud run services describe ${webServiceName} --project=${project} --region=${region} --format="value(status.url)")"
 queue_worker="$(gcloud run services describe ${apiServiceName} --project=${project} --region=${region} --format="yaml(spec.template.spec.containers[0].env)" | grep -A1 "name: SOLID_QUEUE_IN_PUMA" | grep -c "value: .true.")"
@@ -433,14 +446,47 @@ check() {
   [ "$code" = "$3" ] || { echo "FAIL: $1 expected $3 got $code ($2)" >&2; exit 1; }
   echo "  ✓ $1 ($code)"
 }
-check "API /up"      "$api_url/up"    200
-check "API /holidays" "$api_url/holidays" 401
-check "web /"        "$web_url/"      200
-check "web /login"   "$web_url/login" 200
+check "API /up"                     "$api_url/up" 200
+check "API /holidays"               "$api_url/holidays" 401
+check "web /"                       "$web_url/" 200
+check "web /login"                  "$web_url/login" 200
+if [ "$legacy_rollback" != "true" ]; then
+check "OAuth authorization metadata" "$api_url/.well-known/oauth-authorization-server" 200
+check "user MCP resource metadata"  "$api_url/.well-known/oauth-protected-resource/mcp" 200
+check "admin MCP resource metadata" "$api_url/.well-known/oauth-protected-resource/admin/mcp" 200
+check "OIDC is not advertised"        "$api_url/.well-known/openid-configuration" 404
+check "web OAuth consent"           "$web_url/oauth/authorize" 200
+
+registration="$(curl -fsS --max-time 15 -X POST "$api_url/oauth/register" \
+  -H "Content-Type: application/json" \
+  --data "{\"client_name\":\"Deployment OAuth smoke\",\"redirect_uris\":[\"https://example.com/oauth/callback\"],\"scope\":\"read\"}")"
+client_id="$(node -p "JSON.parse(process.argv[1]).client_id" "$registration")"
+challenge="$(printf "A%.0s" {1..43})"
+headers_file="$(mktemp)"
+authorize_code="$(curl -sS -D "$headers_file" -o /dev/null -w "%{http_code}" --max-time 15 -G "$api_url/oauth/authorize" \
+  --data-urlencode "client_id=$client_id" \
+  --data-urlencode "redirect_uri=https://example.com/oauth/callback" \
+  --data-urlencode "response_type=code" \
+  --data-urlencode "scope=read" \
+  --data-urlencode "state=deployment-smoke" \
+  --data-urlencode "code_challenge=$challenge" \
+  --data-urlencode "code_challenge_method=S256" \
+  --data-urlencode "resource=https://${apiDomain}/mcp")"
+authorize_location="$(grep -i "^location:" "$headers_file" | tail -1 | cut -d" " -f2- | tr -d "\r")"
+rm -f "$headers_file"
+[ "$authorize_code" = "302" ] || { echo "FAIL: OAuth authorize expected 302 got $authorize_code" >&2; exit 1; }
+case "$authorize_location" in
+  "https://${appDomain}/oauth/authorize?request_token=lg_request_v2_"*) ;;
+  *) echo "FAIL: unexpected OAuth consent redirect: $authorize_location" >&2; exit 1 ;;
+esac
+echo "  ✓ DCR → browser consent handoff (302)"
+else
+  echo "  ✓ legacy rollback mode: skipped OAuth v2-only smoke assertions"
+fi
 '`,
-    triggers: [sourceSha],
+    triggers: [sourceSha, legacyRollback ? "legacy-rollback" : "oauth-v2"],
   },
-  { dependsOn: [runMigrations, webServiceResource] }
+  { dependsOn: [apiServiceResource, webServiceResource] }
 );
 
 // =============================================================================

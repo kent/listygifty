@@ -1,6 +1,7 @@
 require "test_helper"
 
 class OauthAccessTokenTest < ActiveSupport::TestCase
+  RESOURCE = "https://api.example.com/mcp"
   def setup
     @user = users(:one)
     @client = OauthClient.register_system_client(
@@ -11,7 +12,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
   end
 
   test "generates access token with refresh token" do
-    result = OauthAccessToken.generate_for(
+    result = generate(
       client: @client,
       user: @user,
       scopes: [ "read", "write" ]
@@ -25,7 +26,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
   end
 
   test "generates access token without refresh token" do
-    result = OauthAccessToken.generate_for(
+    result = generate(
       client: @client,
       user: @user,
       scopes: [ "read" ],
@@ -38,7 +39,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
   end
 
   test "finds token by raw value" do
-    result = OauthAccessToken.generate_for(
+    result = generate(
       client: @client,
       user: @user,
       scopes: [ "read" ]
@@ -54,7 +55,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
   end
 
   test "token expires after 1 hour" do
-    result = OauthAccessToken.generate_for(
+    result = generate(
       client: @client,
       user: @user,
       scopes: [ "read" ]
@@ -69,7 +70,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
   end
 
   test "refresh token expires after 30 days" do
-    result = OauthAccessToken.generate_for(
+    result = generate(
       client: @client,
       user: @user,
       scopes: [ "read" ]
@@ -83,7 +84,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
   end
 
   test "refreshes token and rotates refresh token" do
-    result = OauthAccessToken.generate_for(
+    result = generate(
       client: @client,
       user: @user,
       scopes: [ "read", "write" ]
@@ -100,8 +101,48 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     assert new_result.refresh_token.present?
   end
 
+  test "bounds rapid refresh rotation and total family storage" do
+    original = generate(scopes: [ "read" ])
+    current = original.access_token.refresh!
+    grant = current.access_token.oauth_refresh_grant
+    assert_equal 1, grant.reload.rotation_count
+
+    assert_no_difference("OauthAccessToken.count") do
+      error = assert_raises(OauthError) { current.access_token.refresh! }
+      assert_equal "temporarily_unavailable", error.error_code
+    end
+    assert current.access_token.reload.active?
+
+    travel OauthRefreshGrant::MIN_ROTATION_INTERVAL + 1.second do
+      next_result = current.access_token.refresh!
+      assert_equal 2, next_result.access_token.oauth_refresh_grant.reload.rotation_count
+    end
+
+    grant.update_columns(rotation_count: OauthRefreshGrant::MAX_ROTATIONS, last_rotated_at: nil)
+    active = grant.oauth_access_tokens.where(revoked_at: nil).first!
+    error = assert_raises(OauthError) { active.refresh! }
+    assert_equal "invalid_grant", error.error_code
+    assert grant.reload.revoked_at.present?
+  end
+
+  test "detects rotated refresh token replay and durably revokes its active family" do
+    original = generate(scopes: [ "read", "write" ])
+    deadline = original.access_token.refresh_token_expires_at
+    grant = original.access_token.oauth_refresh_grant
+
+    current = original.access_token.refresh!
+    assert_equal grant.id, current.access_token.oauth_refresh_grant_id
+    assert_equal deadline, current.access_token.refresh_token_expires_at
+    assert current.access_token.active?
+
+    error = assert_raises(OauthError) { original.access_token.refresh! }
+    assert_includes error.message, "reuse detected"
+    assert current.access_token.reload.revoked?
+    assert_nil OauthAccessToken.find_by_token(current.token)
+  end
+
   test "fails refresh when token revoked" do
-    result = OauthAccessToken.generate_for(
+    result = generate(
       client: @client,
       user: @user,
       scopes: [ "read" ]
@@ -115,7 +156,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
   end
 
   test "fails refresh when refresh token expired" do
-    result = OauthAccessToken.generate_for(
+    result = generate(
       client: @client,
       user: @user,
       scopes: [ "read" ]
@@ -129,7 +170,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
   end
 
   test "checks scope permissions" do
-    result = OauthAccessToken.generate_for(
+    result = generate(
       client: @client,
       user: @user,
       scopes: [ "read" ]
@@ -140,7 +181,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
   end
 
   test "generates token response" do
-    result = OauthAccessToken.generate_for(
+    result = generate(
       client: @client,
       user: @user,
       scopes: [ "read", "write" ]
@@ -156,7 +197,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
   end
 
   test "touches last_used_at" do
-    result = OauthAccessToken.generate_for(
+    result = generate(
       client: @client,
       user: @user,
       scopes: [ "read" ]
@@ -170,7 +211,7 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
   end
 
   test "stores resource for audience validation" do
-    result = OauthAccessToken.generate_for(
+    result = generate(
       client: @client,
       user: @user,
       scopes: [ "read" ],
@@ -178,5 +219,16 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     )
 
     assert_equal "https://api.example.com/mcp", result.access_token.resource
+  end
+  private
+
+  def generate(**options)
+    defaults = {
+      client: @client,
+      user: @user,
+      scopes: [ "read" ],
+      resource: RESOURCE
+    }
+    OauthAccessToken.generate_for(**defaults.merge(options))
   end
 end

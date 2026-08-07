@@ -275,7 +275,7 @@ cd apps/mobile && npx expo start
 | Holidays | `/holidays` | GET, POST, PATCH, DELETE |
 | People | `/people` | GET, POST, PATCH, DELETE |
 | Gifts | `/gifts` | GET, POST, PATCH, DELETE |
-| Gift Statuses | `/gift_statuses` | GET, POST, PATCH, DELETE |
+| Gift Statuses | `/gift_statuses` | GET; global mutations require an allowlisted Clerk admin (admin MCP is preferred) |
 | Gift Exchanges | `/gift_exchanges` | GET, POST, PATCH, DELETE |
 
 ---
@@ -342,10 +342,10 @@ npm run deploy:mobile       # web + API + iOS EAS build
 ```
 
 Each command runs (parallel where independent): API + web image builds via
-Cloud Build, Cloud Run rollout, db:migrate via Cloud Run job, smoke tests
+Cloud Build, db:migrate via Cloud Run job, Cloud Run rollout, smoke tests
 (`/up`, `/holidays` → 401, web `/`, `/login`). The EAS mobile build
 (`--no-wait --auto-submit`) only runs with `ENABLE_MOBILE=true` /
-`deploy:mobile`. Same git SHA twice → no-op redeploy.
+`deploy:mobile`. Repeating a git SHA still runs both Cloud Builds; Pulumi then treats unchanged rollout resources and command triggers as idempotent.
 
 Pulumi state lives in `gs://listygifty-pulumi-state` (self-hosted GCS
 backend). See `infra/pulumi/README.md` for bootstrap, import-existing,

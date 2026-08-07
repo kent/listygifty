@@ -38,6 +38,17 @@ class GiftSuggestionsApiTest < ActionDispatch::IntegrationTest
     assert_includes [ 200, 201, 403, 422, 503 ], response.status
   end
 
+  test "refine rejects too many suggestion IDs before invoking AI" do
+    @user.update!(subscription_plan: "premium", subscription_expires_at: 1.month.from_now)
+    ids = Array.new(GiftSuggestionService::MAX_REFINEMENT_SUGGESTIONS + 1) { |index| index + 1 }
+
+    post refine_person_gift_suggestions_path(@person),
+      headers: @auth_headers,
+      params: { suggestion_ids: ids, holiday_id: @holiday.id },
+      as: :json
+    assert_response :bad_request
+  end
+
   # ============================================================================
   # Accept and Discard Tests
   # ============================================================================
@@ -50,6 +61,84 @@ class GiftSuggestionsApiTest < ActionDispatch::IntegrationTest
         as: :json
     end
     assert_response :success
+  end
+
+  test "accept enforces the creator quota without consuming the suggestion" do
+    @user.update!(subscription_plan: "free", subscription_expires_at: nil)
+    status = GiftStatus.by_position.first!
+    missing = [ User::FREE_GIFT_LIMIT - @user.gift_count, 0 ].max
+    now = Time.current
+    Gift.insert_all!(Array.new(missing) do |index|
+      {
+        holiday_id: @holiday.id,
+        gift_status_id: status.id,
+        created_by_user_id: @user.id,
+        name: "Suggestion limit filler #{index}",
+        position: index,
+        created_at: now,
+        updated_at: now
+      }
+    end) if missing.positive?
+
+    assert_no_difference([ "Gift.count", "GiftSuggestion.count" ]) do
+      post accept_gift_suggestion_path(@suggestion), headers: @auth_headers, as: :json
+    end
+    assert_response :payment_required
+    assert GiftSuggestion.exists?(@suggestion.id)
+  end
+
+  test "removed workspace and holiday members cannot use stale owned-person suggestions" do
+    owner = users(:two)
+    workspace = Workspace.create!(name: "Removed suggestion access", workspace_type: "business", created_by_user: owner)
+    workspace.workspace_memberships.create!(user: owner, role: "owner")
+    membership = workspace.workspace_memberships.create!(user: @user, role: "member")
+    holiday = workspace.holidays.create!(name: "Former shared holiday")
+    holiday.holiday_users.create!(user: owner, role: "owner")
+    holiday_membership = holiday.holiday_users.create!(user: @user, role: "collaborator")
+    person = workspace.people.create!(name: "Former contact", user: @user)
+    suggestion = person.gift_suggestions.create!(name: "Stale suggestion", holiday: holiday)
+    membership.destroy!
+    holiday_membership.destroy!
+
+    get person_gift_suggestions_path(person), headers: @auth_headers, as: :json
+    assert_response :not_found
+    assert_no_difference([ "Gift.count", "GiftSuggestion.count" ]) do
+      post accept_gift_suggestion_path(suggestion), headers: @auth_headers, as: :json
+    end
+    assert_response :not_found
+  end
+
+  test "external collaborators see only visible suggestions and cannot mutate them" do
+    owner = users(:two)
+    workspace = workspaces(:two)
+    person = workspace.people.create!(name: "Shared suggestion contact", user: owner)
+    visible_holiday = workspace.holidays.create!(name: "Visible suggestion holiday")
+    visible_holiday.holiday_users.create!(user: owner, role: "owner")
+    visible_holiday.holiday_users.create!(user: @user, role: "collaborator")
+    HolidayPerson.create!(holiday: visible_holiday, person: person)
+    hidden_holiday = workspace.holidays.create!(name: "Hidden suggestion holiday")
+    hidden_holiday.holiday_users.create!(user: owner, role: "owner")
+    unshared_joined_holiday = workspace.holidays.create!(name: "Joined but person not shared")
+    unshared_joined_holiday.holiday_users.create!(user: owner, role: "owner")
+    unshared_joined_holiday.holiday_users.create!(user: @user, role: "collaborator")
+    general = person.gift_suggestions.create!(name: "General suggestion")
+    visible = person.gift_suggestions.create!(name: "Visible suggestion", holiday: visible_holiday)
+    hidden = person.gift_suggestions.create!(name: "Hidden suggestion", holiday: hidden_holiday)
+    unshared = person.gift_suggestions.create!(name: "Unshared suggestion", holiday: unshared_joined_holiday)
+
+    get person_gift_suggestions_path(person), headers: @auth_headers, as: :json
+    assert_response :success
+    ids = json_response.pluck("id")
+    assert_not_includes ids, general.id
+    assert_includes ids, visible.id
+    assert_not_includes ids, hidden.id
+    assert_not_includes ids, unshared.id
+
+    post person_gift_suggestions_path(person), headers: @auth_headers, as: :json
+    assert_response :forbidden
+    post refine_person_gift_suggestions_path(person), headers: @auth_headers,
+      params: { suggestion_ids: [ general.id ], holiday_id: visible_holiday.id }, as: :json
+    assert_response :forbidden
   end
 
   test "accept without holiday_id still creates gift" do

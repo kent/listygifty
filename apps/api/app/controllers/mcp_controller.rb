@@ -1,82 +1,68 @@
 # MCP (Model Context Protocol) HTTP endpoint
 # Implements Streamable HTTP transport for remote MCP connections
 class McpController < ApplicationController
-  include ActionController::Live
   include OauthTokenAuthenticatable
+  include McpTransportSecurity
 
-  SUPPORTED_PROTOCOL_VERSIONS = %w[2025-06-18 2025-03-26 2024-11-05].freeze
+  SUPPORTED_PROTOCOL_VERSIONS = McpTransportSecurity::SUPPORTED_PROTOCOL_VERSIONS
+  MAX_REQUEST_BYTES = 256.kilobytes
+  MAX_JSON_DEPTH = 32
+  MAX_METHOD_LENGTH = 100
 
   skip_before_action :authenticate!
+  before_action :set_security_headers
+  before_action :validate_content_type!, only: :handle
+  before_action :validate_origin!
+  before_action :validate_mcp_protocol_version!
   before_action :authenticate_oauth_or_api_key!
+  after_action :set_security_headers
+
+  # Streamable HTTP GET is optional. This stateless server has no server-
+  # initiated messages, so holding Puma threads open for SSE is unsafe.
+  def connect
+    response.headers["Allow"] = "POST"
+    head :method_not_allowed
+  end
 
   # POST /mcp
   # Main MCP endpoint - handles JSON-RPC messages
   def handle
-    # Parse JSON-RPC request
-    begin
-      body = JSON.parse(request.body.read)
-    rescue JSON::ParserError
-      return render_jsonrpc_error(nil, -32700, "Parse error")
-    end
+    raw_body = bounded_request_body
+    return if performed?
 
-    # Handle batch requests
+    body = JSON.parse(raw_body, max_nesting: MAX_JSON_DEPTH)
     if body.is_a?(Array)
-      responses = body.map { |req| process_jsonrpc_request(req) }.compact
-      if responses.any?
-        render json: responses
-      else
-        head :no_content
-      end
+      render json: jsonrpc_error(nil, -32600, "Batch requests are not supported"), status: :bad_request
     else
       response = process_jsonrpc_request(body)
-      if response
-        render json: response
-      else
-        head :no_content
-      end
+      response ? render(json: response) : head(:accepted)
     end
-  end
-
-  # GET /mcp (SSE transport - for legacy/fallback support)
-  def sse_connect
-    response.headers["Content-Type"] = "text/event-stream"
-    response.headers["Cache-Control"] = "no-cache"
-    response.headers["Connection"] = "keep-alive"
-    response.headers["X-Accel-Buffering"] = "no"
-
-    sse = SSE.new(response.stream, retry: 3000)
-
-    # Send endpoint information
-    sse.write({ endpoint: "#{request.base_url}/mcp/messages" }, event: "endpoint")
-
-    # Keep connection alive with heartbeat
-    loop do
-      sse.write({ time: Time.current.iso8601 }, event: "heartbeat")
-      sleep 30
-    end
-  rescue ActionController::Live::ClientDisconnected
-    # Client disconnected, clean up
-  ensure
-    sse&.close
-  end
-
-  # POST /mcp/messages (SSE transport - message endpoint)
-  def sse_message
-    begin
-      body = JSON.parse(request.body.read)
-    rescue JSON::ParserError
-      return render_jsonrpc_error(nil, -32700, "Parse error")
-    end
-
-    response = process_jsonrpc_request(body)
-    if response
-      render json: response
-    else
-      head :no_content
-    end
+  rescue JSON::ParserError, JSON::NestingError
+    render_jsonrpc_error(nil, -32700, "Parse error")
   end
 
   private
+
+  def validate_content_type!
+    return if request.media_type == "application/json"
+
+    render json: { error: "Content-Type must be application/json" }, status: :unsupported_media_type
+  end
+
+  def validate_origin!
+    origin = request.headers["Origin"]
+    return if origin.blank?
+
+    allowed = ENV.fetch("MCP_ALLOWED_ORIGINS", "").split(",").map(&:strip).reject(&:blank?)
+    render json: { error: "Origin is not allowed for the MCP" }, status: :forbidden unless allowed.include?(origin)
+  end
+
+  def set_security_headers
+    response.headers["Cache-Control"] = "no-store, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "no-referrer"
+  end
 
   def authenticate_oauth_or_api_key!
     # Try OAuth token first
@@ -96,22 +82,19 @@ class McpController < ApplicationController
   end
 
   def authenticate_with_oauth_token
-    auth_header = request.headers["Authorization"]
-    return false unless auth_header&.start_with?("Bearer ")
+    token = extract_bearer_token
+    return false unless token
 
-    token = auth_header.split(" ").last
     return false if token.start_with?("ng_") # This is an API key, not OAuth
+    return false unless OauthAccessToken.hardened_access_token?(token)
 
     oauth_token = OauthAccessToken.find_by_token(token)
     return false unless oauth_token
 
-    # Validate audience (resource parameter)
-    if oauth_token.resource.present?
-      mcp_uri = ENV.fetch("MCP_SERVER_URI") { "#{request.base_url}/mcp" }
-      unless oauth_token.resource == mcp_uri
-        return false
-      end
-    end
+    # OAuth access tokens are sender-constrained to this exact protected
+    # resource through the RFC 8707 resource indicator.
+    return false unless oauth_token.resource == oauth_resource.uri
+    return false if oauth_token.scopes.empty? || (oauth_token.scopes - oauth_resource.scopes).any?
 
     oauth_token.touch_last_used!
     @current_user = oauth_token.user
@@ -122,11 +105,11 @@ class McpController < ApplicationController
 
   def authenticate_with_api_key
     # Check Authorization header or X-API-Key header
-    auth_header = request.headers["Authorization"]
+    bearer_token = extract_bearer_token
     api_key_header = request.headers["X-API-Key"]
 
-    raw_key = if auth_header&.start_with?("Bearer ng_")
-      auth_header.split(" ").last
+    raw_key = if bearer_token&.start_with?("ng_")
+      bearer_token
     elsif api_key_header&.start_with?("ng_")
       api_key_header
     end
@@ -142,25 +125,55 @@ class McpController < ApplicationController
     true
   end
 
+  def bounded_request_body
+    if request.content_length.to_i > MAX_REQUEST_BYTES
+      render json: { error: "MCP request is too large" }, status: :content_too_large
+      return nil
+    end
+
+    body = request.body.read(MAX_REQUEST_BYTES + 1)
+    if body.bytesize > MAX_REQUEST_BYTES
+      render json: { error: "MCP request is too large" }, status: :content_too_large
+      return nil
+    end
+    body
+  end
+
+  def valid_jsonrpc_message?(message)
+    return false unless message.is_a?(Hash)
+    return false unless message["jsonrpc"] == "2.0"
+    return false unless message["method"].is_a?(String) &&
+      message["method"].present? && message["method"].length <= MAX_METHOD_LENGTH
+    return false unless !message.key?("params") || message["params"].is_a?(Hash)
+    return false unless !message.key?("id") || valid_request_id?(message["id"])
+
+    true
+  end
+
+  def valid_request_id?(id)
+    id.nil? || id.is_a?(String) || id.is_a?(Integer)
+  end
+
   def process_jsonrpc_request(req)
-    unless req.is_a?(Hash) && req["jsonrpc"] == "2.0"
-      return jsonrpc_error(req&.dig("id"), -32600, "Invalid Request")
+    unless valid_jsonrpc_message?(req)
+      candidate_id = req.is_a?(Hash) ? req["id"] : nil
+      id = valid_request_id?(candidate_id) ? candidate_id : nil
+      return jsonrpc_error(id, -32600, "Invalid Request")
     end
 
     method = req["method"]
     params = req["params"] || {}
     id = req["id"]
-
-    # Handle notifications (no id means no response expected)
-    is_notification = id.nil?
+    is_notification = !req.key?("id")
+    return nil if is_notification && method != "notifications/initialized"
 
     begin
       result = dispatch_method(method, params)
       is_notification ? nil : jsonrpc_response(id, result)
     rescue McpError => e
       is_notification ? nil : jsonrpc_error(id, e.code, e.message, e.data)
-    rescue => e
-      Rails.logger.error("MCP error: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
+    rescue StandardError => e
+      Rails.logger.error("MCP error request_id=#{request.request_id} class=#{e.class}")
       is_notification ? nil : jsonrpc_error(id, -32603, "Internal error")
     end
   end
@@ -214,14 +227,15 @@ class McpController < ApplicationController
     tool_handler = tool_handlers[tool_name]
     raise McpError.new(-32601, "Unknown tool: #{tool_name}") unless tool_handler
 
-    # Check scope permissions
+    # Check scope permissions and enforce the same schema advertised to clients.
     required_scope = tool_handler[:scope] || "read"
-    unless can_access_scope?(required_scope)
-      raise McpError.new(-32000, "Insufficient permissions. Required scope: #{required_scope}")
-    end
+    require_scope!(required_scope)
+    Admin::Mcp::SchemaValidator.validate!(tool_args, tool_handler[:schema])
 
     result = tool_handler[:handler].call(tool_args)
     { content: [ { type: "text", text: result.to_json } ] }
+  rescue Gifts::MutationService::LimitExceeded => e
+    tool_error(e.message)
   rescue ActiveRecord::RecordInvalid => e
     tool_error(e.record.errors.full_messages.join(", "))
   rescue ActiveRecord::RecordNotFound
@@ -231,16 +245,24 @@ class McpController < ApplicationController
   end
 
   def handle_list_resources(_params)
+    require_scope!("read")
     { resources: mcp_resources }
   end
 
   def handle_read_resource(params)
+    require_scope!("read")
     uri = params["uri"]
     resource = resource_handlers[uri]
     raise McpError.new(-32602, "Unknown resource: #{uri}") unless resource
 
     result = resource[:handler].call
     { contents: [ { uri: uri, mimeType: "application/json", text: result.to_json } ] }
+  end
+
+  def require_scope!(scope)
+    return if can_access_scope?(scope)
+
+    raise McpError.new(-32000, "Insufficient permissions. Required scope: #{scope}")
   end
 
   def can_access_scope?(scope)
@@ -268,7 +290,11 @@ class McpController < ApplicationController
   end
 
   def resource_metadata_url
-    "#{request.base_url}/.well-known/oauth-protected-resource"
+    "#{request.base_url}#{oauth_resource.metadata_path}"
+  end
+
+  def oauth_resource
+    @oauth_resource ||= Oauth::ResourceRegistry.new(base_url: request.base_url).user_mcp
   end
 
   # MCP Tools and Resources definitions
@@ -294,7 +320,11 @@ class McpController < ApplicationController
   end
 
   def tool_handlers
-    @tool_handlers ||= build_tool_handlers
+    @tool_handlers ||= build_tool_handlers.tap do |handlers|
+      handlers.each_value do |config|
+        config[:schema][:additionalProperties] = false if config.dig(:schema, :type) == "object"
+      end
+    end
   end
 
   def resource_handlers
@@ -322,7 +352,10 @@ class McpController < ApplicationController
         description: "List all holidays in a workspace",
         scope: "read",
         schema: { type: "object", properties: { workspace_id: { type: "integer" } }, required: [ "workspace_id" ] },
-        handler: ->(args) { find_workspace(args["workspace_id"]).holidays.map { |h| holiday_to_json(h) } }
+        handler: ->(args) {
+          workspace = find_workspace(args["workspace_id"])
+          workspace.holidays.where(id: @current_user.holiday_ids).map { |holiday| holiday_to_json(holiday) }
+        }
       },
       "create_holiday" => {
         description: "Create a new holiday",
@@ -405,23 +438,13 @@ class McpController < ApplicationController
             link: { type: "string" },
             cost: { type: "number" },
             gift_status_id: { type: "integer" },
-            recipient_ids: { type: "array", items: { type: "integer" } },
-            giver_ids: { type: "array", items: { type: "integer" } }
+            recipient_ids: { type: "array", items: { type: "integer" }, maxItems: 100, uniqueItems: true },
+            giver_ids: { type: "array", items: { type: "integer" }, maxItems: 100, uniqueItems: true }
           },
           required: [ "holiday_id", "name" ]
         },
         handler: ->(args) {
-          holiday = find_holiday(args["holiday_id"])
-          gift = holiday.gifts.create!(
-            name: args["name"],
-            description: args["description"],
-            link: args["link"],
-            cost: args["cost"],
-            gift_status: args["gift_status_id"] ? GiftStatus.find(args["gift_status_id"]) : GiftStatus.by_position.first,
-            created_by_user_id: @current_user.id
-          )
-          gift.recipient_ids = args["recipient_ids"] || []
-          gift.giver_ids = args["giver_ids"] || []
+          gift = Gifts::MutationService.new(@current_user).create(args)
           GiftBlueprint.render_as_hash(gift.reload, current_user: @current_user)
         }
       },
@@ -484,7 +507,7 @@ class McpController < ApplicationController
         description: "Get an accessible person/contact",
         scope: "read",
         schema: tool_schema({ person_id: integer_property("Person ID") }, [ "person_id" ]),
-        handler: ->(args) { PersonBlueprint.render_as_hash(find_person(args["person_id"]), current_user: @current_user, current_workspace: find_person(args["person_id"]).workspace) }
+        handler: ->(args) { serialize_person(find_person(args["person_id"])) }
       },
       "update_person" => {
         description: "Update an accessible person/contact",
@@ -492,8 +515,12 @@ class McpController < ApplicationController
         schema: person_update_schema,
         handler: ->(args) {
           person = find_person(args["person_id"])
+          raise ArgumentError, "Externally shared people are read-only" unless person.editable_by?(@current_user)
+          if args.key?("default_shipping_address_id") && !person.shipping_address_editable_by?(@current_user)
+            raise ArgumentError, "Only workspace admins can manage shipping addresses"
+          end
           person.update!(slice_args(args, person_attributes))
-          PersonBlueprint.render_as_hash(person, current_user: @current_user, current_workspace: person.workspace)
+          serialize_person(person)
         }
       },
       "delete_person" => {
@@ -514,7 +541,10 @@ class McpController < ApplicationController
         description: "List all wishlists in a workspace",
         scope: "read",
         schema: { type: "object", properties: { workspace_id: { type: "integer" } }, required: [ "workspace_id" ] },
-        handler: ->(args) { find_workspace(args["workspace_id"]).wishlists.map { |w| wishlist_to_json(w) } }
+        handler: ->(args) {
+          workspace = find_workspace(args["workspace_id"])
+          Wishlist.visible_to(@current_user, workspace).map { |wishlist| wishlist_to_json(wishlist) }
+        }
       }
     }
 
@@ -998,7 +1028,10 @@ class McpController < ApplicationController
         description: "Get an overview of the user's gift management dashboard",
         handler: -> {
           workspaces = WorkspaceMembership.where(user: @current_user).includes(:workspace).map(&:workspace)
-          upcoming_holidays = workspaces.flat_map { |w| w.holidays.where("date >= ?", Date.current).order(:date).limit(5) }
+          upcoming_holidays = workspaces.flat_map do |workspace|
+            workspace.holidays.where(id: @current_user.holiday_ids)
+              .where("date >= ?", Date.current).order(:date).limit(5)
+          end
           {
             workspaces: workspaces.map { |w| { id: w.id, name: w.name } },
             upcoming_holidays: upcoming_holidays.map { |h| { id: h.id, name: h.name, date: h.date } }
@@ -1012,7 +1045,8 @@ class McpController < ApplicationController
           {
             plan: @current_user.subscription_plan,
             expires_at: @current_user.subscription_expires_at,
-            is_premium: @current_user.subscription_plan != "free"
+            is_premium: @current_user.premium?,
+            subscription_status: @current_user.subscription_status
           }
         }
       }
@@ -1068,8 +1102,8 @@ class McpController < ApplicationController
       holiday_id: integer_property("Holiday ID"),
       gift_status_id: integer_property("Gift status ID"),
       position: integer_property,
-      recipient_ids: { type: "array", items: { type: "integer" } },
-      giver_ids: { type: "array", items: { type: "integer" } }
+      recipient_ids: { type: "array", items: { type: "integer" }, maxItems: 100, uniqueItems: true },
+      giver_ids: { type: "array", items: { type: "integer" }, maxItems: 100, uniqueItems: true }
     }, [ "gift_id" ])
   end
 
@@ -1155,10 +1189,7 @@ class McpController < ApplicationController
 
   def update_gift_from_mcp(args)
     gift = find_gift(args["gift_id"])
-    attributes = slice_args(args, %w[name description link cost holiday_id gift_status_id position])
-    attributes[:recipient_ids] = args["recipient_ids"] if args.key?("recipient_ids")
-    attributes[:giver_ids] = args["giver_ids"] if args.key?("giver_ids")
-    gift.update!(attributes)
+    Gifts::MutationService.new(@current_user).update(gift, args.except("gift_id"))
     GiftBlueprint.render_as_hash(gift.reload, current_user: @current_user)
   end
 
@@ -1329,6 +1360,15 @@ class McpController < ApplicationController
       status: gift.gift_status&.name,
       recipients: gift.gift_recipients.includes(:person).map { |gr| { id: gr.person.id, name: gr.person.name } }
     }
+  end
+
+  def serialize_person(person)
+    visible_workspace = person.workspace if person.workspace.member?(@current_user)
+    PersonBlueprint.render_as_hash(
+      person,
+      current_user: @current_user,
+      current_workspace: visible_workspace
+    )
   end
 
   def person_to_json(person)

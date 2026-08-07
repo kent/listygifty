@@ -1,9 +1,9 @@
 module Admin
   module Mcp
     class UserDeletionService
-      def initialize(actor:, api_key:, request_id: nil)
+      def initialize(actor:, credential:, request_id: nil)
         @actor = actor
-        @api_key = api_key
+        @credential = Admin::Credential.wrap(credential)
         @request_id = request_id
       end
 
@@ -17,7 +17,7 @@ module Admin
         AdminActionConfirmation.transaction do
           confirmation, token = AdminActionConfirmation.create_with_token!(
             actor: @actor,
-            api_key: @api_key,
+            credential: @credential,
             action: "delete_user",
             target: target,
             target_label: target.email,
@@ -78,7 +78,7 @@ module Admin
 
       def validate_confirmation!(confirmation)
         raise ArgumentError, "This user deletion confirmation belongs to another administrator" unless confirmation.actor_id == @actor.id
-        raise ArgumentError, "This user deletion confirmation belongs to another API key" unless confirmation.api_key_id == @api_key.id
+        raise ArgumentError, "This user deletion confirmation belongs to another #{@credential.label}" unless @credential.matches?(confirmation)
         raise ArgumentError, "Invalid user deletion action" unless confirmation.action == "delete_user" && confirmation.target_type == "User"
         raise ArgumentError, "This user deletion confirmation has expired" if confirmation.expired?
         raise ArgumentError, "This user deletion confirmation has already been used" if confirmation.consumed?
@@ -109,7 +109,8 @@ module Admin
           analytics_visitors: AnalyticsVisitor.where(user_id: target.id).count,
           analytics_events: analytics_events_for(target).count,
           api_keys: ApiKey.where(user_id: target.id).count,
-          oauth_tokens: OauthAccessToken.where(user_id: target.id).count
+          oauth_tokens: OauthAccessToken.where(user_id: target.id).count,
+          pending_oauth_authorizations: OauthAuthorizationRequest.pending.where(user_id: target.id).count
         }
       end
 
@@ -131,7 +132,7 @@ module Admin
       end
 
       def audit_metadata(metadata)
-        metadata.merge(api_key_id: @api_key.id, request_id: @request_id).compact
+        metadata.merge(@credential.audit_metadata).merge(request_id: @request_id).compact
       end
     end
   end

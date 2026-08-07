@@ -21,3 +21,5 @@ export { workspacesService } from "./workspaces.service";
 export { importsService } from "./imports.service";
 export { exportsService } from "./exports.service";
 export { wishlistsService } from "./wishlists.service";
+
+export { oauthAuthorizationService, type OAuthConsent } from "./oauth-authorization.service";

@@ -1,21 +1,20 @@
 # Pulumi infrastructure for listygifty.com
 
-Every step of a deploy — container builds, Cloud Run rollout, Cloud Run IAM,
-Secret Manager access, the migration job, the migration *execution*, domain
-mappings, smoke tests, and the EAS mobile build — is declared as a Pulumi
-resource in `src/stack.ts`. One command per environment runs the entire
-pipeline:
+The production deploy wrapper builds immutable API/web images, then hands their
+SHA to Pulumi for the ordered Cloud Run, migration, IAM, and smoke-test rollout.
+An optional mobile release is queued by the wrapper only after Pulumi succeeds.
+One command runs the complete production pipeline:
 
 ```bash
-npm run deploy              # build → roll → migrate → smoke (production)
+npm run deploy              # build → migrate → roll → smoke (production)
 npm run deploy:mobile       # same, plus queue the iOS EAS build
 ```
 
 > **Staging is turned off** (stack destroyed 2026-07-30, pre-PMF speed mode).
-> To re-enable: restore `Pulumi.staging.yaml` from git history
-> (`git show 214b1ea:infra/pulumi/Pulumi.staging.yaml`), run
-> `pulumi stack init staging`, re-apply the config, and `pulumi up`. Staging
-> Secret Manager containers were retained on delete, so secrets still exist.
+> Re-enabling it requires a reviewed, current `us-central1` stack configuration
+> and infrastructure plan; historical stack files and resource names are not a
+> safe bootstrap procedure. Retained secret containers do not imply that a live
+> staging service exists.
 
 State lives in **`gs://listygifty-pulumi-state`** (self-hosted GCS backend
 declared in `Pulumi.yaml`). No Pulumi Cloud account needed.
@@ -25,136 +24,100 @@ declared in `Pulumi.yaml`). No Pulumi Cloud account needed.
 ## Architecture
 
 ```
-git HEAD ──┐
-           │ (sourceSha config)
-           ▼
-   ┌───────────────────┐    ┌───────────────────┐
-   │  build-api        │    │  build-web        │   ← Cloud Build, parallel
-   │  (gcloud builds)  │    │  (gcloud builds)  │
-   └─────────┬─────────┘    └─────────┬─────────┘
-             │                        │
-             ▼                        ▼
-   ┌───────────────────┐    ┌───────────────────┐
-   │ api Cloud Run     │    │ web Cloud Run     │
-   │ + IAM allUsers    │    │ + IAM allUsers    │
-   │ + Cloud SQL mount │    │                   │
-   └─────────┬─────────┘    └─────────┬─────────┘
-             │                        │
-             ▼                        │
-   ┌───────────────────┐              │
-   │ api-migrate       │              │
-   │ Cloud Run job     │              │
-   │ + run-migrations  │              │
-   └─────────┬─────────┘              │
-             │      ┌─────────────────┘
-             ▼      ▼
-        ┌────────────────┐
-        │  smoke-tests   │      ← /up, /holidays (401), web /, /login
-        └────────┬───────┘
-                 ▼
-        ┌────────────────┐
-        │  eas-build     │      ← TestFlight (staging) or App Store (prod)
-        └────────────────┘
+git HEAD ──┬───────────────────────────┐
+           │                           │
+           ▼                           ▼
+   ┌───────────────────┐       ┌───────────────────┐
+   │  build-api        │       │  build-web        │   ← Cloud Build, parallel
+   └─────────┬─────────┘       └─────────┬─────────┘
+             │                           │
+             ▼                           ▼
+   ┌───────────────────┐       ┌───────────────────┐
+   │ api-migrate job   │       │ web Cloud Run     │
+   │ image update      │       │ + IAM allUsers    │
+   └─────────┬─────────┘       └─────────┬─────────┘
+             │                           │
+             └─────────────┬─────────────┘
+                           ▼
+                 ┌───────────────────┐
+                 │ run-migrations    │   ← starts only after web is ready
+                 └─────────┬─────────┘
+                           ▼
+                 ┌───────────────────┐
+                 │ api Cloud Run     │   ← starts only after schema succeeds
+                 │ + IAM allUsers    │
+                 │ + Cloud SQL mount │
+                 └─────────┬─────────┘
+                           ▼
+                  ┌────────────────┐
+                  │  smoke-tests   │   ← health, OAuth discovery/consent, auth challenge
+                  └────────┬───────┘
+                           ▼
+                  ┌────────────────┐
+                  │  eas-build     │   ← optional production App Store/TestFlight build
+                  └────────────────┘
 ```
 
-Pulumi runs independent resources concurrently. `build-api` and `build-web`
-have no dependency on each other so they execute in parallel.
+The deploy wrapper runs API and web Cloud Builds concurrently, then invokes
+Pulumi. Pulumi gates the release in strict order: web rollout, migration-job
+image update and migration execution, then API rollout and smoke tests.
+Migrations must remain backward-compatible with the old API revision that serves
+traffic until the final gate succeeds.
 
 ---
 
 ## What is and isn't managed by Pulumi
 
-**Managed (Pulumi is the source of truth):**
+The production stack is configured by `Pulumi.production.yaml` in project
+`listygifty`, region `us-central1`. Current production resource names are:
 
-| Resource | Notes |
-|---|---|
-| Artifact Registry repo `niftygifty` | `protect: true` |
-| Runtime service accounts | One per environment |
-| Cloud Run API + web services | `deletionProtection: true` in production |
-| Cloud Run migration job | Image kept in lockstep with API service |
-| Secret Manager IAM bindings | Pulumi grants accessor, never reads/writes values |
-| Cloud Run domain mappings | `staging.listygifty.com`, `api-staging.listygifty.com`, prod equivalents |
+- API service: `listygifty-api-prod`
+- Web service: `listygifty-web-prod`
+- Migration job: `listygifty-migrate-prod`
+- Cloud SQL instance (read-only reference): `niftygifty-postgres-central`
 
-**Referenced read-only (Pulumi never modifies):**
+**Managed by this program:** the web runtime service account, Secret Manager
+containers (never secret values), the production Active Storage bucket and IAM,
+Cloud Run API/web services and public invoker IAM, the migration job, migration
+execution, and smoke tests. The wrapper restores the tracked stack YAML after
+`pulumi up` (including on failure); deployed config remains in remote state.
+Image builds and optional EAS submission are wrapper
+steps, not Pulumi resources.
 
-| Resource | Why |
-|---|---|
-| Cloud SQL instance `niftygifty-postgres` | Manual ops only — too dangerous to manage |
-| Secret Manager **values** | Rotated via `sync-heroku-secrets.sh` |
-| GitHub Cloud Build triggers | `configure-github-triggers.sh` |
+**Referenced or managed out-of-band:** Cloud SQL, raw Secret Manager values,
+container registries, GitHub triggers, DNS, TLS, and Cloud Run domain mappings.
+Domain mappings are intentionally not Pulumi resources; see the comment in
+`src/stack.ts`. Never import or delete them based on this stack.
 
 ---
 
-## First-time bootstrap
+## Bootstrap and state recovery
+
+Production is already bootstrapped. On a new operator machine, attach to the
+existing state rather than creating resources or another stack:
 
 ```bash
-# 1. Auth — gcloud should already be authed to listygifty.
+gcloud config configurations activate listygifty
 source .gcp/listygifty-deploy.env
-
-# 2. Create the state bucket with versioning.
-gcloud storage buckets create gs://listygifty-pulumi-state \
-  --project=listygifty --location=us-east1 \
-  --uniform-bucket-level-access --no-public-access-prevention
-gcloud storage buckets update gs://listygifty-pulumi-state --versioning
-
-# 3. Install pulumi + eas locally.
-brew install pulumi/tap/pulumi
-npm i -g eas-cli
-
-# 4. Login Pulumi to the GCS backend.
 pulumi login gs://listygifty-pulumi-state
-
-# 5. Install Pulumi deps.
-cd infra/pulumi && npm install
-
-# 6. Create both stacks.
-pulumi stack init staging
-pulumi stack init production
-
-# 7. Import existing GCP resources — see "Importing" below.
-```
-
----
-
-## Importing existing resources
-
-Because staging + production are already running, the first `pulumi up` must
-*adopt* what's there rather than try to create duplicates. Run these imports
-once per stack.
-
-```bash
 cd infra/pulumi
-pulumi stack select staging
-
-# Artifact Registry (shared; only import once on whichever stack you pick first)
-pulumi import gcp:artifactregistry/repository:Repository container-images \
-  projects/listygifty/locations/us-east1/repositories/niftygifty --yes
-
-# Runtime SA
-pulumi import gcp:serviceaccount/account:Account runtime-sa \
-  projects/listygifty/serviceAccounts/niftygifty-staging-runner@listygifty.iam.gserviceaccount.com --yes
-
-# Cloud Run services + job
-pulumi import gcp:cloudrunv2/service:Service api-service \
-  projects/listygifty/locations/us-east1/services/niftygifty-staging-api --yes
-pulumi import gcp:cloudrunv2/service:Service web-service \
-  projects/listygifty/locations/us-east1/services/niftygifty-staging-web --yes
-pulumi import gcp:cloudrunv2/job:Job api-migrate \
-  projects/listygifty/locations/us-east1/jobs/niftygifty-staging-api-migrate --yes
-
-# Domain mappings (skip if they don't exist yet for this env)
-pulumi import gcp:cloudrun/domainMapping:DomainMapping api-domain \
-  locations/us-east1/namespaces/listygifty/domainmappings/api-staging.listygifty.com --yes
-pulumi import gcp:cloudrun/domainMapping:DomainMapping web-domain \
-  locations/us-east1/namespaces/listygifty/domainmappings/staging.listygifty.com --yes
+npm ci
+pulumi stack select production
+pulumi refresh --yes
+pulumi preview
 ```
 
-Repeat with `production` stack + unsuffixed names (`niftygifty-api`,
-`niftygifty-web`, `niftygifty-api-migrate`, `api.listygifty.com`,
-`listygifty.com`).
+The preview must reference `us-central1` and the exact `*-prod` names above.
+Staging is disabled; do not initialize or import a staging stack during normal
+recovery.
 
-After every import: `pulumi refresh --yes` then `pulumi preview`. The preview
-should be small or empty before the first `pulumi up`.
+If the production stack or GCS state appears missing, **stop before running
+`pulumi stack init`, `pulumi import`, or `pulumi up`**. First restore the
+versioned objects in `gs://listygifty-pulumi-state` and compare live resources
+with `Pulumi.production.yaml` and `src/stack.ts`. Imports are a disaster-recovery
+operation and must use IDs read from the live `listygifty` project—never the
+historical `niftygifty-*`/`us-east1` examples. Domain mappings remain
+out-of-band even during recovery.
 
 ---
 
@@ -177,21 +140,23 @@ pulumi config set niftygifty:androidAppLinkSha256CertFingerprints "AA:BB:..."
 Use comma-separated or newline-separated values when staging and production
 need multiple fingerprints.
 
-Both do (in this order, with the build steps running concurrently):
+`npm run deploy` does the following:
 
-1. Compute git SHA → feed it as `niftygifty:sourceSha` config
-2. `pulumi up --yes --skip-preview` — Pulumi engine runs:
-   - `gcloud builds submit` for API + web (parallel, registry-cached)
-   - Cloud Run revision rollouts to the new image
-   - Migration job image update
-   - Migration job execution (`gcloud run jobs execute --wait`)
-   - Curl smoke endpoints (`/up`, `/holidays` → 401, web `/`, `/login`)
-   - `eas build --no-wait --auto-submit`
-3. Print URLs + elapsed time
+1. Verifies the production worktree is clean and computes the git SHA.
+2. Runs API and web `gcloud builds submit` jobs in parallel and waits for both.
+3. Calls `pulumi up --yes --skip-preview` with `niftygifty:sourceSha=<sha>`.
+   Pulumi rolls web first, executes the migration job, rolls API only after the
+   schema succeeds, and then runs the smoke suite.
+4. Prints the deployed URLs, revisions, SHA, and elapsed time.
 
-If `pulumi up` runs twice with the same SHA, every `command.local.Command`
-sees an unchanged `triggers` array and skips. Pulumi diffs the Cloud Run
-resources and reports no changes. Unchanged redeploys are no-ops in seconds.
+`npm run deploy:mobile` performs the same release, then the wrapper runs
+`eas build --no-wait --auto-submit`. Ordinary `npm run deploy` does not queue a
+mobile build. Calling `pulumi up` directly never builds container images or
+submits EAS; the requested SHA tag must already exist in the registry.
+
+A repeated wrapper deploy still invokes Cloud Build for both images. Pulumi's
+migration/smoke command triggers and Cloud Run resources are idempotent for an
+unchanged SHA, but do not describe the wrapper build time as a no-op.
 
 ### Expected timings
 
@@ -199,7 +164,8 @@ resources and reports no changes. Unchanged redeploys are no-ops in seconds.
 |---|---|---|
 | Cold deploy (no image cache) | ~5–7 min | Cloud Build (`E2_HIGHCPU_8`) building Rails + Next images from scratch |
 | Warm deploy (registry cache hit) | ~2–3 min | Cloud Build pulling layers + Cloud Run revision rollout |
-| No-change redeploy | ~10–20 s | Pulumi state read + diff only |
+| Direct Pulumi no-change | ~10–20 s | Pulumi state read + diff only (no builds) |
+| Repeated wrapper deploy | ~2–3 min | Cloud Builds still run before Pulumi |
 | Migration-only (DB schema change) | ~30–60 s | Cloud Run job execution |
 
 Steps that drive the wall time:
@@ -209,31 +175,72 @@ Steps that drive the wall time:
   tag persists per repository so subsequent builds reuse layers.
 - **Cloud Run rollout** — Cloud Run waits for at least one healthy revision
   before shifting traffic. Min instances = 1 on production keeps a warm pod.
-- **Smoke tests** — four serial curl calls with 15 s timeouts. ~3 s total.
-- **EAS build** — fire-and-forget; the Pulumi resource returns once the
-  build is *queued* on Expo's infra. Actual ipa/aab build takes 15–30 min
+- **Smoke tests** — health, auth, discovery, web-consent, and DCR handoff checks with 15 s timeouts.
+- **EAS build** — `deploy:mobile` queues it after Pulumi succeeds and returns
+  once the build is *queued* on Expo's infra. Actual ipa/aab build takes 15–30 min
   on Expo's side and posts to TestFlight / Play when done.
 
 ### Knobs
 
-- `pulumi up -c niftygifty:enableMobile=false` — skip EAS for this run
-- `pulumi up -c niftygifty:sourceSha=<sha>` — roll a specific image tag
-  (useful for rollback)
+- `npm run deploy` — web/API only; mobile is skipped.
+- `npm run deploy:mobile` — queue the production iOS build after web/API succeed.
+- `pulumi up -c niftygifty:sourceSha=<sha>` — roll an image tag that already
+  exists (useful for rollback; direct Pulumi does not build it).
 
 ### Rollback
 
-Cloud Run keeps prior revisions. Two options:
+Cloud Run keeps prior revisions, and schema migrations are expand-compatible. A rollback to a revision that predates OAuth credential version 2 requires a maintenance window: legacy code does not understand the v2 provenance column and could re-accept a surviving credential. Do not run the revocation task while OAuth issuance is live.
 
-**Pulumi-driven (preserves IaC truth):**
+First roll the current v2 API with issuance disabled, verify the maintenance response, and wait for the old revision's 300-second maximum request lifetime to drain:
+
 ```bash
-cd infra/pulumi
-pulumi up --stack production -c niftygifty:sourceSha=<previous-sha>
+gcloud run services update listygifty-api-prod \
+  --project=listygifty --region=us-central1 \
+  --update-env-vars=OAUTH_ISSUANCE_ENABLED=false
+
+curl -i "https://api.listygifty.com/oauth/authorize"  # must be HTTP 503
+sleep 300
 ```
 
-**Fast manual (out-of-band):**
+Then revoke all OAuth credentials from the still-current migration-job image. The explicit confirmation variable prevents accidental use without this quiescence step:
+
 ```bash
-gcloud run services update-traffic niftygifty-api \
-  --region=us-east1 --to-revisions=<previous-revision>=100
+gcloud run jobs execute listygifty-migrate-prod \
+  --project=listygifty --region=us-central1 --wait \
+  --update-env-vars=OAUTH_ROLLBACK_QUIESCED=true \
+  --args=exec,rails,oauth:revoke_all_for_legacy_rollback
+```
+
+This intentionally disconnects OAuth clients; break-glass admin API keys are unaffected. Immediately choose one rollback path below. If the rollback is abandoned, restore the current v2 release (and `OAUTH_ISSUANCE_ENABLED=true`) before ending maintenance.
+
+**Pulumi-driven (preserves IaC truth and rolls web before API):**
+
+`sourceSha` is an Artifact Registry image tag, not an arbitrary 40-character Git SHA. Recover the exact prior tag (normally the 12-character or `*-dirty` value recorded as `deployedSha`) from deployment output or the previous Cloud Run revision image before rollback:
+
+```bash
+cd infra/pulumi
+pulumi stack output deployedSha --stack production  # current recorded image tag
+
+gcloud run revisions describe <previous-api-revision> \
+  --project=listygifty --region=us-central1 \
+  --format='value(spec.containers[0].image)'
+# Copy the exact tag after the final colon and verify both API and web images exist.
+
+pulumi up --stack production \
+  -c niftygifty:sourceSha=<previous-image-tag> \
+  -c niftygifty:legacyRollback=true
+# The legacy flag skips only OAuth-v2 discovery/consent/DCR assertions;
+# baseline API health, auth, queue-worker, and web checks still run.
+pulumi config set niftygifty:legacyRollback false --stack production
+git -C ../.. restore infra/pulumi/Pulumi.production.yaml
+```
+
+**Fast manual (out-of-band; update both services to compatible revisions):**
+```bash
+gcloud run services update-traffic listygifty-web-prod \
+  --project=listygifty --region=us-central1 --to-revisions=<previous-web-revision>=100
+gcloud run services update-traffic listygifty-api-prod \
+  --project=listygifty --region=us-central1 --to-revisions=<previous-api-revision>=100
 ```
 
 ---
@@ -256,12 +263,7 @@ eas init       # Links to Expo project ID
 eas credentials   # Walks you through setting up signing creds
 ```
 
-After that, every `npm run deploy:*` from the repo root fires
-`eas build --auto-submit` automatically. The build runs on Expo's
-infrastructure (15-30 min) and TestFlight / App Store ingestion follows.
-
-To skip mobile for a backend-only hotfix:
-
-```bash
-pulumi up --stack production -c niftygifty:enableMobile=false
-```
+After that, only `npm run deploy:mobile` fires `eas build --auto-submit`.
+The ordinary `npm run deploy` path intentionally skips mobile. The build runs
+on Expo's infrastructure (15–30 min) and TestFlight / App Store ingestion
+follows.

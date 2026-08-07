@@ -1,4 +1,7 @@
 class ProfileController < ApplicationController
+  skip_before_action :authenticate!
+  before_action :authenticate_clerk_session!
+
   # POST /profile/sync - Force sync user data from Clerk
   # Accepts optional profile params from frontend as fallback when Clerk API unavailable
   def sync

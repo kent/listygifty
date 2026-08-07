@@ -14,9 +14,10 @@ class ExchangeWishlistItemsController < ApplicationController
   end
 
   def create
-    item = @participant.exchange_wishlist_items.new(wishlist_item_params)
+    attributes = wishlist_item_params
+    item = @participant.exchange_wishlist_items.new(attributes)
 
-    if item.save
+    if persist_with_photo_quota(item, attributes[:photo]) { item.save }
       ExchangeNotificationService.wishlist_item_added!(item)
       render json: ExchangeWishlistItemBlueprint.render(item), status: :created
     else
@@ -25,7 +26,8 @@ class ExchangeWishlistItemsController < ApplicationController
   end
 
   def update
-    if @wishlist_item.update(wishlist_item_params)
+    attributes = wishlist_item_params
+    if persist_with_photo_quota(@wishlist_item, attributes[:photo]) { @wishlist_item.update(attributes) }
       render json: ExchangeWishlistItemBlueprint.render(@wishlist_item)
     else
       render json: { errors: @wishlist_item.errors.full_messages }, status: :unprocessable_entity
@@ -80,6 +82,36 @@ class ExchangeWishlistItemsController < ApplicationController
     return false unless %w[active completed].include?(@gift_exchange.status)
 
     current_user_participant&.matched_participant_id == @participant.id
+  end
+
+  def persist_with_photo_quota(item, uploaded_photo)
+    return yield unless uploaded_photo
+
+    unless uploaded_photo.is_a?(ActionDispatch::Http::UploadedFile)
+      item.errors.add(:photo, "must be uploaded as multipart file data")
+      return false
+    end
+
+    current_user.with_lock do
+      existing_bytes = item.persisted? && item.photo.attached? ? item.photo.blob.byte_size : 0
+      requested_bytes = uploaded_photo.size
+      projected_bytes = photo_storage_bytes_for_current_user - existing_bytes + requested_bytes
+      if projected_bytes > ExchangeWishlistItem::MAX_PHOTO_STORAGE_PER_USER_BYTES
+        item.errors.add(:photo, "storage limit of 50 MB has been reached")
+        false
+      else
+        yield
+      end
+    end
+  end
+
+  def photo_storage_bytes_for_current_user
+    item_ids = ExchangeWishlistItem.joins(:exchange_participant)
+      .where(exchange_participants: { user_id: current_user.id })
+      .select(:id)
+    ActiveStorage::Attachment.joins(:blob)
+      .where(record_type: "ExchangeWishlistItem", record_id: item_ids, name: "photo")
+      .sum("active_storage_blobs.byte_size")
   end
 
   def wishlist_item_params

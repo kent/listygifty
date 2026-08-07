@@ -1,20 +1,26 @@
 Rails.application.routes.draw do
+  # This app accepts only authenticated, proxied multipart photo uploads.
+  # Shadow Active Storage write endpoints while retaining signed blob reads.
+  post "rails/active_storage/direct_uploads", to: "active_storage_access#not_found"
+  put "rails/active_storage/disk/:encoded_token", to: "active_storage_access#not_found"
   # =============================================================================
   # OAuth 2.1 Authorization Server
   # =============================================================================
 
   # Well-known discovery endpoints (RFC 9728, RFC 8414)
-  get ".well-known/oauth-protected-resource" => "well_known#oauth_protected_resource"
-  get ".well-known/oauth-authorization-server" => "well_known#oauth_authorization_server"
-  get ".well-known/openid-configuration" => "well_known#openid_configuration"
+  get ".well-known/oauth-protected-resource" => "well_known#oauth_protected_resource", format: false
+  get ".well-known/oauth-protected-resource/mcp" => "well_known#oauth_user_mcp_protected_resource", format: false
+  get ".well-known/oauth-protected-resource/admin/mcp" => "well_known#oauth_admin_mcp_protected_resource", format: false
+  get ".well-known/oauth-authorization-server" => "well_known#oauth_authorization_server", format: false
 
   # OAuth authorization and token endpoints
   scope :oauth do
-    get "authorize", to: "oauth#authorize"
-    post "authorize", to: "oauth#authorize_decision"
-    post "token", to: "oauth#token"
-    post "register", to: "oauth#register"
-    post "revoke", to: "oauth#revoke"
+    get "authorize", to: "oauth#authorize", format: false
+    post "authorize/consent", to: "oauth#consent", format: false
+    post "authorize", to: "oauth#authorize_decision", format: false
+    post "token", to: "oauth#token", format: false
+    post "register", to: "oauth#register", format: false
+    post "revoke", to: "oauth#revoke", format: false
     get "connections", to: "oauth_connections#index"
     delete "connections/:client_id", to: "oauth_connections#destroy"
   end
@@ -24,14 +30,14 @@ Rails.application.routes.draw do
   # =============================================================================
 
   # Streamable HTTP transport (primary)
-  post "mcp", to: "mcp#handle"
+  post "mcp", to: "mcp#handle", format: false
 
-  # SSE transport (legacy/fallback)
-  get "mcp", to: "mcp#sse_connect"
-  post "mcp/messages", to: "mcp#sse_message"
+  # No long-lived SSE transport: this stateless server has no server-initiated messages.
+  get "mcp", to: "mcp#connect", format: false
 
-  # Separate global administration control plane. This endpoint accepts only
-  # allowlisted, admin-scoped API keys and never OAuth credentials.
+  # Separate global administration control plane. This endpoint accepts
+  # admin-scoped OAuth credentials and dedicated API keys for break-glass use.
+  get "admin/mcp", to: "admin_mcp#connect", format: false
   post "admin/mcp", to: "admin_mcp#handle", format: false
 
   # First-party product and marketing analytics ingestion.

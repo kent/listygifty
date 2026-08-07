@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
-import { giftStatusesService, AUTH_ROUTES } from "@/services";
+import { AUTH_ROUTES } from "@/services";
 import { AppHeader } from "@/components/layout";
 import {
-  GiftStatusSection,
   ProfileSection,
   BillingSection,
   NotificationsSection,
@@ -19,12 +18,9 @@ import {
   SettingsNav,
   type SettingsSection,
 } from "@/components/settings";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { Settings as SettingsIcon } from "lucide-react";
-import type { GiftStatus } from "@niftygifty/types";
 
-const VALID_SECTIONS: SettingsSection[] = ["profile", "workspace", "team", "company", "notifications", "appearance", "statuses", "api-keys", "integrations", "billing"];
+const VALID_SECTIONS: SettingsSection[] = ["profile", "workspace", "team", "company", "notifications", "appearance", "api-keys", "integrations", "billing"];
 
 export default function SettingsPage() {
   const { isAuthenticated, isLoading: authLoading, user, signOut } = useAuth();
@@ -38,66 +34,12 @@ export default function SettingsPage() {
     }
     return "profile";
   });
-  const [statuses, setStatuses] = useState<GiftStatus[]>([]);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push(AUTH_ROUTES.signIn);
     }
   }, [authLoading, isAuthenticated, router]);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    async function loadData() {
-      try {
-        const data = await giftStatusesService.getAll();
-        setStatuses(data);
-      } catch {
-        setError("Failed to load settings. Please try again.");
-      }
-    }
-
-    loadData();
-  }, [isAuthenticated]);
-
-
-  const handleAddStatus = useCallback(async (name: string) => {
-    const nextPosition = statuses.length > 0
-      ? Math.max(...statuses.map((s) => s.position)) + 1
-      : 1;
-    const status = await giftStatusesService.create({ name, position: nextPosition });
-    setStatuses((prev) => [...prev, status]);
-    toast.success(`Created "${status.name}" status`);
-  }, [statuses]);
-
-  const handleDeleteStatus = useCallback(async (status: GiftStatus) => {
-    await giftStatusesService.delete(status.id);
-    setStatuses((prev) => prev.filter((s) => s.id !== status.id));
-    toast.success(`Deleted "${status.name}" status`);
-  }, []);
-
-  const handleReorderStatus = useCallback(async (statusId: number, newPosition: number) => {
-    const status = await giftStatusesService.update(statusId, { position: newPosition });
-    setStatuses((prev) =>
-      prev.map((s) => (s.id === statusId ? status : s)).sort((a, b) => a.position - b.position)
-    );
-  }, []);
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 mb-4">
-            <SettingsIcon className="h-8 w-8 text-red-400" />
-          </div>
-          <p className="text-red-400 mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -151,14 +93,6 @@ export default function SettingsPage() {
             )}
             {activeSection === "appearance" && (
               <AppearanceSection />
-            )}
-            {activeSection === "statuses" && (
-              <GiftStatusSection
-                statuses={statuses}
-                onAdd={handleAddStatus}
-                onDelete={handleDeleteStatus}
-                onReorder={handleReorderStatus}
-              />
             )}
             {activeSection === "api-keys" && (
               <ApiKeysSection />

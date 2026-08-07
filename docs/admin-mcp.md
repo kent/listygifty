@@ -4,15 +4,15 @@ The admin MCP server is a separate HTTP control plane for product-wide statistic
 
 ## Security model
 
-The endpoint is `POST /admin/mcp`. It accepts API keys only—OAuth and Clerk bearer tokens are rejected. A key must:
+The endpoint is `https://api.listygifty.com/admin/mcp`. OAuth 2.1 browser authorization is the preferred authentication method. The endpoint advertises its RFC 9728 protected-resource metadata at:
 
-- be active and unexpired;
-- contain the `admin` scope; and
-- belong to a user whose normalized email is in `ADMIN_EMAILS`.
+```text
+https://api.listygifty.com/.well-known/oauth-protected-resource/admin/mcp
+```
 
-Admin keys are dedicated (`admin` is the only scope), expire no later than 30 days after creation, and are accepted only through `Authorization: Bearer ...`. The admin endpoint intentionally rejects `X-API-Key` even though ordinary API endpoints retain that legacy option.
+An OAuth client must use authorization code + S256 PKCE and request the exact resource `https://api.listygifty.com/admin/mcp` with the sole `admin` scope. Authorization requests are frozen in short-lived, one-time server-side transactions before the browser handoff. The user signs in to the first-party Listy Gifty web application, sees an explicit administrator warning, and approves or denies the connection. Access tokens last one hour. Refresh credentials rotate within a server-locked token family, have a non-sliding 30-day maximum lifetime, and revoke the entire family if a rotated credential is replayed.
 
-The initial and default allowlist is:
+Admin authorization is checked both when consent is shown and on every MCP request. The authenticated user's normalized email must be in `ADMIN_EMAILS`; the initial and default sole administrator is:
 
 ```env
 ADMIN_EMAILS=kent.fenwick@gmail.com
@@ -20,29 +20,42 @@ ADMIN_MCP_ENABLED=true
 ADMIN_MCP_ALLOWED_ORIGINS=
 ```
 
-Set that value explicitly in production. Generate a new, dedicated admin key while authenticated as `kent.fenwick@gmail.com`; do not add `admin` to a key shared with another integration.
+The endpoint requires the exact admin audience and scope, rejects ordinary `/mcp` OAuth tokens, rejects tokens from revoked clients, and immediately stops accepting a token if its user is removed from the admin allowlist. The ordinary user-scoped MCP remains a separate connection at `/mcp` with only `read` and `write` scopes.
+
+### Break-glass API keys
+
+Dedicated admin API keys remain supported for recovery and clients that cannot initiate remote OAuth. A key must be active, unexpired, contain only the `admin` scope, belong to an allowlisted user, and be sent through `Authorization: Bearer ...`. `X-API-Key`, Clerk JWTs, and ordinary read/write keys are rejected. Admin keys expire no later than 30 days after creation.
+
+Generate a recovery key from an interactive Clerk browser session authenticated as `kent.fenwick@gmail.com`. Existing API keys and OAuth tokens cannot inspect, mint, rotate, or revoke credentials:
 
 ```json
 POST /api_keys
 {
   "api_key": {
-    "name": "Admin MCP",
+    "name": "Admin MCP break-glass",
     "scopes": ["admin"]
   }
 }
 ```
 
-Save the returned `ng_...` value immediately because it cannot be retrieved again.
-
-Rotate the key at least every 30 days: create a replacement, update and test the MCP client, then revoke the old key with `DELETE /api_keys/:id`. The admin MCP can be disabled immediately by setting `ADMIN_MCP_ENABLED=false` and rolling the API service.
+Save the returned value immediately because it cannot be retrieved again. Store it outside source control, rotate it at least every 30 days, and revoke it when all active clients use OAuth. The admin MCP can be disabled immediately by setting `ADMIN_MCP_ENABLED=false` and rolling the API service.
 
 ## Connecting
 
-The admin MCP is a separate connection from the user-scoped OAuth server at `/mcp`. Adding or refreshing the ordinary Listy Gifty connection will not expose global statistics or analytics tools. Configure a header-capable MCP client with the admin deployment URL and a dedicated bearer key:
+For an OAuth-capable HTTP MCP client, configure only the server URL:
 
 ```text
-URL: https://api.listygifty.com/admin/mcp
-Authorization: Bearer ng_your_admin_key
+https://api.listygifty.com/admin/mcp
+```
+
+The first unauthenticated request returns a `WWW-Authenticate` challenge containing the resource-metadata URL and `scope="admin"`. The client discovers the Listy Gifty authorization server, opens the browser login/consent page, exchanges the one-time code with PKCE, and refreshes the short-lived credential automatically.
+
+Generic admin clients register dynamically and are deliberately labeled **Unverified client metadata**. Their self-reported name or website is not an identity signal. Before approving, verify the exact callback URI shown on the page and check the explicit “I initiated this connection” confirmation. Pre-registered Claude/ChatGPT consumer clients remain read/write-only; they do not silently gain admin scope.
+
+A non-OAuth client may use the same URL with a dedicated break-glass header:
+
+```text
+Authorization: Bearer ng_<redacted-admin-key>
 Content-Type: application/json
 ```
 
@@ -89,6 +102,6 @@ Every read, mutation, sensitive reveal, preview, and confirmation writes an `Adm
 
 ## Hardened HTTP boundary
 
-The endpoint accepts at most 256 KiB per request, 20 JSON-RPC calls per batch, and 32 levels of JSON nesting. It centrally validates tool arguments against the same schemas advertised by `tools/list`, ignores notification-shaped tool calls without executing them, applies per-IP and per-credential throttles, and returns no-store security headers. Browser requests with an `Origin` header are denied unless that exact origin is configured in `ADMIN_MCP_ALLOWED_ORIGINS`; normal hosted MCP clients make server-to-server requests without this header.
+The endpoint accepts one JSON-RPC request or notification per POST (top-level arrays/batches are rejected), at most 256 KiB per request, and 32 levels of JSON nesting. It centrally validates tool arguments against the same schemas advertised by `tools/list`, ignores notification-shaped tool calls without executing them, applies per-IP and per-credential throttles, and returns no-store security headers. Browser requests with an `Origin` header are denied unless that exact origin is configured in `ADMIN_MCP_ALLOWED_ORIGINS`; normal hosted MCP clients make server-to-server requests without this header.
 
-Email and user-deletion confirmations are bound to the exact API key that created the preview. A replacement or secondary key cannot confirm an older key's pending action.
+Email and user-deletion confirmations are bound to the exact credential that created the preview. A replacement API key, refreshed OAuth access token, or secondary connection cannot confirm an older credential's pending action; preview again after credential rotation.
