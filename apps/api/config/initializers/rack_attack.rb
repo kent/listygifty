@@ -21,6 +21,23 @@ class Rack::Attack
     req.ip if req.path.start_with?("/billing") && req.post?
   end
 
+  # Analytics clients send small batches and may flush during rapid route
+  # changes; keep this above the ordinary product-request baseline.
+  throttle("analytics/ip", limit: 120, period: 1.minute) do |req|
+    req.ip if req.post? && req.path == "/analytics/events"
+  end
+
+  throttle("admin_mcp/ip", limit: 30, period: 1.minute) do |req|
+    req.ip if req.post? && req.path == "/admin/mcp"
+  end
+
+  throttle("admin_mcp/credential", limit: 60, period: 1.minute) do |req|
+    next unless req.post? && req.path == "/admin/mcp"
+
+    authorization = req.get_header("HTTP_AUTHORIZATION")
+    Digest::SHA256.hexdigest(authorization) if authorization&.match?(/\ABearer ng_[A-Za-z0-9_-]{43}\z/)
+  end
+
   # Token-based public links are intentionally unauthenticated; keep guessing
   # and scraping pressure lower than the authenticated API baseline.
   throttle("public_token_links/ip", limit: 30, period: 1.minute) do |req|

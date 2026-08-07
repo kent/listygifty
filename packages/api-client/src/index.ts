@@ -59,6 +59,7 @@ interface RequestOptions {
   timeout?: number;
   retries?: number;
   signal?: AbortSignal;
+  keepalive?: boolean;
 }
 
 // =============================================================================
@@ -116,6 +117,7 @@ export class ApiClient {
       timeout = DEFAULT_TIMEOUT_MS,
       retries = method === "GET" ? MAX_RETRIES : 0,
       signal: externalSignal,
+      keepalive = false,
     } = options;
 
     const headers: Record<string, string> = {
@@ -154,6 +156,7 @@ export class ApiClient {
         method,
         headers,
         signal,
+        keepalive,
       };
 
       if (options.body && method !== "GET") {

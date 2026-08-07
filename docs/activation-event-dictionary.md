@@ -2,6 +2,16 @@
 
 This is the measurement contract for the household and business activation funnels in `GOALS.md`.
 
+All events are stored by Listy Gifty's first-party analytics endpoint. Every event includes a generated event ID, anonymous visitor ID, 30-minute session ID, occurrence time, platform, normalized path, landing page, and bounded properties. Web events also include the sanitized referrer and available UTM/click-ID attribution.
+
+Foundation events:
+
+- `page_viewed`: automatic web route view; path, title, landing page, referrer, and attribution live in the event envelope.
+- `mobile_screen_viewed`: automatic mobile route view; `path` identifies the Expo route.
+- `user_signed_up`: synthesized once when a recently-created account is first associated with an anonymous visitor, preserving the visitor's acquisition touch.
+
+Reserved identity fields such as email, user IDs, workspace IDs, tokens, and anonymous/session IDs must not be placed in event properties. Server-side associations are authoritative.
+
 ## Public Funnel
 
 Events:

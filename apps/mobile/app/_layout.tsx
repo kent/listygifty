@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { Slot, useGlobalSearchParams, usePathname, useRouter, useSegments } from "expo-router";
 import { ClerkProvider, ClerkLoaded, useAuth } from "@clerk/clerk-expo";
-import { PostHogProvider } from "posthog-react-native";
-import { LogBox } from "react-native";
+import { AppState, LogBox } from "react-native";
 import { tokenCache } from "@/lib/token-cache";
 import { StatusBar } from "expo-status-bar";
 import { ThemeProvider, useTheme } from "@/lib/theme";
@@ -10,6 +9,8 @@ import { ScreenLoader } from "@/components/ScreenLoader";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { clearCachedResources } from "@/lib/api";
 import { normalizeAuthReturnPath } from "@/lib/auth-return";
+import { flushAnalyticsEvents, useAnalytics } from "@/lib/analytics";
+import { useApiSetup } from "@/lib/use-api";
 import {
   getActiveScreenshotRouteName,
   getScreenshotRouteTarget,
@@ -17,8 +18,6 @@ import {
 } from "@/lib/screenshot-routes";
 
 const publishableKey = runtimeConfig.clerkPublishableKey;
-const posthogApiKey = runtimeConfig.posthogApiKey;
-const posthogHost = runtimeConfig.posthogHost;
 
 if (runtimeConfig.screenshotMode) {
   // Hide development warning overlays while capturing App Store screenshots.
@@ -55,6 +54,20 @@ function AuthRouter() {
   const { returnTo } = useGlobalSearchParams<{ returnTo?: string | string[] }>();
   const router = useRouter();
   const { isDark } = useTheme();
+  const capture = useAnalytics();
+  const pathname = usePathname();
+  useApiSetup();
+
+  useEffect(() => {
+    capture("mobile_screen_viewed", { path: pathname });
+  }, [capture, pathname]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state !== "active") void flushAnalyticsEvents();
+    });
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -105,7 +118,7 @@ export default function RootLayout() {
     );
   }
 
-  const appShell = (
+  return (
     <ThemeProvider>
       <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
         <ClerkLoaded>
@@ -113,20 +126,5 @@ export default function RootLayout() {
         </ClerkLoaded>
       </ClerkProvider>
     </ThemeProvider>
-  );
-
-  if (!posthogApiKey) {
-    return appShell;
-  }
-
-  return (
-    <PostHogProvider
-      apiKey={posthogApiKey}
-      options={{
-        host: posthogHost,
-      }}
-    >
-      {appShell}
-    </PostHogProvider>
   );
 }

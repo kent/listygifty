@@ -57,7 +57,7 @@ Treat `GET /bootstrap` as the main startup service-level indicator.
 
 ### 2. Browser RUM
 
-Capture these measurements in the web app and send them to PostHog when configured:
+Capture these measurements with the first-party analytics endpoint:
 
 - `app_bootstrap_start`
 - `app_bootstrap_end`

@@ -62,6 +62,15 @@ class ApiKeyTest < ActiveSupport::TestCase
     assert_not_nil result.api_key.reload.last_used_at
   end
 
+  test "find_by_raw_key does not write last_used_at more than once every five minutes" do
+    result = ApiKey.generate_for(@user, name: "Test")
+    ApiKey.find_by_raw_key(result.raw_key)
+    first_used_at = result.api_key.reload.last_used_at
+
+    ApiKey.find_by_raw_key(result.raw_key)
+    assert_equal first_used_at, result.api_key.reload.last_used_at
+  end
+
   test "can? returns true for explicit scope" do
     result = ApiKey.generate_for(@user, name: "Test", scopes: %w[read])
     assert result.api_key.can?(:read)
@@ -73,6 +82,29 @@ class ApiKeyTest < ActiveSupport::TestCase
     assert result.api_key.can?(:read)
     assert result.api_key.can?(:write)
     assert result.api_key.can?(:admin)
+    assert_in_delta 30.days.from_now, result.api_key.expires_at, 2.seconds
+    assert result.api_key.admin_compliant?
+  end
+
+  test "admin keys reject mixed scopes, missing expiry, and expiry beyond thirty days" do
+    attributes = {
+      user: @user,
+      name: "Unsafe admin",
+      key_prefix: "abcdefgh",
+      key_hash: "x" * 64,
+      scopes: %w[admin read]
+    }
+    mixed = ApiKey.new(attributes.merge(expires_at: 1.day.from_now))
+    assert_not mixed.valid?
+    assert mixed.errors[:scopes].any?
+
+    missing_expiry = ApiKey.new(attributes.merge(scopes: %w[admin]))
+    assert_not missing_expiry.valid?
+    assert missing_expiry.errors[:expires_at].any?
+
+    long_expiry = ApiKey.new(attributes.merge(scopes: %w[admin], expires_at: 31.days.from_now))
+    assert_not long_expiry.valid?
+    assert long_expiry.errors[:expires_at].any?
   end
 
   test "revoked? and active? track revoke state" do

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -150,7 +151,9 @@ export default function RootLayout({
           </div>
           <Toaster />
         </Providers>
-        <Analytics />
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
       </body>
     </html>
   );

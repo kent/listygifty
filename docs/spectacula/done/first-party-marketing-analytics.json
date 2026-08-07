@@ -1,0 +1,81 @@
+{
+  "spec_id": "first-party-marketing-analytics",
+  "slug": "first-party-marketing-analytics",
+  "title": "First-Party Marketing Analytics and MCP Suite Specification",
+  "stage": "done",
+  "spec_path": "../specs/first-party-marketing-analytics.md",
+  "created_at": "2026-08-01T12:24:04Z",
+  "updated_at": "2026-08-01T15:22:49Z",
+  "summary": "First-party analytics, performant marketing/product reporting, and the agentic metric-goal loop are implemented and verified.",
+  "next_action": "Deploy through the normal production workflow when requested, then verify live event flow and create the first operating goals.",
+  "blockers": [],
+  "reference_examples": [],
+  "review_policy": {
+    "final_vetting": "off"
+  },
+  "verification": {
+    "format": "passed",
+    "lint": "passed",
+    "typecheck": "passed",
+    "build": "passed",
+    "tests": "passed",
+    "spec_review": "passed",
+    "final_vetting": "skipped",
+    "notes": "Rails: 370 tests and 1,674 assertions. Mobile: 25 suites and 174 tests. Root/web/mobile builds and type checks passed. RuboCop inspected 294 files with no offenses; Zeitwerk passed; Brakeman reported zero warnings; dependency and diff checks passed."
+  },
+  "resume_context": {
+    "last_completed_step": "Moved manifest to done after required verification gates passed.",
+    "pending_steps": [],
+    "open_questions": [],
+    "last_reviewed_sections": [
+      "1-13"
+    ],
+    "artifacts": [
+      "docs/spectacula/specs/first-party-marketing-analytics.md",
+      "docs/first-party-analytics.md",
+      "docs/admin-mcp.md",
+      "docs/activation-event-dictionary.md"
+    ],
+    "notes": "The user explicitly delegated product judgment. The later goal-loop and performance requirements were incorporated into the same active specification before completion."
+  },
+  "history": [
+    {
+      "at": "2026-08-01T12:24:04Z",
+      "event": "spec_created",
+      "from_stage": null,
+      "to_stage": "specs",
+      "note": "Initial draft created from template."
+    },
+    {
+      "at": "2026-08-01T12:25:18Z",
+      "event": "spec_approved",
+      "from_stage": "specs",
+      "to_stage": "ready",
+      "note": "Moved manifest to ready."
+    },
+    {
+      "at": "2026-08-01T12:25:19Z",
+      "event": "implementation_started",
+      "from_stage": "ready",
+      "to_stage": "inprogress",
+      "note": "Moved manifest to inprogress."
+    },
+    {
+      "at": "2026-08-01T15:21:29Z",
+      "event": "spec_review_passed",
+      "from_stage": "inprogress",
+      "to_stage": "inprogress",
+      "note": "Implementation matches the expanded spec; all verification gates passed."
+    },
+    {
+      "at": "2026-08-01T15:22:49Z",
+      "event": "implementation_completed",
+      "from_stage": "inprogress",
+      "to_stage": "done",
+      "note": "All implementation, regression, security, build, documentation, and spec-review gates passed."
+    }
+  ],
+  "approved_at": "2026-08-01T12:25:18Z",
+  "started_at": "2026-08-01T12:25:19Z",
+  "completed_at": "2026-08-01T15:22:49Z"
+}

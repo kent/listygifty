@@ -8,10 +8,15 @@ class ApiKeysController < ApplicationController
 
   def create
     attributes = api_key_params
+    requested_scopes = attributes[:scopes].presence || %w[read write]
+    if requested_scopes.map(&:to_s).include?("admin") && !Admin::Authorization.allowed?(current_user)
+      return render json: { error: "Only an allowlisted administrator can create an admin API key" }, status: :forbidden
+    end
+
     result = ApiKey.generate_for(
       current_user,
       name: attributes[:name],
-      scopes: attributes[:scopes].presence || %w[read write],
+      scopes: requested_scopes,
       expires_at: attributes[:expires_at].presence&.to_datetime
     )
 
@@ -22,6 +27,8 @@ class ApiKeysController < ApplicationController
     }, status: :created
   rescue ActiveRecord::RecordInvalid => e
     render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+  rescue ArgumentError
+    render json: { errors: [ "expires_at must be a valid date and time" ] }, status: :unprocessable_entity
   end
 
   def destroy

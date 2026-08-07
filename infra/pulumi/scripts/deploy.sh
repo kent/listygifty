@@ -52,7 +52,23 @@ if [[ -n "${WORKTREE_STATUS}" ]]; then
     exit 1
   fi
 
-  SHA="${SHA}-dirty"
+  # A fixed `-dirty` tag can leave Cloud Run on an older image when Pulumi has
+  # already seen the same commit/tag pair. Include tracked and untracked source
+  # content so every materially different worktree produces a distinct image
+  # tag and Pulumi trigger.
+  DIRTY_FINGERPRINT="$({
+    git -C "${ROOT_DIR}" diff --binary HEAD -- . \
+      ':(exclude)infra/pulumi/Pulumi.production.yaml'
+    # `pulumi up --config` rewrites sourceSha in the tracked stack file. Hash a
+    # normalized copy so that deploy-managed value does not make every
+    # otherwise identical dirty deploy produce a new fingerprint.
+    sed -E 's/^([[:space:]]*niftygifty:sourceSha:).*/\1 <deployment-managed>/' \
+      "${PULUMI_DIR}/Pulumi.production.yaml"
+    git -C "${ROOT_DIR}" ls-files --others --exclude-standard -z \
+      | sort -z \
+      | xargs -0 shasum
+  } | shasum | cut -c1-12)"
+  SHA="${SHA}-${DIRTY_FINGERPRINT}"
 fi
 
 START_TS="$(date +%s)"
@@ -127,7 +143,7 @@ build_web_image() {
     --async \
     --format="value(id)" \
     --config="${ROOT_DIR}/infra/gcp/cloudbuild.web.yaml" \
-    --substitutions="_IMAGE=${WEB_IMAGE},_CACHE_IMAGE=${IMAGE_REGISTRY}/${WEB_IMAGE_REPO}:buildcache,_CACHE_DEPS=${IMAGE_REGISTRY}/${WEB_IMAGE_REPO}:buildcache-deps,_NEXT_PUBLIC_API_URL=https://${API_DOMAIN},_NEXT_PUBLIC_APP_URL=https://${APP_DOMAIN},_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY},_NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login,_NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup,_NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard,_NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard,_NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY:-},_NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST:-}")"
+    --substitutions="_IMAGE=${WEB_IMAGE},_CACHE_IMAGE=${IMAGE_REGISTRY}/${WEB_IMAGE_REPO}:buildcache,_CACHE_DEPS=${IMAGE_REGISTRY}/${WEB_IMAGE_REPO}:buildcache-deps,_NEXT_PUBLIC_API_URL=https://${API_DOMAIN},_NEXT_PUBLIC_APP_URL=https://${APP_DOMAIN},_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY},_NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login,_NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup,_NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard,_NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard")"
   wait_for_cloud_build "${build_id}" "web"
 }
 

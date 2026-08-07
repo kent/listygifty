@@ -82,7 +82,6 @@ echo "  - listygifty-clerk-key-prod"
 echo "  - listygifty-stripe-key-prod"
 echo "  - listygifty-postmark-key-prod"
 echo "  - listygifty-openai-key-prod"
-echo "  - listygifty-posthog-key-prod"
 
 # Create placeholder secrets (replace with actual values)
 for secret in listygifty-db-staging listygifty-db-prod listygifty-rails-key-staging listygifty-rails-key-prod listygifty-clerk-key-staging listygifty-clerk-key-prod; do

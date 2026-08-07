@@ -18,10 +18,6 @@ const envSchema = z.object({
   NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: z.string().default("/dashboard"),
   NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: z.string().default("/dashboard"),
 
-  // Optional: Analytics
-  NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
-  NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
-
   // App URL for SEO
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
 
@@ -37,8 +33,6 @@ function validateEnv() {
     NEXT_PUBLIC_CLERK_SIGN_UP_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,
     NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL,
     NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL,
-    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
-    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NODE_ENV: process.env.NODE_ENV,
   });
@@ -55,4 +49,3 @@ export const env = validateEnv();
 
 // Type-safe access
 export type Env = z.infer<typeof envSchema>;
-

@@ -11,6 +11,7 @@ import {
   createWishlistItemsService,
   createExchangeInvitesService,
   createExchangeJoinsService,
+  createAnalyticsService,
 } from "@niftygifty/services";
 import { runtimeConfig } from "@/lib/runtime-config";
 import {
@@ -39,6 +40,7 @@ export const apiClient = new ApiClient({
   baseUrl: API_URL,
   debug: __DEV__,
 });
+export const analyticsService = createAnalyticsService(apiClient);
 
 const baseHolidaysService = createHolidaysService(apiClient);
 const baseGiftsService = createGiftsService(apiClient);

@@ -1592,3 +1592,46 @@ export const OAUTH_CONNECTION_ENDPOINTS = {
   oauthConnections: "/oauth/connections",
   oauthConnection: (clientId: string) => `/oauth/connections/${clientId}`,
 } as const;
+
+// =============================================================================
+// First-party analytics
+// =============================================================================
+
+export type AnalyticsPlatform = "web" | "ios" | "android" | "unknown";
+export type AnalyticsProperties = Record<string, boolean | number | string | null | undefined>;
+
+export interface AnalyticsAttribution {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  gclid?: string;
+  gbraid?: string;
+  wbraid?: string;
+  fbclid?: string;
+  msclkid?: string;
+  ttclid?: string;
+}
+
+export interface AnalyticsEventInput {
+  event_id: string;
+  event_name: string;
+  occurred_at: string;
+  anonymous_id: string;
+  session_id: string;
+  platform: AnalyticsPlatform;
+  path?: string;
+  title?: string;
+  referrer?: string;
+  landing_page?: string;
+  attribution?: AnalyticsAttribution;
+  properties?: AnalyticsProperties;
+}
+
+export interface AnalyticsIngestionResponse {
+  accepted: number;
+  duplicates: number;
+  rejected: number;
+  suppressed?: boolean;
+}

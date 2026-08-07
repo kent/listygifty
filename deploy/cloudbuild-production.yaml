@@ -24,7 +24,7 @@ steps:
       - '--concurrency=100'
       - '--timeout=300'
       - '--set-env-vars=RAILS_ENV=production,API_BASE_URL=https://api.listygifty.com,MCP_SERVER_URI=https://api.listygifty.com/mcp,FRONTEND_URL=https://listygifty.com'
-      - '--set-secrets=DATABASE_URL=listygifty-db-prod:latest,RAILS_MASTER_KEY=listygifty-rails-key-prod:latest,CLERK_SECRET_KEY=listygifty-clerk-key-prod:latest,STRIPE_SECRET_KEY=listygifty-stripe-key-prod:latest,POSTMARK_API_TOKEN=listygifty-postmark-key-prod:latest,OPENAI_API_KEY=listygifty-openai-key-prod:latest,POSTHOG_API_KEY=listygifty-posthog-key-prod:latest'
+      - '--set-secrets=DATABASE_URL=listygifty-db-prod:latest,RAILS_MASTER_KEY=listygifty-rails-key-prod:latest,CLERK_SECRET_KEY=listygifty-clerk-key-prod:latest,STRIPE_SECRET_KEY=listygifty-stripe-key-prod:latest,POSTMARK_API_TOKEN=listygifty-postmark-key-prod:latest,OPENAI_API_KEY=listygifty-openai-key-prod:latest'
 
   # Step 2: Run database migrations
   - id: 'run-migrations'

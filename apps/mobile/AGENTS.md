@@ -115,12 +115,6 @@ EXPO_PUBLIC_API_URL=http://localhost:3001
 EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 ```
 
-Optional:
-
-```bash
-EXPO_PUBLIC_POSTHOG_KEY=...
-EXPO_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
-```
 
 ## Troubleshooting
 

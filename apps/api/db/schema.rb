@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_31_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_01_000500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -57,6 +57,146 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_31_000000) do
     t.index ["company_profile_id", "is_default"], name: "index_addresses_on_company_profile_id_and_is_default"
     t.index ["company_profile_id", "label"], name: "index_addresses_on_company_profile_id_and_label", unique: true
     t.index ["company_profile_id"], name: "index_addresses_on_company_profile_id"
+  end
+
+  create_table "admin_action_confirmations", force: :cascade do |t|
+    t.string "action", null: false
+    t.bigint "actor_id", null: false
+    t.bigint "api_key_id"
+    t.string "confirmation_digest", null: false
+    t.datetime "consumed_at"
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.bigint "target_id", null: false
+    t.string "target_label", null: false
+    t.string "target_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_admin_action_confirmations_on_actor_id"
+    t.index ["api_key_id"], name: "index_admin_action_confirmations_on_api_key_id"
+    t.index ["confirmation_digest"], name: "index_admin_action_confirmations_on_confirmation_digest", unique: true
+    t.index ["expires_at", "consumed_at"], name: "index_admin_action_confirmations_on_expires_at_and_consumed_at"
+    t.index ["target_type", "target_id"], name: "index_admin_action_confirmations_on_target_type_and_target_id"
+  end
+
+  create_table "admin_audit_events", force: :cascade do |t|
+    t.string "action", null: false
+    t.bigint "actor_id", null: false
+    t.datetime "created_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.bigint "resource_id"
+    t.string "resource_type"
+    t.datetime "updated_at", null: false
+    t.index ["action"], name: "index_admin_audit_events_on_action"
+    t.index ["actor_id", "created_at"], name: "index_admin_audit_events_on_actor_id_and_created_at"
+    t.index ["actor_id"], name: "index_admin_audit_events_on_actor_id"
+    t.index ["resource_type", "resource_id"], name: "index_admin_audit_events_on_resource_type_and_resource_id"
+  end
+
+  create_table "admin_email_drafts", force: :cascade do |t|
+    t.bigint "api_key_id"
+    t.text "body", null: false
+    t.string "confirmation_digest", null: false
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "queued_at"
+    t.string "recipient_email", null: false
+    t.bigint "recipient_id", null: false
+    t.string "subject", null: false
+    t.datetime "updated_at", null: false
+    t.index ["api_key_id"], name: "index_admin_email_drafts_on_api_key_id"
+    t.index ["confirmation_digest"], name: "index_admin_email_drafts_on_confirmation_digest", unique: true
+    t.index ["created_by_id"], name: "index_admin_email_drafts_on_created_by_id"
+    t.index ["expires_at", "queued_at"], name: "index_admin_email_drafts_on_expires_at_and_queued_at"
+    t.index ["recipient_id"], name: "index_admin_email_drafts_on_recipient_id"
+  end
+
+  create_table "analytics_events", force: :cascade do |t|
+    t.bigint "analytics_visitor_id", null: false
+    t.string "anonymous_id", null: false
+    t.string "channel", default: "direct", null: false
+    t.jsonb "click_ids", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.string "event_id", null: false
+    t.string "event_name", null: false
+    t.string "ip_hash"
+    t.string "landing_page"
+    t.datetime "occurred_at", null: false
+    t.string "path"
+    t.string "platform", default: "unknown", null: false
+    t.jsonb "properties", default: {}, null: false
+    t.datetime "received_at", null: false
+    t.string "referrer"
+    t.string "session_id", null: false
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.string "user_agent"
+    t.bigint "user_id"
+    t.string "utm_campaign"
+    t.string "utm_content"
+    t.string "utm_medium"
+    t.string "utm_source"
+    t.string "utm_term"
+    t.bigint "workspace_id"
+    t.index ["analytics_visitor_id", "occurred_at"], name: "index_analytics_events_on_analytics_visitor_id_and_occurred_at"
+    t.index ["analytics_visitor_id"], name: "index_analytics_events_on_analytics_visitor_id"
+    t.index ["anonymous_id", "occurred_at"], name: "index_analytics_events_on_anonymous_id_and_occurred_at"
+    t.index ["channel", "occurred_at"], name: "index_analytics_events_on_channel_and_occurred_at"
+    t.index ["event_id"], name: "index_analytics_events_on_event_id", unique: true
+    t.index ["event_name", "occurred_at"], name: "index_analytics_events_on_event_name_and_occurred_at"
+    t.index ["occurred_at", "event_name"], name: "index_analytics_events_on_occurred_at_and_event_name"
+    t.index ["occurred_at", "platform"], name: "index_analytics_events_on_occurred_at_and_platform"
+    t.index ["occurred_at"], name: "index_analytics_events_on_occurred_at"
+    t.index ["session_id", "occurred_at"], name: "index_analytics_events_on_session_id_and_occurred_at"
+    t.index ["user_id", "occurred_at"], name: "index_analytics_events_on_user_id_and_occurred_at"
+    t.index ["user_id"], name: "index_analytics_events_on_user_id"
+    t.index ["utm_campaign", "occurred_at"], name: "index_analytics_events_on_utm_campaign_and_occurred_at"
+    t.index ["utm_source", "occurred_at"], name: "index_analytics_events_on_utm_source_and_occurred_at"
+    t.index ["workspace_id"], name: "index_analytics_events_on_workspace_id"
+  end
+
+  create_table "analytics_metric_goals", force: :cascade do |t|
+    t.string "comparison_operator", default: "gte", null: false
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id"
+    t.jsonb "filters", default: {}, null: false
+    t.jsonb "funnel_steps", default: [], null: false
+    t.string "granularity", default: "week", null: false
+    t.string "metric_key", null: false
+    t.string "name", null: false
+    t.text "notes"
+    t.date "start_date", null: false
+    t.string "status", default: "active", null: false
+    t.date "target_date", null: false
+    t.decimal "target_value", precision: 15, scale: 4, null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_analytics_metric_goals_on_created_by_id"
+    t.index ["metric_key", "status"], name: "index_analytics_metric_goals_on_metric_key_and_status"
+    t.index ["status", "target_date"], name: "index_analytics_metric_goals_on_status_and_target_date"
+  end
+
+  create_table "analytics_visitors", force: :cascade do |t|
+    t.string "anonymous_id", null: false
+    t.datetime "created_at", null: false
+    t.string "first_channel", default: "direct", null: false
+    t.string "first_landing_page"
+    t.string "first_referrer"
+    t.datetime "first_seen_at", null: false
+    t.jsonb "first_touch", default: {}, null: false
+    t.string "last_channel", default: "direct", null: false
+    t.string "last_landing_page"
+    t.string "last_referrer"
+    t.datetime "last_seen_at", null: false
+    t.jsonb "last_touch", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["anonymous_id"], name: "index_analytics_visitors_on_anonymous_id", unique: true
+    t.index ["first_channel"], name: "index_analytics_visitors_on_first_channel"
+    t.index ["first_seen_at"], name: "index_analytics_visitors_on_first_seen_at"
+    t.index ["last_seen_at"], name: "index_analytics_visitors_on_last_seen_at"
+    t.index ["user_id", "first_seen_at"], name: "index_analytics_visitors_on_user_id_and_first_seen_at"
+    t.index ["user_id"], name: "index_analytics_visitors_on_user_id"
   end
 
   create_table "api_keys", force: :cascade do |t|
@@ -291,6 +431,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_31_000000) do
     t.index ["share_token"], name: "index_holidays_on_share_token", unique: true
     t.index ["workspace_id", "is_template"], name: "index_holidays_on_workspace_id_and_is_template"
     t.index ["workspace_id"], name: "index_holidays_on_workspace_id"
+  end
+
+  create_table "marketing_spends", force: :cascade do |t|
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.string "campaign", default: "", null: false
+    t.string "channel", null: false
+    t.integer "clicks"
+    t.datetime "created_at", null: false
+    t.string "currency", default: "USD", null: false
+    t.integer "impressions"
+    t.string "medium", default: "", null: false
+    t.text "notes"
+    t.string "source", null: false
+    t.date "spend_date", null: false
+    t.datetime "updated_at", null: false
+    t.index ["campaign", "spend_date"], name: "index_marketing_spends_on_campaign_and_spend_date"
+    t.index ["channel", "spend_date"], name: "index_marketing_spends_on_channel_and_spend_date"
+    t.index ["source", "spend_date"], name: "index_marketing_spends_on_source_and_spend_date"
+    t.index ["spend_date", "source", "medium", "campaign"], name: "idx_marketing_spends_identity", unique: true
   end
 
   create_table "match_arrangements", force: :cascade do |t|
@@ -555,9 +714,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_31_000000) do
     t.string "username"
     t.datetime "welcomed_at"
     t.index ["clerk_user_id"], name: "index_users_on_clerk_user_id", unique: true
+    t.index ["created_at"], name: "index_users_on_created_at"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["email_preferences_token"], name: "index_users_on_email_preferences_token", unique: true
     t.index ["stripe_customer_id"], name: "index_users_on_stripe_customer_id", unique: true
+    t.index ["subscription_plan", "created_at"], name: "index_users_on_subscription_plan_and_created_at"
   end
 
   create_table "wishlist_item_claims", force: :cascade do |t|
@@ -663,6 +824,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_31_000000) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "addresses", "company_profiles"
+  add_foreign_key "admin_action_confirmations", "api_keys", on_delete: :nullify
+  add_foreign_key "admin_action_confirmations", "users", column: "actor_id"
+  add_foreign_key "admin_audit_events", "users", column: "actor_id"
+  add_foreign_key "admin_email_drafts", "api_keys", on_delete: :nullify
+  add_foreign_key "admin_email_drafts", "users", column: "created_by_id"
+  add_foreign_key "admin_email_drafts", "users", column: "recipient_id"
+  add_foreign_key "analytics_events", "analytics_visitors"
+  add_foreign_key "analytics_events", "users"
+  add_foreign_key "analytics_events", "workspaces"
+  add_foreign_key "analytics_metric_goals", "users", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "analytics_visitors", "users"
   add_foreign_key "api_keys", "users"
   add_foreign_key "company_profiles", "workspaces"
   add_foreign_key "email_deliveries", "holidays"

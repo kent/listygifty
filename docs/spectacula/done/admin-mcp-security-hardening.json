@@ -1,0 +1,76 @@
+{
+  "spec_id": "admin-mcp-security-hardening",
+  "slug": "admin-mcp-security-hardening",
+  "title": "Admin MCP Security Hardening Specification",
+  "stage": "done",
+  "spec_path": "../specs/admin-mcp-security-hardening.md",
+  "created_at": "2026-08-01T15:56:04Z",
+  "updated_at": "2026-08-01T16:06:16Z",
+  "summary": "Admin MCP hardening is implemented, verified, and locally credentialed.",
+  "next_action": "Deploy through the production Pulumi path when explicitly authorized, then mint a separate production credential.",
+  "blockers": [],
+  "reference_examples": [],
+  "review_policy": {
+    "final_vetting": "off"
+  },
+  "verification": {
+    "format": "passed",
+    "lint": "passed",
+    "typecheck": "passed",
+    "build": "passed",
+    "tests": "passed",
+    "spec_review": "passed",
+    "final_vetting": "skipped",
+    "notes": "Rails: 382 tests and 1,745 assertions passed. RuboCop inspected 297 files with no offenses. Brakeman reported zero warnings. Zeitwerk passed. Pulumi TypeScript passed tsc --noEmit. Local HTTP smoke passed initialize, ping, tools/list (31 tools), and admin_get_stats using the issued dedicated key. Final vetting is off for this plain Spectacula run."
+  },
+  "resume_context": {
+    "last_completed_step": "Moved manifest to done after required verification gates passed.",
+    "pending_steps": [],
+    "open_questions": [],
+    "last_reviewed_sections": [
+      "HTTP and JSON-RPC boundary",
+      "Tool schema enforcement",
+      "Credential lifecycle and authorization",
+      "Confirmation and audit binding",
+      "Validation matrix",
+      "Definition of done"
+    ],
+    "artifacts": [
+      "docs/spectacula/specs/admin-mcp-security-hardening.md"
+    ],
+    "notes": "Production deployment remains intentionally out of scope until explicitly authorized."
+  },
+  "history": [
+    {
+      "at": "2026-08-01T15:56:04Z",
+      "event": "spec_created",
+      "from_stage": null,
+      "to_stage": "specs",
+      "note": "Initial draft created from template."
+    },
+    {
+      "at": "2026-08-01T15:57:30Z",
+      "event": "spec_approved",
+      "from_stage": "specs",
+      "to_stage": "ready",
+      "note": "The user requested implementation and credential delivery."
+    },
+    {
+      "at": "2026-08-01T15:57:30Z",
+      "event": "implementation_started",
+      "from_stage": "ready",
+      "to_stage": "inprogress",
+      "note": "Implementation started immediately after approval."
+    },
+    {
+      "at": "2026-08-01T16:06:16Z",
+      "event": "implementation_completed",
+      "from_stage": "inprogress",
+      "to_stage": "done",
+      "note": "Implementation, security checks, full Rails regression suite, and local HTTP credential smoke passed."
+    }
+  ],
+  "approved_at": "2026-08-01T15:57:30Z",
+  "started_at": "2026-08-01T15:57:30Z",
+  "completed_at": "2026-08-01T16:06:16Z"
+}

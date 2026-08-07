@@ -173,7 +173,7 @@ Do not lead with charity or donation positioning; the homepage hero now stays fo
 - Mobile quick gift capture now remembers the last selected list for repeat idea entry.
 - Mobile quick gift capture now focuses the gift-name field immediately and only enables save when required fields are ready.
 - Mobile new/edit gift screens can paste merchant links directly from the clipboard and track link-paste usage.
-- Mobile now tracks core activation, gift status-change, and exchange-funnel events through PostHog when analytics is configured.
+- Mobile tracks core activation, gift status-change, and exchange-funnel events through the first-party analytics endpoint.
 - Mobile exchange draw analytics now use the documented draw-completed event, and invite sharing is tracked from the native share sheet.
 - Mobile exchange owners can now copy participant invite links as a fallback for TestFlight rehearsal invites.
 - Mobile exchange invite links now use the EAS profile web app URL so staging and production builds share the matching web domain.

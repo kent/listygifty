@@ -17,6 +17,15 @@ class User < ApplicationRecord
   has_many :wishlist_item_claims, dependent: :nullify
   has_many :api_keys, dependent: :destroy
   has_many :oauth_access_tokens, dependent: :destroy
+  has_many :oauth_authorization_codes, dependent: :destroy
+  has_many :oauth_clients, dependent: :nullify
+  has_many :admin_audit_events, foreign_key: :actor_id, dependent: :restrict_with_error
+  has_many :admin_email_drafts_created, class_name: "AdminEmailDraft", foreign_key: :created_by_id, dependent: :restrict_with_error
+  has_many :admin_email_drafts_received, class_name: "AdminEmailDraft", foreign_key: :recipient_id, dependent: :destroy
+  has_many :admin_action_confirmations, foreign_key: :actor_id, dependent: :restrict_with_error
+  has_many :analytics_visitors, dependent: :nullify
+  has_many :analytics_events, dependent: :nullify
+  has_many :analytics_metric_goals_created, class_name: "AnalyticsMetricGoal", foreign_key: :created_by_id, dependent: :nullify
 
   # Workspace associations
   has_many :workspace_memberships, dependent: :destroy

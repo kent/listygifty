@@ -296,7 +296,6 @@ GitHub Actions secrets:
 - `GCP_SERVICE_ACCOUNT`
 - `CLERK_PUBLISHABLE_KEY_PROD`
 - `CLERK_PUBLISHABLE_KEY_STAGING`
-- `POSTHOG_KEY` and `POSTHOG_HOST` when analytics are enabled for web builds
 
 Local deploy files:
 - `.gcp/listygifty-deploy.env`
