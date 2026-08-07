@@ -42,6 +42,13 @@ const androidAppLinkSha256CertFingerprints =
 // is rolling out.
 const sourceSha = nfg.require("sourceSha");
 const legacyRollback = nfg.getBoolean("legacyRollback") ?? false;
+const oauthSmokeRegistrationPayload = Buffer.from(
+  JSON.stringify({
+    client_name: "Deployment OAuth smoke",
+    redirect_uris: ["https://example.com/oauth/callback"],
+    scope: "read",
+  })
+).toString("base64");
 
 // =============================================================================
 // Provider
@@ -459,7 +466,7 @@ check "web OAuth consent"           "$web_url/oauth/authorize" 200
 
 registration="$(curl -fsS --max-time 15 -X POST "$api_url/oauth/register" \
   -H "Content-Type: application/json" \
-  --data "{\"client_name\":\"Deployment OAuth smoke\",\"redirect_uris\":[\"https://example.com/oauth/callback\"],\"scope\":\"read\"}")"
+  --data "$(printf "%s" "${oauthSmokeRegistrationPayload}" | base64 --decode)")"
 client_id="$(node -p "JSON.parse(process.argv[1]).client_id" "$registration")"
 challenge="$(printf "A%.0s" {1..43})"
 headers_file="$(mktemp)"
