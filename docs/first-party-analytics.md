@@ -13,7 +13,7 @@ Listy Gifty stores product and marketing events in its own Rails/PostgreSQL stac
 - Channels are classified as paid search, paid social, email, affiliate, display, organic search, organic social, referral, direct, or other.
 - Activation counts come from authoritative product records as well as events, so product creation remains measurable if a client event is lost.
 
-URLs are stored without query strings. Raw IP addresses are never stored; the API retains only a daily salted hash for abuse and quality diagnosis. Event properties are size-limited and identity/secret keys are removed. Browser DNT and Global Privacy Control suppress capture. The intended maximum event retention is 25 months; automated expiry should be added when the product retention policy is finalized.
+URLs are stored without query strings. Routes containing claim, invite, wishlist, exchange-share, or email-preference tokens are stored only as redacted route templates, and page titles are not retained. Event properties are scalar-only after sanitization; nested values, identity/secret-keyed fields, emails, and URLs are dropped. Raw IP addresses are never stored; the API retains only a daily salted hash for abuse and quality diagnosis. Browser DNT and Global Privacy Control suppress capture. Confirmed account deletion removes analytics visitors and events associated with that account. The intended maximum event retention is 25 months; automated expiry should be added when the product retention policy is finalized.
 
 ## Spend inputs
 

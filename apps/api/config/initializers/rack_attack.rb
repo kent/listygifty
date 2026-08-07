@@ -8,7 +8,8 @@ class Rack::Attack
 
   # Throttle all requests by IP (60 requests per minute)
   throttle("req/ip", limit: 60, period: 1.minute) do |req|
-    req.ip unless req.path.start_with?("/assets")
+    dedicated_limit = RequestBodyLimiter::ANALYTICS_PATH.match?(req.path) || RequestBodyLimiter::ADMIN_PATH.match?(req.path)
+    req.ip unless req.path.start_with?("/assets") || dedicated_limit
   end
 
   # Throttle OAuth credential exchange and dynamic client registration.
@@ -24,15 +25,15 @@ class Rack::Attack
   # Analytics clients send small batches and may flush during rapid route
   # changes; keep this above the ordinary product-request baseline.
   throttle("analytics/ip", limit: 120, period: 1.minute) do |req|
-    req.ip if req.post? && req.path == "/analytics/events"
+    req.ip if req.post? && RequestBodyLimiter::ANALYTICS_PATH.match?(req.path)
   end
 
   throttle("admin_mcp/ip", limit: 30, period: 1.minute) do |req|
-    req.ip if req.post? && req.path == "/admin/mcp"
+    req.ip if req.post? && RequestBodyLimiter::ADMIN_PATH.match?(req.path)
   end
 
   throttle("admin_mcp/credential", limit: 60, period: 1.minute) do |req|
-    next unless req.post? && req.path == "/admin/mcp"
+    next unless req.post? && RequestBodyLimiter::ADMIN_PATH.match?(req.path)
 
     authorization = req.get_header("HTTP_AUTHORIZATION")
     Digest::SHA256.hexdigest(authorization) if authorization&.match?(/\ABearer ng_[A-Za-z0-9_-]{43}\z/)

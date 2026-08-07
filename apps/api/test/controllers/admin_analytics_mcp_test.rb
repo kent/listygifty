@@ -45,16 +45,29 @@ class AdminAnalyticsMcpTest < ActionDispatch::IntegrationTest
       spend_date: Date.current.iso8601,
       channel: "organic_search",
       source: "google",
+      campaign: "Holiday-Launch",
       amount: 45.5,
       currency: "usd",
       clicks: 10,
       notes: "Manual import"
     })
     assert_equal "USD", spend["currency"]
+    assert_equal "holiday-launch", spend["campaign"]
     assert spend["has_notes"]
 
-    listed = call_tool("admin_list_marketing_spend")
-    assert_equal 45.5, listed["total_amount"]
+    updated = call_tool("admin_upsert_marketing_spend", {
+      spend_date: Date.current.iso8601,
+      channel: "organic_search",
+      source: "Google",
+      campaign: "holiday-launch",
+      amount: 50,
+      currency: "USD"
+    })
+    assert_equal spend["id"], updated["id"]
+    assert_equal 1, MarketingSpend.where(campaign: "holiday-launch").count
+
+    listed = call_tool("admin_list_marketing_spend", campaign: "HOLIDAY-LAUNCH")
+    assert_equal 50.0, listed["total_amount"]
     assert AdminAuditEvent.exists?(actor: @admin, action: "marketing_spend.upsert")
   end
 

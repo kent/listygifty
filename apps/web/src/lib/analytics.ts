@@ -22,7 +22,16 @@ const ATTRIBUTION_KEYS = [
 const queue: AnalyticsEventInput[] = [];
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 let landingPage: string | null = null;
-let previousPage: string | null = null;
+
+const SENSITIVE_ROUTE_PATTERNS: Array<[RegExp, string]> = [
+  [/^\/claim\/[^/]+\/?$/, "/claim/:token"],
+  [/^\/email-preferences\/[^/]+\/?$/, "/email-preferences/:token"],
+  [/^\/join\/(?:exchange|workspace)\/[^/]+\/?$/, "/join/:kind/:token"],
+  [/^\/join\/x\/[^/]+\/?$/, "/join/x/:share_token"],
+  [/^\/join\/[^/]+\/?$/, "/join/:token"],
+  [/^\/w\/[^/]+\/?$/, "/w/:token"],
+  [/^\/e\/[^/]+\/[^/]+\/?$/, "/e/:slug/:share_token"],
+];
 
 function trackingSuppressed() {
   if (typeof navigator === "undefined") return true;
@@ -95,7 +104,18 @@ function currentAttribution(): AnalyticsAttribution {
 }
 
 function normalizedPath() {
-  return window.location.pathname;
+  const path = window.location.pathname;
+  return SENSITIVE_ROUTE_PATTERNS.find(([pattern]) => pattern.test(path))?.[1] || path;
+}
+
+function externalReferrer() {
+  if (!document.referrer) return undefined;
+  try {
+    const referrer = new URL(document.referrer);
+    return referrer.origin === window.location.origin ? undefined : document.referrer;
+  } catch {
+    return undefined;
+  }
 }
 
 function enqueue(event: AnalyticsEventInput) {
@@ -131,11 +151,9 @@ export function captureWebEvent(event: string, properties?: AnalyticsProperties)
     session_id: sessionId(),
     platform: "web",
     path: normalizedPath(),
-    title: document.title,
-    referrer: previousPage || document.referrer || undefined,
+    referrer: externalReferrer(),
     landing_page: landingPage,
     attribution: currentAttribution(),
     properties,
   });
-  previousPage = window.location.href;
 }

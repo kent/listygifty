@@ -107,13 +107,15 @@ module Admin
           email_deliveries: EmailDelivery.where(user_id: target.id).count,
           pending_admin_email_drafts: AdminEmailDraft.where(recipient_id: target.id, queued_at: nil).count,
           analytics_visitors: AnalyticsVisitor.where(user_id: target.id).count,
-          analytics_events: AnalyticsEvent.where(user_id: target.id).count,
+          analytics_events: analytics_events_for(target).count,
           api_keys: ApiKey.where(user_id: target.id).count,
           oauth_tokens: OauthAccessToken.where(user_id: target.id).count
         }
       end
 
       def delete_user_dependencies!(target)
+        analytics_events_for(target).delete_all
+        AnalyticsVisitor.where(user_id: target.id).delete_all
         Workspace.where(created_by_user_id: target.id).destroy_all
         WorkspaceInvite.where(invited_by_id: target.id).destroy_all
         WorkspaceInvite.where(accepted_by_id: target.id).update_all(accepted_by_id: nil, updated_at: Time.current)
@@ -121,6 +123,11 @@ module Admin
         Gift.where(created_by_user_id: target.id).update_all(created_by_user_id: nil, updated_at: Time.current)
         OauthAuthorizationCode.where(user_id: target.id).destroy_all
         OauthClient.where(user_id: target.id).update_all(user_id: nil, updated_at: Time.current)
+      end
+
+      def analytics_events_for(target)
+        visitor_ids = AnalyticsVisitor.where(user_id: target.id).select(:id)
+        AnalyticsEvent.where(user_id: target.id).or(AnalyticsEvent.where(analytics_visitor_id: visitor_ids))
       end
 
       def audit_metadata(metadata)

@@ -6,11 +6,14 @@ module Analytics
     UTM_KEYS = %w[utm_source utm_medium utm_campaign utm_term utm_content].freeze
     SEARCH_HOSTS = %w[google. bing. yahoo. duckduckgo. ecosia.].freeze
     SOCIAL_HOSTS = %w[facebook. instagram. linkedin. t.co twitter. x.com tiktok. pinterest. reddit.].freeze
+    FIRST_PARTY_HOSTS = %w[listygifty.com localhost 127.0.0.1].freeze
+    CANONICAL_DIMENSION_KEYS = %w[utm_source utm_medium utm_campaign].freeze
 
     def self.normalize(raw, referrer: nil)
-      values = raw.to_h.stringify_keys.slice(*(UTM_KEYS + CLICK_ID_KEYS))
-        .transform_values { |value| value.to_s.strip.first(500).presence }
-        .compact
+      values = raw.to_h.stringify_keys.slice(*(UTM_KEYS + CLICK_ID_KEYS)).each_with_object({}) do |(key, value), normalized|
+        value = value.to_s.strip.first(500).presence
+        normalized[key] = CANONICAL_DIMENSION_KEYS.include?(key) ? value&.downcase : value if value
+      end
       values["referrer_host"] = referrer_host(referrer)
       values["channel"] = classify(values)
       values
@@ -37,7 +40,10 @@ module Analytics
     def self.referrer_host(referrer)
       return nil if referrer.blank?
 
-      URI.parse(referrer).host&.downcase
+      host = URI.parse(referrer).host&.downcase
+      return nil if host.blank? || FIRST_PARTY_HOSTS.any? { |domain| host == domain || host.end_with?(".#{domain}") }
+
+      host
     rescue URI::InvalidURIError
       nil
     end

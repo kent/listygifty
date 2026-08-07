@@ -27,28 +27,40 @@ module Analytics
     def acquisition(from: nil, to: nil, attribution_model: "first_touch", group_by: "channel")
       window = window(from, to)
       touch = normalize_touch(attribution_model)
-      grouping = GROUP_FIELDS[group_by.to_s]
-      raise ArgumentError, "group_by must be one of: #{GROUP_FIELDS.keys.join(', ')}" unless grouping
+      group_by = group_by.to_s
+      raise ArgumentError, "group_by must be one of: #{GROUP_FIELDS.keys.join(', ')}" unless GROUP_FIELDS.key?(group_by)
 
       visitors = AnalyticsVisitor.where(first_seen_at: window[:range]).to_a
+      last_touch_events = touch == "last_touch" ? visitor_last_touch_events(visitors, window, group_by) : {}
+      visitor_groups = visitors.group_by do |visitor|
+        visitor_acquisition_value(visitor, touch, group_by, last_touch_events[visitor.id])
+      end
       session_counts = AnalyticsEvent.occurred_between(*window[:bounds]).group(:anonymous_id).distinct.count(:session_id)
-      all_user_ids = visitors.filter_map(&:user_id).uniq
-      signup_user_ids = User.where(id: all_user_ids, created_at: window[:range]).pluck(:id).to_set
-      paid_user_ids = User.where(id: signup_user_ids.to_a, subscription_plan: "premium").where("subscription_expires_at > ?", Time.current).pluck(:id).to_set
-      activated_user_ids = Activation.user_ids(all_user_ids).to_set
-      spend_by_value = grouped_spend(group_by.to_s, window)
-      rows = visitors.group_by do |visitor|
-        touch_data = visitor.public_send(touch)
-        group_by.to_s == "channel" ? grouping.call(visitor, touch.delete_suffix("_touch")) : grouping.call(visitor, touch_data)
-      end.map do |value, grouped_visitors|
-        user_ids = grouped_visitors.filter_map(&:user_id).uniq
-        signups = user_ids.count { |id| signup_user_ids.include?(id) }
-        paid = user_ids.count { |id| paid_user_ids.include?(id) }
-        activated = user_ids.count { |id| activated_user_ids.include?(id) }
-        spend = spend_by_value.fetch(value.to_s, [])
+
+      signup_users = User.where(created_at: window[:range]).to_a
+      signup_user_ids = signup_users.map(&:id)
+      signup_events = canonical_signup_events(signup_user_ids)
+      signup_groups = signup_users.each_with_object(Hash.new { |hash, key| hash[key] = Set.new }) do |user, groups|
+        value = signup_acquisition_value(signup_events[user.id], touch, group_by)
+        groups[value] << user.id
+      end
+      paid_user_ids = User.where(id: signup_user_ids, subscription_plan: "premium")
+        .where("subscription_expires_at > ?", Time.current).pluck(:id).to_set
+      activated_user_ids = Activation.user_ids(signup_user_ids).to_set
+
+      all_spend = MarketingSpend.where(spend_date: window[:from]..window[:to]).to_a
+      spend_by_value = grouped_spend(group_by, all_spend)
+      values = visitor_groups.keys | signup_groups.keys | spend_by_value.keys
+      rows = values.map do |value|
+        grouped_visitors = visitor_groups.fetch(value, [])
+        grouped_signup_ids = signup_groups.fetch(value, Set.new)
+        spend = spend_by_value.fetch(value, [])
         clicks = spend.sum { |row| row.clicks.to_i }
         amounts = spend.group_by(&:currency).transform_values { |items| items.sum { |row| row.amount.to_f }.round(2) }
         amount = amounts.one? ? amounts.values.first : nil
+        signups = grouped_signup_ids.length
+        activated = grouped_signup_ids.count { |id| activated_user_ids.include?(id) }
+        paid = grouped_signup_ids.count { |id| paid_user_ids.include?(id) }
         {
           value: value,
           visitors: grouped_visitors.length,
@@ -68,19 +80,29 @@ module Analytics
         }
       end
 
+      unattributed_signups = signup_groups.fetch("(unattributed)", Set.new).length
       {
         query: window_payload(window).merge(attribution_model: attribution_model, group_by: group_by),
         rows: rows.sort_by { |row| [ -row[:signups], -row[:visitors], row[:value].to_s ] },
-        totals: sum_acquisition(rows),
+        totals: acquisition_totals(
+          visitors: visitors,
+          session_counts: session_counts,
+          signup_user_ids: signup_user_ids,
+          activated_user_ids: activated_user_ids,
+          paid_user_ids: paid_user_ids,
+          spend: all_spend
+        ),
         definitions: metric_definitions,
-        data_quality: data_quality
+        data_quality: data_quality.merge(unattributed_signups: unattributed_signups)
       }
     end
 
     def pages(from: nil, to: nil, limit: 50)
       window = window(from, to)
-      landing_signups = AnalyticsVisitor.where(first_seen_at: window[:range]).where.not(user_id: nil)
-        .joins(:user).where(users: { created_at: window[:range] }).group(:first_landing_page).count
+      signup_user_ids = User.where(created_at: window[:range]).pluck(:id)
+      landing_signups = canonical_signup_events(signup_user_ids).values.filter_map do |event|
+        Sanitizer.path(event.landing_page)
+      end.tally
       rows = page_rows(window, normalize_limit(limit, 100)).map do |values|
         signups = landing_signups.fetch(values.fetch("path"), 0)
         {
@@ -170,7 +192,10 @@ module Analytics
       rows = cohorts.sort.map do |cohort_date, cohort_users|
         ids = cohort_users.map(&:id)
         retention = Array.new(weeks) do |week|
-          count = ids.count { |id| activity.include?([ id, cohort_date + week.weeks ]) }
+          activity_week = cohort_date + week.weeks
+          next nil if activity_week > Date.current.beginning_of_week
+
+          count = ids.count { |id| activity.include?([ id, activity_week ]) }
           rate(count, ids.length)
         end
         { cohort_week: cohort_date.iso8601, users: ids.length, weekly_retention: retention }
@@ -205,8 +230,16 @@ module Analytics
       window = window(from, to)
       relation = AnalyticsEvent.occurred_between(*window[:bounds]).order(:occurred_at)
       relation = user_id.present? ? relation.where(user_id: user_id) : relation.where(anonymous_id: anonymous_id)
-      records = relation.limit(normalize_limit(limit, 500)).to_a
-      { query: window_payload(window).merge(user_id: user_id, anonymous_id: anonymous_id), events: records.map { |event| serialize_event(event) }, data_quality: data_quality }
+      normalized_limit = normalize_limit(limit, 500)
+      records = relation.limit(normalized_limit + 1).to_a
+      truncated = records.length > normalized_limit
+      records = records.first(normalized_limit)
+      {
+        query: window_payload(window).merge(user_id: user_id, anonymous_id: anonymous_id),
+        events: records.map { |event| serialize_event(event) },
+        truncated: truncated,
+        data_quality: data_quality
+      }
     end
 
     private
@@ -363,28 +396,117 @@ module Analytics
       Activation.count(user_ids)
     end
 
-    def grouped_spend(group_by, window)
-      return {} unless %w[channel source medium campaign].include?(group_by)
+    def visitor_acquisition_value(visitor, touch, group_by, last_touch_event = nil)
+      if touch == "last_touch" && last_touch_event
+        raw_value = event_acquisition_value(last_touch_event, group_by)
+      else
+        touch_data = visitor.first_touch
+        raw_value = case group_by
+        when "channel" then visitor.first_channel
+        when "source" then touch_data["utm_source"]
+        when "medium" then touch_data["utm_medium"]
+        when "campaign" then touch_data["utm_campaign"]
+        when "landing_page" then visitor.first_landing_page
+        end
+      end
+      normalize_acquisition_value(raw_value, group_by)
+    end
 
-      MarketingSpend.where(spend_date: window[:from]..window[:to]).to_a.group_by do |spend|
-        spend.public_send(group_by).presence || "(none)"
+    def visitor_last_touch_events(visitors, window, group_by)
+      return {} if visitors.empty?
+
+      relation = AnalyticsEvent.where(analytics_visitor_id: visitors.map(&:id))
+        .where("occurred_at <= ?", window[:bounds].last)
+      relation = relation.select("DISTINCT ON (analytics_visitor_id) analytics_events.*")
+      relation = if group_by == "landing_page"
+        relation.order(:analytics_visitor_id, occurred_at: :desc, id: :desc)
+      else
+        relation.order(
+          :analytics_visitor_id,
+          Arel.sql("CASE WHEN channel = 'direct' THEN 1 ELSE 0 END"),
+          occurred_at: :desc,
+          id: :desc
+        )
+      end
+      relation.index_by(&:analytics_visitor_id)
+    end
+
+    def event_acquisition_value(event, group_by)
+      case group_by
+      when "channel" then event.channel
+      when "source" then event.utm_source
+      when "medium" then event.utm_medium
+      when "campaign" then event.utm_campaign
+      when "landing_page" then event.landing_page.presence || event.path
       end
     end
 
-    def sum_acquisition(rows)
-      keys = %i[visitors sessions signups activated_users paid_users clicks]
-      totals = keys.to_h { |key| [ key, rows.sum { |row| row[key] } ] }
-      spend_by_currency = rows.each_with_object(Hash.new(0.0)) do |row, sums|
-        row[:spend_by_currency].each { |currency, amount| sums[currency] += amount }
-      end.transform_values { |amount| amount.round(2) }
+    def canonical_signup_events(user_ids)
+      return {} if user_ids.empty?
+
+      AnalyticsEvent.where(user_id: user_ids, event_name: "user_signed_up")
+        .order(:received_at, :id)
+        .to_a
+        .group_by(&:user_id)
+        .transform_values(&:first)
+    end
+
+    def signup_acquisition_value(event, touch, group_by)
+      return "(unattributed)" unless event
+
+      if touch == "last_touch"
+        return "(unattributed)" unless event.properties.key?("signup_last_channel")
+
+        raw_value = event.properties["signup_last_#{signup_property_suffix(group_by)}"]
+      else
+        raw_value = case group_by
+        when "channel" then event.channel
+        when "source" then event.utm_source
+        when "medium" then event.utm_medium
+        when "campaign" then event.utm_campaign
+        when "landing_page" then event.landing_page
+        end
+      end
+      normalize_acquisition_value(raw_value, group_by)
+    end
+
+    def signup_property_suffix(group_by)
+      { "channel" => "channel", "source" => "source", "medium" => "medium", "campaign" => "campaign", "landing_page" => "landing_page" }.fetch(group_by)
+    end
+
+    def normalize_acquisition_value(value, group_by)
+      value = Sanitizer.path(value) if group_by == "landing_page"
+      value = value.to_s.strip.presence || "(none)"
+      %w[channel source medium campaign].include?(group_by) ? value.downcase : value
+    end
+
+    def grouped_spend(group_by, spend_rows)
+      return {} unless %w[channel source medium campaign].include?(group_by)
+
+      spend_rows.group_by { |spend| normalize_acquisition_value(spend.public_send(group_by), group_by) }
+    end
+
+    def acquisition_totals(visitors:, session_counts:, signup_user_ids:, activated_user_ids:, paid_user_ids:, spend:)
+      spend_by_currency = spend.group_by(&:currency).transform_values do |items|
+        items.sum { |row| row.amount.to_f }.round(2)
+      end
       amount = spend_by_currency.one? ? spend_by_currency.values.first : nil
+      clicks = spend.sum { |row| row.clicks.to_i }
+      totals = {
+        visitors: visitors.length,
+        sessions: visitors.sum { |visitor| session_counts.fetch(visitor.anonymous_id, 0) },
+        signups: signup_user_ids.length,
+        activated_users: activated_user_ids.length,
+        paid_users: paid_user_ids.length,
+        clicks: clicks
+      }
       totals.merge(
         spend: amount,
         currency: spend_by_currency.one? ? spend_by_currency.keys.first : nil,
         spend_by_currency: spend_by_currency,
         visitor_to_signup_rate: rate(totals[:signups], totals[:visitors]),
         signup_to_activation_rate: rate(totals[:activated_users], totals[:signups]),
-        cpc: divide(amount, totals[:clicks]),
+        cpc: divide(amount, clicks),
         cost_per_signup: divide(amount, totals[:signups]),
         customer_acquisition_cost: divide(amount, totals[:paid_users])
       )
@@ -422,17 +544,18 @@ module Analytics
         workspace_id: event.workspace_id,
         session_id: event.session_id,
         platform: event.platform,
-        path: event.path,
-        title: event.title,
-        referrer: event.referrer,
-        landing_page: event.landing_page,
+        path: Sanitizer.path(event.path),
+        title: nil,
+        referrer: Sanitizer.url(event.referrer),
+        landing_page: Sanitizer.path(event.landing_page),
         channel: event.channel,
         utm_source: event.utm_source,
         utm_medium: event.utm_medium,
         utm_campaign: event.utm_campaign,
         utm_term: event.utm_term,
         utm_content: event.utm_content,
-        properties: event.properties
+        click_ids: event.click_ids,
+        properties: Sanitizer.properties(event.properties)
       }
     end
 

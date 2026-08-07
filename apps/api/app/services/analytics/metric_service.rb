@@ -128,10 +128,11 @@ module Analytics
 
     def funnel_values(range, granularity, filters, steps)
       period_starts(range[:from], range[:to], granularity).to_h do |period|
+        period_start = [ period, range[:from] ].max
         period_end = [ next_period(period, granularity) - 1.day, range[:to] ].min
         result = QueryService.new.funnel(
           steps: steps,
-          from: period.iso8601,
+          from: period_start.iso8601,
           to: period_end.iso8601,
           filters: funnel_filters(filters)
         )

@@ -32,10 +32,10 @@ Rails.application.routes.draw do
 
   # Separate global administration control plane. This endpoint accepts only
   # allowlisted, admin-scoped API keys and never OAuth credentials.
-  post "admin/mcp", to: "admin_mcp#handle"
+  post "admin/mcp", to: "admin_mcp#handle", format: false
 
   # First-party product and marketing analytics ingestion.
-  post "analytics/events", to: "analytics_events#create"
+  post "analytics/events", to: "analytics_events#create", format: false
 
   # =============================================================================
   # API Keys (for MCP server and other integrations)

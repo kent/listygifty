@@ -1,4 +1,5 @@
 require_relative "boot"
+require_relative "../lib/request_body_limiter"
 
 require "rails"
 require "active_model/railtie"
@@ -19,6 +20,8 @@ module Niftygifty
 
     # API-only mode
     config.api_only = true
+
+    config.middleware.insert_before 0, RequestBodyLimiter
 
     # Middleware for Clerk session handling
     config.middleware.use ActionDispatch::Cookies

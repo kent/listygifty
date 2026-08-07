@@ -13,7 +13,7 @@ class MarketingSpend < ApplicationRecord
     self.channel = channel.to_s.strip.downcase
     self.source = source.to_s.strip.downcase
     self.medium = medium.to_s.strip.downcase
-    self.campaign = campaign.to_s.strip
+    self.campaign = campaign.to_s.strip.downcase
     self.currency = currency.to_s.strip.upcase.presence || "USD"
   end
 end

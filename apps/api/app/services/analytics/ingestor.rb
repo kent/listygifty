@@ -4,8 +4,6 @@ module Analytics
     MAX_PROPERTIES = 50
     MAX_PROPERTIES_BYTES = 8.kilobytes
     ID_FORMAT = /\A[A-Za-z0-9_-]{16,100}\z/
-    RESERVED_PROPERTIES = %w[user_id workspace_id email token anonymous_id session_id].freeze
-    SENSITIVE_PROPERTY_PATTERN = /(email|phone|address|password|secret|token|user_id|workspace_id|anonymous_id|session_id)/i
 
     def initialize(user:, workspace:, ip:, user_agent:)
       @user = user
@@ -86,10 +84,10 @@ module Analytics
         anonymous_id: payload.fetch("anonymous_id"),
         session_id: payload.fetch("session_id"),
         platform: normalized_platform(payload["platform"]),
-        path: sanitize_path(payload["path"]),
-        title: payload["title"].to_s.first(500).presence,
+        path: Sanitizer.path(payload["path"]),
+        title: nil,
         referrer: referrer,
-        landing_page: sanitize_path(payload["landing_page"]),
+        landing_page: Sanitizer.path(payload["landing_page"]),
         channel: attribution.fetch("channel"),
         utm_source: attribution["utm_source"],
         utm_medium: attribution["utm_medium"],
@@ -104,7 +102,7 @@ module Analytics
     end
 
     def find_or_update_visitor!(payload, occurred_at, attribution, referrer)
-      landing_page = sanitize_path(payload["landing_page"] || payload["path"])
+      landing_page = Sanitizer.path(payload["landing_page"] || payload["path"])
       visitor = AnalyticsVisitor.find_by(anonymous_id: payload.fetch("anonymous_id"))
       unless visitor
         now = Time.current
@@ -158,9 +156,9 @@ module Analytics
     end
 
     def synthesize_signup!(visitor, payload)
-      return if AnalyticsEvent.exists?(analytics_visitor: visitor, user: @user, event_name: "user_signed_up")
+      return if AnalyticsEvent.exists?(user: @user, event_name: "user_signed_up")
 
-      AnalyticsEvent.create_or_find_by!(event_id: "signup_#{visitor.id}_#{@user.id}") do |event|
+      AnalyticsEvent.create_or_find_by!(event_id: "signup_user_#{@user.id}") do |event|
         event.assign_attributes(
           event_name: "user_signed_up",
           occurred_at: @user.created_at,
@@ -171,8 +169,8 @@ module Analytics
           anonymous_id: visitor.anonymous_id,
           session_id: payload.fetch("session_id"),
           platform: normalized_platform(payload["platform"]),
-          path: sanitize_path(payload["path"]),
-          landing_page: visitor.first_landing_page,
+          path: Sanitizer.path(payload["path"]),
+          landing_page: Sanitizer.path(visitor.first_landing_page),
           channel: visitor.first_channel,
           utm_source: visitor.first_touch["utm_source"],
           utm_medium: visitor.first_touch["utm_medium"],
@@ -180,7 +178,18 @@ module Analytics
           utm_term: visitor.first_touch["utm_term"],
           utm_content: visitor.first_touch["utm_content"],
           click_ids: visitor.first_touch.slice(*Attribution::CLICK_ID_KEYS),
-          properties: {},
+          properties: {
+            "signup_first_channel" => visitor.first_channel,
+            "signup_first_source" => visitor.first_touch["utm_source"],
+            "signup_first_medium" => visitor.first_touch["utm_medium"],
+            "signup_first_campaign" => visitor.first_touch["utm_campaign"],
+            "signup_first_landing_page" => Sanitizer.path(visitor.first_landing_page),
+            "signup_last_channel" => visitor.last_channel,
+            "signup_last_source" => visitor.last_touch["utm_source"],
+            "signup_last_medium" => visitor.last_touch["utm_medium"],
+            "signup_last_campaign" => visitor.last_touch["utm_campaign"],
+            "signup_last_landing_page" => Sanitizer.path(visitor.last_landing_page)
+          }.compact,
           ip_hash: ip_hash,
           user_agent: @user_agent
         )
@@ -201,22 +210,12 @@ module Analytics
       AnalyticsEvent::PLATFORMS.include?(value) ? value : "unknown"
     end
 
-    def sanitize_path(value)
-      value.to_s.split("?", 2).first.to_s.first(1_000).presence
-    end
-
     def sanitize_url(value)
-      value.to_s.split("?", 2).first.to_s.first(1_000).presence
+      Sanitizer.url(value)
     end
 
     def sanitized_properties(properties)
-      properties.stringify_keys.reject { |key, _value| RESERVED_PROPERTIES.include?(key) || key.match?(SENSITIVE_PROPERTY_PATTERN) }.transform_values do |value|
-        case value
-        when String then value.first(1_000)
-        when Numeric, TrueClass, FalseClass, NilClass then value
-        else value.to_s.first(1_000)
-        end
-      end
+      Sanitizer.properties(properties.to_h.stringify_keys)
     end
 
     def ip_hash

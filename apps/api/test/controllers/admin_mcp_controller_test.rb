@@ -75,9 +75,13 @@ class AdminMcpControllerTest < ActionDispatch::IntegrationTest
       "Content-Type" => "text/plain"
     }
     assert_response :unsupported_media_type
+    assert_equal %w[no-store private], response.headers["Cache-Control"].split(", ").sort
+    assert_equal "no-referrer", response.headers["Referrer-Policy"]
 
     post_admin_mcp(method: "ping", headers: admin_headers.merge("Origin" => "https://evil.example"))
     assert_response :forbidden
+    assert_equal %w[no-store private], response.headers["Cache-Control"].split(", ").sort
+    assert_equal "no-referrer", response.headers["Referrer-Policy"]
 
     with_env("ADMIN_MCP_ALLOWED_ORIGINS", "https://trusted.example") do
       post_admin_mcp(method: "ping", headers: admin_headers.merge("Origin" => "https://trusted.example"))
@@ -318,6 +322,26 @@ class AdminMcpControllerTest < ActionDispatch::IntegrationTest
     holiday = target.personal_workspace.holidays.create!(name: "Delete my gifts")
     HolidayUser.create!(holiday: holiday, user: target, role: "owner")
     holiday.gifts.create!(name: "Gone", gift_status: gift_statuses(:idea), created_by: target)
+    visitor = AnalyticsVisitor.create!(
+      anonymous_id: SecureRandom.uuid,
+      user: target,
+      first_seen_at: 1.day.ago,
+      last_seen_at: Time.current,
+      first_touch: {},
+      last_touch: {}
+    )
+    analytics_event = AnalyticsEvent.create!(
+      event_id: SecureRandom.uuid,
+      event_name: "page_viewed",
+      occurred_at: 1.hour.ago,
+      received_at: Time.current,
+      analytics_visitor: visitor,
+      user: target,
+      anonymous_id: visitor.anonymous_id,
+      session_id: SecureRandom.uuid,
+      platform: "web",
+      channel: "direct"
+    )
 
     protected_result = call_tool_result("admin_preview_user_deletion", user_id: @admin.id)
     assert protected_result["isError"]
@@ -325,6 +349,8 @@ class AdminMcpControllerTest < ActionDispatch::IntegrationTest
     preview = call_tool("admin_preview_user_deletion", user_id: target.id)
     assert_equal 1, preview.dig("impact", "workspaces_created")
     assert_equal 1, preview.dig("impact", "gifts_in_created_workspaces")
+    assert_equal 1, preview.dig("impact", "analytics_visitors")
+    assert_equal 1, preview.dig("impact", "analytics_events")
 
     wrong_key = call_tool_result(
       "admin_confirm_user_deletion",
@@ -339,6 +365,8 @@ class AdminMcpControllerTest < ActionDispatch::IntegrationTest
     assert result["deleted"]
     assert_not User.exists?(target.id)
     assert_not Workspace.exists?(created_by_user_id: target.id)
+    assert_not AnalyticsVisitor.exists?(visitor.id)
+    assert_not AnalyticsEvent.exists?(analytics_event.id)
     assert AdminAuditEvent.exists?(action: "user_deletion.confirm", resource_id: target.id)
 
     repeated = call_tool_result("admin_confirm_user_deletion", confirmation_token: preview.fetch("confirmation_token"))

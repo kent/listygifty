@@ -67,7 +67,8 @@ module Analytics
       target = goal.target_value.to_f
       elapsed = elapsed_ratio(goal, today)
       expected = rate_metric?(goal.metric_key) ? target : (target * elapsed).round(4)
-      achieved = meets_target?(current, target, goal.comparison_operator)
+      threshold_met = meets_target?(current, target, goal.comparison_operator)
+      achieved = threshold_met && (goal.comparison_operator == "gte" || today > goal.target_date)
       on_track = meets_target?(current, expected, goal.comparison_operator)
       state = goal_state(goal, today, achieved, on_track)
 
@@ -80,6 +81,7 @@ module Analytics
           elapsed_percent: (elapsed * 100).round(2),
           percent_of_target: percent_of_target(current, target),
           remaining_value: remaining_value(current, target, goal.comparison_operator),
+          threshold_met: threshold_met,
           achieved: achieved,
           on_track: on_track,
           recommendation: recommendation(goal, state, current, target),

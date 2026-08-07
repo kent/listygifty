@@ -71,6 +71,24 @@ class Analytics::MetricServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "excludes events before the requested start of a partial funnel bucket" do
+    week_start = Date.new(2026, 8, 3)
+    create_event("partial_funnel_started", week_start.noon, session_id: "partial_week_session_123")
+    create_event("partial_funnel_finished", (week_start + 1.day).noon, session_id: "partial_week_session_123")
+
+    result = @service.time_series(
+      metric_key: "funnel_conversion_rate",
+      from: week_start + 2.days,
+      to: week_start + 4.days,
+      granularity: "week",
+      funnel_steps: %w[partial_funnel_started partial_funnel_finished]
+    )
+
+    assert_nil result.dig(:series, 0, :value)
+    assert_equal 0, result.dig(:series, 0, :denominator)
+    assert_nil result[:value]
+  end
+
   private
 
   def create_event(name, occurred_at, session_id:)

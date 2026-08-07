@@ -6,6 +6,7 @@ class AdminMcpController < ApplicationController
   MAX_METHOD_LENGTH = 100
 
   skip_before_action :authenticate!
+  before_action :set_security_headers
   before_action :ensure_admin_mcp_enabled!
   before_action :validate_content_type!
   before_action :validate_origin!

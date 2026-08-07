@@ -2,6 +2,7 @@ class AnalyticsEventsController < ApplicationController
   MAX_REQUEST_BYTES = 256.kilobytes
 
   skip_before_action :authenticate!
+  before_action :validate_content_type!
 
   def create
     return render json: { error: "analytics payload is too large" }, status: :content_too_large if request.content_length.to_i > MAX_REQUEST_BYTES
@@ -45,5 +46,11 @@ class AnalyticsEventsController < ApplicationController
 
   def privacy_signal?
     request.headers["DNT"] == "1" || request.headers["Sec-GPC"] == "1"
+  end
+
+  def validate_content_type!
+    return if request.media_type == "application/json"
+
+    render json: { error: "Content-Type must be application/json" }, status: :unsupported_media_type
   end
 end

@@ -38,7 +38,7 @@ Rotate the key at least every 30 days: create a replacement, update and test the
 
 ## Connecting
 
-Configure an MCP client with the API deployment URL and a bearer header:
+The admin MCP is a separate connection from the user-scoped OAuth server at `/mcp`. Adding or refreshing the ordinary Listy Gifty connection will not expose global statistics or analytics tools. Configure a header-capable MCP client with the admin deployment URL and a dedicated bearer key:
 
 ```text
 URL: https://api.listygifty.com/admin/mcp

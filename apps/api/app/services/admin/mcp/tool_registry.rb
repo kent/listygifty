@@ -398,7 +398,7 @@ module Admin
           spend_date: Date.iso8601(args.fetch("spend_date")),
           source: args.fetch("source").to_s.strip.downcase,
           medium: args["medium"].to_s.strip.downcase,
-          campaign: args["campaign"].to_s.strip
+          campaign: args["campaign"].to_s.strip.downcase
         )
         MarketingSpend.transaction do
           spend.assign_attributes(attributes)
@@ -419,7 +419,7 @@ module Admin
         raise ArgumentError, "limit must be positive" if limit < 1
         relation = MarketingSpend.where(spend_date: from..to).order(spend_date: :desc, id: :desc)
         relation = relation.where(source: args["source"].to_s.downcase) if args["source"].present?
-        relation = relation.where(campaign: args["campaign"]) if args["campaign"].present?
+        relation = relation.where(campaign: args["campaign"].to_s.downcase) if args["campaign"].present?
         rows = relation.limit(limit).map { |spend| spend.attributes.except("notes").merge("has_notes" => spend.notes.present?) }
         totals_by_currency = rows.group_by { |row| row["currency"] }.transform_values { |items| items.sum { |row| row["amount"].to_f }.round(2) }
         audit!("marketing_spend.read", resource_type: "MarketingSpend", metadata: safe_analytics_query(args).merge(count: rows.length))
