@@ -4,6 +4,7 @@ const { test, expect } = require("@playwright/test");
 
 const baseURL = process.env.SCREEN_BASE_URL || "http://127.0.0.1:19008";
 const artifactRoot = path.join(process.cwd(), "build-artifacts", "screen-verification");
+const mcpOAuthUrl = `${(process.env.EXPO_PUBLIC_API_URL || "https://api.listygifty.com").replace(/\/+$/, "")}/mcp`;
 
 const routes = [
   "auth-login",
@@ -110,6 +111,13 @@ for (const viewport of viewports) {
         }
 
         const before = await pageMetrics(page);
+        if (route === "profile") {
+          await expect(page.getByText("Your MCP OAuth URL", { exact: true })).toBeVisible();
+          await expect(page.getByText(mcpOAuthUrl, { exact: true })).toBeVisible();
+          await expect(page.getByRole("button", { name: "Copy MCP OAuth URL" })).toBeVisible();
+          expect(before.scrollWidth, "profile MCP card overflowed horizontally").toBeLessThanOrEqual(viewport.width);
+        }
+
         const screenshotDir = path.join(artifactRoot, viewport.name);
         fs.mkdirSync(screenshotDir, { recursive: true });
         const screenshotPath = path.join(screenshotDir, `${route}.png`);

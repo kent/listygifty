@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/theme";
+import { McpOAuthUrlCard } from "@/components/McpOAuthUrlCard";
 import { useProfileController } from "@/lib/controllers";
 
 export default function ProfileScreen() {
@@ -57,6 +58,8 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </View>
+
+      <McpOAuthUrlCard />
 
       <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
         <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>

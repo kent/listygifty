@@ -43,6 +43,7 @@ const lightColors = {
   info: "#3b82f6",
   infoLight: "#dbeafe",
   infoDark: "#2563eb",
+  infoText: "#1d4ed8",
 
   // Semantic
   muted: "#94a3b8",
@@ -104,6 +105,7 @@ const darkColors = {
   info: "#3b82f6",
   infoLight: "#1e3a8a",
   infoDark: "#2563eb",
+  infoText: "#bfdbfe",
 
   // Semantic
   muted: "#64748b",

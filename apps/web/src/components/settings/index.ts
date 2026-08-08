@@ -10,5 +10,6 @@ export { AddressesSection } from "./AddressesSection";
 export { AddressDialog } from "./AddressDialog";
 export { ApiKeysSection } from "./ApiKeysSection";
 export { IntegrationsSection } from "./IntegrationsSection";
+export { McpOAuthUrlCard } from "./McpOAuthUrlCard";
 export { SettingsNav } from "./SettingsNav";
 export type { SettingsSection } from "./SettingsNav";

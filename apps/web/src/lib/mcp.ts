@@ -1,6 +1,6 @@
-export const MCP_SERVER_URL = process.env.NEXT_PUBLIC_API_URL
-  ? `${process.env.NEXT_PUBLIC_API_URL}/mcp`
-  : "https://api.listygifty.com/mcp";
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "https://api.listygifty.com").replace(/\/+$/, "");
+
+export const MCP_SERVER_URL = `${API_BASE_URL}/mcp`;
 
 export const RUNNER_MCP_CONFIG = `{
   "mcpServers": {

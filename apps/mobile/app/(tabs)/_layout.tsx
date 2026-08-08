@@ -68,9 +68,9 @@ function ScreenshotTabLayout() {
       <Tabs.Screen
         name="profile/index"
         options={{
-          title: "Profile",
+          title: "Settings",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-circle-outline" size={size} color={color} />
+            <Ionicons name="settings-outline" size={size} color={color} />
           ),
         }}
       />
@@ -139,9 +139,9 @@ function AuthenticatedTabLayout() {
         <Tabs.Screen
           name="profile/index"
           options={{
-            title: "Profile",
+            title: "Settings",
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person-circle-outline" size={size} color={color} />
+              <Ionicons name="settings-outline" size={size} color={color} />
             ),
           }}
         />

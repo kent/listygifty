@@ -15,6 +15,7 @@ import {
   CompanySection,
   ApiKeysSection,
   IntegrationsSection,
+  McpOAuthUrlCard,
   SettingsNav,
   type SettingsSection,
 } from "@/components/settings";
@@ -54,7 +55,7 @@ export default function SettingsPage() {
 
       <main className="relative z-10 container mx-auto px-4 py-8">
         {/* Page Header */}
-        <div className="mb-10">
+        <div className="mb-6">
           <div className="flex items-center gap-4 mb-3">
             <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-violet-500/30">
               <SettingsIcon className="h-6 w-6 text-violet-400" />
@@ -66,6 +67,10 @@ export default function SettingsPage() {
               </p>
             </div>
           </div>
+        </div>
+
+        <div className="mb-8 max-w-5xl">
+          <McpOAuthUrlCard />
         </div>
 
         {/* Main Content */}

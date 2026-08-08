@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Plug, ExternalLink, Trash2, RefreshCw, KeyRound } from "lucide-react";
 import type { OAuthConnection } from "@niftygifty/types";
 import { oauthConnectionsService } from "@/services";
-import { MCP_SERVER_URL, RUNNER_MCP_CONFIG } from "@/lib/mcp";
+import { RUNNER_MCP_CONFIG } from "@/lib/mcp";
 
 function formatConnectionDate(value: string | null): string | null {
   if (!value) {
@@ -64,45 +64,6 @@ export function IntegrationsSection({ onOpenApiKeys }: IntegrationsSectionProps)
         <p className="text-slate-600 dark:text-slate-400">
           Connect MCP-compatible assistants to help update lists, review budgets, and keep gift work moving.
         </p>
-      </div>
-
-      {/* MCP Server Info Card */}
-      <div className="p-6 rounded-2xl bg-gradient-to-br from-cyan-500/5 to-blue-500/5 dark:from-cyan-500/10 dark:to-blue-500/10 border border-cyan-500/20">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0">
-            <Plug className="w-6 h-6 text-white" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-              Connect Your Assistant
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Paste this URL into an OAuth-capable MCP client, then sign in to Listy Gifty when prompted:
-            </p>
-            <div className="flex items-center gap-3 mb-4">
-              <code className="flex-1 px-4 py-2 rounded-lg bg-slate-900 dark:bg-slate-800 text-cyan-400 font-mono text-sm overflow-x-auto">
-                {MCP_SERVER_URL}
-              </code>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigator.clipboard.writeText(MCP_SERVER_URL);
-                  toast.success("Copied to clipboard");
-                }}
-              >
-                Copy
-              </Button>
-            </div>
-            <Link
-              href="/integrations"
-              className="inline-flex items-center gap-2 text-sm text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-medium"
-            >
-              View setup instructions
-              <ExternalLink className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
       </div>
 
       {/* Authentication */}
@@ -263,7 +224,7 @@ export function IntegrationsSection({ onOpenApiKeys }: IntegrationsSectionProps)
             <Plug className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
             <p className="text-slate-600 dark:text-slate-400 mb-1">No connected apps yet</p>
             <p className="text-sm text-slate-500 dark:text-slate-500">
-              Connect an AI assistant using the MCP server URL above
+              Connect an AI assistant using the MCP OAuth URL at the top of Settings
             </p>
           </div>
         ) : (
