@@ -292,6 +292,9 @@ const apiEnv: pulumi.Input<pulumi.Input<gcp.types.input.cloudrunv2.ServiceTempla
   plainEnv("RAILS_ENV", environment === "production" ? "production" : "staging"),
   plainEnv("RAILS_MAX_THREADS", "5"),
   plainEnv("RAILS_MIN_THREADS", "5"),
+  // The API verifies Clerk bearer tokens in ApplicationController. Disable the
+  // Clerk session middleware so browser cookies cannot trigger a handshake here.
+  plainEnv("CLERK_SKIP_RAILTIE", "1"),
   // Cloud Run has no separate long-running worker service. Keep Solid Queue
   // attached to Puma so queued mail and other background jobs are processed.
   plainEnv("SOLID_QUEUE_IN_PUMA", "true"),
@@ -471,6 +474,9 @@ client_id="$(node -p "JSON.parse(process.argv[1]).client_id" "$registration")"
 challenge="$(printf "A%.0s" {1..43})"
 headers_file="$(mktemp)"
 authorize_code="$(curl -sS -D "$headers_file" -o /dev/null -w "%{http_code}" --max-time 15 -G "$api_url/oauth/authorize" \
+  -H "Accept: text/html" \
+  -H "Sec-Fetch-Dest: document" \
+  -H "Cookie: __client_uat=1" \
   --data-urlencode "client_id=$client_id" \
   --data-urlencode "redirect_uri=https://example.com/oauth/callback" \
   --data-urlencode "response_type=code" \
