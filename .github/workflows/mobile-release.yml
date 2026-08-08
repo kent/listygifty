@@ -247,6 +247,7 @@ jobs:
         run: eas whoami
 
       - name: Queue production-profile TestFlight build
+        id: queue-build
         working-directory: apps/mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -264,6 +265,31 @@ jobs:
           )
           eas "${args[@]}"
 
+          # jq variables are intentionally quoted for jq rather than expanded by the shell.
+          # shellcheck disable=SC2016
+          jq_args=(
+            -er
+            --arg sha "${GITHUB_SHA}"
+            --arg profile "${EAS_PROFILE}"
+            'first(.[] | select(.gitCommitHash == $sha and .buildProfile == $profile)) | [.id, .appBuildVersion] | @tsv'
+          )
+          build_metadata=""
+          for _ in {1..5}; do
+            queued_builds="$(eas build:list --platform ios --limit 1 --json --non-interactive)"
+            if build_metadata="$(printf '%s' "${queued_builds}" | jq "${jq_args[@]}")"; then
+              break
+            fi
+            sleep 5
+          done
+
+          [ -n "${build_metadata}" ] || { echo "Could not identify the queued EAS build" >&2; exit 1; }
+          IFS=$'\t' read -r build_id build_number <<< "${build_metadata}"
+          {
+            echo "build_id=${build_id}"
+            echo "build_number=${build_number}"
+          } >> "${GITHUB_OUTPUT}"
+          echo "Queued EAS build ${build_id} (build ${build_number})."
+
       - name: Verify TestFlight group attachment
         env:
           ASC_KEY_ID: ${{ env.ASC_KEY_ID }}
@@ -271,6 +297,7 @@ jobs:
           ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
           ASC_APP_ID: ${{ env.ASC_APP_ID }}
           ASC_VERSION_STRING: ${{ needs.release-context.outputs.app_version }}
+          ASC_BUILD_NUMBER: ${{ steps.queue-build.outputs.build_number }}
           ASC_BETA_GROUP_NAME: Internal Testers
           ASC_WAIT_ATTEMPTS: 60
           ASC_WAIT_SECONDS: 60
@@ -283,8 +310,9 @@ jobs:
             echo ""
             echo "- EAS profile: \`${{ needs.release-context.outputs.eas_profile }}\`"
             echo "- App version: \`${{ needs.release-context.outputs.app_version }}\`"
+            echo "- Build number: \`${{ steps.queue-build.outputs.build_number }}\`"
             echo "- Tester group: \`Internal Testers\` for the production profile"
-            echo "- Dashboard: https://expo.dev/accounts/kentf/projects/niftygifty/builds"
+            echo "- Build: https://expo.dev/accounts/kentf/projects/niftygifty/builds/${{ steps.queue-build.outputs.build_id }}"
             echo "- App Store Connect: https://appstoreconnect.apple.com/apps/6759929474/testflight/ios"
           } >> "${GITHUB_STEP_SUMMARY}"
 
