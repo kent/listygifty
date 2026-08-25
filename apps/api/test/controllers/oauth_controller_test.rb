@@ -269,7 +269,7 @@ class OauthControllerTest < ActionDispatch::IntegrationTest
       clerk_user_id: "oauth_e2e_admin_#{SecureRandom.hex(4)}",
       subscription_plan: "free"
     )
-    client = dynamic_client(scopes: [ "admin" ])
+    client = dynamic_client(scopes: %w[read write])
     request_token, verifier = start_authorization(client: client, resource: ADMIN_RESOURCE, scope: "admin")
     headers = auth_headers_for(admin)
 

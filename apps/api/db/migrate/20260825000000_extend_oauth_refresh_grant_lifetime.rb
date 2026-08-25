@@ -5,6 +5,7 @@ class ExtendOauthRefreshGrantLifetime < ActiveRecord::Migration[8.1]
       SET expires_at = created_at + INTERVAL '1 year',
           updated_at = CURRENT_TIMESTAMP
       WHERE revoked_at IS NULL
+        AND expires_at > CURRENT_TIMESTAMP
         AND expires_at < created_at + INTERVAL '1 year'
     SQL
 
