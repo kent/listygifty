@@ -1,7 +1,7 @@
 class OauthRefreshGrant < ApplicationRecord
-  GRANT_LIFETIME = 30.days
+  GRANT_LIFETIME = 1.year
   MIN_ROTATION_INTERVAL = 1.minute
-  MAX_ROTATIONS = 1_000
+  MAX_ROTATIONS = 10_000
 
   belongs_to :oauth_client
   belongs_to :user

@@ -141,7 +141,12 @@ class OauthClient < ApplicationRecord
   end
 
   def can_request_scope?(scope)
-    scopes.include?(scope.to_s)
+    requested_scope = scope.to_s
+    # Dynamic metadata is self-asserted. Exact resource binding, user consent,
+    # and the admin allowlist authorize each request when one client is reused.
+    return VALID_SCOPES.include?(requested_scope) if is_dynamic?
+
+    scopes.include?(requested_scope)
   end
 
   # Returns metadata for OAuth 2.0 Dynamic Client Registration response

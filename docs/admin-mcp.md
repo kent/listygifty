@@ -10,7 +10,7 @@ The endpoint is `https://api.listygifty.com/admin/mcp`. OAuth 2.1 browser author
 https://api.listygifty.com/.well-known/oauth-protected-resource/admin/mcp
 ```
 
-An OAuth client must use authorization code + S256 PKCE and request the exact resource `https://api.listygifty.com/admin/mcp` with the sole `admin` scope. Authorization requests are frozen in short-lived, one-time server-side transactions before the browser handoff. The user signs in to the first-party Listy Gifty web application, sees an explicit administrator warning, and approves or denies the connection. Access tokens last one hour. Refresh credentials rotate within a server-locked token family, have a non-sliding 30-day maximum lifetime, and revoke the entire family if a rotated credential is replayed.
+An OAuth client must use authorization code + S256 PKCE and request the exact resource `https://api.listygifty.com/admin/mcp` with the sole `admin` scope. Authorization requests are frozen in short-lived, one-time server-side transactions before the browser handoff. The user signs in to the first-party Listy Gifty web application, sees an explicit administrator warning, and approves or denies the connection. Access tokens last one hour. Refresh credentials rotate within a server-locked token family, have a non-sliding one-year maximum lifetime, and revoke the entire family if a rotated credential is replayed.
 
 Admin authorization is checked both when consent is shown and on every MCP request. The authenticated user's normalized email must be in `ADMIN_EMAILS`; the initial and default sole administrator is:
 

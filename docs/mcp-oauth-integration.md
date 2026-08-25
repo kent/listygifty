@@ -157,7 +157,7 @@ Credential version 2 is enforced in both the raw credential prefix and the datab
 ### Token Lifetimes
 
 - **Access tokens**: 1 hour
-- **Refresh tokens**: non-sliding 30-day grant lifetime; rotated on each refresh, with family-wide revocation on replay
+- **Refresh tokens**: non-sliding one-year grant lifetime; rotated on each refresh, with family-wide revocation on replay
 - **Authorization codes**: 10 minutes (one-time use)
 
 ### Scopes
@@ -190,7 +190,7 @@ The following AI clients are pre-registered:
 
 ## Dynamic Client Registration
 
-New clients can register dynamically. Dynamic metadata is self-asserted and is displayed as **unverified** on the consent page; users must verify the exact registered callback URI rather than trusting the supplied name or website. Pre-registered consumer clients remain limited to ordinary read/write MCP access.
+New clients can register dynamically. Dynamic metadata is self-asserted and is displayed as **unverified** on the consent page; users must verify the exact registered callback URI rather than trusting the supplied name or website. A dynamic client registration can be reused for both protected resources, but each authorization request remains bound to one exact resource and its scopes. Pre-registered consumer clients remain limited to ordinary read/write MCP access.
 
 
 ```bash

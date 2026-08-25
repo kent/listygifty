@@ -143,7 +143,7 @@ class OauthController < ApplicationController
       grant_types: params[:grant_types],
       response_types: params[:response_types],
       token_endpoint_auth_method: auth_method,
-      scopes: params.key?(:scope) ? params[:scope].split : OauthClient::VALID_SCOPES
+      scopes: OauthClient::VALID_SCOPES
     )
 
     render json: client.to_registration_response.merge(client_id_issued_at: client.created_at.to_i), status: :created
@@ -203,10 +203,17 @@ class OauthController < ApplicationController
       end
     end
 
-    if params.key?(:scope) &&
-        (!params[:scope].is_a?(String) || params[:scope].empty? || params[:scope].bytesize > 500)
-      render json: { error: "invalid_client_metadata", error_description: "scope must be a non-empty string" }, status: :bad_request
-      return false
+    if params.key?(:scope)
+      if !params[:scope].is_a?(String) || params[:scope].empty? || params[:scope].bytesize > 500
+        render json: { error: "invalid_client_metadata", error_description: "scope must be a non-empty string" }, status: :bad_request
+        return false
+      end
+
+      invalid_scopes = params[:scope].split - OauthClient::VALID_SCOPES
+      if invalid_scopes.any?
+        render json: { error: "invalid_client_metadata", error_description: "scope contains unsupported values" }, status: :bad_request
+        return false
+      end
     end
 
     {

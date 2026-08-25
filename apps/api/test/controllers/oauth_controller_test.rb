@@ -678,7 +678,8 @@ class OauthControllerTest < ActionDispatch::IntegrationTest
   test "dynamic registration creates a public PKCE client able to request discovered scopes" do
     post "/oauth/register", params: {
       client_name: "New MCP App",
-      redirect_uris: [ "https://newapp.example/callback" ]
+      redirect_uris: [ "https://newapp.example/callback" ],
+      scope: "read write"
     }, as: :json
 
     assert_response :created
@@ -686,6 +687,27 @@ class OauthControllerTest < ActionDispatch::IntegrationTest
     assert_equal "none", json_response["token_endpoint_auth_method"]
     assert_equal "read write admin", json_response["scope"]
     assert_includes json_response["grant_types"], "refresh_token"
+  end
+
+  test "an existing dynamic user MCP client can later authorize admin MCP" do
+    client = OauthClient.dynamic_register(
+      client_name: "Reusable MCP App",
+      redirect_uris: [ REDIRECT_URI ],
+      scopes: %w[read write]
+    )
+    assert_equal %w[read write], client.scopes
+
+    get "/oauth/authorize", params: authorization_params(
+      client: client,
+      resource: ADMIN_RESOURCE,
+      scope: "admin"
+    )
+
+    assert_response :redirect
+    request_token = Rack::Utils.parse_query(URI.parse(response.location).query).fetch("request_token")
+    authorization_request = OauthAuthorizationRequest.find_by_token(request_token)
+    assert_equal ADMIN_RESOURCE, authorization_request.resource
+    assert_equal [ "admin" ], authorization_request.scopes
   end
 
   test "dynamic registration requires JSON and rejects untrusted browser origins" do
@@ -711,6 +733,14 @@ class OauthControllerTest < ActionDispatch::IntegrationTest
       client_name: "Empty scope client",
       redirect_uris: [ "https://example.com/callback" ],
       scope: ""
+    }, as: :json
+    assert_response :bad_request
+    assert_equal "invalid_client_metadata", json_response["error"]
+
+    post "/oauth/register", params: {
+      client_name: "Unsupported scope app",
+      redirect_uris: [ "https://newapp.example/callback" ],
+      scope: "read payments"
     }, as: :json
     assert_response :bad_request
     assert_equal "invalid_client_metadata", json_response["error"]

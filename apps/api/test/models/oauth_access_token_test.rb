@@ -69,16 +69,18 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     end
   end
 
-  test "refresh token expires after 30 days" do
+  test "refresh token grant remains active for one year" do
     result = generate(
       client: @client,
       user: @user,
       scopes: [ "read" ]
     )
 
-    assert_not result.access_token.refresh_token_expired?
+    travel 364.days do
+      assert_not result.access_token.refresh_token_expired?
+    end
 
-    travel 31.days do
+    travel 366.days do
       assert result.access_token.refresh_token_expired?
     end
   end
@@ -155,14 +157,14 @@ class OauthAccessTokenTest < ActiveSupport::TestCase
     end
   end
 
-  test "fails refresh when refresh token expired" do
+  test "fails refresh when the one-year refresh grant expires" do
     result = generate(
       client: @client,
       user: @user,
       scopes: [ "read" ]
     )
 
-    travel 31.days do
+    travel 366.days do
       assert_raises(OauthError) do
         result.access_token.refresh!
       end
