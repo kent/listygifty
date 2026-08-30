@@ -39,6 +39,12 @@ jobs:
       ENABLE_MOBILE: ${{ github.event_name == 'workflow_dispatch' && inputs.enable_mobile || 'false' }}
 
     steps:
+      - name: Require production branch for manual deploys
+        if: ${{ github.event_name == 'workflow_dispatch' && github.ref_name != 'main' }}
+        run: |
+          echo "Manual production deploys must run from main." >&2
+          exit 1
+
       - name: Checkout code
         uses: actions/checkout@v5
 
