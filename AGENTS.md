@@ -82,6 +82,20 @@ Rules:
 - Prefer the production iOS EAS submit path for TestFlight unless the user explicitly asks for a different profile.
 - Ensure production submits target the `Internal Testers` group unless the user explicitly asks for a different tester group.
 
+### Cursor Mobile Releases
+
+- Cursor Cloud agents do not need Apple or Expo release credentials. Keep
+  `EXPO_TOKEN` and `APP_STORE_CONNECT_API_KEY_P8` only in GitHub Actions.
+- Merge release code into `main`, then comment exactly `/testflight` on the
+  merged pull request to queue the production EAS build and TestFlight submit.
+- Production backend/web deployment starts automatically for relevant `main`
+  changes. The phone-accessible recovery path is a manual `main` run of the
+  `Deploy` workflow; enable its mobile input to queue TestFlight only after the
+  backend rollout and smoke tests succeed.
+- TestFlight builds must come from commits already merged into `main`.
+- See `docs/mobile-release.md` for the complete phone workflow and recovery
+  steps.
+
 ### Before Building Mobile
 Ensure shared packages are built first:
 ```bash

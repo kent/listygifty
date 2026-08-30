@@ -1,7 +1,10 @@
 name: Mobile Release
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('Mobile {0}', inputs.release_action) || github.ref_name }}
+run-name: ${{ github.event_name == 'issue_comment' && format('TestFlight from PR {0}', github.event.issue.number) || github.event_name == 'workflow_dispatch' && format('Mobile {0}', inputs.release_action) || github.ref_name }}
 
 on:
+  issue_comment:
+    types:
+      - created
   push:
     tags:
       - 'v*'
@@ -42,25 +45,93 @@ on:
           - AFTER_APPROVAL
           - SCHEDULED
 
+permissions:
+  contents: read
+  pull-requests: read
+
 env:
   ASC_APP_ID: '6759929474'
   ASC_KEY_ID: 2XG664G4GG
   ASC_ISSUER_ID: 69a6de6e-8f71-47e3-e053-5b8c7c11a4d1
 
 jobs:
+  authorize:
+    name: Authorize Merged Commit
+    if: >-
+      github.event_name != 'issue_comment' ||
+      (github.event.issue.pull_request &&
+       github.event.comment.body == '/testflight' &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      target_sha: ${{ steps.target.outputs.sha }}
+
+    steps:
+      - name: Checkout repository history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve trusted release target
+        id: target
+        shell: bash
+        env:
+          DEFAULT_SHA: ${{ github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          target_sha="${DEFAULT_SHA}"
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            if [ "${REF_NAME}" != "main" ]; then
+              echo "Manual mobile releases must run from main." >&2
+              exit 1
+            fi
+          elif [ "${EVENT_NAME}" = "issue_comment" ]; then
+            pr_json="$(gh api "repos/${GH_REPO}/pulls/${PR_NUMBER}")"
+            merged_at="$(jq -r '.merged_at // empty' <<<"${pr_json}")"
+            base_ref="$(jq -r '.base.ref' <<<"${pr_json}")"
+            target_sha="$(jq -r '.merge_commit_sha // empty' <<<"${pr_json}")"
+
+            if [ -z "${merged_at}" ] || [ "${base_ref}" != "main" ] || [ -z "${target_sha}" ]; then
+              echo "PR #${PR_NUMBER} must be merged into main before a TestFlight build." >&2
+              exit 1
+            fi
+          elif [[ "${GITHUB_REF}" != refs/tags/v* ]]; then
+            echo "Unsupported mobile release event: ${EVENT_NAME} (${GITHUB_REF})." >&2
+            exit 1
+          fi
+
+          git fetch origin main --no-tags
+          if ! git merge-base --is-ancestor "${target_sha}" origin/main; then
+            echo "Release target ${target_sha} is not merged into main." >&2
+            exit 1
+          fi
+
+          echo "sha=${target_sha}" >> "${GITHUB_OUTPUT}"
+
   release-context:
     name: Release Context
     runs-on: ubuntu-latest
+    needs: [authorize]
     outputs:
       release_action: ${{ steps.context.outputs.release_action }}
       eas_profile: ${{ steps.context.outputs.eas_profile }}
       app_version: ${{ steps.context.outputs.app_version }}
       whats_new: ${{ steps.context.outputs.whats_new }}
       app_store_release_type: ${{ steps.context.outputs.app_store_release_type }}
+      target_sha: ${{ steps.context.outputs.target_sha }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.authorize.outputs.target_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -77,6 +148,7 @@ jobs:
           INPUT_APP_VERSION: ${{ inputs.app_version || '' }}
           INPUT_WHATS_NEW: ${{ inputs.whats_new || '' }}
           INPUT_APP_STORE_RELEASE_TYPE: ${{ inputs.app_store_release_type || '' }}
+          TARGET_SHA: ${{ needs.authorize.outputs.target_sha }}
         run: |
           set -euo pipefail
 
@@ -92,6 +164,11 @@ jobs:
 
           if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
             release_action="${INPUT_RELEASE_ACTION:-testflight}"
+          fi
+
+          if [ "${EVENT_NAME}" = "issue_comment" ]; then
+            release_action="testflight"
+            eas_profile="production"
           fi
 
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
@@ -112,6 +189,7 @@ jobs:
             echo "${whats_new}"
             echo "EOF"
             echo "app_store_release_type=${app_store_release_type}"
+            echo "target_sha=${TARGET_SHA}"
           } >> "${GITHUB_OUTPUT}"
 
   mobile-quality:
@@ -122,6 +200,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.release-context.outputs.target_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -164,6 +244,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.release-context.outputs.target_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -218,6 +300,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.release-context.outputs.target_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -252,6 +336,7 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EAS_PROFILE: ${{ needs.release-context.outputs.eas_profile }}
+          TARGET_SHA: ${{ needs.release-context.outputs.target_sha }}
         run: |
           set -euo pipefail
           args=(
@@ -261,7 +346,7 @@ jobs:
             --auto-submit
             --non-interactive
             --no-wait
-            --message "${GITHUB_REF_NAME} ${GITHUB_SHA}"
+            --message "${GITHUB_REF_NAME} ${TARGET_SHA}"
           )
           eas "${args[@]}"
 
@@ -269,13 +354,19 @@ jobs:
           # shellcheck disable=SC2016
           jq_args=(
             -er
-            --arg sha "${GITHUB_SHA}"
+            --arg sha "${TARGET_SHA}"
             --arg profile "${EAS_PROFILE}"
             'first(.[] | select(.gitCommitHash == $sha and .buildProfile == $profile)) | [.id, .appBuildVersion] | @tsv'
           )
           build_metadata=""
           for _ in {1..5}; do
-            queued_builds="$(eas build:list --platform ios --limit 1 --json --non-interactive)"
+            queued_builds="$(eas build:list \
+              --platform ios \
+              --build-profile "${EAS_PROFILE}" \
+              --git-commit-hash "${TARGET_SHA}" \
+              --limit 1 \
+              --json \
+              --non-interactive)"
             if build_metadata="$(printf '%s' "${queued_builds}" | jq "${jq_args[@]}")"; then
               break
             fi
@@ -299,6 +390,7 @@ jobs:
           ASC_VERSION_STRING: ${{ needs.release-context.outputs.app_version }}
           ASC_BUILD_NUMBER: ${{ steps.queue-build.outputs.build_number }}
           ASC_BETA_GROUP_NAME: Internal Testers
+          ASC_REQUIRED_TESTER_EMAIL: kent.fenwick@gmail.com
           ASC_WAIT_ATTEMPTS: 60
           ASC_WAIT_SECONDS: 60
         run: node scripts/ci/attach-testflight-build-to-group.mjs
@@ -311,6 +403,7 @@ jobs:
             echo "- EAS profile: \`${{ needs.release-context.outputs.eas_profile }}\`"
             echo "- App version: \`${{ needs.release-context.outputs.app_version }}\`"
             echo "- Build number: \`${{ steps.queue-build.outputs.build_number }}\`"
+            echo "- Source: \`${{ needs.release-context.outputs.target_sha }}\`"
             echo "- Tester group: \`Internal Testers\` for the production profile"
             echo "- Build: https://expo.dev/accounts/kentf/projects/niftygifty/builds/${{ steps.queue-build.outputs.build_id }}"
             echo "- App Store Connect: https://appstoreconnect.apple.com/apps/6759929474/testflight/ios"
@@ -331,6 +424,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.release-context.outputs.target_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

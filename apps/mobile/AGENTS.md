@@ -97,6 +97,15 @@ When a user asks for a Listy Gifty TestFlight release:
 - Treat `kent.fenwick@gmail.com` as an internal tester for that group.
 - Use the production iOS EAS submit path unless the user explicitly asks for a different profile or group.
 - Do not default production TestFlight releases to `Staging`.
+- Keep Expo and Apple release credentials in GitHub Actions, never in Cursor
+  Cloud secrets or repository files.
+- After the release pull request is merged into `main`, comment exactly
+  `/testflight` on that merged pull request to queue and verify the production
+  EAS/TestFlight build from a phone.
+- Use a manual `main` run of the `Deploy` workflow with its mobile input enabled
+  when the backend and TestFlight build need to run as one serialized recovery
+  release.
+- See `docs/mobile-release.md` for the complete Cursor Mobile flow.
 
 ## Feature Workflow
 

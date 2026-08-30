@@ -25,6 +25,7 @@ const APP_ID = process.env.ASC_APP_ID;
 const VERSION = process.env.ASC_VERSION_STRING;
 const BUILD_NUMBER = process.env.ASC_BUILD_NUMBER || null;
 const GROUP_NAME = process.env.ASC_BETA_GROUP_NAME || "Internal Testers";
+const REQUIRED_TESTER_EMAIL = process.env.ASC_REQUIRED_TESTER_EMAIL?.trim().toLowerCase() || null;
 const WAIT_ATTEMPTS = parsePositiveInt(process.env.ASC_WAIT_ATTEMPTS, 30);
 const WAIT_SECONDS = parsePositiveInt(process.env.ASC_WAIT_SECONDS, 60);
 const API = "https://api.appstoreconnect.apple.com/v1";
@@ -150,6 +151,15 @@ async function listGroupsForBuild(buildId) {
   return body.data || [];
 }
 
+async function listTestersForGroup(groupId) {
+  const params = new URLSearchParams({
+    "fields[betaTesters]": "email",
+    limit: "200",
+  });
+  const body = await asc("GET", `/betaGroups/${groupId}/betaTesters?${params}`);
+  return body.data || [];
+}
+
 async function attachGroup(buildId, groupId) {
   await asc("POST", `/builds/${buildId}/relationships/betaGroups`, {
     data: [{ type: "betaGroups", id: groupId }],
@@ -173,3 +183,14 @@ if (!finalNames.includes(GROUP_NAME)) {
 }
 
 console.log(`Verified TestFlight group: ${GROUP_NAME}.`);
+
+if (REQUIRED_TESTER_EMAIL) {
+  const testers = await listTestersForGroup(group.id);
+  const hasRequiredTester = testers.some(
+    (tester) => tester.attributes?.email?.trim().toLowerCase() === REQUIRED_TESTER_EMAIL,
+  );
+  if (!hasRequiredTester) {
+    throw new Error(`Required tester ${REQUIRED_TESTER_EMAIL} is not in "${GROUP_NAME}".`);
+  }
+  console.log(`Verified required tester: ${REQUIRED_TESTER_EMAIL}.`);
+}

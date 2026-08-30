@@ -1,0 +1,216 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan_ruby:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          working-directory: apps/api
+
+      - name: Scan Rails code
+        run: bin/brakeman --no-pager
+
+      - name: Scan Ruby dependencies
+        run: bin/bundler-audit
+
+  scan_js:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/mobile/package-lock.json
+
+      - name: Install root workspace dependencies
+        run: npm ci --prefer-offline --no-audit --progress=false
+
+      - name: Reject critical root production vulnerabilities
+        run: npm audit --workspaces --omit=dev --audit-level=critical
+
+      - name: Install mobile dependencies
+        run: npm ci --legacy-peer-deps --prefer-offline --no-audit --progress=false --prefix apps/mobile
+
+      - name: Reject critical mobile production vulnerabilities
+        run: npm audit --omit=dev --audit-level=critical --prefix apps/mobile
+
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      RUBOCOP_CACHE_ROOT: tmp/rubocop
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          working-directory: apps/api
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Restore RuboCop cache
+        uses: actions/cache@v6
+        env:
+          DEPENDENCIES_HASH: ${{ hashFiles('apps/api/.ruby-version', 'apps/api/**/.rubocop.yml', 'apps/api/**/.rubocop_todo.yml', 'apps/api/Gemfile.lock') }}
+        with:
+          path: apps/api/${{ env.RUBOCOP_CACHE_ROOT }}
+          key: rubocop-${{ runner.os }}-${{ env.DEPENDENCIES_HASH }}-${{ github.run_id }}
+          restore-keys: |
+            rubocop-${{ runner.os }}-${{ env.DEPENDENCIES_HASH }}-
+
+      - name: Lint Rails code
+        working-directory: apps/api
+        run: bin/rubocop -f github
+
+      - name: Install root workspace dependencies
+        run: npm ci --prefer-offline --no-audit --progress=false
+
+      - name: Build shared web packages
+        run: |
+          npm --prefix packages/types run build
+          npm --prefix packages/api-client run build
+          npm --prefix packages/services run build
+
+      - name: Lint and typecheck web app
+        run: |
+          npm --prefix apps/web run lint
+          npm --prefix apps/web run typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: niftygifty_test
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          working-directory: apps/api
+
+      - name: Run API tests
+        working-directory: apps/api
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/niftygifty_test
+          PARALLEL_WORKERS: '1'
+        run: bin/rails db:test:prepare test
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/mobile/package-lock.json
+
+      - name: Install root workspace dependencies
+        run: npm ci --prefer-offline --no-audit --progress=false
+
+      - name: Build shared mobile packages
+        run: |
+          npm --prefix packages/types run build
+          npm --prefix packages/api-client run build
+          npm --prefix packages/services run build
+
+      - name: Install mobile dependencies
+        run: npm ci --legacy-peer-deps --prefer-offline --no-audit --progress=false --prefix apps/mobile
+
+      - name: Check Expo dependency versions
+        working-directory: apps/mobile
+        run: npx expo install --check
+
+      - name: Typecheck mobile app
+        working-directory: apps/mobile
+        run: npx tsc --noEmit
+
+      - name: Run mobile tests
+        working-directory: apps/mobile
+        run: npm test -- --runInBand
+
+  system-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: niftygifty_test
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          working-directory: apps/api
+
+      - name: Run Rails system tests
+        working-directory: apps/api
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/niftygifty_test
+          PARALLEL_WORKERS: '1'
+        run: bin/rails db:test:prepare test:system
+
+      - name: Keep screenshots from failed system tests
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots-${{ github.run_id }}
+          path: apps/api/tmp/screenshots
+          if-no-files-found: ignore
+          retention-days: 7
