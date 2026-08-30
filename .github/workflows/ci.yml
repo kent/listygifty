@@ -98,6 +98,12 @@ jobs:
       - name: Install root workspace dependencies
         run: npm ci --prefer-offline --no-audit --progress=false
 
+      - name: Build shared web packages
+        run: |
+          npm --prefix packages/types run build
+          npm --prefix packages/api-client run build
+          npm --prefix packages/services run build
+
       - name: Lint and typecheck web app
         run: |
           npm --prefix apps/web run lint
