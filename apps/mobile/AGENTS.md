@@ -93,15 +93,26 @@ npx tsc --noEmit
 ## TestFlight Releases
 
 When a user asks for a Listy Gifty TestFlight release:
+- Treat `deploy to TestFlight`, `ship to TestFlight`, `release to TestFlight`,
+  `test flight`, and obvious misspellings such as `deploy to test lfihgt` as
+  explicit authorization for a new production TestFlight build. The user does
+  not need to know or mention `/testflight`, EAS, GitHub Actions, credentials,
+  or a profile.
+- Do not queue a build when the user is only asking to configure, document, or
+  verify the release automation.
 - Use the App Store Connect internal testing group `Internal Testers`.
 - Treat `kent.fenwick@gmail.com` as an internal tester for that group.
 - Use the production iOS EAS submit path unless the user explicitly asks for a different profile or group.
 - Do not default production TestFlight releases to `Staging`.
 - Keep Expo and Apple release credentials in GitHub Actions, never in Cursor
   Cloud secrets or repository files.
-- After the release pull request is merged into `main`, comment exactly
-  `/testflight` on that merged pull request to queue and verify the production
-  EAS/TestFlight build from a phone.
+- Complete the normal pull request checks and merge without bypassing branch
+  protection. Wait for any relevant production deploy for the exact merge SHA,
+  then comment exactly `/testflight` on the merged pull request. If there is no
+  suitable merged pull request for the current `main` commit, manually dispatch
+  `Mobile Release` from `main` with the production TestFlight options.
+- Monitor the workflow through build, submit, Apple processing, and attachment
+  to `Internal Testers`, then report the verified build number and links.
 - Use a manual `main` run of the `Deploy` workflow with its mobile input enabled
   when the backend and TestFlight build need to run as one serialized recovery
   release.

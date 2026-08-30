@@ -8,25 +8,42 @@ and App Store Connect verification steps. No local computer is required.
 
 ## Ship From Cursor Mobile
 
-1. Ask Cursor Mobile to implement the change, run the checks, and open a pull
-   request from `main`.
-2. Review the pull request and merge it into `main`. Changes under the API,
-   web, mobile, shared packages, infrastructure, or deploy scripts trigger the
-   production `Deploy` workflow. It builds the API and web images, runs database
-   migrations, rolls Cloud Run, and runs the production smoke tests.
-3. On the merged pull request, add a top-level comment whose complete body is:
+Just tell Cursor Mobile:
+
+```text
+Deploy to TestFlight
+```
+
+Natural spacing, capitalization, and obvious spelling mistakes are accepted,
+including `deploy to test lfihgt`. You do not need to mention GitHub Actions,
+`/testflight`, EAS, credentials, or a build profile. Cursor Mobile will:
+
+1. Finish the requested change and normal pull request flow, wait for required
+   checks, and merge without bypassing branch protection.
+2. Resolve the exact merge commit on `main`. For changes under the API, web,
+   mobile, shared packages, infrastructure, or deploy scripts, wait for the
+   production `Deploy` workflow for that commit to complete successfully.
+3. Add a top-level comment to the merged pull request whose complete body is:
 
    ```text
    /testflight
    ```
 
-4. Follow **Mobile Release / Queue TestFlight Build** from Cursor Mobile,
-   GitHub Mobile, or GitHub in Safari. The workflow tests the app, queues the
-   exact merged commit with the production EAS profile, waits for Apple to
-   process that exact build, and verifies its attachment to `Internal Testers`.
-5. Open TestFlight on the iPhone after the workflow succeeds.
+   If the current `main` commit has no suitable merged pull request, Cursor
+   Mobile will manually dispatch **Mobile Release** from `main` with the
+   `testflight` action and `production` EAS profile instead.
+4. Monitor **Mobile Release / Queue TestFlight Build** until it tests the app,
+   builds and submits the exact commit, waits for Apple to process that build,
+   and verifies its attachment to `Internal Testers`.
+5. Report the verified build number and relevant workflow/build links. Merely
+   queueing the workflow is not completion.
 
-The comment trigger accepts only an exact `/testflight` comment from a
+A request to configure, document, or verify the release process is not a
+release request and must not queue a build. Cursor acts only when the user
+clearly asks to deploy, ship, or release the app to TestFlight.
+
+The `/testflight` command is an implementation detail and manual fallback. Its
+trigger accepts only an exact `/testflight` comment from a
 repository owner, member, or collaborator, and only for a pull request already
 merged into `main`. Apple and Expo credentials remain in GitHub Actions and
 must never be placed in Cursor Cloud secrets, commits, pull requests, comments,
