@@ -84,10 +84,28 @@ Rules:
 
 ### Cursor Mobile Releases
 
+- Treat natural-language requests such as `deploy to TestFlight`, `ship to
+  TestFlight`, `release to TestFlight`, `test flight`, and obvious misspellings
+  such as `deploy to test lfihgt` as explicit authorization to create a new
+  production TestFlight build. Do not require the user to mention GitHub
+  Actions, `/testflight`, EAS, credentials, or a release profile.
+- A request to configure, document, or verify this release automation is not
+  itself authorization to queue a build. Only act when the user clearly asks
+  to deploy, ship, or release the app to TestFlight.
+- For an actual release request, finish the normal pull request flow, wait for
+  all required checks, merge without bypassing branch protection, and use the
+  exact merge commit on `main`. If the change affects the API, web, mobile,
+  shared packages, infrastructure, or deploy scripts, wait for the production
+  `Deploy` run for that exact commit to succeed before starting TestFlight.
+- Queue TestFlight by commenting exactly `/testflight` on the merged pull
+  request. If the current `main` commit has no suitable merged pull request,
+  dispatch `Mobile Release` manually from `main` with `release_action` set to
+  `testflight` and `eas_profile` set to `production`.
+- Monitor the `Mobile Release` workflow through EAS build, Apple processing,
+  and tester-group verification. Report the build number and workflow/build
+  links; merely queueing the workflow is not completion.
 - Cursor Cloud agents do not need Apple or Expo release credentials. Keep
   `EXPO_TOKEN` and `APP_STORE_CONNECT_API_KEY_P8` only in GitHub Actions.
-- Merge release code into `main`, then comment exactly `/testflight` on the
-  merged pull request to queue the production EAS build and TestFlight submit.
 - Production backend/web deployment starts automatically for relevant `main`
   changes. The phone-accessible recovery path is a manual `main` run of the
   `Deploy` workflow; enable its mobile input to queue TestFlight only after the
