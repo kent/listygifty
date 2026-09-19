@@ -1061,6 +1061,8 @@ export function MatchWorkspace({
 
       <AddGiftForPersonDialog
         person={addGiftForPerson}
+        people={people}
+        onPersonCreated={handlePersonCreated}
         holidayId={holidayId}
         statuses={statuses}
         open={!!addGiftForPerson}

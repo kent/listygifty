@@ -21,6 +21,7 @@ import { peopleService } from "@/services";
 import type { Person } from "@niftygifty/types";
 
 interface PeopleCellProps {
+  id?: string;
   selectedIds: number[];
   people: Person[];
   onChange: (ids: number[]) => void;
@@ -30,6 +31,7 @@ interface PeopleCellProps {
 }
 
 export function PeopleCell({
+  id,
   selectedIds,
   people,
   onChange,
@@ -83,6 +85,8 @@ export function PeopleCell({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          id={id}
+          type="button"
           variant="ghost"
           role="combobox"
           aria-expanded={open}

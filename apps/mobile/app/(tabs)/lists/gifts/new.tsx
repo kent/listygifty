@@ -1,16 +1,13 @@
+import { useEffect, useRef } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  ScrollView,
+  View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView,
+  Keyboard, Platform, ActivityIndicator, ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/lib/theme";
 import { PersonPicker } from "@/components/PersonPicker";
+import { PrimaryButton } from "@/components/PrimaryButton";
 import { InlineError } from "@/components/InlineError";
 import { useNewGiftController } from "@/lib/controllers";
 import { formatShortDate } from "@/lib/formatters";
@@ -18,77 +15,110 @@ import { getGiftStatusColors } from "@/lib/gift-status-colors";
 
 export default function NewGiftScreen() {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const controller = useNewGiftController();
-  const renderSaveActions = () => (
-    <View style={{ gap: 10 }}>
-      <TouchableOpacity
-        onPress={controller.handleSubmit}
-        disabled={!controller.canSubmit}
-        style={{
-          backgroundColor: controller.canSubmit ? colors.primary : colors.surfaceSecondary,
-          padding: 16,
-          borderRadius: 8,
-          alignItems: "center",
-        }}
-      >
-        {controller.savingMode === "done" ? (
-          <ActivityIndicator color={colors.textInverse} />
-        ) : (
-          <Text
-            style={{
-              color: controller.canSubmit ? colors.textInverse : colors.muted,
-              fontSize: 16,
-              fontWeight: "600",
-            }}
-          >
-            Add Gift
-          </Text>
-        )}
-      </TouchableOpacity>
+  const scrollRef = useRef<ScrollView>(null);
+  const isNameStep = controller.step === "name";
 
-      <TouchableOpacity
-        onPress={controller.handleSubmitAndAddAnother}
-        disabled={!controller.canSubmit}
-        style={{
-          backgroundColor: colors.input,
-          padding: 16,
-          borderRadius: 8,
-          alignItems: "center",
-          borderWidth: 1,
-          borderColor: controller.canSubmit ? colors.primary : colors.inputBorder,
-        }}
-      >
-        {controller.savingMode === "another" ? (
-          <ActivityIndicator color={colors.primary} />
-        ) : (
-          <Text
-            style={{
-              color: controller.canSubmit ? colors.primary : colors.muted,
-              fontSize: 16,
-              fontWeight: "600",
-            }}
-          >
-            Save & Add Another
-          </Text>
-        )}
-      </TouchableOpacity>
-    </View>
-  );
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [controller.step]);
+
+  const next = () => {
+    if (!controller.canContinue) return;
+    Keyboard.dismiss();
+    controller.handleNext();
+  };
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       style={{ flex: 1, backgroundColor: colors.background }}
     >
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20 }}>
+        <Text style={{ color: colors.primary, fontSize: 13, fontWeight: "600", marginBottom: 12 }}>
+          {isNameStep ? "1 of 2 · The gift" : "2 of 2 · The details"}
+        </Text>
+        <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 28, fontWeight: "700", marginBottom: 8 }}>
+          {isNameStep ? "What's the gift?" : controller.form.name.trim()}
+        </Text>
+        <Text style={{ color: colors.textTertiary, fontSize: 15, marginBottom: 24 }}>
+          {isNameStep ? "Start with a name. Details come next." : "Pick who it's for, or save the idea for later."}
+        </Text>
         {controller.error ? <InlineError message={controller.error} margin={0} /> : null}
-        {controller.statusesError ? (
-          <InlineError
-            message={controller.statusesError}
-            onRetry={controller.retryStatuses}
-            margin={16}
+        {isNameStep ? (
+          <TextInput
+            accessibilityLabel="Gift name"
+            placeholder="e.g., Nintendo Switch"
+            placeholderTextColor={colors.placeholder}
+            value={controller.form.name}
+            onChangeText={(value) => controller.updateField("name", value)}
+            autoFocus
+            returnKeyType="next"
+            onSubmitEditing={next}
+            style={{ backgroundColor: colors.input, color: colors.text, padding: 16,
+              borderRadius: 12, fontSize: 18, borderWidth: 1, borderColor: colors.inputBorder }}
           />
-        ) : null}
+        ) : (
+          <View pointerEvents={controller.saving ? "none" : "auto"}>
+            <PersonPicker
+              label="Who is it for?"
+              selectedIds={controller.form.recipientIds}
+              onSelectionChange={controller.setRecipientIds}
+              placeholder="Choose people (optional)"
+            />
+            {controller.statusesError ? (
+              <InlineError message={controller.statusesError} onRetry={controller.retryStatuses} margin={0} />
+            ) : !controller.loadingStatuses && controller.statuses.length === 0 ? (
+              <InlineError message="No gift statuses available" onRetry={controller.retryStatuses} margin={0} />
+            ) : null}
+        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Status</Text>
+        {controller.loadingStatuses ? (
+          <View style={{ minHeight: 44, justifyContent: "center", marginBottom: 20 }}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        ) : (
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              gap: 8,
+              marginBottom: 20,
+              minHeight: 44,
+            }}
+          >
+            {controller.statuses.map((status) => {
+              const isSelected = controller.selectedStatusId === status.id;
+              const statusColor = getGiftStatusColors(status.name, colors, isDark);
+              return (
+                <TouchableOpacity
+                  key={status.id}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: isSelected }}
+                  onPress={() => controller.handleStatusChange(status.id)}
+                  style={{
+                    backgroundColor: isSelected ? statusColor.backgroundColor : colors.input,
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 8,
+                    borderWidth: 2,
+                    borderColor: isSelected ? statusColor.textColor : colors.inputBorder,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: isSelected ? statusColor.textColor : colors.textTertiary,
+                      fontWeight: isSelected ? "600" : "400",
+                    }}
+                  >
+                    {status.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
 
         {controller.canChooseList ? (
           <View style={{ marginBottom: 16, minHeight: 118 }}>
@@ -191,91 +221,22 @@ export default function NewGiftScreen() {
           </View>
         ) : null}
 
-        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Name *</Text>
-        <TextInput
-          placeholder="e.g., Nintendo Switch"
-          placeholderTextColor={colors.placeholder}
-          value={controller.form.name}
-          onChangeText={(value) => controller.updateField("name", value)}
-          autoFocus
-          returnKeyType="done"
-          onSubmitEditing={() => {
-            if (controller.canSubmit) {
-              void controller.handleSubmit();
-            }
-          }}
-          style={{
-            backgroundColor: colors.input,
-            color: colors.text,
-            padding: 16,
-            borderRadius: 8,
-            marginBottom: 16,
-            fontSize: 16,
-            borderWidth: 1,
-            borderColor: colors.inputBorder,
-          }}
-        />
 
-        <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>Status *</Text>
-        {controller.loadingStatuses ? (
-          <View style={{ minHeight: 44, justifyContent: "center", marginBottom: 20 }}>
-            <ActivityIndicator color={colors.primary} />
-          </View>
-        ) : (
-          <View
-            style={{
-              flexDirection: "row",
-              flexWrap: "wrap",
-              gap: 8,
-              marginBottom: 20,
-              minHeight: 44,
-            }}
-          >
-            {controller.statuses.map((status) => {
-              const isSelected = controller.selectedStatusId === status.id;
-              const statusColor = getGiftStatusColors(status.name, colors, isDark);
-              return (
-                <TouchableOpacity
-                  key={status.id}
-                  onPress={() => controller.handleStatusChange(status.id)}
-                  style={{
-                    backgroundColor: isSelected ? statusColor.backgroundColor : colors.input,
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    borderRadius: 8,
-                    borderWidth: 2,
-                    borderColor: isSelected ? statusColor.textColor : colors.inputBorder,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: isSelected ? statusColor.textColor : colors.textTertiary,
-                      fontWeight: isSelected ? "600" : "400",
-                    }}
-                  >
-                    {status.name}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
-        {renderSaveActions()}
-
-        <View
-          style={{
-            height: 1,
-            backgroundColor: colors.border,
-            marginBottom: 20,
-            marginTop: 24,
-          }}
-        />
-
-        <Text style={{ color: colors.text, fontSize: 17, fontWeight: "700", marginBottom: 16 }}>
-          Optional details
-        </Text>
-
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityState={{ expanded: controller.advancedOpen }}
+              onPress={() => controller.setAdvancedOpen(!controller.advancedOpen)}
+              style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+                borderTopWidth: 1, borderTopColor: colors.border, paddingVertical: 18, marginTop: 4 }}
+            >
+              <View>
+                <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600" }}>Advanced</Text>
+                <Text style={{ color: colors.textTertiary, fontSize: 13, marginTop: 4 }}>Notes, link, cost, and givers</Text>
+              </View>
+              <Ionicons name={controller.advancedOpen ? "chevron-up" : "chevron-down"} size={20} color={colors.muted} />
+            </TouchableOpacity>
+            {controller.advancedOpen ? (
+              <View>
         <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
           Description
         </Text>
@@ -358,32 +319,30 @@ export default function NewGiftScreen() {
         />
 
         <PersonPicker
-          label="For (Recipients)"
-          selectedIds={controller.form.recipientIds}
-          onSelectionChange={controller.setRecipientIds}
-          placeholder="Who is this gift for?"
-        />
-
-        <PersonPicker
           label="From (Givers)"
           selectedIds={controller.form.giverIds}
           onSelectionChange={controller.setGiverIds}
           placeholder="Who is giving this gift?"
         />
 
-        <View style={{ marginTop: 8 }}>{renderSaveActions()}</View>
-
-        <TouchableOpacity
-          onPress={controller.handleCancel}
-          style={{
-            padding: 16,
-            alignItems: "center",
-            marginTop: 8,
-          }}
-        >
-          <Text style={{ color: colors.textTertiary, fontSize: 16 }}>Cancel</Text>
-        </TouchableOpacity>
+              </View>
+            ) : null}
+          </View>
+        )}
       </ScrollView>
+      <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: Math.max(insets.bottom, 16),
+        borderTopWidth: 1, borderTopColor: colors.border, gap: 8 }}>
+        {isNameStep ? (
+          <PrimaryButton label="Next" icon="arrow-forward" iconPosition="right" onPress={next} disabled={!controller.canContinue} />
+        ) : (
+          <>
+            <PrimaryButton label="Add Gift" onPress={controller.handleSubmit} disabled={!controller.canSubmit} loading={controller.savingMode === "done"} />
+            <PrimaryButton label="Save & Add Another" variant="secondary" onPress={controller.handleSubmitAndAddAnother} disabled={!controller.canSubmit} loading={controller.savingMode === "another"} />
+          </>
+        )}
+        <PrimaryButton label={isNameStep ? "Cancel" : "Back"} variant="ghost" disabled={controller.saving}
+          onPress={isNameStep ? controller.handleCancel : controller.handleBack} />
+      </View>
     </KeyboardAvoidingView>
   );
 }
