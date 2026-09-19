@@ -46,7 +46,7 @@ import { MobileGiftCard } from "./MobileGiftCard";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
 import { useAuth } from "@/contexts/auth-context";
 import { giftsService } from "@/services";
-import { ApiError } from "@/lib/api-client";
+import { NewGiftDialog } from "./NewGiftDialog";
 import { captureWebEvent } from "@/lib/analytics";
 import { toast } from "sonner";
 import type { Gift, Person, GiftStatus, Holiday, CreateGiftRequest, Address } from "@niftygifty/types";
@@ -88,6 +88,7 @@ export function GiftGrid({
 }: GiftGridProps) {
   const [localState, setLocalState] = useState<Record<number, { _isNew?: boolean; _isSaving?: boolean }>>({});
   const [isPending, startTransition] = useTransition();
+  const [newGiftPosition, setNewGiftPosition] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [pendingDeleteGift, setPendingDeleteGift] = useState<Gift | null>(null);
   const [isBulkUpdatingStatus, setIsBulkUpdatingStatus] = useState(false);
@@ -324,58 +325,21 @@ export function GiftGrid({
     [addresses, refreshGiftList]
   );
 
-  const addGift = useCallback(async (atPosition?: number) => {
-    const holidayId = getActiveHolidayId();
-    const statusId = defaultStatusId || statuses[0]?.id;
-    if (!holidayId || !statusId) return;
-    const shouldClearFilters = hasActiveFilters && Boolean(onClearFilters);
+  const addGift = useCallback((atPosition = 0) => {
+    setNewGiftPosition(atPosition);
+  }, []);
 
-    startTransition(async () => {
-      try {
-        const desiredPosition = atPosition ?? 0;
-        const created = await giftsService.create({
-          name: "New Gift",
-          holiday_id: holidayId,
-          gift_status_id: statusId,
-          position: desiredPosition,
-        });
-        setLocalMeta(created.id, { _isNew: true });
-        
-        // Always refresh so ordering/positions stay consistent (especially when inserting at top).
-        const refreshed = await refreshGiftList();
-        onGiftsChangeRef.current(refreshed);
-        if (shouldClearFilters) {
-          onClearFilters?.();
-          toast("Filters cleared so the new gift is visible");
-        }
-
-        // Refresh billing status after creating gift
-        await refreshBillingStatus();
-      } catch (err) {
-        if (err instanceof ApiError && err.isGiftLimitReached) {
-          toast.error("Gift limit reached", {
-            description: "Upgrade to Premium for unlimited gift tracking.",
-            action: {
-              label: "Upgrade",
-              onClick: () => window.location.href = "/billing",
-            },
-          });
-          await refreshBillingStatus();
-        } else {
-          console.error("Failed to create gift:", err);
-          toast.error("Failed to create gift");
-        }
-      }
+  const handleGiftCreated = useCallback((created: Gift) => {
+    // Show the saved gift immediately. Reconcile server positions in the background.
+    onGiftsChangeRef.current([created, ...allGiftsRef.current.map((gift) => (
+      gift.position >= created.position ? { ...gift, position: gift.position + 1 } : gift
+    ))]);
+    if (hasActiveFilters) onClearFilters?.();
+    void refreshGiftList().then((refreshed) => onGiftsChangeRef.current(refreshed)).catch(() => {
+      toast.error("Gift saved, but the list could not refresh. Reload to see the latest order.");
     });
-  }, [
-    defaultStatusId,
-    getActiveHolidayId,
-    hasActiveFilters,
-    onClearFilters,
-    refreshBillingStatus,
-    refreshGiftList,
-    statuses,
-  ]);
+    void refreshBillingStatus();
+  }, [hasActiveFilters, onClearFilters, refreshBillingStatus, refreshGiftList]);
 
   const insertGift = useCallback(async (referenceId: number, position: "above" | "below") => {
     const sorted = [...allGiftsRef.current].sort((a, b) => a.position - b.position);
@@ -619,6 +583,18 @@ export function GiftGrid({
           )}
         </button>
       )}
+
+      <NewGiftDialog
+        open={newGiftPosition !== null}
+        onOpenChange={(open) => { if (!open) setNewGiftPosition(null); }}
+        holidayId={getActiveHolidayId() ?? 0}
+        statuses={statuses}
+        people={people}
+        defaultStatusId={defaultStatusId}
+        position={newGiftPosition ?? 0}
+        onGiftCreated={handleGiftCreated}
+        onPersonCreated={handlePersonCreated}
+      />
 
       <AlertDialog
         open={pendingDeleteGift !== null}

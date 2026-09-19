@@ -560,6 +560,9 @@ export function useNewGiftController() {
   );
   const [preferredHolidayId, setPreferredHolidayId] = useState<number | null>(null);
   const [preferredHolidayLoaded, setPreferredHolidayLoaded] = useState(hasPresetHoliday);
+  const [step, setStep] = useState<"name" | "details">("name");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const submittingRef = useRef(false);
   const [savingMode, setSavingMode] = useState<NewGiftSaveMode | null>(null);
   const [error, setError] = useState<string | null>(null);
   const openedAtRef = useRef(Date.now());
@@ -671,6 +674,8 @@ export function useNewGiftController() {
   }, [hasPresetHoliday, track, updateField]);
 
   const submitGift = useCallback(async (mode: NewGiftSaveMode) => {
+    if (submittingRef.current) return;
+
     if (!form.name.trim()) {
       setError("Name is required");
       return;
@@ -687,11 +692,13 @@ export function useNewGiftController() {
     }
 
     const parsedCost = parseOptionalDecimal(form.cost);
-    if (Number.isNaN(parsedCost)) {
-      setError("Cost must be a valid number");
+    if (parsedCost !== undefined && (!Number.isFinite(parsedCost) || parsedCost < 0)) {
+      setAdvancedOpen(true);
+      setError("Cost must be a valid number of zero or more");
       return;
     }
 
+    submittingRef.current = true;
     setError(null);
     setSavingMode(mode);
 
@@ -714,6 +721,8 @@ export function useNewGiftController() {
       await haptics.success();
       if (mode === "another") {
         setForm(buildRepeatGiftCaptureValues(form));
+        setStep("name");
+        setAdvancedOpen(false);
         openedAtRef.current = Date.now();
       } else {
         router.back();
@@ -723,11 +732,23 @@ export function useNewGiftController() {
       setError("Failed to create gift");
       await haptics.error();
     } finally {
+      submittingRef.current = false;
       setSavingMode(null);
     }
   }, [form, gifts, hasPresetHoliday, router, selectedHolidayId, selectedStatusId, track]);
 
   return {
+    step,
+    advancedOpen,
+    setAdvancedOpen,
+    canContinue: Boolean(form.name.trim()),
+    handleNext: () => {
+      if (form.name.trim()) {
+        setError(null);
+        setStep("details");
+      }
+    },
+    handleBack: () => { if (!submittingRef.current) setStep("name"); },
     canChooseList: !hasPresetHoliday,
     canSubmit: Boolean(form.name.trim()) && Boolean(selectedHolidayId) && Boolean(selectedStatusId) && !saving,
     captureLists,

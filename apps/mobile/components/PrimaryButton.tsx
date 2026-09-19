@@ -101,6 +101,7 @@ export function PrimaryButton({
     >
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel={label}
         accessibilityState={{ disabled: disabled || loading, busy: loading }}
         onPress={handlePress}
         onPressIn={handlePressIn}

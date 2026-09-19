@@ -159,6 +159,9 @@ jobs:
           npm --prefix packages/api-client run build
           npm --prefix packages/services run build
 
+      - name: Run web component tests
+        run: npm --prefix apps/web test
+
       - name: Install mobile dependencies
         run: npm ci --legacy-peer-deps --prefer-offline --no-audit --progress=false --prefix apps/mobile
 
