@@ -97,6 +97,7 @@ export function GiftGrid({
   const onGiftsChangeRef = useRef(onGiftsChange);
   onGiftsChangeRef.current = onGiftsChange;
   // Use allGifts for state management to preserve unfiltered gifts
+  const createRefreshVersionRef = useRef(0);
   const allGiftsRef = useRef(allGifts);
   allGiftsRef.current = allGifts;
 
@@ -335,7 +336,10 @@ export function GiftGrid({
       gift.position >= created.position ? { ...gift, position: gift.position + 1 } : gift
     ))]);
     if (hasActiveFilters) onClearFilters?.();
-    void refreshGiftList().then((refreshed) => onGiftsChangeRef.current(refreshed)).catch(() => {
+    const refreshVersion = ++createRefreshVersionRef.current;
+    void refreshGiftList().then((refreshed) => {
+      if (refreshVersion === createRefreshVersionRef.current) onGiftsChangeRef.current(refreshed);
+    }).catch(() => {
       toast.error("Gift saved, but the list could not refresh. Reload to see the latest order.");
     });
     void refreshBillingStatus();
