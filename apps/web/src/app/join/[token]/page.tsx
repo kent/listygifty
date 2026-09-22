@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
+import { useWorkspace } from "@/contexts/workspace-context";
 import { holidaysService, AUTH_ROUTES } from "@/services";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ type JoinStatus = "loading" | "joining" | "success" | "error" | "already_member"
 
 export default function JoinHolidayPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isLoading: workspaceLoading, refreshWorkspaces } = useWorkspace();
   const router = useRouter();
   const params = useParams();
   const token = params.token as string;
@@ -31,12 +33,13 @@ export default function JoinHolidayPage() {
   }, [authLoading, isAuthenticated, router, token]);
 
   useEffect(() => {
-    if (!isAuthenticated || !token) return;
+    if (authLoading || workspaceLoading || !isAuthenticated || !token) return;
 
     async function joinHoliday() {
       setStatus("joining");
       try {
         const result = await holidaysService.join(token);
+        await refreshWorkspaces();
         setHoliday(result);
         setStatus("success");
       } catch (err) {
@@ -51,7 +54,7 @@ export default function JoinHolidayPage() {
     }
 
     joinHoliday();
-  }, [isAuthenticated, token]);
+  }, [authLoading, workspaceLoading, isAuthenticated, token, refreshWorkspaces]);
 
   if (authLoading) {
     return (
@@ -72,8 +75,8 @@ export default function JoinHolidayPage() {
               <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-violet-500/20 flex items-center justify-center">
                 <Loader2 className="h-8 w-8 text-violet-500 dark:text-violet-400 animate-spin" />
               </div>
-              <CardTitle className="text-slate-900 dark:text-white">Joining Holiday...</CardTitle>
-              <CardDescription>Please wait while we add you to the holiday.</CardDescription>
+              <CardTitle className="text-slate-900 dark:text-white">Joining Gift List...</CardTitle>
+              <CardDescription>Please wait while we add you to the gift list.</CardDescription>
             </>
           ) : status === "success" ? (
             <>
@@ -91,7 +94,7 @@ export default function JoinHolidayPage() {
                 <Users className="h-8 w-8 text-blue-500 dark:text-blue-400" />
               </div>
               <CardTitle className="text-slate-900 dark:text-white">Already a Member</CardTitle>
-              <CardDescription>You&apos;re already part of this holiday.</CardDescription>
+              <CardDescription>You&apos;re already part of this gift list.</CardDescription>
             </>
           ) : (
             <>
@@ -131,9 +134,9 @@ export default function JoinHolidayPage() {
 
           <div className="flex flex-col gap-2">
             {(status === "success" || status === "already_member") && (
-              <Link href="/holidays" className="w-full">
+              <Link href={holiday ? `/holidays/${holiday.id}` : "/holidays"} className="w-full">
                 <Button className="w-full bg-violet-600 hover:bg-violet-700">
-                  Go to Gift Lists
+                  {holiday ? "Open Gift List" : "Go to Gift Lists"}
                 </Button>
               </Link>
             )}

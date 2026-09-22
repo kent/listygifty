@@ -39,7 +39,7 @@ class ImportsController < ApplicationController
       return render json: { error: "No file provided" }, status: :bad_request
     end
 
-    holiday = current_workspace.holidays.where(id: current_user.holiday_ids).find_by(id: params[:holiday_id])
+    holiday = current_user.holidays_in_workspace(current_workspace).find_by(id: params[:holiday_id])
     return render json: { error: "Holiday not found" }, status: :not_found unless holiday
 
     result = CsvGiftImportService.import_gifts(

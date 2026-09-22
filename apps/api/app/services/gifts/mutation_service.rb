@@ -77,11 +77,8 @@ module Gifts
       return if ids.empty?
 
       shared_people = Person.where(id: holiday.shared_people.select(:id))
-      accessible_people = if holiday.workspace.member?(@user)
-        shared_people.or(Person.where(id: holiday.workspace.people.select(:id)))
-      else
-        shared_people
-      end
+      workspace = holiday.workspace.member?(@user) ? holiday.workspace : @user.personal_workspace
+      accessible_people = shared_people.or(Person.where(workspace: workspace))
       accessible_count = accessible_people.where(id: ids).distinct.count
       raise ActiveRecord::RecordNotFound unless accessible_count == ids.length
     end

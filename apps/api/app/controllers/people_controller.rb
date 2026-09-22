@@ -9,7 +9,7 @@ class PeopleController < ApplicationController
   # Without holiday_id: returns all accessible people in workspace (+ shared via any holiday)
   def index
     if params[:holiday_id].present?
-      holiday = current_workspace.holidays.where(id: current_user.holiday_ids).find_by(id: params[:holiday_id])
+      holiday = current_user.holidays_in_workspace(current_workspace).find_by(id: params[:holiday_id])
       return render json: { error: "Holiday not found" }, status: :not_found unless holiday
 
       # Workspace people + people shared to this holiday (from any collaborator)
@@ -118,7 +118,7 @@ class PeopleController < ApplicationController
   def all_accessible_people
     workspace_people_ids = current_workspace.people.select(:id)
     # People shared to any holiday in this workspace that the user is a member of
-    workspace_holiday_ids = current_workspace.holidays.where(id: current_user.holiday_ids).select(:id)
+    workspace_holiday_ids = current_user.holidays_in_workspace(current_workspace).select(:id)
     shared_people_ids = Person.joins(:shared_holidays)
                               .where(holidays: { id: workspace_holiday_ids })
                               .where.not(workspace_id: current_workspace.id)

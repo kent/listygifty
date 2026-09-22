@@ -8,7 +8,7 @@ class HolidaysController < ApplicationController
   before_action :require_owner, only: %i[destroy remove_collaborator]
 
   def index
-    holidays = current_workspace.holidays.user_holidays.where(id: current_user.holiday_ids).includes(:holiday_users)
+    holidays = current_user.holidays_in_workspace(current_workspace).user_holidays.includes(:holiday_users)
     render json: HolidayBlueprint.render(holidays, current_user: current_user)
   end
 
@@ -56,17 +56,21 @@ class HolidaysController < ApplicationController
     holiday = Holiday.find_by(share_token: token)
 
     return render json: { error: "Invalid share link" }, status: :not_found unless holiday
-    return render json: { error: "You are already a member of this holiday" }, status: :unprocessable_entity if holiday.member?(current_user)
-
-    holiday.holiday_users.create!(user: current_user, role: "collaborator")
+    joined = false
+    holiday.with_lock do
+      unless holiday.member?(current_user)
+        holiday.holiday_users.create!(user: current_user, role: "collaborator")
+        joined = true
+      end
+    end
 
     # Send invite welcome email if user hasn't been welcomed yet
-    if current_user.welcomed_at.nil?
+    if joined && current_user.welcomed_at.nil?
       current_user.update!(welcomed_at: Time.current)
       WelcomeMailer.welcome_from_invite(current_user, holiday).deliver_later
     end
 
-    render json: HolidayBlueprint.render(holiday, current_user: current_user), status: :created
+    render json: HolidayBlueprint.render(holiday, current_user: current_user), status: joined ? :created : :ok
   end
 
   # DELETE /holidays/:id/leave
@@ -109,7 +113,7 @@ class HolidaysController < ApplicationController
   private
 
   def set_holiday
-    @holiday = current_workspace.holidays.includes(:holiday_users).where(id: current_user.holiday_ids).find(params[:id])
+    @holiday = current_user.holidays_in_workspace(current_workspace).includes(:holiday_users).find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Holiday not found" }, status: :not_found
   end
