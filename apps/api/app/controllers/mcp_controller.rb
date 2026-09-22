@@ -354,7 +354,7 @@ class McpController < ApplicationController
         schema: { type: "object", properties: { workspace_id: { type: "integer" } }, required: [ "workspace_id" ] },
         handler: ->(args) {
           workspace = find_workspace(args["workspace_id"])
-          workspace.holidays.where(id: @current_user.holiday_ids).map { |holiday| holiday_to_json(holiday) }
+          @current_user.holidays_in_workspace(workspace).map { |holiday| holiday_to_json(holiday) }
         }
       },
       "create_holiday" => {
@@ -1029,7 +1029,7 @@ class McpController < ApplicationController
         handler: -> {
           workspaces = WorkspaceMembership.where(user: @current_user).includes(:workspace).map(&:workspace)
           upcoming_holidays = workspaces.flat_map do |workspace|
-            workspace.holidays.where(id: @current_user.holiday_ids)
+            @current_user.holidays_in_workspace(workspace)
               .where("date >= ?", Date.current).order(:date).limit(5)
           end
           {

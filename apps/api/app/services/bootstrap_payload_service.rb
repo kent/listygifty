@@ -61,7 +61,7 @@ class BootstrapPayloadService
   end
 
   def workspace_payload(workspace, timings)
-    workspace_holidays = workspace.holidays.user_holidays.where(id: user.holiday_ids)
+    workspace_holidays = user.holidays_in_workspace(workspace).user_holidays
 
     holidays = measure(timings, :holidays) do
       workspace_holidays.includes(:holiday_users).order(:date, :created_at)
@@ -135,7 +135,7 @@ class BootstrapPayloadService
   def preload_people(workspace)
     workspace_people_ids = workspace.people.select(:id)
     shared_people_ids = Person.joins(:shared_holidays)
-                              .where(holidays: { id: workspace.holidays.where(id: user.holiday_ids).select(:id) })
+                              .where(holidays: { id: user.holidays_in_workspace(workspace).select(:id) })
                               .where.not(workspace_id: workspace.id)
                               .select(:id)
 

@@ -4,7 +4,7 @@ class ExportsController < ApplicationController
   include WorkspaceScoped
 
   def gifts
-    holiday = current_workspace.holidays.where(id: current_user.holiday_ids).find(params[:holiday_id])
+    holiday = current_user.holidays_in_workspace(current_workspace).find(params[:holiday_id])
 
     filename = generate_gifts_filename(holiday)
     csv_data = ExportService.gifts_to_csv(holiday)

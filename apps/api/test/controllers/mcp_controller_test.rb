@@ -367,6 +367,24 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes dashboard.fetch("upcoming_holidays").pluck("id"), hidden_holiday.id
   end
 
+  test "list tools and dashboard include external invitations in the personal workspace" do
+    holiday = workspaces(:two).holidays.create!(name: "Shared invitation", date: 1.month.from_now)
+    holiday.holiday_users.create!(user: users(:two), role: "owner")
+    holiday.holiday_users.create!(user: @user, role: "collaborator")
+
+    holidays = tool_payload(call_tool("list_holidays", { workspace_id: @workspace.id }))
+    assert_includes holidays.pluck("id"), holiday.id
+
+    post "/mcp", params: {
+      jsonrpc: "2.0",
+      method: "resources/read",
+      params: { uri: "listygifty://dashboard" },
+      id: 1
+    }.to_json, headers: auth_headers.merge("Content-Type" => "application/json")
+    dashboard = JSON.parse(JSON.parse(response.body).dig("result", "contents", 0, "text"))
+    assert_includes dashboard.fetch("upcoming_holidays").pluck("id"), holiday.id
+  end
+
   test "person tools hide and protect addresses outside the caller's workspace" do
     owner = users(:two)
     owner_workspace = Workspace.create!(

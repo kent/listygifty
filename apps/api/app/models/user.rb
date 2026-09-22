@@ -103,6 +103,15 @@ class User < ApplicationRecord
     workspaces.personal.first
   end
 
+  # External list invitations belong in the recipient's personal workspace.
+  # Lists from workspaces they belong to stay in those workspaces.
+  def holidays_in_workspace(workspace)
+    own_workspace = holidays.where(workspace_id: workspace.id)
+    return own_workspace unless workspace.personal?
+
+    own_workspace.or(holidays.where.not(workspace_id: workspaces.select(:id)))
+  end
+
   def business_workspaces
     workspaces.business
   end
