@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useTransition, useRef, useMemo } from "react";
+import Link from "next/link";
 import { Plus, Loader2, Crown, ListChecks } from "lucide-react";
 import {
   DndContext,
@@ -431,13 +432,15 @@ export function GiftGrid({
       <div className="flex flex-wrap items-center gap-2">
         {atLimit ? (
           <Button
+            asChild
             variant="outline"
             size="sm"
-            onClick={() => window.location.href = "/billing"}
             className="gap-2 border-violet-500/50 text-violet-400 hover:bg-violet-500/10"
           >
-            <Crown className="h-4 w-4" />
-            Upgrade to Add More
+            <Link href="/billing">
+              <Crown className="h-4 w-4" />
+              Upgrade to Add More
+            </Link>
           </Button>
         ) : (
           <Button

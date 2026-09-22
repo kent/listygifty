@@ -94,15 +94,20 @@ class SharedHolidayInvitationTest < ActionDispatch::IntegrationTest
 
   test "reopening an invitation succeeds without duplicate membership or welcome emails" do
     @guest.update!(welcomed_at: nil)
-    assert_enqueued_emails(1) { accept_invitation }
+    assert_enqueued_with(job: SendWelcomeEmailJob, args: [ @guest.id, { holiday_id: @holiday.id } ]) do
+      accept_invitation
+    end
     assert_response :created
+    assert_nil @guest.reload.welcomed_at
 
     assert_no_difference("HolidayUser.count") do
-      assert_no_enqueued_emails { accept_invitation }
+      assert_no_enqueued_jobs(only: SendWelcomeEmailJob) { accept_invitation }
     end
     assert_response :ok
     assert_equal @holiday.id, json_response["id"]
     assert_equal "collaborator", json_response["role"]
+    assert_emails(1) { perform_enqueued_jobs(only: SendWelcomeEmailJob) }
+    assert_not_nil @guest.reload.welcomed_at
   end
 
   test "leaving a shared list removes access without needing workspace membership" do

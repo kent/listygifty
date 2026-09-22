@@ -7,7 +7,11 @@ const mockLists = jest.fn();
 const mockRouter = { push: jest.fn(), back: jest.fn() };
 let mockParams: { holiday_id?: string } = { holiday_id: "5" };
 
-jest.mock("expo-router", () => ({ useRouter: () => mockRouter, useLocalSearchParams: () => mockParams }));
+jest.mock("expo-router", () => ({
+  useRouter: () => mockRouter,
+  useLocalSearchParams: () => mockParams,
+  usePathname: () => "/lists/gifts/new",
+}));
 jest.mock("@react-navigation/native", () => ({
   useFocusEffect: (effect: () => void | (() => void)) => jest.requireActual("react").useEffect(effect, [effect]),
 }));
