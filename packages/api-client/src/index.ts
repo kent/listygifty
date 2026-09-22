@@ -18,12 +18,16 @@ export interface ApiClientConfig {
 // =============================================================================
 
 export class ApiError extends Error {
+  public data: ApiErrorType;
+
   constructor(
     public status: number,
-    public data: ApiErrorType
+    data: unknown
   ) {
-    super(data.error || data.errors?.join(", ") || "An error occurred");
+    const normalized = normalizeErrorData(data);
+    super(normalized.error || normalized.errors?.join(", ") || "An error occurred");
     this.name = "ApiError";
+    this.data = normalized;
   }
 
   get isUnauthorized() {
@@ -52,6 +56,7 @@ export class ApiError extends Error {
 // =============================================================================
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+type TokenGetter = () => Promise<string | null>;
 
 interface RequestOptions {
   body?: unknown;
@@ -66,8 +71,68 @@ interface RequestOptions {
 // Utilities
 // =============================================================================
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function normalizeErrorData(data: unknown): ApiErrorType {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    return { error: "An error occurred" };
+  }
+  const value = data as Record<string, unknown>;
+  return {
+    ...value,
+    error: typeof value.error === "string" ? value.error : undefined,
+    errors: Array.isArray(value.errors) ? value.errors.filter((error): error is string => typeof error === "string") : undefined,
+  };
+}
+
+function abortReason(signal: AbortSignal): unknown {
+  return signal.reason ?? Object.assign(new Error("Request cancelled"), { name: "AbortError" });
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw abortReason(signal);
+}
+
+// Also bounds operations (such as token lookup) that cannot consume a signal.
+function abortable<T>(operation: () => Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(abortReason(signal));
+      return;
+    }
+    const abort = () => {
+      signal.removeEventListener("abort", abort);
+      reject(abortReason(signal));
+    };
+    signal.addEventListener("abort", abort, { once: true });
+    Promise.resolve().then(operation).then(
+      (value) => {
+        signal.removeEventListener("abort", abort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener("abort", abort);
+        reject(error);
+      }
+    );
+  });
+}
+
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(abortReason(signal));
+      return;
+    }
+    const abort = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", abort);
+      reject(abortReason(signal!));
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", abort);
+      resolve();
+    }, ms);
+    signal?.addEventListener("abort", abort, { once: true });
+  });
 }
 
 // =============================================================================
@@ -75,17 +140,17 @@ function sleep(ms: number): Promise<void> {
 // =============================================================================
 
 export class ApiClient {
-  private tokenGetter: (() => Promise<string | null>) | null = null;
+  private tokenGetter: TokenGetter | null = null;
   private workspaceId: number | null = null;
   private baseUrl: string;
   private debug: boolean;
 
   constructor(config: ApiClientConfig) {
-    this.baseUrl = config.baseUrl;
+    this.baseUrl = config.baseUrl.replace(/\/+$/, "");
     this.debug = config.debug ?? false;
   }
 
-  setTokenGetter(getter: () => Promise<string | null>) {
+  setTokenGetter(getter: TokenGetter) {
     this.tokenGetter = getter;
   }
 
@@ -111,7 +176,9 @@ export class ApiClient {
   private async request<T>(
     method: HttpMethod,
     endpoint: string,
-    options: RequestOptions = {}
+    options: RequestOptions = {},
+    formData?: FormData,
+    readResponse?: (response: Response) => Promise<T>
   ): Promise<T> {
     const {
       timeout = DEFAULT_TIMEOUT_MS,
@@ -120,88 +187,68 @@ export class ApiClient {
       keepalive = false,
     } = options;
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...options.headers,
-    };
-
-    if (this.tokenGetter) {
-      const token = await this.tokenGetter();
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+    if (!Number.isInteger(retries) || retries < 0) {
+      throw new RangeError("retries must be a non-negative integer");
     }
-
-    if (this.workspaceId) {
-      headers["X-Workspace-ID"] = String(this.workspaceId);
+    if (!Number.isFinite(timeout) || timeout <= 0) {
+      throw new RangeError("timeout must be a positive finite number");
     }
+    throwIfAborted(externalSignal);
+
+    const body = formData ?? (options.body !== undefined && method !== "GET" ? JSON.stringify(options.body) : undefined);
+    // Capture the workspace before token lookup yields; retries retain this scope.
+    const workspaceId = this.workspaceId;
+    const tokenGetter = this.tokenGetter;
+    let authHeaders: Promise<Record<string, string>> | undefined;
 
     const url = `${this.baseUrl}${endpoint}`;
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-      // Combine external signal with timeout
-      let signal: AbortSignal;
-      if (externalSignal && typeof AbortSignal.any === "function") {
-        signal = AbortSignal.any([externalSignal, controller.signal]);
-      } else {
-        signal = externalSignal || controller.signal;
-      }
-
-      const config: RequestInit = {
-        method,
-        headers,
-        signal,
-        keepalive,
-      };
-
-      if (options.body && method !== "GET") {
-        config.body = JSON.stringify(options.body);
-      }
+      const cancel = () => controller.abort(externalSignal && abortReason(externalSignal));
+      if (externalSignal?.aborted) cancel();
+      else externalSignal?.addEventListener("abort", cancel, { once: true });
+      let timedOut = false;
+      const timeoutId = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, timeout);
 
       try {
-        const startTime = Date.now();
-        const response = await fetch(url, config);
-        const duration = Date.now() - startTime;
+        return await abortable(async () => {
+          throwIfAborted(controller.signal);
+          const headers: Record<string, string> = {
+            ...(formData ? {} : { "Content-Type": "application/json" }),
+            Accept: "application/json",
+            ...options.headers,
+            ...await (authHeaders ??= this.authHeadersFor(workspaceId, tokenGetter)),
+          };
+          throwIfAborted(controller.signal);
+          const startTime = Date.now();
+          const response = await fetch(url, { method, headers, signal: controller.signal, keepalive, body });
 
-        clearTimeout(timeoutId);
+          this.log("info", `${method} ${endpoint}`, {
+            status: response.status,
+            duration: Date.now() - startTime,
+            attempt: attempt + 1,
+          });
 
-        this.log("info", `${method} ${endpoint}`, {
-          status: response.status,
-          duration,
-          attempt: attempt + 1,
-        });
-
-        if (!response.ok) {
-          const errorData: ApiErrorType = await response.json().catch(() => ({
-            error: "An error occurred",
-          }));
-          throw new ApiError(response.status, errorData);
-        }
-
-        if (response.status === 204) {
-          return {} as T;
-        }
-
-        return response.json();
-      } catch (err) {
-        clearTimeout(timeoutId);
-
-        if (err instanceof ApiError) {
-          // Don't retry client errors (4xx) except specific cases
-          if (err.status >= 400 && err.status < 500) {
-            throw err;
+          if (!response.ok) {
+            const errorData: unknown = await response.json().catch(() => undefined);
+            throw new ApiError(response.status, errorData);
           }
-        }
-
-        // Handle abort/timeout
-        if (err instanceof Error && err.name === "AbortError") {
+          if (readResponse) return await readResponse(response);
+          if (response.status === 204 || response.status === 205) return {} as T;
+          return await response.json();
+        }, controller.signal);
+      } catch (err) {
+        throwIfAborted(externalSignal);
+        if (timedOut) {
           lastError = new ApiError(0, { error: `Request timeout after ${timeout}ms` });
         } else {
+          if (err instanceof ApiError && err.status >= 400 && err.status < 500) throw err;
+          if (err instanceof Error && err.name === "AbortError") throw err;
           lastError = err instanceof Error ? err : new Error(String(err));
         }
 
@@ -210,11 +257,12 @@ export class ApiClient {
           error: lastError.message,
         });
 
-        // Retry with exponential backoff
-        if (attempt < retries) {
-          await sleep(RETRY_DELAY_MS * Math.pow(2, attempt));
-        }
+      } finally {
+        clearTimeout(timeoutId);
+        externalSignal?.removeEventListener("abort", cancel);
       }
+
+      if (attempt < retries) await sleep(RETRY_DELAY_MS * Math.pow(2, attempt), externalSignal);
     }
 
     this.log("error", `${method} ${endpoint} exhausted retries`, {
@@ -225,6 +273,13 @@ export class ApiClient {
 
   get<T>(endpoint: string, options?: Omit<RequestOptions, "body">): Promise<T> {
     return this.request<T>("GET", endpoint, options);
+  }
+
+  getBlob(endpoint: string, options?: Omit<RequestOptions, "body">): Promise<{ blob: Blob; headers: Headers }> {
+    return this.request("GET", endpoint, options, undefined, async (response) => ({
+      blob: await response.blob(),
+      headers: response.headers,
+    }));
   }
 
   post<T>(endpoint: string, body?: unknown, options?: Omit<RequestOptions, "body">): Promise<T> {
@@ -243,52 +298,12 @@ export class ApiClient {
     return this.request<T>("DELETE", endpoint, options);
   }
 
-  postFormData<T>(endpoint: string, formData: FormData): Promise<T> {
-    return this.formDataRequest<T>("POST", endpoint, formData);
+  postFormData<T>(endpoint: string, formData: FormData, options?: Omit<RequestOptions, "body">): Promise<T> {
+    return this.request<T>("POST", endpoint, options, formData);
   }
 
-  patchFormData<T>(endpoint: string, formData: FormData): Promise<T> {
-    return this.formDataRequest<T>("PATCH", endpoint, formData);
-  }
-
-  private async formDataRequest<T>(
-    method: "POST" | "PATCH",
-    endpoint: string,
-    formData: FormData
-  ): Promise<T> {
-    const headers: Record<string, string> = {
-      Accept: "application/json",
-    };
-
-    if (this.tokenGetter) {
-      const token = await this.tokenGetter();
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-    }
-
-    if (this.workspaceId) {
-      headers["X-Workspace-ID"] = String(this.workspaceId);
-    }
-
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      method,
-      headers,
-      body: formData,
-    });
-
-    this.log("info", `${method} (FormData) ${endpoint}`, {
-      status: response.status,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        error: "An error occurred",
-      }));
-      throw new ApiError(response.status, errorData);
-    }
-
-    return response.json();
+  patchFormData<T>(endpoint: string, formData: FormData, options?: Omit<RequestOptions, "body">): Promise<T> {
+    return this.request<T>("PATCH", endpoint, options, formData);
   }
 
   getBaseUrl(): string {
@@ -296,17 +311,21 @@ export class ApiClient {
   }
 
   async getAuthHeaders(): Promise<Record<string, string>> {
+    return this.authHeadersFor(this.workspaceId, this.tokenGetter);
+  }
+
+  private async authHeadersFor(workspaceId: number | null, tokenGetter: TokenGetter | null): Promise<Record<string, string>> {
     const headers: Record<string, string> = {};
 
-    if (this.tokenGetter) {
-      const token = await this.tokenGetter();
+    if (tokenGetter) {
+      const token = await tokenGetter();
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
     }
 
-    if (this.workspaceId) {
-      headers["X-Workspace-ID"] = String(this.workspaceId);
+    if (workspaceId) {
+      headers["X-Workspace-ID"] = String(workspaceId);
     }
 
     return headers;

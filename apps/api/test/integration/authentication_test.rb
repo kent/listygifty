@@ -1,6 +1,35 @@
 require "test_helper"
 
 class AuthenticationTest < ActionDispatch::IntegrationTest
+  test "authentication repairs an account with no personal workspace" do
+    user = User.create!(email: "repair@example.com", clerk_user_id: "repair_workspace", clerk_profile_synced_at: Time.current)
+    get holidays_path, headers: auth_headers_for(user), as: :json
+
+    assert_response :success
+    assert user.personal_workspace.owner?(user)
+    assert_equal 1, user.workspaces.personal.count
+  end
+
+  test "failed initial workspace provisioning rolls back the new user" do
+    clerk_id = "failed_workspace_provision"
+    token = "failed_provision_token"
+    mock_clerk_token(token, { "sub" => clerk_id, "email" => "failed-provision@example.com" })
+    mock_clerk_user_fetch(clerk_id, "failed-provision@example.com")
+    reject_workspace = ->(workspace) do
+      workspace.errors.add(:name, "cannot provision") if workspace.created_by_user&.clerk_user_id == clerk_id
+    end
+    Workspace.validate(reject_workspace)
+
+    assert_no_difference("User.count") do
+      assert_no_difference("Workspace.count") do
+        get holidays_path, headers: { "Authorization" => "Bearer #{token}" }, as: :json
+      end
+    end
+    assert_response :unauthorized
+  ensure
+    Workspace.skip_callback(:validate, :before, reject_workspace) if reject_workspace
+  end
+
   test "protected routes require authentication" do
     get holidays_path, as: :json
     assert_response :unauthorized

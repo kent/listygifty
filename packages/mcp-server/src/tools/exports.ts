@@ -35,7 +35,7 @@ export async function handleExportTool(
   switch (toolName) {
     case "niftygifty_export_gifts_csv": {
       const holidayId = args.holiday_id as number;
-      const csvData = await client.get<string>(
+      const csvData = await client.getText(
         `/exports/gifts?holiday_id=${holidayId}`
       );
       return {
@@ -46,7 +46,7 @@ export async function handleExportTool(
     }
 
     case "niftygifty_export_people_csv": {
-      const csvData = await client.get<string>("/exports/people");
+      const csvData = await client.getText("/exports/people");
       return {
         message: "People exported successfully",
         format: "csv",

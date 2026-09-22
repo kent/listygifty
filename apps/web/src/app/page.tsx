@@ -821,41 +821,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="relative container mx-auto px-4 py-12 z-10">
-        <div className="border-t border-slate-200 dark:border-slate-800 pt-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <Image
-                src="/listygifty-logo.png"
-                alt="Listy Gifty"
-                width={32}
-                height={32}
-                className="rounded-md"
-              />
-              <span className="text-sm font-semibold text-slate-900 dark:text-white">Listy Gifty</span>
-            </div>
 
-            <div className="flex items-center gap-6">
-              <Link href="/integrations" className="text-sm text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
-                AI Integrations
-              </Link>
-              <Link href="/support" className="text-sm text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
-                Support
-              </Link>
-            </div>
-
-            <div className="text-center md:text-right">
-              <p className="text-slate-500 text-sm">
-                © {new Date().getFullYear()} Listy Gifty. Built for gift givers everywhere
-              </p>
-              <p className="text-slate-400 dark:text-slate-600 text-xs mt-1">
-                Holiday planning, exchanges, and team gifting in one place
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import { toCalendarDate } from "@/lib/dates";
+
 /**
  * Regional holidays utility
  * Detects user's locale/region and suggests relevant upcoming holidays
@@ -319,11 +321,11 @@ export function getUpcomingHolidaysForRegion(region: Region, maxResults: number 
       const date = new Date(year, month - 1, day);
       if (date <= today) continue;
 
-      const daysUntil = Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      const daysUntil = Math.round((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
       upcoming.push({
         name: holiday.name,
-        date: date.toISOString().split("T")[0],
+        date: toCalendarDate(date),
         icon: holiday.icon,
         displayDate: date.toLocaleDateString("en-US", {
           month: "short",

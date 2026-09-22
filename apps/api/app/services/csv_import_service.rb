@@ -62,11 +62,6 @@ class CsvImportService
     if missing.any?
       @errors << "Missing required columns: #{missing.join(', ')}"
     end
-
-    unknown = headers - VALID_HEADERS
-    if unknown.any?
-      @errors << "Unknown columns will be ignored: #{unknown.join(', ')}"
-    end
   end
 
   def process_row(row, index)

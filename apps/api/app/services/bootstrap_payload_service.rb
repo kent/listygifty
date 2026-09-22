@@ -148,8 +148,7 @@ class BootstrapPayloadService
 
   def pending_gifts_scope_for(workspace_holidays)
     Gift.where(holiday_id: workspace_holidays.select(:id))
-        .joins(:gift_status)
-        .where.not(gift_statuses: { name: "Done" })
+        .where.not(gift_status_id: GiftStatus.completed_ids)
   end
 
   def empty_payload

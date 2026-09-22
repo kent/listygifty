@@ -3,9 +3,17 @@ import type { ApiClient } from "../client.js";
 import type {
   Holiday,
   Gift,
+  GiftStatus,
   Person,
   BillingStatus,
 } from "../types.js";
+
+function upcomingHolidays(holidays: Holiday[]): Holiday[] {
+  const today = new Date().toISOString().slice(0, 10);
+  return holidays
+    .filter((holiday) => !holiday.archived && !!holiday.date && holiday.date >= today)
+    .sort((left, right) => left.date!.localeCompare(right.date!));
+}
 
 export const mcpResources: Resource[] = [
   {
@@ -53,15 +61,8 @@ export async function handleResourceRead(
         const holidays = await client.get<Holiday[]>("/holidays");
         const billingStatus = await client.get<BillingStatus>("/billing/status");
 
-        const upcomingHolidays = holidays
-          .filter((h) => !h.archived && h.date)
-          .sort((a, b) =>
-            new Date(a.date!).getTime() - new Date(b.date!).getTime()
-          )
-          .slice(0, 5);
-
         content = {
-          upcoming_holidays: upcomingHolidays,
+          upcoming_holidays: upcomingHolidays(holidays).slice(0, 5),
           total_holidays: holidays.filter((h) => !h.archived).length,
           subscription: {
             plan: billingStatus.subscription_plan,
@@ -75,22 +76,21 @@ export async function handleResourceRead(
 
       case "niftygifty://holidays/upcoming": {
         const holidays = await client.get<Holiday[]>("/holidays");
-        const upcomingHolidays = holidays
-          .filter((h) => !h.archived && h.date)
-          .sort((a, b) =>
-            new Date(a.date!).getTime() - new Date(b.date!).getTime()
-          );
-        content = upcomingHolidays;
+        content = upcomingHolidays(holidays);
         break;
       }
 
       case "niftygifty://gifts/pending": {
-        const gifts = await client.get<Gift[]>("/gifts");
-        // Filter to gifts that aren't in a "completed" type status
-        // This is a simplification - in reality you'd check the status name
-        const pendingGifts = gifts.filter((g) => {
-          const statusName = g.gift_status?.name?.toLowerCase() || "";
-          return !statusName.includes("given") && !statusName.includes("complete");
+        const [gifts, statuses] = await Promise.all([
+          client.get<Gift[]>("/gifts"),
+          client.get<GiftStatus[]>("/gift_statuses"),
+        ]);
+        const finalPosition = Math.max(...statuses.map((status) => status.position));
+        const completeIds = new Set(statuses.filter((status) => status.position === finalPosition).map((status) => status.id));
+        const pendingGifts = gifts.filter((gift) => {
+          if (statuses.length > 1) return !completeIds.has(gift.gift_status_id);
+          // Match the shared package's fallback for legacy/incomplete status data.
+          return !/complete|delivered|done|received|shipped|wrapped/i.test(gift.gift_status?.name || "");
         });
         content = pendingGifts;
         break;

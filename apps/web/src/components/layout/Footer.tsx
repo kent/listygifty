@@ -20,7 +20,7 @@ export function Footer() {
           Privacy
         </Link>
       </nav>
-      <span>© 2026 Listy Gifty</span>
+      <span>© {new Date().getFullYear()} Listy Gifty</span>
     </footer>
   );
 }

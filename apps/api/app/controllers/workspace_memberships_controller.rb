@@ -11,22 +11,37 @@ class WorkspaceMembershipsController < ApplicationController
   end
 
   def update
-    if @membership.update(membership_params)
-      render json: WorkspaceMembershipBlueprint.render(@membership)
-    else
-      render json: { errors: @membership.errors.full_messages }, status: :unprocessable_entity
+    with_authorized_membership do
+      if @membership.update(membership_params)
+        render json: WorkspaceMembershipBlueprint.render(@membership)
+      else
+        render json: { errors: @membership.errors.full_messages }, status: :unprocessable_entity
+      end
     end
   end
 
   def destroy
-    if @membership.destroy
-      head :no_content
-    else
-      render json: { errors: @membership.errors.full_messages }, status: :unprocessable_entity
+    with_authorized_membership do
+      if @membership.destroy
+        head :no_content
+      else
+        render json: { errors: @membership.errors.full_messages }, status: :unprocessable_entity
+      end
     end
   end
 
   private
+
+  def with_authorized_membership
+    @workspace.with_lock do
+      @membership.reload
+      WorkspaceMembership.uncached do
+        require_admin
+        require_owner_for_ownership_change unless performed?
+        yield unless performed?
+      end
+    end
+  end
 
   def set_workspace
     @workspace = current_user.workspaces.find(params[:workspace_id])
@@ -47,5 +62,13 @@ class WorkspaceMembershipsController < ApplicationController
 
   def membership_params
     params.require(:workspace_membership).permit(:role)
+  end
+
+  def require_owner_for_ownership_change
+    changing_ownership = @membership.owner? || (action_name == "update" && membership_params[:role] == "owner")
+    return unless changing_ownership
+    return if @workspace.owner?(current_user)
+
+    render json: { error: "Only workspace owners can manage ownership" }, status: :forbidden
   end
 end

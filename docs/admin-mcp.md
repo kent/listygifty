@@ -50,6 +50,25 @@ https://api.listygifty.com/admin/mcp
 
 The first unauthenticated request returns a `WWW-Authenticate` challenge containing the resource-metadata URL and `scope="admin"`. The client discovers the Listy Gifty authorization server, opens the browser login/consent page, exchanges the one-time code with PKCE, and refreshes the short-lived credential automatically.
 
+### Runner
+
+Runner manages remote OAuth MCP connections through **Connected Apps**:
+
+1. Open **Connected Apps** in Runner's sidebar.
+2. Select **Custom MCP**, then **Connect**.
+3. Enter `https://api.listygifty.com/admin/mcp` as the full endpoint.
+4. Choose **Sign in with the provider**.
+5. Complete the Listy Gifty login and administrator consent flow as `kent.fenwick@gmail.com`.
+6. Back in Runner, select **Refresh tools** and start a new conversation.
+
+Keep the admin server as a separate connection from the ordinary
+`https://api.listygifty.com/mcp` server. If Runner connected before the admin
+scope was enabled, use **Reconnect** in the connection settings; refreshing the
+tool list alone cannot replace an ordinary read/write token with an admin token.
+The healthy admin connection exposes `admin_analytics_overview`,
+`admin_analytics_timeseries`, and `admin_analytics_acquisition`, among the other
+admin tools.
+
 Generic admin clients register dynamically and are deliberately labeled **Unverified client metadata**. Their self-reported name or website is not an identity signal. Before approving, verify the exact callback URI shown on the page and check the explicit “I initiated this connection” confirmation. Pre-registered Claude/ChatGPT consumer clients remain read/write-only; they do not silently gain admin scope.
 
 A non-OAuth client may use the same URL with a dedicated break-glass header:

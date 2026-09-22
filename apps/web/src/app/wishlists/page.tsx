@@ -1,5 +1,7 @@
 "use client";
 
+import { parseCalendarDate } from "@/lib/dates";
+
 import Link from "next/link";
 import { wishlistsService } from "@/services";
 import { useWorkspaceData } from "@/hooks";
@@ -50,7 +52,7 @@ function getVisibilityLabel(visibility: string) {
 }
 
 function WishlistCard({ wishlist }: { wishlist: Wishlist }) {
-  const date = wishlist.target_date ? new Date(wishlist.target_date) : null;
+  const date = wishlist.target_date ? parseCalendarDate(wishlist.target_date) : null;
   const formattedDate = date
     ? date.toLocaleDateString("en-US", {
         month: "short",

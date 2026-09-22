@@ -2,6 +2,8 @@ import { View, Text, FlatList, RefreshControl } from "react-native";
 import { Stack } from "expo-router";
 import { MatchRevealCard } from "@/components/MatchRevealCard";
 import { WishlistItemCard } from "@/components/WishlistItemCard";
+import { PrimaryButton } from "@/components/PrimaryButton";
+import { InlineError } from "@/components/InlineError";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { useTheme } from "@/lib/theme";
 import { useExchangeMatchController } from "@/lib/controllers";
@@ -26,9 +28,7 @@ export default function MyMatchScreen() {
           padding: 32,
         }}
       >
-        <Text style={{ color: colors.error, fontSize: 16, textAlign: "center" }}>
-          {controller.error || "Match not found. The exchange may not have started yet."}
-        </Text>
+        <InlineError message={controller.error || "Your match isn't ready yet. Come back after the organizer draws names."} onRetry={controller.retryLoad} />
       </View>
     );
   }
@@ -96,6 +96,16 @@ export default function MyMatchScreen() {
               {matchName} hasn't added any items to their wishlist yet. Check back later for gift
               ideas!
             </Text>
+            {controller.nudgeError ? <InlineError message={controller.nudgeError} /> : null}
+            {controller.exchange.capabilities.nudge_match ? (
+              <View style={{ marginTop: 20, paddingHorizontal: 20, width: "100%" }}>
+                <PrimaryButton label={controller.nudgeSent ? "Request sent!" : "Ask for gift ideas"}
+                  icon="mail-outline" onPress={controller.nudgeMatch} loading={controller.nudging} disabled={controller.nudgeSent} />
+                <Text style={{ color: colors.textTertiary, fontSize: 12, textAlign: "center", marginTop: 10 }}>
+                  {controller.nudgeSent ? "We'll email you when they add an idea." : "We'll send an anonymous email. Your match stays a secret."}
+                </Text>
+              </View>
+            ) : null}
           </View>
         }
         ListFooterComponent={

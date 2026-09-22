@@ -1,5 +1,7 @@
 "use client";
 
+import { parseCalendarDate } from "@/lib/dates";
+
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Users, ChevronRight, Crown } from "lucide-react";
@@ -11,7 +13,7 @@ interface ExchangeCardProps {
 }
 
 export function ExchangeCard({ exchange }: ExchangeCardProps) {
-  const date = exchange.exchange_date ? new Date(exchange.exchange_date) : null;
+  const date = exchange.exchange_date ? parseCalendarDate(exchange.exchange_date) : null;
   const formattedDate = date
     ? date.toLocaleDateString("en-US", {
         month: "short",

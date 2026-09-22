@@ -4,7 +4,7 @@ class WorkspaceInvitesController < ApplicationController
   skip_before_action :authenticate!
   before_action :authenticate!, only: [ :index, :create, :regenerate, :destroy, :accept ]
   before_action :set_workspace, only: [ :index, :create, :regenerate, :destroy ]
-  before_action :require_admin, only: [ :create, :regenerate, :destroy ]
+  before_action :require_admin, only: [ :index, :create, :regenerate, :destroy ]
   before_action :set_invite_by_token, only: [ :show, :accept ]
   before_action :set_invite_by_id, only: [ :destroy ]
 
@@ -32,20 +32,21 @@ class WorkspaceInvitesController < ApplicationController
 
   # POST /workspaces/:workspace_id/invites/regenerate
   def regenerate
-    # Expire existing invites
-    @workspace.workspace_invites.valid.update_all(expires_at: Time.current)
-
-    # Create new invite
-    invite = @workspace.workspace_invites.create!(
-      invited_by: current_user,
-      role: params[:role] || "member"
-    )
+    invite = @workspace.with_lock do
+      @workspace.workspace_invites.valid.update_all(expires_at: Time.current)
+      @workspace.workspace_invites.create!(
+        invited_by: current_user,
+        role: params[:role] || "member"
+      )
+    end
 
     render json: {
       invite_token: invite.token,
       invite_url: invite.invite_url,
       expires_at: invite.expires_at
     }, status: :created
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
   end
 
   # GET /workspace_invite/:token (public - shows invite details)

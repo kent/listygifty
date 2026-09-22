@@ -74,23 +74,7 @@ export function createWishlistItemsService(client: ApiClient): WishlistItemsServ
       itemId: number,
       formData: FormData
     ) {
-      // Photo upload uses PATCH with FormData
-      const headers = await client.getAuthHeaders();
-      headers["Accept"] = "application/json";
-      // Note: Don't set Content-Type for FormData - browser will set it with boundary
-
-      const url = `${client.getBaseUrl()}${buildUrl(exchangeId, participantId, itemId)}`;
-      const response = await fetch(url, {
-        method: "PATCH",
-        headers,
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to upload photo");
-      }
-
-      return response.json() as Promise<WishlistItem>;
+      return client.patchFormData<WishlistItem>(buildUrl(exchangeId, participantId, itemId), formData);
     },
   };
 }

@@ -35,6 +35,14 @@ class WorkspacesApiTest < ActionDispatch::IntegrationTest
     assert_equal "business", Workspace.last.workspace_type
   end
 
+  test "business workspace creation respects an explicit false address setting" do
+    post workspaces_path, headers: @auth_headers,
+      params: { workspace: { name: "No shipping", workspace_type: "business", show_gift_addresses: false } }, as: :json
+    assert_response :created
+    assert_equal false, json_response["show_gift_addresses"]
+    assert_not Workspace.find(json_response["id"]).show_gift_addresses
+  end
+
   test "create stores initial business use case on company profile" do
     assert_difference([ "Workspace.count", "CompanyProfile.count" ], 1) do
       post workspaces_path,

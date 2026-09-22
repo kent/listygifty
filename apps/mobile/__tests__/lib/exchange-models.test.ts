@@ -1,5 +1,7 @@
 import type { ExchangeExclusion, ExchangeParticipant, GiftExchange } from "@niftygifty/types";
 import {
+  canViewExchangeMatch,
+  getExchangeDrawConfirmation,
   canManageExchangeWishlist,
   buildCreateExchangeExclusionPayload,
   buildCreateExchangeParticipantPayload,
@@ -321,7 +323,7 @@ describe("exchange model helpers", () => {
       }),
       expect.objectContaining({
         complete: true,
-        detail: "2/2 minimum",
+        detail: "2/3 joined. Only joined people receive a match.",
         key: "acceptances",
         required: true,
       }),
@@ -339,4 +341,20 @@ describe("exchange model helpers", () => {
       }),
     ]);
   });
+});
+
+it("keeps completed exchange matches accessible", () => {
+  const exchange = buildExchange({ status: "completed", my_participant: buildParticipant({ matched_participant_id: 2 }) });
+  expect(canViewExchangeMatch(exchange)).toBe(true);
+  expect(canViewExchangeMatch({ ...exchange, status: "inviting" })).toBe(false);
+});
+it("warns before leaving pending people out of a draw", () => {
+  const message = getExchangeDrawConfirmation({ ...buildExchange({ accepted_count: 2 }), exchange_participants: [
+    buildParticipant({ id: 1, wishlist_count: 1 }), buildParticipant({ id: 2, wishlist_count: 0 }),
+    buildParticipant({ id: 3, display_name: "Sam", status: "invited" }),
+  ] });
+  expect(message).toContain("2 people");
+  expect(message).toContain("Sam");
+  expect(message).toContain("left out");
+  expect(message).toContain("1 person still needs wishlist ideas");
 });

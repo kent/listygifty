@@ -1,5 +1,6 @@
 "use client";
 
+import { parseDateOnly } from "@/lib/dates";
 import Link from "next/link";
 import type { Person } from "@niftygifty/types";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,11 +11,9 @@ interface PersonCardProps {
 }
 
 function formatMonthDay(date: string | null) {
-  if (!date) return null;
-  const [year, month, day] = date.split("-").map(Number);
-  if (!year || !month || !day) return null;
-
-  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
+  const parsed = parseDateOnly(date);
+  if (!parsed) return null;
+  return parsed.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
   });

@@ -1,7 +1,7 @@
-import { useEffect, useMemo } from "react";
+import { useLayoutEffect, useMemo } from "react";
 import { useAuth } from "@clerk/clerk-expo";
 import {
-  apiClient,
+  configureApiSession,
   holidaysService,
   giftsService,
   giftStatusesService,
@@ -21,12 +21,12 @@ import { screenshotServices } from "@/lib/screenshot-mocks";
  * Call this once in your app to enable authenticated API requests.
  */
 export function useApiSetup() {
-  const { getToken } = useAuth();
+  const { getToken, userId, isLoaded } = useAuth();
 
-  useEffect(() => {
-    if (runtimeConfig.screenshotMode) return;
-    apiClient.setTokenGetter(getToken);
-  }, [getToken]);
+  useLayoutEffect(() => {
+    if (runtimeConfig.screenshotMode || !isLoaded) return;
+    configureApiSession(userId ?? null, getToken);
+  }, [getToken, userId, isLoaded]);
 }
 
 /**

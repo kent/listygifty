@@ -1,6 +1,7 @@
 import { Link } from "expo-router";
 import {
   View,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
@@ -8,6 +9,8 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
+import { AuthCodeForm } from "@/components/AuthCodeForm";
+import { PrimaryButton } from "@/components/PrimaryButton";
 import { AppleAuthButton } from "@/components/AppleAuthButton";
 import { useTheme } from "@/lib/theme";
 import { useLoginController } from "@/lib/controllers";
@@ -16,12 +19,18 @@ export default function LoginScreen() {
   const { colors, isDark } = useTheme();
   const controller = useLoginController();
 
+  if (controller.verification) {
+    return <AuthCodeForm email={controller.email} code={controller.code} error={controller.error} loading={controller.loading}
+      authenticator={controller.verification === "totp"} onChangeCode={controller.setCode} onVerify={controller.handleVerify}
+      onResend={controller.handleResendCode} onBack={controller.cancelVerification} />;
+  }
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1, backgroundColor: colors.background }}
     >
-      <View style={{ flex: 1, justifyContent: "center", padding: 24 }}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}>
         <Text
           style={{
             fontSize: 32,
@@ -150,6 +159,8 @@ export default function LoginScreen() {
           )}
         </TouchableOpacity>
 
+        <PrimaryButton label="Email me a sign-in code" variant="ghost" onPress={controller.handleEmailCodeSignIn} disabled={controller.loading} style={{ marginTop: 12 }} />
+
         <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 24 }}>
           <Text style={{ color: colors.textTertiary }}>Don't have an account? </Text>
           <Link
@@ -164,7 +175,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </Link>
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

@@ -291,6 +291,7 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
     signOut,
     refetch,
   } = useWorkspaceData<WishlistWithItems | null>({
+    resourceKey: String(id),
     fetcher: () => wishlistsService.getById(Number(id)),
     initialData: null,
   });

@@ -10,7 +10,10 @@ export function trimOrUndefined(value: string): string | undefined {
 }
 
 export function isValidIsoDate(value: string): boolean {
-  return ISO_DATE_PATTERN.test(trim(value));
+  const text = trim(value);
+  if (!ISO_DATE_PATTERN.test(text)) return false;
+  const date = new Date(`${text}T12:00:00Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === text;
 }
 
 export function parseOptionalDecimal(value: string): number | undefined {
@@ -19,6 +22,6 @@ export function parseOptionalDecimal(value: string): number | undefined {
     return undefined;
   }
 
-  const parsed = Number.parseFloat(trimmed);
+  const parsed = Number(trimmed);
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }

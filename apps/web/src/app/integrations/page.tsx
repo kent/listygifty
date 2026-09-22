@@ -125,10 +125,10 @@ const aiClients = [
     gradient: "from-blue-500 to-indigo-600",
     description: "Let Runner manage gift planning alongside your other connected work.",
     steps: [
-      "Create a read/write API key in Listy Gifty settings",
-      "Add a remote HTTP server to ~/.runner/mcp.json",
-      "Use https://api.listygifty.com/mcp and send the API key as a Bearer header",
-      "Start a new Runner conversation to load the tools",
+      "Open Connected Apps in Runner and choose Custom MCP",
+      "Enter https://api.listygifty.com/mcp as the full endpoint",
+      "Choose Sign in with the provider and authorize Listy Gifty",
+      "Refresh tools and start a new Runner conversation",
     ],
   },
 ];

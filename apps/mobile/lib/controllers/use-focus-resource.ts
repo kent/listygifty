@@ -1,5 +1,5 @@
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState, type SetStateAction } from "react";
 
 type LoadMode = "initial" | "refresh";
 
@@ -18,22 +18,23 @@ export function useFocusResource<T>({
   key,
   load,
 }: UseFocusResourceOptions<T>) {
-  const [data, setData] = useState<T>(initialValue);
+  const [data, updateData] = useState<T>(initialValue);
   const [loading, setLoading] = useState(enabled);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, updateError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
   const scopeIdRef = useRef(0);
   const hasResolvedRef = useRef(false);
   const lastKeyRef = useRef(key);
   const loadRef = useRef(load);
   const initialValueRef = useRef(initialValue);
+  const focusedRef = useRef(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     loadRef.current = load;
   }, [load]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     initialValueRef.current = initialValue;
   }, [initialValue]);
 
@@ -45,11 +46,7 @@ export function useFocusResource<T>({
 
   const runLoad = useCallback(
     async (mode: LoadMode = "initial") => {
-      if (!enabled) {
-        setLoading(false);
-        setRefreshing(false);
-        return undefined;
-      }
+      if (!enabled || !focusedRef.current || lastKeyRef.current !== key) return undefined;
 
       const requestId = requestIdRef.current + 1;
       const scopeId = scopeIdRef.current;
@@ -64,30 +61,28 @@ export function useFocusResource<T>({
       }
 
       try {
-        setError(null);
+        updateError(null);
         const nextData = await loadRef.current();
         if (isCurrentRequest(requestId, scopeId)) {
-          setData(nextData);
+          updateData(nextData);
           hasResolvedRef.current = true;
+          return nextData;
         }
-        return nextData;
+        return undefined;
       } catch (loadError) {
-        console.error(errorMessage, loadError);
         if (isCurrentRequest(requestId, scopeId)) {
-          setError(errorMessage);
+          console.error(errorMessage, loadError);
+          updateError(errorMessage);
         }
         return undefined;
       } finally {
         if (isCurrentRequest(requestId, scopeId)) {
-          if (mode === "refresh") {
-            setRefreshing(false);
-          } else {
-            setLoading(false);
-          }
+          setRefreshing(false);
+          setLoading(false);
         }
       }
     },
-    [enabled, errorMessage, isCurrentRequest]
+    [enabled, errorMessage, isCurrentRequest, key]
   );
 
   useFocusEffect(
@@ -101,14 +96,16 @@ export function useFocusResource<T>({
       if (lastKeyRef.current !== key) {
         lastKeyRef.current = key;
         hasResolvedRef.current = false;
-        setData(initialValueRef.current);
-        setError(null);
+        updateData(initialValueRef.current);
+        updateError(null);
       }
 
       scopeIdRef.current += 1;
+      focusedRef.current = true;
       void runLoad("initial");
       return () => {
         scopeIdRef.current += 1;
+        focusedRef.current = false;
       };
     }, [enabled, key, runLoad])
   );
@@ -118,6 +115,19 @@ export function useFocusResource<T>({
   }, [runLoad]);
 
   const reload = useCallback(async () => runLoad("initial"), [runLoad]);
+
+  const setData = useCallback((value: SetStateAction<T>) => {
+    if (!focusedRef.current || lastKeyRef.current !== key) return;
+    requestIdRef.current += 1;
+    hasResolvedRef.current = true;
+    updateData(value);
+    setLoading(false);
+    setRefreshing(false);
+  }, [key]);
+
+  const setError = useCallback((value: SetStateAction<string | null>) => {
+    if (focusedRef.current && lastKeyRef.current === key) updateError(value);
+  }, [key]);
 
   return {
     data,

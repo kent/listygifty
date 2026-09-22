@@ -9,6 +9,7 @@ import { haptics } from "@/lib/haptics";
 import { scheduleGiftListReminder } from "@/lib/notifications";
 import { getMerchantLabel } from "@/lib/url";
 import { useServices } from "@/lib/use-api";
+import { useScreenActivity } from "@/lib/controllers/use-screen-activity";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import {
   buildCreateHolidayPayload,
@@ -480,6 +481,7 @@ export function useGiftListDetailController() {
 
 export function useNewListController() {
   const router = useRouter();
+  const captureScreen = useScreenActivity();
   const { holidays } = useServices();
   const track = useAnalytics();
   const [form, setForm] = useState<HolidayFormValues>(EMPTY_HOLIDAY_FORM_VALUES);
@@ -501,6 +503,7 @@ export function useNewListController() {
   }, []);
 
   const handleSubmit = useCallback(async () => {
+    const isCurrentScreen = captureScreen();
     if (!form.name.trim()) {
       setError("Name is required");
       return;
@@ -523,7 +526,7 @@ export function useNewListController() {
         template_key: selectedTemplateKey,
       });
       await haptics.success();
-      router.back();
+      if (isCurrentScreen()) router.back();
     } catch (submitError) {
       console.error("Failed to create list", submitError);
       setError("Failed to create list");
@@ -531,7 +534,7 @@ export function useNewListController() {
     } finally {
       setLoading(false);
     }
-  }, [form, holidays, router, selectedTemplateKey, track]);
+  }, [captureScreen, form, holidays, router, selectedTemplateKey, track]);
 
   return {
     applyTemplate,
@@ -548,6 +551,7 @@ export function useNewListController() {
 
 export function useNewGiftController() {
   const router = useRouter();
+  const captureScreen = useScreenActivity();
   const { holiday_id } = useLocalSearchParams<{ holiday_id: string }>();
   const { gifts, giftStatuses, holidays } = useServices();
   const track = useAnalytics();
@@ -675,7 +679,7 @@ export function useNewGiftController() {
 
   const submitGift = useCallback(async (mode: NewGiftSaveMode) => {
     if (submittingRef.current) return;
-
+    const isCurrentScreen = captureScreen();
     if (!form.name.trim()) {
       setError("Name is required");
       return;
@@ -719,13 +723,14 @@ export function useNewGiftController() {
         time_to_save_ms: Date.now() - openedAtRef.current,
       });
       await haptics.success();
+      if (!isCurrentScreen()) return;
       if (mode === "another") {
         setForm(buildRepeatGiftCaptureValues(form));
         setStep("name");
         setAdvancedOpen(false);
         openedAtRef.current = Date.now();
       } else {
-        router.back();
+        if (isCurrentScreen()) router.back();
       }
     } catch (submitError) {
       console.error("Failed to create gift", submitError);
@@ -735,7 +740,7 @@ export function useNewGiftController() {
       submittingRef.current = false;
       setSavingMode(null);
     }
-  }, [form, gifts, hasPresetHoliday, router, selectedHolidayId, selectedStatusId, track]);
+  }, [captureScreen, form, gifts, hasPresetHoliday, router, selectedHolidayId, selectedStatusId, track]);
 
   return {
     step,
@@ -782,6 +787,7 @@ export function useNewGiftController() {
 export function useGiftDetailController() {
   const { giftId } = useLocalSearchParams<{ giftId: string }>();
   const router = useRouter();
+  const captureScreen = useScreenActivity();
   const { gifts, giftStatuses } = useServices();
   const track = useAnalytics();
   const id = Number.parseInt(giftId ?? "", 10);
@@ -806,10 +812,21 @@ export function useGiftDetailController() {
     key: id,
     load: async () => {
       const [gift, statuses] = await Promise.all([gifts.getById(id), giftStatuses.getAll()]);
-      setForm(buildGiftFormValues(gift));
       return { gift, statuses };
     },
   });
+
+  const loadedGift = resource.data.gift;
+  const previousGiftRef = useRef<Gift | null>(null);
+  useEffect(() => {
+    const previousGift = previousGiftRef.current;
+    previousGiftRef.current = loadedGift;
+    setForm((current) => {
+      if (!loadedGift) return EMPTY_GIFT_FORM_VALUES;
+      if (previousGift?.id === loadedGift.id && giftFormHasChanges(previousGift, current)) return current;
+      return buildGiftFormValues(loadedGift);
+    });
+  }, [loadedGift]);
 
   const selectedStatusId = useMemo(
     () => getResolvedGiftStatusId(form, resource.data.statuses),
@@ -908,6 +925,7 @@ export function useGiftDetailController() {
   }, [gifts, hasChanges, id, markingPurchased, purchasedStatus, resource, track]);
 
   const handleSave = useCallback(async () => {
+    const isCurrentScreen = captureScreen();
     if (!resource.data.gift) {
       return;
     }
@@ -943,7 +961,7 @@ export function useGiftDetailController() {
         });
       }
       await haptics.success();
-      router.back();
+      if (isCurrentScreen()) router.back();
     } catch (saveError) {
       console.error("Failed to save gift", saveError);
       setActionError("Failed to save changes");
@@ -951,9 +969,10 @@ export function useGiftDetailController() {
     } finally {
       setSaving(false);
     }
-  }, [form, gifts, id, resource.data.gift, router, selectedStatusId, track]);
+  }, [captureScreen, form, gifts, id, resource.data.gift, router, selectedStatusId, track]);
 
   const promptDelete = useCallback(() => {
+    const isCurrentScreen = captureScreen();
     Alert.alert(
       "Delete Gift",
       `Are you sure you want to delete "${resource.data.gift?.name}"? This cannot be undone.`,
@@ -963,12 +982,13 @@ export function useGiftDetailController() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
+            if (!isCurrentScreen()) return;
             setDeleting(true);
 
             try {
               await gifts.delete(id);
               await haptics.success();
-              router.back();
+              if (isCurrentScreen()) router.back();
             } catch (deleteError) {
               console.error("Failed to delete gift", deleteError);
               setActionError("Failed to delete gift");
@@ -980,7 +1000,7 @@ export function useGiftDetailController() {
         },
       ]
     );
-  }, [gifts, id, resource.data.gift?.name, router]);
+  }, [captureScreen, gifts, id, resource.data.gift?.name, router]);
 
   return {
     deleting,

@@ -112,12 +112,31 @@ class User < ApplicationRecord
     own_workspace.or(holidays.where.not(workspace_id: workspaces.select(:id)))
   end
 
+  def ensure_personal_workspace!
+    existing = personal_workspace
+    return existing if existing
+
+    with_lock do
+      personal_workspace || begin
+        workspace = Workspace.create!(
+          name: "#{safe_name}'s Workspace".truncate(200),
+          workspace_type: "personal",
+          created_by_user: self
+        )
+        workspace.workspace_memberships.create!(user: self, role: "owner")
+        workspace
+      end
+    end
+  end
+
   def business_workspaces
     workspaces.business
   end
 
   # Returns (and creates if missing) notification preferences
   def notification_prefs
-    notification_preference || create_notification_preference!
+    notification_preference || with_lock do
+      notification_preference || create_notification_preference!
+    end
   end
 end

@@ -1,7 +1,7 @@
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
-import { router } from "expo-router";
+import { router, type Href } from "expo-router";
 import type { GiftExchange, Holiday, Person } from "@niftygifty/types";
 import {
   getBirthdayReminderSchedule,
@@ -31,6 +31,8 @@ export async function registerForPushNotifications(): Promise<string | null> {
     console.log("Push notifications require a physical device");
     return null;
   }
+
+  await setupNotificationChannel();
 
   // Check existing permissions
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -76,71 +78,56 @@ export async function setupNotificationChannel(): Promise<void> {
 /**
  * Handle notification response (when user taps a notification)
  */
-export function setupNotificationHandlers(): () => void {
-  // Handle notification tap
-  const subscription = Notifications.addNotificationResponseReceivedListener((response: Notifications.NotificationResponse) => {
-    const data = response.notification.request.content.data as unknown as NotificationData;
+export function notificationTarget(data: unknown): Href | null {
+  if (!data || typeof data !== "object") return null;
+  const payload = data as Record<string, unknown>;
+  const validId = (value: unknown): value is number =>
+    typeof value === "number" && Number.isSafeInteger(value) && value > 0;
 
-    // Navigate based on notification type
-    switch (data.type) {
-      case "exchange_invite":
-        if (data.token) {
-          router.push(`/join/exchange/${data.token}`);
-        }
-        break;
+  switch (payload.type) {
+    case "exchange_invite":
+      return typeof payload.token === "string" && /^[A-Za-z0-9_-]+$/.test(payload.token)
+        ? `/join/exchange/${payload.token}` : null;
+    case "match_revealed":
+    case "wishlist_updated":
+      return validId(payload.exchangeId) ? `/(tabs)/exchanges/${payload.exchangeId}/my-match` : null;
+    case "exchange_reminder":
+      return validId(payload.exchangeId) ? `/(tabs)/exchanges/${payload.exchangeId}` : null;
+    case "gift_list_reminder":
+      return validId(payload.holidayId) ? `/(tabs)/lists/${payload.holidayId}` : null;
+    case "birthday_reminder":
+    case "milestone_reminder":
+      return "/(tabs)/people";
+    default:
+      return null;
+  }
+}
 
-      case "match_revealed":
-        if (data.exchangeId) {
-          router.push(`/(tabs)/exchanges/${data.exchangeId}/my-match`);
-        }
-        break;
+export function setupNotificationHandlers(navigate: (target: Href) => void = router.push): () => void {
+  if (Platform.OS === "web") return () => {};
+  let active = true;
+  const handled = new Set<string>();
+  const handleResponse = (response: Notifications.NotificationResponse | null) => {
+    if (!active || !response || response.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) return;
+    const identifier = response.notification.request.identifier;
+    if (handled.has(identifier)) return;
+    handled.add(identifier);
+    const target = notificationTarget(response.notification.request.content.data);
+    Notifications.clearLastNotificationResponse();
+    if (target) navigate(target);
+  };
 
-      case "wishlist_updated":
-        if (data.exchangeId) {
-          router.push(`/(tabs)/exchanges/${data.exchangeId}/my-match`);
-        }
-        break;
+  const subscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
+  handleResponse(Notifications.getLastNotificationResponse());
 
-      case "exchange_reminder":
-        if (data.exchangeId) {
-          router.push(`/(tabs)/exchanges/${data.exchangeId}`);
-        }
-        break;
-
-      case "gift_list_reminder":
-        if (data.holidayId) {
-          router.push(`/(tabs)/lists/${data.holidayId}`);
-        }
-        break;
-
-      case "birthday_reminder":
-        router.push("/(tabs)/people");
-        break;
-
-      case "milestone_reminder":
-        router.push("/(tabs)/people");
-        break;
-
-      default:
-        // Default to exchanges list
-        router.push("/(tabs)/exchanges");
-    }
-  });
-
-  // Return cleanup function
   return () => {
+    active = false;
     subscription.remove();
   };
 }
 
-/**
- * Get the last notification response (for handling notification that opened the app)
- */
-export async function getInitialNotification(): Promise<Notifications.NotificationResponse | null> {
-  return await Notifications.getLastNotificationResponseAsync();
-}
-
 async function requestLocalNotificationPermission(): Promise<boolean> {
+  await setupNotificationChannel();
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   if (existingStatus === "granted") {
     return true;
@@ -160,8 +147,6 @@ export async function scheduleGiftListReminder(holiday: Holiday): Promise<string
   if (!hasPermission) {
     return null;
   }
-
-  await setupNotificationChannel();
 
   return Notifications.scheduleNotificationAsync({
     content: {
@@ -192,8 +177,6 @@ export async function scheduleExchangeReminder(
     return null;
   }
 
-  await setupNotificationChannel();
-
   return Notifications.scheduleNotificationAsync({
     content: {
       title: `Gift exchange soon: ${exchange.name}`,
@@ -222,8 +205,6 @@ export async function scheduleBirthdayReminder(
   if (!hasPermission) {
     return null;
   }
-
-  await setupNotificationChannel();
 
   return Notifications.scheduleNotificationAsync({
     content: {

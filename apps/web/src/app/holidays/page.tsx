@@ -1,5 +1,7 @@
 "use client";
 
+import { parseCalendarDate } from "@/lib/dates";
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -63,7 +65,7 @@ function HolidayCard({
   onToggleArchive?: (holiday: Holiday) => void;
 }) {
   const icon = getHolidayIcon(holiday.icon);
-  const date = holiday.date ? new Date(holiday.date) : null;
+  const date = holiday.date ? parseCalendarDate(holiday.date) : null;
   const formattedDate = date
     ? date.toLocaleDateString("en-US", {
         month: "short",
@@ -583,7 +585,7 @@ function ArchivedSection({
                   </div>
                   {holiday.date && (
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {new Date(holiday.date).toLocaleDateString("en-US", {
+                      {parseCalendarDate(holiday.date).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
                         year: "numeric",

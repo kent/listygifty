@@ -49,6 +49,9 @@ class Address < ApplicationRecord
   def ensure_single_default
     return unless is_default? && is_default_changed?
 
+    # Serialize changes to different address rows through their shared parent.
+    # The save transaction retains this lock until this address is persisted.
+    CompanyProfile.where(id: company_profile_id).lock.pick(:id)
     Address.where(company_profile_id: company_profile_id)
            .where.not(id: id)
            .update_all(is_default: false)

@@ -32,7 +32,6 @@ const CACHE_TTL_MS = {
   giftStatuses: 6 * 60 * 60 * 1000,
   people: 60_000,
   exchanges: 60_000,
-  exchange: 30_000,
 } as const;
 
 // Create the API client instance
@@ -56,6 +55,17 @@ const baseExchangeJoinsService = createExchangeJoinsService(apiClient);
 
 let bootstrapPromise: Promise<void> | null = null;
 let bootstrapExpiresAt = 0;
+let sessionUserId: string | null = null;
+let sessionGeneration = 0;
+
+export function configureApiSession(userId: string | null, getToken: () => Promise<string | null>) {
+  if (sessionUserId !== userId) {
+    sessionUserId = userId;
+    clearCachedResources();
+    apiClient.setWorkspaceId(null);
+  }
+  apiClient.setTokenGetter(userId ? getToken : async () => null);
+}
 
 function resetBootstrapState() {
   bootstrapPromise = null;
@@ -86,21 +96,23 @@ async function loadBootstrap(force = false) {
     return bootstrapPromise;
   }
 
-  bootstrapPromise = baseBootstrapService
+  const request = baseBootstrapService
     .get()
     .then((payload) => {
+      if (bootstrapPromise !== request) return;
       seedShellCache(payload.data);
       bootstrapExpiresAt = Date.now() + BOOTSTRAP_TTL_MS;
     })
     .catch((error) => {
-      bootstrapExpiresAt = 0;
+      if (bootstrapPromise === request) bootstrapExpiresAt = 0;
       throw error;
     })
     .finally(() => {
-      bootstrapPromise = null;
+      if (bootstrapPromise === request) bootstrapPromise = null;
     });
 
-  return bootstrapPromise;
+  bootstrapPromise = request;
+  return request;
 }
 
 async function readAppShellResource<T>(
@@ -108,9 +120,11 @@ async function readAppShellResource<T>(
   ttlMs: number,
   fetcher: () => Promise<T>
 ) {
+  const generation = sessionGeneration;
   return readCachedResource(cacheKey, ttlMs, async () => {
     try {
       await loadBootstrap();
+      if (generation !== sessionGeneration) throw new Error("Session changed");
       const seeded = peekCachedResource<T>(cacheKey);
       if (seeded !== undefined) {
         return seeded;
@@ -119,16 +133,17 @@ async function readAppShellResource<T>(
       // Fall back to the dedicated endpoint when bootstrap is unavailable.
     }
 
+    if (generation !== sessionGeneration) throw new Error("Session changed");
     return fetcher();
   });
 }
 
-function invalidateGiftCaches(holidayId?: number | null) {
+function invalidateGiftCaches() {
   resetBootstrapState();
   invalidateCachedResources("gifts:");
-  if (holidayId) {
-    invalidateCachedResources(`holidays:${holidayId}`);
-  }
+  // Gift changes affect list totals and may move between holidays. Deletion
+  // responses do not identify the old holiday, so expire all holiday summaries.
+  invalidateCachedResources("holidays:");
   invalidateCachedResources("people:");
 }
 
@@ -205,6 +220,7 @@ export const holidaysService = {
 
   async removeCollaborator(holidayId: number, userId: number) {
     await baseHolidaysService.removeCollaborator(holidayId, userId);
+    resetBootstrapState();
     invalidateCachedResources("holidays:");
   },
 };
@@ -222,13 +238,13 @@ export const giftsService = {
 
   async create(data: Parameters<typeof baseGiftsService.create>[0]) {
     const gift = await baseGiftsService.create(data);
-    invalidateGiftCaches(gift.holiday_id);
+    invalidateGiftCaches();
     return gift;
   },
 
   async update(id: number, data: Parameters<typeof baseGiftsService.update>[1]) {
     const gift = await baseGiftsService.update(id, data);
-    invalidateGiftCaches(gift.holiday_id);
+    invalidateGiftCaches();
     invalidateCachedResources(`gifts:${id}`);
     return gift;
   },
@@ -241,8 +257,7 @@ export const giftsService = {
 
   async reorder(id: number, newPosition: number) {
     const gifts = await baseGiftsService.reorder(id, newPosition);
-    const holidayId = gifts[0]?.holiday_id;
-    invalidateGiftCaches(holidayId);
+    invalidateGiftCaches();
     for (const gift of gifts) {
       invalidateCachedResources(`gifts:${gift.id}`);
     }
@@ -251,7 +266,7 @@ export const giftsService = {
 
   async updateRecipientAddress(giftId: number, recipientId: number, shippingAddressId: number | null) {
     const gift = await baseGiftsService.updateRecipientAddress(giftId, recipientId, shippingAddressId);
-    invalidateGiftCaches(gift.holiday_id);
+    invalidateGiftCaches();
     invalidateCachedResources(`gifts:${giftId}`);
     return gift;
   },
@@ -283,29 +298,29 @@ export const peopleService = {
 
   async update(id: number, data: Parameters<typeof basePeopleService.update>[1]) {
     const person = await basePeopleService.update(id, data);
-    resetBootstrapState();
-    invalidateCachedResources("people:");
+    invalidateGiftCaches();
     return person;
   },
 
   async delete(id: number) {
     await basePeopleService.delete(id);
-    resetBootstrapState();
-    invalidateCachedResources("people:");
+    invalidateGiftCaches();
   },
 };
 
 export const giftExchangesService = {
+  nudgeMatch(id: number) {
+    return baseGiftExchangesService.nudgeMatch(id);
+  },
+
   getAll() {
-    return readAppShellResource("gift-exchanges:list", CACHE_TTL_MS.exchanges, () =>
-      baseGiftExchangesService.getAll()
-    );
+    // Another person can join or the organizer can draw while this app is open.
+    // Focus and pull-to-refresh must see those changes immediately.
+    return baseGiftExchangesService.getAll();
   },
 
   getById(id: number) {
-    return readCachedResource(`gift-exchanges:${id}`, CACHE_TTL_MS.exchange, () =>
-      baseGiftExchangesService.getBySlug(String(id))
-    );
+    return baseGiftExchangesService.getBySlug(String(id));
   },
 
   async create(data: Parameters<typeof baseGiftExchangesService.create>[0]) {
@@ -338,6 +353,11 @@ export const exchangeJoinsService = {
 };
 
 export const exchangeParticipantsService = {
+  async resendInvite(exchangeId: number, participantId: number) {
+    await baseExchangeParticipantsService.resendInvite(exchangeId, participantId);
+    resetBootstrapState();
+    invalidateCachedResources("gift-exchanges:");
+  },
   async create(exchangeId: number, data: Parameters<typeof baseExchangeParticipantsService.create>[1]) {
     const participant = await baseExchangeParticipantsService.create(exchangeId, data);
     resetBootstrapState();
@@ -372,6 +392,7 @@ export function prefetchAppShellData() {
 }
 
 export function clearCachedResources() {
+  sessionGeneration += 1;
   resetBootstrapState();
   clearResourceCache();
 }

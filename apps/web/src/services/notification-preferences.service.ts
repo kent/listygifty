@@ -1,3 +1,4 @@
+import { ApiClient } from "@niftygifty/api-client";
 import { apiClient } from "@/lib/api-client";
 import type {
   NotificationPreferences,
@@ -7,7 +8,7 @@ import type {
 } from "@niftygifty/types";
 
 // Server URL for token-based requests (no auth header)
-const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const publicClient = new ApiClient({ baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001" });
 
 class NotificationPreferencesService {
   // Authenticated endpoints (current user)
@@ -25,29 +26,14 @@ class NotificationPreferencesService {
 
   // Token-based endpoints (no auth required, for email unsubscribe links)
   async getByToken(token: string): Promise<EmailPreferencesResponse> {
-    const response = await fetch(`${getApiUrl()}/email_preferences/${token}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!response.ok) {
-      throw new Error("Invalid or expired link");
-    }
-    return response.json();
+    return publicClient.get<EmailPreferencesResponse>(`/email_preferences/${encodeURIComponent(token)}`);
   }
 
   async updateByToken(
     token: string,
     data: UpdateNotificationPreferencesRequest
   ): Promise<EmailPreferencesResponse> {
-    const response = await fetch(`${getApiUrl()}/email_preferences/${token}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      throw new Error("Failed to update preferences");
-    }
-    return response.json();
+    return publicClient.patch<EmailPreferencesResponse>(`/email_preferences/${encodeURIComponent(token)}`, data);
   }
 }
 

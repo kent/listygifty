@@ -7,9 +7,9 @@ import { StatusBar } from "expo-status-bar";
 import { ThemeProvider, useTheme } from "@/lib/theme";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { runtimeConfig } from "@/lib/runtime-config";
-import { clearCachedResources } from "@/lib/api";
 import { normalizeAuthReturnPath } from "@/lib/auth-return";
 import { flushAnalyticsEvents, useAnalytics } from "@/lib/analytics";
+import { setupNotificationHandlers } from "@/lib/notifications";
 import { useApiSetup } from "@/lib/use-api";
 import {
   getActiveScreenshotRouteName,
@@ -49,7 +49,7 @@ function ScreenshotRouter() {
 }
 
 function AuthRouter() {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, userId } = useAuth();
   const segments = useSegments();
   const { returnTo } = useGlobalSearchParams<{ returnTo?: string | string[] }>();
   const router = useRouter();
@@ -84,16 +84,17 @@ function AuthRouter() {
       return;
     }
 
-    if (!isSignedIn) {
-      clearCachedResources();
-    }
-
     if (isSignedIn && inAuthGroup) {
       router.replace(authReturnPath || "/(tabs)/lists");
     } else if (!isSignedIn && !inAuthGroup && !inJoinGroup && !inSharedExchangeGroup) {
       router.replace("/auth/login");
     }
   }, [isLoaded, isSignedIn, returnTo, router, segments]);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    return setupNotificationHandlers();
+  }, [isLoaded, isSignedIn, userId]);
 
   if (!isLoaded) {
     return <ScreenLoader />;
@@ -102,7 +103,7 @@ function AuthRouter() {
   return (
     <>
       <StatusBar style={isDark ? "light" : "dark"} />
-      <Slot />
+      <Slot key={userId ?? "signed-out"} />
     </>
   );
 }

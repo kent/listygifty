@@ -124,6 +124,21 @@ export function canStartExchange(exchange: GiftExchange): boolean {
   );
 }
 
+export function canViewExchangeMatch(exchange: GiftExchange): boolean {
+  return ["active", "completed"].includes(exchange.status) && exchange.my_participant?.matched_participant_id != null;
+}
+
+export function getExchangeDrawConfirmation(exchange: GiftExchangeWithParticipants): string {
+  const joined = exchange.exchange_participants.filter((participant) => participant.status === "accepted");
+  const pending = exchange.exchange_participants.filter((participant) => participant.status === "invited");
+  const emptyWishlists = joined.filter((participant) => participant.wishlist_count === 0).length;
+  return [
+    `Draw a secret match for ${joined.length} people and email everyone their match. Joining will close.`,
+    pending.length ? `${pending.length} ${pending.length === 1 ? "person has" : "people have"} not joined: ${pending.map((participant) => participant.display_name || participant.name).join(", ")}. They will be left out of this draw. Wait if you want them to take part.` : null,
+    emptyWishlists ? `${emptyWishlists} ${emptyWishlists === 1 ? "person still needs" : "people still need"} wishlist ideas. They can add them after the draw.` : null,
+  ].filter(Boolean).join("\n\n");
+}
+
 export function canManageExchangeWishlist(exchange: GiftExchange): boolean {
   return (
     exchange.my_participant?.status === "accepted" &&
@@ -243,7 +258,7 @@ export function getExchangeReadinessItems(
     {
       key: "acceptances",
       label: "Accepted participants",
-      detail: `${Math.min(acceptedParticipants.length, MIN_EXCHANGE_PARTICIPANTS)}/${MIN_EXCHANGE_PARTICIPANTS} minimum`,
+      detail: `${acceptedParticipants.length}/${participantCount} joined. Only joined people receive a match.`,
       complete: acceptancesReady,
       required: true,
     },
@@ -281,7 +296,7 @@ export function buildCreateExchangeParticipantPayload(
 ): CreateExchangeParticipantRequest["exchange_participant"] {
   return {
     name: trim(values.name),
-    email: trim(values.email),
+    email: trim(values.email).toLowerCase(),
   };
 }
 

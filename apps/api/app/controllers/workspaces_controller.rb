@@ -19,7 +19,7 @@ class WorkspacesController < ApplicationController
     workspace.created_by_user = current_user
 
     # Business workspaces default to showing addresses for gifts
-    if workspace.business? && !params.dig(:workspace, :show_gift_addresses).present?
+    if workspace.business? && !workspace_params.key?(:show_gift_addresses)
       workspace.show_gift_addresses = true
     end
 

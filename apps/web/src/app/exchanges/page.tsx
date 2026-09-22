@@ -1,5 +1,7 @@
 "use client";
 
+import { parseCalendarDate } from "@/lib/dates";
+
 import Link from "next/link";
 import { giftExchangesService } from "@/services";
 import { useWorkspaceData } from "@/hooks";
@@ -26,7 +28,7 @@ function getStatusColor(status: string) {
 }
 
 function ExchangeCard({ exchange }: { exchange: GiftExchange }) {
-  const date = exchange.exchange_date ? new Date(exchange.exchange_date) : null;
+  const date = exchange.exchange_date ? parseCalendarDate(exchange.exchange_date) : null;
   const formattedDate = date
     ? date.toLocaleDateString("en-US", {
         month: "short",

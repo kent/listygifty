@@ -2,6 +2,7 @@
 
 import { AlertTriangle, CalendarClock, CheckCircle2, CircleDollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { parseCalendarDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { summarizeGifts, type Gift, type GiftStatus } from "@niftygifty/types";
 
@@ -23,21 +24,12 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-function parseLocalDate(dateString: string): Date {
-  const [year, month, day] = dateString.split("-").map(Number);
-  if (year && month && day) {
-    return new Date(year, month - 1, day);
-  }
-
-  return new Date(dateString);
-}
-
 function getDeadlineCopy(holidayDate: string | null): { value: string; detail: string } {
   if (!holidayDate) {
     return { value: "No date", detail: "Add a deadline" };
   }
 
-  const target = parseLocalDate(holidayDate);
+  const target = parseCalendarDate(holidayDate);
   if (Number.isNaN(target.getTime())) {
     return { value: "Date set", detail: holidayDate };
   }

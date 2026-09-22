@@ -1,4 +1,6 @@
 import type { Tool, CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { AjvJsonSchemaValidator } from "@modelcontextprotocol/sdk/validation/ajv";
+import type { JsonSchemaType } from "@modelcontextprotocol/sdk/validation";
 import type { ApiClient } from "../client.js";
 import { workspaceTools, handleWorkspaceTool } from "./workspaces.js";
 import { holidayTools, handleHolidayTool } from "./holidays.js";
@@ -54,6 +56,12 @@ export const allTools: Tool[] = [
   ...statusTools,
 ];
 
+const schemaValidator = new AjvJsonSchemaValidator();
+const argumentValidators = new Map(allTools.map((tool) => [
+  tool.name,
+  schemaValidator.getValidator<Record<string, unknown>>(tool.inputSchema as JsonSchemaType),
+]));
+
 // Route tool calls to appropriate handlers
 export async function handleToolCall(
   client: ApiClient,
@@ -67,6 +75,8 @@ export async function handleToolCall(
     if (!handler) {
       throw new Error(`Unknown tool: ${toolName}`);
     }
+    const validation = argumentValidators.get(toolName)!(args);
+    if (!validation.valid) throw new Error(`Invalid arguments: ${validation.errorMessage}`);
     result = await handler(client, toolName, args);
 
     return {

@@ -108,17 +108,21 @@ in `main`.
 
 ## Version And Tag Helper
 
-Use the root helper when it is time to make a release candidate:
+Use the pull-request flow above for normal releases. Version changes belong in
+that PR and must update `apps/mobile/app.json`, `apps/mobile/package.json` and
+`apps/mobile/package-lock.json` together.
+
+The legacy local helper can preview the version change:
 
 ```bash
-npm run release -- patch
-npm run release -- minor
-npm run release -- 1.2.3
+npm run release -- patch --dry-run
 ```
 
-The helper requires a clean working tree, bumps the mobile app version, commits
-the change, creates `v<version>`, and pushes the branch and tag. The tag queues
-TestFlight; it does not submit the app for App Store review.
+Without `--dry-run`, it commits and pushes the current branch and immediately
+pushes a tag. It does not wait for a reviewed merge or the production deployment,
+so it is not the normal protected-branch release path. Tags outside `main` are
+rejected by the mobile workflow. No helper command submits an app for App Review;
+that requires the separate `app_store_review` action.
 
 ## Required GitHub Secrets
 

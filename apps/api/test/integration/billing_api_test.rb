@@ -37,6 +37,14 @@ class BillingApiTest < ActionDispatch::IntegrationTest
     assert_equal "Invalid plan", json_response["error"]
   end
 
+  test "create_checkout_session rejects non-string plans" do
+    [ 123, [], { unexpected: "yearly" } ].each do |plan|
+      post "/billing/create_checkout_session", headers: @auth_headers, params: { plan: plan }, as: :json
+      assert_response :unprocessable_entity
+      assert_equal "Invalid plan", json_response["error"]
+    end
+  end
+
   test "create_checkout_session requires plan" do
     post "/billing/create_checkout_session",
       headers: @auth_headers,
@@ -51,22 +59,20 @@ class BillingApiTest < ActionDispatch::IntegrationTest
   # Coupon Tests
   # ============================================================================
 
-  test "redeem_coupon applies valid coupon" do
+  test "redeem_coupon is unavailable outside development" do
     post "/billing/redeem_coupon",
       headers: @auth_headers,
-      params: { coupon_code: "TESTCOUPON" },
+      params: { code: "HOHOHO" },
       as: :json
-    # May succeed or fail depending on coupon validity and subscription status
-    assert_includes [ 200, 403, 404, 422 ], response.status
+    assert_response :forbidden
   end
 
-  test "redeem_coupon requires coupon_code" do
+  test "redeem_coupon without a code remains unavailable outside development" do
     post "/billing/redeem_coupon",
       headers: @auth_headers,
       params: {},
       as: :json
-    # Should return error status
-    assert_includes [ 400, 403, 422 ], response.status
+    assert_response :forbidden
   end
 
   # ============================================================================
@@ -119,7 +125,6 @@ class BillingApiTest < ActionDispatch::IntegrationTest
       params: { type: "test" },
       headers: { "Stripe-Signature" => "invalid_sig" },
       as: :json
-    # Should fail signature verification, not auth
-    assert_not_equal 401, response.status
+    assert_response :bad_request
   end
 end

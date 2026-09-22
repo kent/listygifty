@@ -23,7 +23,7 @@ export default function NewExchangeScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1, backgroundColor: colors.background }}
     >
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16 }}>
         {controller.error ? <InlineError message={controller.error} margin={0} /> : null}
 
         <View

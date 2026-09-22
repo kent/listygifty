@@ -1,5 +1,7 @@
 "use client";
 
+import { parseCalendarDate } from "@/lib/dates";
+
 import { useState, use, useEffect, useCallback } from "react";
 import { wishlistsService } from "@/services";
 import { Button } from "@/components/ui/button";
@@ -233,7 +235,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
   }
 
   const items = wishlist.wishlist_items || [];
-  const targetDate = wishlist.target_date ? new Date(wishlist.target_date) : null;
+  const targetDate = wishlist.target_date ? parseCalendarDate(wishlist.target_date) : null;
   const formattedDate = targetDate
     ? targetDate.toLocaleDateString("en-US", {
         month: "long",

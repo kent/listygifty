@@ -1,8 +1,6 @@
 class WishlistItemsController < ApplicationController
   include WorkspaceScoped
 
-  class ClaimError < StandardError; end
-
   before_action :set_wishlist
   before_action :set_item, only: %i[show update destroy claim unclaim mark_purchased]
   before_action :require_owner, only: %i[create update destroy reorder]
@@ -42,9 +40,12 @@ class WishlistItemsController < ApplicationController
   # PATCH /wishlists/:wishlist_id/wishlist_items/reorder
   def reorder
     positions = params[:positions] # { item_id: position }
+    unless positions.is_a?(ActionController::Parameters) && positions.keys.all? { |id| id.match?(/\A[1-9]\d*\z/) }
+      return render json: { error: "Positions must map item IDs to non-negative integers" }, status: :unprocessable_entity
+    end
 
     WishlistItem.transaction do
-      positions.each do |item_id, position|
+      positions.each_pair.sort_by { |item_id, _| item_id.to_i }.each do |item_id, position|
         @wishlist.wishlist_items.find(item_id).update!(position: position)
       end
     end
@@ -53,6 +54,8 @@ class WishlistItemsController < ApplicationController
     render json: WishlistItemBlueprint.render(items, current_user: current_user)
   rescue ActiveRecord::RecordNotFound => e
     render json: { error: "Item not found: #{e.message}" }, status: :not_found
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
   end
 
   # POST /wishlists/:wishlist_id/wishlist_items/:id/claim
@@ -68,31 +71,16 @@ class WishlistItemsController < ApplicationController
       return render json: { error: "You have already claimed this item" }, status: :unprocessable_entity
     end
 
-    quantity = (params[:quantity] || 1).to_i
-    purchased = params[:purchased] == true || params[:purchased] == "true"
-
-    # Use pessimistic locking to prevent race conditions
-    claim = @item.with_lock do
-      if @item.fully_claimed?
-        raise ClaimError, "Item is fully claimed"
-      end
-
-      available = @item.available_quantity
-      if quantity > available
-        raise ClaimError, "Only #{available} available"
-      end
-
-      @item.claims.create!(
-        user: current_user,
-        quantity: quantity,
-        status: purchased ? "purchased" : "reserved",
-        purchased_at: purchased ? Time.current : nil
-      )
-    end
+    claim = Wishlists::ClaimService.create!(
+      item: @item, user: current_user,
+      quantity: params.fetch(:quantity, 1), purchased: params[:purchased]
+    )
 
     render json: WishlistItemClaimBlueprint.render(claim), status: :created
-  rescue ClaimError => e
+  rescue ArgumentError => e
     render json: { error: e.message }, status: :unprocessable_entity
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
   end
 
   # DELETE /wishlists/:wishlist_id/wishlist_items/:id/unclaim

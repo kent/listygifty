@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
 import { Link } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { InlineError } from "@/components/InlineError";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { formatBudgetRange, formatLongDate } from "@/lib/formatters";
 import { useTheme } from "@/lib/theme";
@@ -43,6 +44,9 @@ export default function ExchangeInviteScreen() {
         >
           {controller.error || "Invite not found"}
         </Text>
+        <TouchableOpacity onPress={controller.retryLoad} style={{ marginTop: 24, minHeight: 44 }}>
+          <Text style={{ color: colors.primary, fontSize: 16 }}>Try again</Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={controller.routeToExchanges} style={{ marginTop: 24 }}>
           <Text style={{ color: colors.primary, fontSize: 16 }}>Go to Exchanges</Text>
         </TouchableOpacity>
@@ -76,8 +80,8 @@ export default function ExchangeInviteScreen() {
           }}
         >
           {invite.participant.status === "accepted"
-            ? "You've already accepted this invitation!"
-            : "You've declined this invitation"}
+            ? "This invitation has already been accepted."
+            : "This invitation was declined. Ask the organizer for a new invite."}
         </Text>
         <TouchableOpacity
           onPress={() => controller.routeToExchange(invite.exchange.id)}
@@ -169,8 +173,13 @@ export default function ExchangeInviteScreen() {
         </View>
       </View>
 
+      <Text style={{ color: colors.textTertiary, textAlign: "center", marginBottom: 24, lineHeight: 22 }}>
+        Join the exchange, add a few things you'd love, and get one secret match when names are drawn.
+      </Text>
+      {controller.actionError ? <InlineError message={controller.actionError} margin={0} /> : null}
       {controller.isSignedIn ? (
         <View style={{ width: "100%", gap: 12 }}>
+          <Text style={{ color: colors.textTertiary, textAlign: "center", fontSize: 13 }}>Invitation for {invite.participant.name} ({invite.participant.email})</Text>
           <TouchableOpacity
             onPress={controller.handleAccept}
             disabled={controller.actionLoading}
@@ -185,7 +194,7 @@ export default function ExchangeInviteScreen() {
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
-                Accept Invitation
+                Join Exchange
               </Text>
             )}
           </TouchableOpacity>
@@ -209,6 +218,9 @@ export default function ExchangeInviteScreen() {
             >
               Decline
             </Text>
+          </TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" onPress={controller.switchAccount} disabled={controller.actionLoading} style={{ minHeight: 44, justifyContent: "center", alignItems: "center" }}>
+            <Text style={{ color: colors.primary, fontSize: 14 }}>Use a different account</Text>
           </TouchableOpacity>
         </View>
       ) : (

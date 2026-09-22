@@ -1,5 +1,7 @@
 "use client";
 
+import { parseCalendarDate } from "@/lib/dates";
+
 import { useState } from "react";
 import { giftSuggestionsService } from "@/services";
 import { useAuth } from "@/contexts/auth-context";
@@ -29,7 +31,7 @@ interface GiftSuggestionsTabProps {
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return null;
-  return new Date(dateStr).toLocaleDateString("en-US", {
+  return parseCalendarDate(dateStr).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
   });

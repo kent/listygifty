@@ -30,6 +30,10 @@ class ExchangeInvitesController < ApplicationController
       return render_error("This invite has already been accepted") if @participant.status == "accepted"
       return render_error("This invite has been declined") if @participant.status == "declined"
 
+      if @participant.gift_exchange.exchange_participants.where(user: current_user).where.not(id: @participant.id).exists?
+        return render_error("You already joined this exchange. Sign in with the invited account to use this invitation.")
+      end
+
       if @participant.email.downcase != current_user.email.downcase
         Rails.logger.info "User #{current_user.email} accepting invite for #{@participant.email}"
       end

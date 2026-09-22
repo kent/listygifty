@@ -2,6 +2,7 @@ require "test_helper"
 
 class Analytics::MetricServiceTest < ActiveSupport::TestCase
   def setup
+    travel_to Time.zone.local(2026, 9, 9, 12)
     @service = Analytics::MetricService.new
     @visitor = AnalyticsVisitor.create!(
       anonymous_id: SecureRandom.uuid,
@@ -87,6 +88,26 @@ class Analytics::MetricServiceTest < ActiveSupport::TestCase
     assert_nil result.dig(:series, 0, :value)
     assert_equal 0, result.dig(:series, 0, :denominator)
     assert_nil result[:value]
+  end
+
+  test "splits a Sunday to Monday funnel window into two weekly buckets" do
+    sunday = Date.new(2026, 9, 6)
+    monday = sunday + 1.day
+    create_event("weekly_funnel_started", sunday.noon, session_id: "weekly_boundary_session_123")
+    create_event("weekly_funnel_started", monday.noon, session_id: "weekly_boundary_session_123")
+    create_event("weekly_funnel_finished", monday.noon + 1.minute, session_id: "weekly_boundary_session_123")
+
+    result = @service.time_series(
+      metric_key: "funnel_conversion_rate",
+      from: sunday,
+      to: monday,
+      granularity: "week",
+      funnel_steps: %w[weekly_funnel_started weekly_funnel_finished]
+    )
+
+    assert_equal %w[2026-08-31 2026-09-07], result[:series].pluck(:period_start)
+    assert_equal [ 0.0, 100.0 ], result[:series].pluck(:value)
+    assert_equal 100.0, result[:value]
   end
 
   private

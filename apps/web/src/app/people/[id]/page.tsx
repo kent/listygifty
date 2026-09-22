@@ -1,5 +1,7 @@
 "use client";
 
+import { parseCalendarDate } from "@/lib/dates";
+
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
@@ -80,7 +82,7 @@ function getHolidayIcon(icon?: string | null) {
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return null;
-  return new Date(dateStr).toLocaleDateString("en-US", {
+  return parseCalendarDate(dateStr).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -100,8 +102,8 @@ function groupGiftsByHolidayDescending(gifts: Gift[]): Map<Holiday, Gift[]> {
   
   // Sort by holiday date descending
   const sorted = Array.from(grouped.values()).sort((a, b) => {
-    const dateA = a.holiday.date ? new Date(a.holiday.date).getTime() : 0;
-    const dateB = b.holiday.date ? new Date(b.holiday.date).getTime() : 0;
+    const dateA = a.holiday.date ? parseCalendarDate(a.holiday.date).getTime() : 0;
+    const dateB = b.holiday.date ? parseCalendarDate(b.holiday.date).getTime() : 0;
     return dateB - dateA;
   });
   
@@ -728,8 +730,8 @@ export default function PersonDetailPage() {
     }
     
     return Array.from(holidayMap.values()).sort((a, b) => {
-      const dateA = a.date ? new Date(a.date).getTime() : 0;
-      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      const dateA = a.date ? parseCalendarDate(a.date).getTime() : 0;
+      const dateB = b.date ? parseCalendarDate(b.date).getTime() : 0;
       return dateB - dateA;
     });
   }, [person]);

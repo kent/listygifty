@@ -3,7 +3,7 @@ class SendDigestJob < ApplicationJob
 
   def perform
     # Find all users who have digest enabled and are collaborators on shared holidays
-    users_to_notify.each do |user|
+    users_to_notify.find_each do |user|
       send_digest_to(user)
     end
   end
@@ -18,27 +18,30 @@ class SendDigestJob < ApplicationJob
   end
 
   def send_digest_to(user)
-    # Get pending changes for holidays this user is a member of
-    # Exclude changes made by this user themselves
-    changes = GiftChange.pending
-                        .includes(:gift, :holiday, :user)
-                        .where(holiday_id: user.holiday_ids)
-                        .where.not(user_id: user.id)
-                        .order(created_at: :desc)
+    user.with_lock do
+      return unless user.digest_enabled?
 
-    return if changes.empty?
+      cutoff = Time.current
+      # A shared change is pending independently for each collaborator. A global
+      # notified_at flag lets the first recipient consume everyone else's email.
+      changes = GiftChange.joins(holiday: :holiday_users)
+                          .includes(:gift, :holiday, :user)
+                          .where(holiday_users: { user_id: user.id, role: %w[owner collaborator] })
+                          .where("gift_changes.created_at >= holiday_users.created_at")
+                          .where("gift_changes.created_at > ?", user.last_digest_sent_at || user.created_at)
+                          .where(gift_changes: { created_at: ..cutoff })
+                          .where.not(user_id: user.id)
+                          .order("gift_changes.created_at DESC")
+                          .to_a
+      return if changes.empty?
 
-    # Group by holiday
-    changes_by_holiday = changes.group_by(&:holiday)
+      DigestMailer.daily_digest(user, changes.group_by(&:holiday)).deliver_now
 
-    # Send the email
-    DigestMailer.daily_digest(user, changes_by_holiday).deliver_now
-
-    # Mark changes as notified and update user's last digest time
-    GiftChange.mark_notified!(changes.pluck(:id))
-    user.update_column(:last_digest_sent_at, Time.current)
-
-    Rails.logger.info "[SendDigestJob] Sent digest to #{user.email} with #{changes.count} changes"
+      GiftChange.mark_notified!(changes.map(&:id))
+      # New changes arriving during delivery belong to the next digest.
+      user.update_column(:last_digest_sent_at, cutoff)
+      Rails.logger.info "[SendDigestJob] Sent digest to #{user.email} with #{changes.length} changes"
+    end
   rescue StandardError => e
     Rails.logger.error "[SendDigestJob] Failed to send digest to #{user.email}: #{e.message}"
   end

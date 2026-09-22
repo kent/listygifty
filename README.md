@@ -10,8 +10,10 @@ Listy Gifty is a monorepo with:
 
 ## 1) Prerequisites
 
-- Node.js 20.x and npm 10.x
+- Node.js 22.x and npm 10.x
 - Ruby 3.4.x and Bundler
+- Docker with Compose for the local preview stack
+- Pulumi CLI for infrastructure previews and deployments
 - `gcloud` CLI
 - For mobile: run dependency install inside `apps/mobile` (it is intentionally decoupled from root workspaces)
 
@@ -39,20 +41,11 @@ cd apps/mobile
 npm install --legacy-peer-deps
 ```
 
-For Listy Gifty TestFlight releases:
-
-```bash
-npm run release -- patch
-```
-
-The release helper bumps the mobile version, commits it, pushes a matching
-`v<version>` tag, and lets GitHub Actions queue the production-profile
-TestFlight build. The default App Store Connect internal testing group is
-`Internal Testers` for `kent.fenwick@gmail.com`.
-
-Production App Store review is deliberately separate: run the `Mobile Release`
-workflow with `release_action=app_store_review` after validating TestFlight.
-See `docs/mobile-release.md`.
+For TestFlight, merge a reviewed pull request, wait for the production `Deploy`
+run for that exact merge commit, then comment `/testflight` on the merged PR.
+The production profile targets `Internal Testers` for `kent.fenwick@gmail.com`.
+App Store review is a separate `Mobile Release` dispatch after validation.
+See [the mobile release runbook](docs/mobile-release.md).
 
 ## 3) Local development
 
@@ -125,6 +118,7 @@ Root workspace checks:
 ```bash
 npm run build
 npm run test
+./bin/lint
 ```
 
 API checks:
@@ -159,7 +153,7 @@ Use this sequence to add features cleanly across the monorepo:
 4. Rebuild packages from root: `npm run build`.
 5. Implement UI in web and/or mobile using shared types/services.
 6. Add or update tests in affected apps.
-7. Run app-level checks and then deploy to staging.
+7. Run app-level checks and local browser flows, then use the reviewed pull request flow. Production deploys automatically after merge; staging is disabled.
 
 Guidelines:
 - Prefer shared types/services over duplicating request logic in UI layers.
@@ -178,7 +172,7 @@ control.
 |---|---|---|---|
 | API | Rails API, migrations, runtime secrets, Cloud SQL connection | Pulumi + Cloud Run | `npm run deploy` |
 | Web | Next.js app, public web env, app-link metadata | Pulumi + Cloud Run | `npm run deploy` |
-| Mobile TestFlight | Expo iOS store build, production API/web URLs, app assets from `apps/mobile/app.json` | GitHub Actions + EAS | `npm run release -- patch` or `Mobile Release` workflow |
+| Mobile TestFlight | Expo iOS store build, production API/web URLs, app assets from `apps/mobile/app.json` | GitHub Actions + EAS | `/testflight` on a merged PR or a `main` dispatch of `Mobile Release` |
 | App Store Production | Promotion of a validated TestFlight build to App Review | GitHub Actions + App Store Connect | `Mobile Release` workflow with `app_store_review` |
 
 ### Cloud Run API And Web
@@ -199,29 +193,27 @@ npm run deploy
 ```
 
 Staging is turned off pre-PMF (see `infra/pulumi/README.md` to re-enable).
-Tests run locally with `npm test` — there is no CI gate on deploys.
+Pull-request CI runs API, web, shared client/service, MCP and mobile tests, builds,
+static checks and dependency scans. The `Deploy` workflow runs on relevant `main`
+pushes; it relies on the reviewed merge and branch protection for those checks.
+The local deploy wrapper itself does not run the test suites.
 
 Each Pulumi deploy:
 
 1. Builds API and web images with Cloud Build.
-2. Rolls Cloud Run revisions.
-3. Updates and runs the Rails migration job.
+2. Rolls the web revision and updates the Rails migration job image.
+3. Runs migrations before rolling the API revision.
 4. Smoke-tests the new API/web revisions.
 5. Prints deployed URLs and the source SHA.
 
-Preview before applying:
+Preview the current production stack configuration:
 
 ```bash
-npm run deploy:preview:staging
-npm run deploy:preview:production
+npm run deploy:preview
 ```
 
-Skip mobile side effects during a backend/web hotfix:
-
-```bash
-cd infra/pulumi
-pulumi up --stack production -c niftygifty:enableMobile=false
-```
+`npm run deploy` deploys API/web only. `npm run deploy:mobile` additionally queues
+an iOS build after migrations, rollout and smoke checks succeed.
 
 Validate production data after migration-heavy deploys:
 
@@ -244,27 +236,26 @@ Default TestFlight target:
 
 Normal release-candidate flow:
 
-```bash
-npm run release -- patch
-```
-
-That helper requires a clean tree, bumps `apps/mobile/app.json`,
-`apps/mobile/package.json`, and `apps/mobile/package-lock.json`, creates
-`v<version>`, pushes the branch and tag, and lets GitHub Actions queue the
-production-profile TestFlight build.
+1. Include any mobile version bump in a pull request; keep `app.json`,
+   `package.json` and the mobile lockfile version synchronized.
+2. Wait for required checks and merge without bypassing branch protection.
+3. Wait for the successful production `Deploy` run for that exact commit.
+4. Comment exactly `/testflight` on the merged PR and monitor build, Apple
+   processing and `Internal Testers` verification.
 
 Manual TestFlight dispatch:
 
 1. Open GitHub Actions.
-2. Run `Mobile Release`.
+2. Run `Mobile Release` from `main`.
 3. Choose `release_action=testflight`.
-4. Keep `eas_profile=production` unless intentionally testing staging.
+4. Keep `eas_profile=production`. Staging infrastructure is disabled.
 
 The workflow runs mobile quality gates, queues `eas build --profile production
 --platform ios --auto-submit --no-wait`, then verifies through App Store
 Connect that the processed build is attached to `Internal Testers`.
 
-Local emergency TestFlight command:
+Local diagnostics can use EAS directly only from a clean, already merged commit
+whose production deploy succeeded:
 
 ```bash
 cd apps/mobile
@@ -277,7 +268,7 @@ Public production release is deliberately separate from TestFlight. After the
 TestFlight build is validated:
 
 1. Open GitHub Actions.
-2. Run `Mobile Release`.
+2. Run `Mobile Release` from `main`.
 3. Choose `release_action=app_store_review`.
 4. Set `app_version` if promoting a version other than the current
    `apps/mobile/app.json` version.
@@ -294,8 +285,6 @@ GitHub Actions secrets:
 - `APP_STORE_CONNECT_API_KEY_P8`
 - `GCP_WORKLOAD_IDENTITY_PROVIDER`
 - `GCP_SERVICE_ACCOUNT`
-- `CLERK_PUBLISHABLE_KEY_PROD`
-- `CLERK_PUBLISHABLE_KEY_STAGING`
 
 Local deploy files:
 - `.gcp/listygifty-deploy.env`
@@ -307,15 +296,12 @@ certificates, provisioning profiles, native build folders, and credentials.
 
 ### CI/CD Branch Policy
 
-- Push to `staging`: `deploy-api.yml` and `deploy-web.yml` deploy changed
-  API/web surfaces to staging; `mobile-release.yml` runs the mobile quality
-  gate when mobile or shared package files change.
-- Push to `main`: `deploy-api.yml` and `deploy-web.yml` deploy changed API/web
-  surfaces to production; `mobile-release.yml` runs the mobile quality gate for
-  mobile changes and does not queue TestFlight.
-- Push a `v<version>` tag: queue a production-profile TestFlight build for
-  that exact mobile version.
-- App Store review always requires manual `Mobile Release` dispatch.
+- Pull requests run `.github/workflows/ci.yml`.
+- Relevant pushes to `main` run `.github/workflows/deploy.yml` for production.
+- Staging has no active deploy workflow or infrastructure.
+- `/testflight` on a merged PR, a `v<version>` tag already contained in `main`,
+  or a manual `main` dispatch starts the mobile release workflow.
+- App Store review requires manual `Mobile Release` dispatch.
 
 ## 8) Domains and target services
 
@@ -324,9 +310,8 @@ Production:
 - `www.listygifty.com` -> `niftygifty-web`
 - `api.listygifty.com` -> `niftygifty-api`
 
-Staging:
-- `staging.listygifty.com` -> `niftygifty-staging-web`
-- `api-staging.listygifty.com` -> `niftygifty-staging-api`
+Staging is disabled. Historical domains and EAS staging profiles are not an
+operational environment; follow `infra/pulumi/README.md` before re-enabling it.
 
 ## 9) Verification And Rollback
 
@@ -342,8 +327,9 @@ Check EAS builds and TestFlight submissions:
 ```bash
 cd apps/mobile
 npx eas-cli build:list --platform ios --limit 5
-npx eas-cli submit:list --platform ios --limit 5
 ```
+
+Review submissions in the Expo project dashboard and App Store Connect.
 
 Rollback API/web through Pulumi by redeploying a prior SHA:
 

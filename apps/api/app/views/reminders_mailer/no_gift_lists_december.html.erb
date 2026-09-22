@@ -8,6 +8,7 @@
   Hey <%= @user.safe_name %>, the holiday season is here! We noticed you don't have any gift lists set up yet.
 </p>
 
+<% if @days_until_christmas.positive? %>
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 24px;">
   <tr>
     <td style="background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 12px; padding: 24px; text-align: center;">
@@ -20,6 +21,7 @@
     </td>
   </tr>
 </table>
+<% end %>
 
 <p style="margin: 0 0 24px 0; font-size: 15px; color: #52525b;">
   Create a gift list to:
@@ -49,4 +51,3 @@
 <p style="margin: 24px 0 0 0; font-size: 13px; color: #a1a1aa; text-align: center;">
   <a href="<%= @unsubscribe_url %>" style="color: #a1a1aa;">Turn off December reminders</a>
 </p>
-

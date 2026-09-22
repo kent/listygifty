@@ -7,8 +7,10 @@ import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { useServices } from "@/lib/use-api";
+import { useScreenActivity } from "@/lib/controllers/use-screen-activity";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import { scheduleExchangeReminder } from "@/lib/notifications";
+import { humanizeError } from "@/lib/error-message";
 import { normalizeAuthReturnPath } from "@/lib/auth-return";
 import {
   buildCreateExchangePayload,
@@ -25,6 +27,7 @@ import {
   buildExchangeSections,
   EMPTY_EXCHANGE_FORM_VALUES,
   EMPTY_WISHLIST_ITEM_FORM_VALUES,
+  getExchangeDrawConfirmation,
   getExchangeReadinessItems,
   getExchangeStartBlocker,
   hasExchangeExclusionBetween,
@@ -81,6 +84,7 @@ export function useExchangesController() {
 
 export function useNewExchangeController() {
   const router = useRouter();
+  const captureScreen = useScreenActivity();
   const { giftExchanges } = useServices();
   const track = useAnalytics();
   const [form, setForm] = useState<ExchangeFormValues>(() => buildFamilyExchangeFormValues());
@@ -96,6 +100,7 @@ export function useNewExchangeController() {
   }, []);
 
   const handleSubmit = useCallback(async () => {
+    const isCurrentScreen = captureScreen();
     if (!form.name.trim()) {
       setError("Name is required");
       return;
@@ -108,8 +113,8 @@ export function useNewExchangeController() {
 
     const parsedMin = parseOptionalDecimal(form.budgetMin);
     const parsedMax = parseOptionalDecimal(form.budgetMax);
-    if (Number.isNaN(parsedMin) || Number.isNaN(parsedMax)) {
-      setError("Budgets must be valid numbers");
+    if (Number.isNaN(parsedMin) || Number.isNaN(parsedMax) || (parsedMin ?? 0) < 0 || (parsedMax ?? 0) < 0) {
+      setError("Budgets must be zero or a positive number");
       return;
     }
 
@@ -133,14 +138,14 @@ export function useNewExchangeController() {
         has_date: Boolean(form.exchangeDate.trim()),
         include_creator: form.includeCreator,
       });
-      router.replace(`/(tabs)/exchanges/${exchange.id}`);
+      if (isCurrentScreen()) router.replace(`/(tabs)/exchanges/${exchange.id}`);
     } catch (submitError) {
       console.error("Failed to create exchange", submitError);
-      setError("Failed to create exchange");
+      setError(humanizeError(submitError, "Failed to create exchange"));
     } finally {
       setSaving(false);
     }
-  }, [form, giftExchanges, router, track]);
+  }, [captureScreen, form, giftExchanges, router, track]);
 
   return {
     error,
@@ -158,12 +163,13 @@ export function useNewExchangeController() {
 export function useExchangeDetailController() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { giftExchanges, exchangeExclusions } = useServices();
+  const { giftExchanges, exchangeExclusions, exchangeParticipants } = useServices();
   const track = useAnalytics();
   const exchangeId = Number.parseInt(id ?? "", 10);
   const isValidExchangeId = Number.isFinite(exchangeId);
   const [starting, setStarting] = useState(false);
   const [schedulingReminder, setSchedulingReminder] = useState(false);
+  const [resendingParticipantId, setResendingParticipantId] = useState<number | null>(null);
   const [exclusionModalVisible, setExclusionModalVisible] = useState(false);
   const [exclusionForm, setExclusionForm] = useState<ExchangeExclusionFormValues>(
     EMPTY_EXCHANGE_EXCLUSION_FORM_VALUES
@@ -194,7 +200,7 @@ export function useExchangeDetailController() {
 
     Alert.alert(
       "Draw Matches",
-      "This will assign each participant a match and send match emails.",
+      getExchangeDrawConfirmation(resource.data),
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -215,7 +221,7 @@ export function useExchangeDetailController() {
             } catch (startError) {
               console.error("Failed to start exchange", startError);
               await haptics.error();
-              Alert.alert("Could Not Draw Matches", "Check participants and try again.");
+              Alert.alert("Could Not Draw Matches", humanizeError(startError, "Check participants and try again."));
             } finally {
               setStarting(false);
             }
@@ -495,6 +501,28 @@ export function useExchangeDetailController() {
     [exchangeExclusions, exchangeId, exclusionsResource, track]
   );
 
+  const reinviteParticipant = useCallback((participant: ExchangeParticipant) => {
+    if (resendingParticipantId !== null || participant.status !== "declined") return;
+    Alert.alert("Invite again?", `Email a new invitation to ${participant.email}? They can choose whether to join.`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Send invitation",
+        onPress: async () => {
+          setResendingParticipantId(participant.id);
+          try {
+            await exchangeParticipants.resendInvite(exchangeId, participant.id);
+            await resource.reload();
+            await haptics.success();
+          } catch (error) {
+            Alert.alert("Invitation Not Sent", humanizeError(error, "Could not send the invitation. Try again."));
+          } finally {
+            setResendingParticipantId(null);
+          }
+        },
+      },
+    ]);
+  }, [exchangeId, exchangeParticipants, resendingParticipantId, resource]);
+
   const triggerRefresh = useCallback(() => {
     resource.refresh();
     if (resource.data?.is_owner) {
@@ -537,6 +565,8 @@ export function useExchangeDetailController() {
       ? getExchangeReadinessItems(resource.data, exclusionsResource.data.length)
       : [],
     removeExclusion,
+    reinviteParticipant,
+    resendingParticipantId,
     retryLoad: resource.reload,
     shareExchangeJoinLink,
     shareParticipantInvite,
@@ -552,6 +582,7 @@ export function useExchangeDetailController() {
 export function useNewExchangeParticipantController() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const captureScreen = useScreenActivity();
   const { exchangeParticipants } = useServices();
   const track = useAnalytics();
   const exchangeId = Number.parseInt(id ?? "", 10);
@@ -568,6 +599,7 @@ export function useNewExchangeParticipantController() {
   }, []);
 
   const handleSubmit = useCallback(async () => {
+    const isCurrentScreen = captureScreen();
     if (!isValidExchangeId) {
       setError("Invalid exchange ID");
       return;
@@ -578,7 +610,7 @@ export function useNewExchangeParticipantController() {
       return;
     }
 
-    if (!form.email.trim() || !form.email.includes("@")) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
       setError("Valid email is required");
       return;
     }
@@ -595,14 +627,14 @@ export function useNewExchangeParticipantController() {
         exchange_id: exchangeId,
         participant_id: participant.id,
       });
-      router.back();
+      if (isCurrentScreen()) router.back();
     } catch (submitError) {
       console.error("Failed to add participant", submitError);
-      setError("Failed to add participant");
+      setError(humanizeError(submitError, "Failed to add participant"));
     } finally {
       setSaving(false);
     }
-  }, [exchangeId, exchangeParticipants, form, isValidExchangeId, router, track]);
+  }, [captureScreen, exchangeId, exchangeParticipants, form, isValidExchangeId, router, track]);
 
   return {
     error,
@@ -620,6 +652,11 @@ export function useExchangeMatchController() {
   const exchangeId = Number.parseInt(id ?? "", 10);
   const isValidExchangeId = Number.isFinite(exchangeId);
 
+  const [nudging, setNudging] = useState(false);
+  const [nudgeSent, setNudgeSent] = useState(false);
+  const [nudgeError, setNudgeError] = useState<string | null>(null);
+  useEffect(() => { setNudgeSent(false); setNudgeError(null); }, [exchangeId]);
+
   const resource = useFocusResource<ExchangeMatchState>({
     enabled: isValidExchangeId,
     errorMessage: "Failed to load match details",
@@ -636,7 +673,23 @@ export function useExchangeMatchController() {
     },
   });
 
+  const nudgeMatch = useCallback(async () => {
+    if (nudging || nudgeSent || !resource.data.exchange?.capabilities.nudge_match) return;
+    setNudging(true);
+    setNudgeError(null);
+    try {
+      await giftExchanges.nudgeMatch(exchangeId);
+      setNudgeSent(true);
+      await haptics.success();
+    } catch (error) {
+      setNudgeError(humanizeError(error, "Could not send the request. Try again."));
+    } finally {
+      setNudging(false);
+    }
+  }, [exchangeId, giftExchanges, nudgeSent, nudging, resource.data.exchange]);
+
   return {
+    nudgeMatch, nudging, nudgeSent, nudgeError,
     error: !isValidExchangeId ? "Invalid exchange ID" : resource.error,
     exchange: resource.data.exchange,
     loading: isValidExchangeId && resource.loading,
@@ -731,6 +784,7 @@ export function useExchangeWishlistController() {
 
 export function useNewWishlistItemController() {
   const router = useRouter();
+  const captureScreen = useScreenActivity();
   const { exchange_id, participant_id } = useLocalSearchParams<{
     exchange_id: string;
     participant_id: string;
@@ -741,6 +795,7 @@ export function useNewWishlistItemController() {
   const participantId = participant_id ? Number.parseInt(participant_id, 10) : Number.NaN;
 
   const [form, setForm] = useState<WishlistItemFormValues>(EMPTY_WISHLIST_ITEM_FORM_VALUES);
+  const [savedItemName, setSavedItemName] = useState<string | null>(null);
   const [savingMode, setSavingMode] = useState<WishlistItemSaveMode | null>(null);
   const [error, setError] = useState<string | null>(null);
   const loading = savingMode !== null;
@@ -750,6 +805,7 @@ export function useNewWishlistItemController() {
   }, []);
 
   const submitItem = useCallback(async (mode: WishlistItemSaveMode) => {
+    const isCurrentScreen = captureScreen();
     if (!form.name.trim()) {
       setError("Name is required");
       return;
@@ -781,18 +837,21 @@ export function useNewWishlistItemController() {
         participant_id: participantId,
         save_mode: mode,
       });
+      if (!isCurrentScreen()) return;
       if (mode === "another") {
+        setSavedItemName(item.name);
         setForm(buildRepeatWishlistItemFormValues());
+        await haptics.success();
       } else {
-        router.back();
+        if (isCurrentScreen()) router.back();
       }
     } catch (submitError) {
       console.error("Failed to add wishlist item", submitError);
-      setError("Failed to add item");
+      setError(humanizeError(submitError, "Failed to add item"));
     } finally {
       setSavingMode(null);
     }
-  }, [exchangeId, form, participantId, router, track, wishlistItems]);
+  }, [captureScreen, exchangeId, form, participantId, router, track, wishlistItems]);
 
   return {
     error,
@@ -801,6 +860,7 @@ export function useNewWishlistItemController() {
     handleSubmit: () => submitItem("done"),
     handleSubmitAndAddAnother: () => submitItem("another"),
     loading,
+    savedItemName,
     savingMode,
     updateField,
   };
@@ -812,6 +872,7 @@ export function useExchangeShareJoinController() {
     shareToken?: string;
   }>();
   const router = useRouter();
+  const captureScreen = useScreenActivity();
   const clerkAuth = useAuth();
   const isSignedIn = runtimeConfig.screenshotMode ? false : clerkAuth.isSignedIn;
   const isLoaded = runtimeConfig.screenshotMode ? true : clerkAuth.isLoaded;
@@ -852,6 +913,7 @@ export function useExchangeShareJoinController() {
   );
 
   const handleJoin = useCallback(async () => {
+    const isCurrentScreen = captureScreen();
     if (!shareToken || !isSignedIn || !resource.data?.join_open || joining) {
       return;
     }
@@ -866,15 +928,15 @@ export function useExchangeShareJoinController() {
         source: "shared_exchange_link",
       });
       await haptics.success();
-      router.replace(`/(tabs)/exchanges/${result.exchange.id}`);
+      if (isCurrentScreen()) router.replace(`/(tabs)/exchanges/${result.exchange.id}`);
     } catch (joinError) {
       console.error("Failed to join shared exchange", joinError);
       await haptics.error();
-      setActionError("Could not join this exchange. Check the link and try again.");
+      setActionError(humanizeError(joinError, "Could not join this exchange. Check the link and try again."));
     } finally {
       setJoining(false);
     }
-  }, [exchangeJoins, isSignedIn, joining, name, resource.data?.join_open, router, shareToken, track]);
+  }, [captureScreen, exchangeJoins, isSignedIn, joining, name, resource.data?.join_open, router, shareToken, track]);
 
   return {
     actionError,
@@ -900,10 +962,12 @@ export function useExchangeShareJoinController() {
 export function useExchangeInviteController() {
   const { token } = useLocalSearchParams<{ token: string }>();
   const router = useRouter();
+  const captureScreen = useScreenActivity();
   const clerkAuth = useAuth();
   const isSignedIn = runtimeConfig.screenshotMode ? false : clerkAuth.isSignedIn;
   const isLoaded = runtimeConfig.screenshotMode ? true : clerkAuth.isLoaded;
   const { exchangeInvites } = useServices();
+  const [actionError, setActionError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const hasToken = Boolean(token);
   const authReturnPath = normalizeAuthReturnPath(
@@ -919,55 +983,65 @@ export function useExchangeInviteController() {
   });
 
   const handleAccept = useCallback(async () => {
-    if (!token) {
+    const isCurrentScreen = captureScreen();
+    if (!token || !isSignedIn || actionLoading) {
       return;
     }
 
     setActionLoading(true);
-    resource.setError(null);
+    setActionError(null);
 
     try {
       const result = await exchangeInvites.accept(token);
-      router.replace(`/(tabs)/exchanges/${result.exchange.id}`);
+      if (isCurrentScreen()) router.replace(`/(tabs)/exchanges/${result.exchange.id}`);
     } catch (acceptError) {
       console.error("Failed to accept invitation", acceptError);
-      resource.setError("Failed to accept invitation");
+      setActionError(humanizeError(acceptError, "Could not join. Please try again."));
     } finally {
       setActionLoading(false);
     }
-  }, [exchangeInvites, resource, router, token]);
+  }, [actionLoading, captureScreen, exchangeInvites, isSignedIn, router, token]);
 
   const handleDecline = useCallback(async () => {
-    if (!token) {
+    const isCurrentScreen = captureScreen();
+    if (!token || !isSignedIn || actionLoading) {
       return;
     }
 
     setActionLoading(true);
-    resource.setError(null);
+    setActionError(null);
 
     try {
       await exchangeInvites.decline(token);
-      router.replace("/(tabs)/exchanges");
+      if (isCurrentScreen()) router.replace("/(tabs)/exchanges");
     } catch (declineError) {
       console.error("Failed to decline invitation", declineError);
-      resource.setError("Failed to decline invitation");
+      setActionError(humanizeError(declineError, "Could not decline. Please try again."));
     } finally {
       setActionLoading(false);
     }
-  }, [exchangeInvites, resource, router, token]);
+  }, [actionLoading, captureScreen, exchangeInvites, isSignedIn, router, token]);
 
   return {
+    actionError,
     actionLoading,
     authReturnPath,
     error: !hasToken ? "Invalid invite link" : resource.error,
     handleAccept,
-    handleDecline,
+    handleDecline: () => Alert.alert("Decline invitation?", "You won't take part in this exchange. Ask the organizer for a new invite if you change your mind.", [
+      { text: "Keep invitation", style: "cancel" },
+      { text: "Decline", style: "destructive", onPress: handleDecline },
+    ]),
     invite: resource.data,
     isLoaded,
     isSignedIn,
     loading: !isLoaded || (hasToken && resource.loading),
     retryLoad: resource.reload,
     routeToExchange: (exchangeId: number) => router.replace(`/(tabs)/exchanges/${exchangeId}`),
+    switchAccount: async () => {
+      await clerkAuth.signOut();
+      router.replace({ pathname: "/auth/login", params: authReturnPath ? { returnTo: authReturnPath } : {} });
+    },
     routeToExchanges: () => router.replace("/(tabs)/exchanges"),
   };
 }

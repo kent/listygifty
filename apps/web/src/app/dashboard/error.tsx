@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw, Home } from "lucide-react";
@@ -11,6 +13,7 @@ export default function DashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const router = useRouter();
   useEffect(() => {
     console.error("Dashboard error:", error);
   }, [error]);
@@ -41,7 +44,7 @@ export default function DashboardError({
           </Button>
           <Button
             variant="outline"
-            onClick={() => (window.location.href = "/")}
+            onClick={() => (router.push("/"))}
             className="border-slate-700 text-slate-300 hover:bg-slate-800"
           >
             <Home className="w-4 h-4 mr-2" />

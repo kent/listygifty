@@ -50,12 +50,12 @@ describe("ParticipantListItem", () => {
   it("renders wishlist count when requested", () => {
     render(
       <ParticipantListItem
-        participant={buildParticipant({ wishlist_count: 3 })}
+        participant={buildParticipant({ status: "accepted", wishlist_count: 3 })}
         showWishlistCount
       />
     );
 
-    expect(screen.getByText("3 items")).toBeTruthy();
+    expect(screen.getByText("3 ideas")).toBeTruthy();
   });
 
   it("calls the share handler when invite sharing is available", () => {
@@ -70,4 +70,26 @@ describe("ParticipantListItem", () => {
     fireEvent.press(screen.getByText("Share"));
     expect(onShareInvite).toHaveBeenCalledTimes(1);
   });
+});
+
+it("shows joined status to the organizer even when email is present", () => {
+  render(<ParticipantListItem participant={buildParticipant({ status: "accepted" })} />);
+  expect(screen.getByText("Joined")).toBeTruthy();
+});
+it("does not offer used invitation links", () => {
+  render(<ParticipantListItem participant={buildParticipant({ status: "accepted", invite_token: "used" })} onCopyInvite={jest.fn()} onShareInvite={jest.fn()} />);
+  expect(screen.queryByText("Copy")).toBeNull();
+  expect(screen.queryByText("Share")).toBeNull();
+});
+it("makes empty wishlists visible before drawing names", () => {
+  render(<ParticipantListItem participant={buildParticipant({ status: "accepted", wishlist_count: 0 })} showWishlistCount />);
+  expect(screen.getByText("No ideas yet")).toBeTruthy();
+});
+
+it("lets the organizer invite a declined participant again without sharing a dead link", () => {
+  const onReinvite = jest.fn();
+  render(<ParticipantListItem participant={buildParticipant({ status: "declined" })} onReinvite={onReinvite} onShareInvite={jest.fn()} />);
+  expect(screen.queryByText("Share")).toBeNull();
+  fireEvent.press(screen.getByRole("button", { name: "Invite Alex Parker again" }));
+  expect(onReinvite).toHaveBeenCalledTimes(1);
 });

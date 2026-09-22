@@ -498,6 +498,27 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     assert_includes [ 400, 422 ], response.status
   end
 
+  test "resending a declined invitation lets the invited person join again" do
+    @exchange.update!(status: "inviting")
+    invited_user = users(:two)
+    declined = @exchange.exchange_participants.create!(
+      name: "Changed their mind", email: invited_user.email, status: "declined"
+    )
+
+    assert_enqueued_emails 1 do
+      post resend_invite_gift_exchange_exchange_participant_path(@exchange, declined),
+        headers: @auth_headers, as: :json
+    end
+    assert_response :success
+    assert_equal "invited", declined.reload.status
+
+    post "/exchange_invite/#{declined.invite_token}/accept",
+      headers: auth_headers_for(invited_user), as: :json
+    assert_response :success
+    assert_equal "accepted", declined.reload.status
+    assert_equal invited_user, declined.user
+  end
+
   # ============================================================================
   # Exchange Invite Token Tests
   # ============================================================================
@@ -547,6 +568,19 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     post "/exchange_invite/decline_test_token/decline", headers: user_two_headers, as: :json
     assert_response :success
     assert_equal "declined", pending_participant.reload.status
+  end
+
+  test "an existing participant cannot consume another person's invitation" do
+    @exchange.update!(status: "inviting")
+    pending = @exchange.exchange_participants.create!(name: "Another person", email: "another@example.com")
+
+    post "/exchange_invite/#{pending.invite_token}/accept", headers: @auth_headers, as: :json
+
+    assert_response :unprocessable_entity
+    assert_includes json_response["error"], "already joined"
+    assert_equal "invited", pending.reload.status
+    assert_nil pending.user_id
+    assert_equal 1, @exchange.exchange_participants.where(user: @user).count
   end
 
   # ============================================================================

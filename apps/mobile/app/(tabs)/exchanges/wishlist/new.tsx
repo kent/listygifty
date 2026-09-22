@@ -20,10 +20,16 @@ export default function NewWishlistItemScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1, backgroundColor: colors.background }}
     >
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16 }}>
         <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 24 }}>
           Add an item to your wishlist to help your Secret Santa find the perfect gift!
         </Text>
+
+        {controller.savedItemName ? (
+          <Text accessibilityRole="alert" style={{ color: colors.success, marginBottom: 16, fontSize: 15 }}>
+            Added {controller.savedItemName}! Add another idea below.
+          </Text>
+        ) : null}
 
         {controller.error ? (
           <View

@@ -1,5 +1,7 @@
 "use client";
 
+import { parseCalendarDate } from "@/lib/dates";
+
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
@@ -252,7 +254,7 @@ export default function HolidayDetailPage() {
 
   const icon = getHolidayIcon(holiday.icon);
   const formattedDate = holiday.date
-    ? new Date(holiday.date).toLocaleDateString("en-US", {
+    ? parseCalendarDate(holiday.date).toLocaleDateString("en-US", {
         weekday: "long",
         month: "long",
         day: "numeric",
