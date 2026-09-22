@@ -47,11 +47,11 @@
   },
   "packageManager": "npm@10.2.0",
   "overrides": {
-    "@hono/node-server": "1.19.14",
+    "@hono/node-server": "1.19.17",
     "express-rate-limit": "8.5.2",
-    "hono": "4.12.23",
-    "ip-address": "10.2.0",
-    "postcss": "8.5.15",
+    "hono": "4.13.7",
+    "ip-address": "10.7.0",
+    "postcss": "8.5.28",
     "react-test-renderer": "19.2.0"
   }
 }

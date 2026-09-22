@@ -51,19 +51,22 @@ class ApplicationController < ActionController::API
 
     # Auto-create local user record if they don't exist yet
     is_new_user = false
-    @current_user = User.find_or_create_by!(clerk_user_id: clerk_user_id) do |u|
-      clerk_user = fetch_clerk_user(clerk_user_id)
-      apply_clerk_data(u, clerk_user, clerk_user_id, token_email: email_from_token)
-      u.subscription_plan = "free"
-      u.clerk_profile_synced_at = Time.current
-      is_new_user = true
+    User.transaction do
+      @current_user = User.find_or_create_by!(clerk_user_id: clerk_user_id) do |u|
+        clerk_user = fetch_clerk_user(clerk_user_id)
+        apply_clerk_data(u, clerk_user, clerk_user_id, token_email: email_from_token)
+        u.subscription_plan = "free"
+        u.clerk_profile_synced_at = Time.current
+      end
+      # The creation block can run on a losing insert during concurrent sign-in.
+      is_new_user = @current_user.previously_new_record?
+
+      # Keep account creation and its usable workspace atomic; repair older
+      # accounts whose initial workspace creation did not complete.
+      sync_clerk_user_data(@current_user, clerk_user_id, token_email: email_from_token)
+      @current_user.ensure_personal_workspace!
     end
 
-    # Sync user data if missing or stale
-    sync_clerk_user_data(@current_user, clerk_user_id, token_email: email_from_token)
-
-    # Create personal workspace for new users
-    create_personal_workspace(@current_user) if is_new_user
 
     # Queue welcome email for new users (delayed to allow invite flow to take precedence)
     SendWelcomeEmailJob.set(wait: 1.minute).perform_later(@current_user.id) if is_new_user
@@ -188,15 +191,5 @@ class ApplicationController < ActionController::API
 
   def token_email(payload)
     payload["email_address"] || payload["email"]
-  end
-
-  def create_personal_workspace(user)
-    workspace_name = "#{user.safe_name}'s Workspace"
-    workspace = Workspace.create!(
-      name: workspace_name,
-      workspace_type: "personal",
-      created_by_user: user
-    )
-    workspace.workspace_memberships.create!(user: user, role: "owner")
   end
 end

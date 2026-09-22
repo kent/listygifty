@@ -37,8 +37,8 @@ const webImageRepo = nfg.require("webImageRepo");
 const androidAppLinkSha256CertFingerprints =
   nfg.get("androidAppLinkSha256CertFingerprints") ?? "";
 
-// Source SHA — set by the deploy wrapper. Drives image tags; same SHA twice
-// is a no-op redeploy. Required so the program is honest about which commit
+// Source SHA — set by the deploy wrapper. Drives image tags; the same SHA
+// leaves unchanged rollout resources alone (the wrapper still builds images). Required so the program is honest about which commit
 // is rolling out.
 const sourceSha = nfg.require("sourceSha");
 const legacyRollback = nfg.getBoolean("legacyRollback") ?? false;

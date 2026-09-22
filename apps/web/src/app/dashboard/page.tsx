@@ -1,5 +1,6 @@
 "use client";
 
+import { parseDateOnly, toCalendarDate } from "@/lib/dates";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -52,19 +53,6 @@ function formatProgress(current: number, target: number): string {
 function startOfToday(): Date {
   const today = new Date();
   return new Date(today.getFullYear(), today.getMonth(), today.getDate());
-}
-
-function parseDateOnly(date: string | null | undefined): Date | null {
-  if (!date) {
-    return null;
-  }
-
-  const [year, month, day] = date.split("-").map(Number);
-  if (!year || !month || !day) {
-    return null;
-  }
-
-  return new Date(year, month - 1, day);
 }
 
 function nextAnnualDate(date: string | null | undefined, today = startOfToday()): Date | null {
@@ -438,7 +426,7 @@ export default function DashboardPage() {
       const currentYear = new Date().getFullYear();
       const newHoliday = await holidaysService.create({
         name: `${template.name} ${currentYear}`,
-        date: new Date().toISOString().split("T")[0],
+        date: toCalendarDate(new Date()),
         icon: template.icon || undefined,
       });
       setUserHolidays((prev) => [...prev, newHoliday]);

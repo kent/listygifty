@@ -1224,15 +1224,10 @@ class McpController < ApplicationController
     item = wishlist.wishlist_items.find(args["item_id"])
     raise ArgumentError, "You have already claimed this item" if item.claims.by_user(@current_user).exists?
 
-    purchased = ActiveModel::Type::Boolean.new.cast(args["purchased"])
-    claim = item.with_lock do
-      item.claims.create!(
-        user: @current_user,
-        quantity: args.fetch("quantity", 1),
-        status: purchased ? "purchased" : "reserved",
-        purchased_at: purchased ? Time.current : nil
-      )
-    end
+    claim = Wishlists::ClaimService.create!(
+      item: item, user: @current_user,
+      quantity: args.fetch("quantity", 1), purchased: args["purchased"]
+    )
     WishlistItemClaimBlueprint.render_as_hash(claim)
   end
 

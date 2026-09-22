@@ -1,0 +1,49 @@
+diff --git a/node_modules/@expo/cli/build/src/start/server/metro/waitForMetroToObserveTypeScriptFile.js b/node_modules/@expo/cli/build/src/start/server/metro/waitForMetroToObserveTypeScriptFile.js
+index 87cdf53..cf0560e 100644
+--- a/node_modules/@expo/cli/build/src/start/server/metro/waitForMetroToObserveTypeScriptFile.js
++++ b/node_modules/@expo/cli/build/src/start/server/metro/waitForMetroToObserveTypeScriptFile.js
+@@ -32,10 +32,23 @@ function _interop_require_default(obj) {
+     };
+ }
+ const debug = require('debug')('expo:start:server:metro:waitForTypescript');
++// Metro 0.83 emits grouped, root-relative file changes instead of eventsQueue.
++function getEventsQueue(event) {
++    if (event.eventsQueue) return event.eventsQueue;
++    const events = [];
++    for (const [kind, type] of [['addedFiles', 'add'], ['modifiedFiles', 'change'], ['removedFiles', 'delete']]) {
++        for (const [filePath, metadata] of event.changes[kind]) {
++            events.push({ type, filePath: _path().default.resolve(event.rootDir, filePath), metadata: { ...metadata, type: metadata.isSymlink ? 'l' : 'f' } });
++        }
++    }
++    return events;
++}
++
+ function waitForMetroToObserveTypeScriptFile(projectRoot, runner, callback) {
+     const watcher = runner.metro.getBundler().getBundler().getWatcher();
+     const tsconfigPath = _path().default.join(projectRoot, 'tsconfig.json');
+-    const listener = ({ eventsQueue })=>{
++    const listener = (event)=>{
++        const eventsQueue = getEventsQueue(event);
+         for (const event of eventsQueue){
+             var _event_metadata;
+             if (event.type === 'add' && ((_event_metadata = event.metadata) == null ? void 0 : _event_metadata.type) !== 'd' && // We need to ignore node_modules because Metro will add all of the files in node_modules to the watcher.
+@@ -63,7 +76,8 @@ function waitForMetroToObserveTypeScriptFile(projectRoot, runner, callback) {
+ }
+ function observeFileChanges(runner, files, callback) {
+     const watcher = runner.metro.getBundler().getBundler().getWatcher();
+-    const listener = ({ eventsQueue })=>{
++    const listener = (event)=>{
++        const eventsQueue = getEventsQueue(event);
+         for (const event of eventsQueue){
+             var // event.type === 'add' &&
+             _event_metadata;
+@@ -89,7 +103,8 @@ function observeFileChanges(runner, files, callback) {
+ }
+ function observeAnyFileChanges(runner, callback) {
+     const watcher = runner.metro.getBundler().getBundler().getWatcher();
+-    const listener = ({ eventsQueue })=>{
++    const listener = (event)=>{
++        const eventsQueue = getEventsQueue(event);
+         callback(eventsQueue);
+     };
+     watcher.addListener('change', listener);

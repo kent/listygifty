@@ -90,9 +90,18 @@ services:
     volumes:
       - ./apps/web:/app/apps/web
       - ./packages:/app/packages
+      # Use the image's workspace dependencies, never host node_modules.
+      - /app/apps/web/node_modules
+      # Keep Linux Turbopack state separate from host builds and dev servers.
+      - type: volume
+        source: listygifty-next-cache
+        target: /app/apps/web/.next
+        volume:
+          nocopy: true
     depends_on:
       api:
         condition: service_healthy
 
 volumes:
   listygifty-postgres-data:
+  listygifty-next-cache:

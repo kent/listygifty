@@ -1,5 +1,7 @@
 "use client";
 
+import { parseCalendarDate } from "@/lib/dates";
+
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -21,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -356,7 +359,7 @@ export default function ExchangeDetailPage({
               {exchange.exchange_date && (
                 <span className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
-                  {new Date(exchange.exchange_date).toLocaleDateString("en-US", {
+                  {parseCalendarDate(exchange.exchange_date).toLocaleDateString("en-US", {
                     month: "long",
                     day: "numeric",
                     year: "numeric",
@@ -393,11 +396,11 @@ export default function ExchangeDetailPage({
                   <DialogTitle className="text-slate-900 dark:text-white">Publish Gift Exchange?</DialogTitle>
                 </DialogHeader>
                 <div className="py-4">
-                  <p className="text-slate-600 dark:text-slate-400">
+                  <DialogDescription className="text-slate-600 dark:text-slate-400">
                     This will match all joined participants and email them to sign in and privately
                     reveal their assignments. Pending invitations will be closed. This action cannot
                     be undone.
-                  </p>
+                  </DialogDescription>
                   <div className="mt-4 p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
                     <p className="text-sm text-slate-900 dark:text-white font-medium mb-2">Ready to publish:</p>
                     <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
@@ -437,10 +440,10 @@ export default function ExchangeDetailPage({
                     How do you want to redo it?
                   </DialogTitle>
                 </DialogHeader>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <DialogDescription className="text-sm text-slate-600 dark:text-slate-400">
                   The current matches will stop being valid. Choose whether you need to make changes
                   first or simply draw a fresh set of names.
-                </p>
+                </DialogDescription>
                 <div className="grid gap-3 py-2">
                   <button
                     type="button"
@@ -505,6 +508,7 @@ export default function ExchangeDetailPage({
                   <DialogTitle className="text-slate-900 dark:text-white">
                     Delete {exchange.name}?
                   </DialogTitle>
+                  <DialogDescription>This permanently removes the exchange and its participant access.</DialogDescription>
                 </DialogHeader>
                 <div className="py-2">
                   {exchange.status === "inviting" || exchange.status === "active" ? (
@@ -591,11 +595,13 @@ export default function ExchangeDetailPage({
                   <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                     <DialogHeader>
                       <DialogTitle className="text-slate-900 dark:text-white">Add Participant</DialogTitle>
+                      <DialogDescription>Send an email invitation to join this gift exchange.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleAddParticipant} className="space-y-4">
                       <div className="space-y-2">
-                        <Label className="text-slate-700 dark:text-slate-300">Name</Label>
+                        <Label htmlFor="participant-name" className="text-slate-700 dark:text-slate-300">Name</Label>
                         <Input
+                          id="participant-name"
                           value={newParticipant.name}
                           onChange={(e) =>
                             setNewParticipant({ ...newParticipant, name: e.target.value })
@@ -606,8 +612,9 @@ export default function ExchangeDetailPage({
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-slate-700 dark:text-slate-300">Email</Label>
+                        <Label htmlFor="participant-email" className="text-slate-700 dark:text-slate-300">Email</Label>
                         <Input
+                          id="participant-email"
                           type="email"
                           value={newParticipant.email}
                           onChange={(e) =>
@@ -731,19 +738,19 @@ export default function ExchangeDetailPage({
                         <DialogTitle className="text-slate-900 dark:text-white">Add Exclusion Rule</DialogTitle>
                       </DialogHeader>
                       <form onSubmit={handleAddExclusion} className="space-y-4">
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                        <DialogDescription className="text-sm text-slate-600 dark:text-slate-400">
                           These two people will not be matched with each other.
-                        </p>
+                        </DialogDescription>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label className="text-slate-700 dark:text-slate-300">Person 1</Label>
+                            <Label htmlFor="exclusion-person-1" className="text-slate-700 dark:text-slate-300">Person 1</Label>
                             <Select
                               value={newExclusion.participant_a_id}
                               onValueChange={(v) =>
                                 setNewExclusion({ ...newExclusion, participant_a_id: v })
                               }
                             >
-                              <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                              <SelectTrigger id="exclusion-person-1" className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                                 <SelectValue placeholder="Select" />
                               </SelectTrigger>
                               <SelectContent>
@@ -756,14 +763,14 @@ export default function ExchangeDetailPage({
                             </Select>
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-slate-700 dark:text-slate-300">Person 2</Label>
+                            <Label htmlFor="exclusion-person-2" className="text-slate-700 dark:text-slate-300">Person 2</Label>
                             <Select
                               value={newExclusion.participant_b_id}
                               onValueChange={(v) =>
                                 setNewExclusion({ ...newExclusion, participant_b_id: v })
                               }
                             >
-                              <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                              <SelectTrigger id="exclusion-person-2" className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                                 <SelectValue placeholder="Select" />
                               </SelectTrigger>
                               <SelectContent>

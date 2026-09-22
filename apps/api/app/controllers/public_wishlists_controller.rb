@@ -1,8 +1,6 @@
 class PublicWishlistsController < ApplicationController
   skip_before_action :authenticate!
 
-  class ClaimError < StandardError; end
-
   before_action :set_wishlist
   before_action :set_item, only: [ :claim ]
 
@@ -14,9 +12,7 @@ class PublicWishlistsController < ApplicationController
   # POST /w/:token/items/:item_id/claim
   def claim
     guest_name = claim_params[:claimer_name]
-    guest_email = claim_params[:claimer_email]&.strip&.downcase
-    quantity = (claim_params[:quantity] || 1).to_i
-    purchased = claim_params[:purchased] == true || claim_params[:purchased] == "true"
+    guest_email = claim_params[:claimer_email].to_s.strip.downcase
 
     # Validate guest identity
     if guest_name.blank? || guest_email.blank?
@@ -29,25 +25,10 @@ class PublicWishlistsController < ApplicationController
       return render json: { error: "This email has already claimed this item" }, status: :unprocessable_entity
     end
 
-    # Use pessimistic locking to prevent race conditions
-    new_claim = @item.with_lock do
-      if @item.fully_claimed?
-        raise ClaimError, "Item is fully claimed"
-      end
-
-      available = @item.available_quantity
-      if quantity > available
-        raise ClaimError, "Only #{available} available"
-      end
-
-      @item.claims.create!(
-        claimer_name: guest_name,
-        claimer_email: guest_email,
-        quantity: quantity,
-        status: purchased ? "purchased" : "reserved",
-        purchased_at: purchased ? Time.current : nil
-      )
-    end
+    new_claim = Wishlists::ClaimService.create!(
+      item: @item, claimer_name: guest_name, claimer_email: guest_email,
+      quantity: claim_params.fetch(:quantity, 1), purchased: claim_params[:purchased]
+    )
 
     # Send confirmation email with magic link
     GuestClaimMailer.claim_confirmation(new_claim).deliver_later
@@ -56,8 +37,10 @@ class PublicWishlistsController < ApplicationController
       message: "Item claimed! Check your email for a link to manage your claim.",
       claim_id: new_claim.id
     }, status: :created
-  rescue ClaimError => e
+  rescue ArgumentError => e
     render json: { error: e.message }, status: :unprocessable_entity
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
   end
 
   private

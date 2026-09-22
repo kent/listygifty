@@ -1,5 +1,7 @@
 "use client";
 
+import { parseCalendarDate } from "@/lib/dates";
+
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
@@ -117,7 +119,7 @@ export default function JoinHolidayPage() {
                   <p className="text-sm font-medium text-slate-900 dark:text-white">{holiday.name}</p>
                   {holiday.date && (
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {new Date(holiday.date).toLocaleDateString("en-US", {
+                      {parseCalendarDate(holiday.date).toLocaleDateString("en-US", {
                         month: "long",
                         day: "numeric",
                         year: "numeric",

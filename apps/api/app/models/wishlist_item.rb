@@ -10,7 +10,8 @@ class WishlistItem < ApplicationRecord
   validates :image_url, length: { maximum: 2_048 }, allow_blank: true
   validates :price_min, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :price_max, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
-  validates :quantity, numericality: { greater_than: 0 }
+  validates :quantity, numericality: { only_integer: true, greater_than: 0 }
+  validates :position, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :priority, inclusion: { in: PRIORITIES.values }
   validates :url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid URL" }, allow_blank: true
   validate :price_range_valid

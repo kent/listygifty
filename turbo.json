@@ -32,6 +32,7 @@
     },
     "test": {
       "dependsOn": ["^build"],
+      "env": ["TZ"],
       "cache": false
     }
   }

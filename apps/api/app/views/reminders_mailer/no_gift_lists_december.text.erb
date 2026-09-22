@@ -2,7 +2,7 @@
 
 Hey <%= @user.safe_name %>, the holiday season is here! We noticed you don't have any gift lists set up yet.
 
-Only <%= @days_until_christmas %> days until Christmas!
+<% if @days_until_christmas.positive? %>Only <%= @days_until_christmas %> days until Christmas!<% end %>
 
 Create a gift list to:
 • Keep track of gift ideas for everyone
@@ -14,4 +14,3 @@ Create your first list: <%= @frontend_url %>/holidays
 
 ---
 Turn off December reminders: <%= @unsubscribe_url %>
-

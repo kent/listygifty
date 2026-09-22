@@ -66,12 +66,15 @@ module Admin
         has_more = candidates.length > limit
         candidates = candidates.first(limit)
         serialized_records = []
-        response_bytes = 0
+        # Reserve the JSON envelope and separators as well as record bytes.
+        response_bytes = JSON.generate(
+          resource: entry.name, records: [], count: limit, next_after_id: candidates.last&.id
+        ).bytesize
         last_id = nil
 
         candidates.each do |record|
           serialized = bounded_bulk_record(entry.name, record)
-          record_bytes = JSON.generate(serialized).bytesize
+          record_bytes = JSON.generate(serialized).bytesize + (serialized_records.empty? ? 0 : 1)
           if serialized_records.any? && response_bytes + record_bytes > MAX_LIST_RESPONSE_BYTES
             has_more = true
             break
@@ -176,7 +179,7 @@ module Admin
 
         case value
         when String
-          value.bytesize > MAX_BULK_STRING_BYTES ? value.byteslice(0, MAX_BULK_STRING_BYTES).scrub + "…" : value
+          value.bytesize > MAX_BULK_STRING_BYTES ? value.byteslice(0, MAX_BULK_STRING_BYTES).scrub("") + "…" : value
         when Hash
           value.first(100).to_h.transform_values { |child| deep_truncate_bulk(child, depth + 1) }
         when Array
@@ -234,12 +237,7 @@ module Admin
       def create_user!(attributes)
         User.transaction do
           user = User.create!(attributes)
-          workspace = Workspace.create!(
-            name: "#{user.safe_name}'s Workspace",
-            workspace_type: "personal",
-            created_by_user: user
-          )
-          workspace.workspace_memberships.create!(user: user, role: "owner")
+          user.ensure_personal_workspace!
           user
         end
       end

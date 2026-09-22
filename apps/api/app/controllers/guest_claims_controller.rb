@@ -21,11 +21,6 @@ class GuestClaimsController < ApplicationController
     end
 
     if @claim.update(guest_claim_params)
-      # If status changed to purchased, set purchased_at
-      if @claim.saved_change_to_status? && @claim.purchased?
-        @claim.update!(purchased_at: Time.current)
-      end
-
       render json: WishlistItemClaimBlueprint.render(@claim, view: :for_guest)
     else
       render json: { errors: @claim.errors.full_messages }, status: :unprocessable_entity

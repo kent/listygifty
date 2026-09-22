@@ -11,6 +11,7 @@ export interface GiftExchangesService {
   create(data: CreateGiftExchangeRequest["gift_exchange"]): Promise<GiftExchange>;
   start(id: number): Promise<GiftExchangeWithParticipants>;
   redo(id: number, mode: "reopen" | "redraw"): Promise<GiftExchangeWithParticipants>;
+  nudgeMatch(id: number): Promise<void>;
 }
 
 export function createGiftExchangesService(client: ApiClient): GiftExchangesService {
@@ -33,6 +34,10 @@ export function createGiftExchangesService(client: ApiClient): GiftExchangesServ
 
     redo(id: number, mode: "reopen" | "redraw") {
       return client.post<GiftExchangeWithParticipants>(`/gift_exchanges/${id}/redo`, { mode });
+    },
+
+    async nudgeMatch(id: number) {
+      await client.post(`/gift_exchanges/${id}/nudge_match`);
     },
   };
 }

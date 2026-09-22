@@ -1,9 +1,6 @@
 class SendSeasonalRemindersJob < ApplicationJob
   queue_as :default
 
-  # Statuses that count as "done" (case-insensitive)
-  DONE_STATUSES = %w[done wrapped].freeze
-
   # Cadence: days between reminder emails
   PENDING_GIFTS_CADENCE = 3
   NO_GIFTS_CHRISTMAS_CADENCE = 3
@@ -13,9 +10,11 @@ class SendSeasonalRemindersJob < ApplicationJob
     return unless december?
 
     User.find_each do |user|
-      send_pending_gifts_reminder(user)
-      send_no_gifts_before_christmas_reminder(user)
-      send_no_gift_lists_december_reminder(user)
+      user.with_lock do
+        send_pending_gifts_reminder(user)
+        send_no_gifts_before_christmas_reminder(user)
+        send_no_gift_lists_december_reminder(user)
+      end
     rescue StandardError => e
       Rails.logger.error "[SendSeasonalRemindersJob] Error for #{user.email}: #{e.message}"
     end
@@ -65,7 +64,8 @@ class SendSeasonalRemindersJob < ApplicationJob
     return if christmas_holiday.gifts.any?
 
     dedupe_key = dedupe_key_for_period(:no_gifts_before_christmas, NO_GIFTS_CHRISTMAS_CADENCE)
-    days_until = (christmas_holiday.date - Date.current).to_i
+    reminder_date = christmas_holiday.date || Date.new(Date.current.year, 12, 25)
+    days_until = (reminder_date - Date.current).to_i
     subject = "🎄 #{days_until} days until Christmas - start your gift list!"
 
     send_and_log(user, :no_gifts_before_christmas, subject, dedupe_key, holiday: christmas_holiday) do
@@ -103,12 +103,13 @@ class SendSeasonalRemindersJob < ApplicationJob
     user.holidays
         .where(is_template: false, archived: false, completed: false)
         .where("date = ? OR LOWER(name) LIKE ?", christmas_date, "%christmas%")
+        .where("date IS NULL OR date BETWEEN ? AND ?", Date.current, Date.current.end_of_year)
         .first
   end
 
   # Get pending (not done/wrapped) gifts grouped by holiday
   def pending_gifts_by_holiday(user)
-    done_status_ids = GiftStatus.where("LOWER(name) IN (?)", DONE_STATUSES).pluck(:id)
+    done_status_ids = GiftStatus.completed_ids
 
     user.holidays
         .where(is_template: false, archived: false, completed: false)
@@ -153,7 +154,7 @@ class SendSeasonalRemindersJob < ApplicationJob
       user: user,
       kind: kind.to_s,
       subject: subject,
-      dedupe_key: "failed:#{Time.current.to_i}",
+      dedupe_key: "failed:#{SecureRandom.uuid}",
       error: e.message,
       holiday: holiday,
       metadata: { sent_by: "SendSeasonalRemindersJob" }

@@ -50,9 +50,15 @@ class ExchangeParticipantsController < ApplicationController
   end
 
   def resend_invite
-    return render_error("Participant has already accepted") if @participant.status == "accepted"
+    @gift_exchange.with_lock do
+      return render_error("Published exchanges cannot be changed") unless @gift_exchange.editable?
+      @participant.reload
+      return render_error("Participant has already accepted") if @participant.status == "accepted"
 
-    ExchangeMailer.invitation(@participant).deliver_later
+      @participant.update!(status: "invited") if @participant.status == "declined"
+      ExchangeMailer.invitation(@participant).deliver_later
+    end
+
     render json: { message: "Invitation resent" }
   end
 

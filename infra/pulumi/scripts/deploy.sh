@@ -39,7 +39,8 @@ fi
 export PULUMI_CONFIG_PASSPHRASE="${PULUMI_CONFIG_PASSPHRASE-}"
 export PULUMI_BACKEND_URL="${PULUMI_BACKEND_URL:-gs://listygifty-pulumi-state}"
 if [[ -z "${GOOGLE_OAUTH_ACCESS_TOKEN:-}" ]]; then
-  export GOOGLE_OAUTH_ACCESS_TOKEN="$(gcloud auth print-access-token)"
+  GOOGLE_OAUTH_ACCESS_TOKEN="$(gcloud auth print-access-token)"
+  export GOOGLE_OAUTH_ACCESS_TOKEN
 fi
 pulumi login "${PULUMI_BACKEND_URL}" >/dev/null
 
@@ -233,5 +234,5 @@ printf '  SHA:    %s\n' "${SHA}"
 if [[ "${ENABLE_MOBILE}" == "false" || "${ENABLE_MOBILE}" == "0" ]]; then
   printf '  Mobile: skipped\n'
 else
-  printf '  Mobile: EAS build dispatched — `cd apps/mobile && eas build:list`\n'
+  printf '  Mobile: EAS build dispatched — cd apps/mobile && eas build:list\n'
 fi

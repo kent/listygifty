@@ -20,7 +20,7 @@ class BillingController < ApplicationController
 
   # POST /billing/create_checkout_session
   def create_checkout_session
-    plan = params[:plan]&.to_sym
+    plan = params[:plan].is_a?(String) ? params[:plan].to_sym : nil
     price_config = PRICES[plan]
 
     unless price_config
@@ -63,7 +63,7 @@ class BillingController < ApplicationController
       return render json: { error: "Coupons only available in development" }, status: :forbidden
     end
 
-    code = params[:code]&.upcase
+    code = params[:code].is_a?(String) ? params[:code].upcase : nil
 
     case code
     when "HOHOHO"

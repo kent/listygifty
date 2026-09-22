@@ -13,12 +13,18 @@ const RETRY_DELAY_MS = 500;
 // =============================================================================
 
 export class ApiError extends Error {
-  constructor(
-    public status: number,
-    public data: ApiErrorData
-  ) {
-    super(data.error || data.errors?.join(", ") || "An error occurred");
+  public data: ApiErrorData;
+
+  constructor(public status: number, data: unknown) {
+    const raw = data && typeof data === "object" ? data as Record<string, unknown> : {};
+    const normalized = {
+      ...raw,
+      error: typeof raw.error === "string" ? raw.error : undefined,
+      errors: Array.isArray(raw.errors) ? raw.errors.filter((value): value is string => typeof value === "string") : undefined,
+    };
+    super(normalized.error || normalized.errors?.join(", ") || "An error occurred");
     this.name = "ApiError";
+    this.data = normalized;
   }
 
   get isUnauthorized() {
@@ -45,6 +51,7 @@ interface RequestOptions {
   headers?: Record<string, string>;
   timeout?: number;
   retries?: number;
+  responseType?: "json" | "text";
 }
 
 // =============================================================================
@@ -65,7 +72,7 @@ export class ApiClient {
   private baseUrl: string;
 
   constructor(config: { baseUrl: string; apiKey: string }) {
-    this.baseUrl = config.baseUrl;
+    this.baseUrl = config.baseUrl.replace(/\/+$/, "");
     this.apiKey = config.apiKey;
   }
 
@@ -80,79 +87,68 @@ export class ApiClient {
   private async request<T>(
     method: HttpMethod,
     endpoint: string,
-    options: RequestOptions = {}
+    options: RequestOptions = {},
+    formData?: FormData
   ): Promise<T> {
     const {
       timeout = DEFAULT_TIMEOUT_MS,
       retries = method === "GET" ? MAX_RETRIES : 0,
+      responseType = "json",
     } = options;
+    if (!Number.isInteger(retries) || retries < 0) throw new RangeError("retries must be a non-negative integer");
+    if (!Number.isFinite(timeout) || timeout <= 0) throw new RangeError("timeout must be a positive finite number");
 
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
+      ...(formData ? {} : { "Content-Type": "application/json" }),
+      Accept: responseType === "text" ? "text/csv" : "application/json",
       Authorization: `Bearer ${this.apiKey}`,
       ...options.headers,
     };
-
-    if (this.workspaceId) {
-      headers["X-Workspace-ID"] = String(this.workspaceId);
-    }
-
+    if (this.workspaceId) headers["X-Workspace-ID"] = String(this.workspaceId);
     const url = `${this.baseUrl}${endpoint}`;
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-      const config: RequestInit = {
-        method,
-        headers,
-        signal: controller.signal,
-      };
-
-      if (options.body && method !== "GET") {
-        config.body = JSON.stringify(options.body);
-      }
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      const deadline = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new ApiError(0, { error: `Request timeout after ${timeout}ms` }));
+          controller.abort();
+        }, timeout);
+      });
 
       try {
-        const response = await fetch(url, config);
+        return await Promise.race([
+          deadline,
+          (async () => {
+            const config: RequestInit = { method, headers, signal: controller.signal };
+            if (formData) config.body = formData;
+            else if (options.body !== undefined && method !== "GET") config.body = JSON.stringify(options.body);
+
+            const response = await fetch(url, config);
+            if (!response.ok) {
+              const data: unknown = await response.json().catch(() => ({ error: "An error occurred" }));
+              throw new ApiError(response.status, data);
+            }
+            if (response.status === 204 || response.status === 205) return {} as T;
+            // Keep parsing under the deadline; receiving headers is not completion.
+            return await (responseType === "text" ? response.text() : response.json()) as T;
+          })(),
+        ]);
+      } catch (error) {
+        if (error instanceof ApiError && error.status >= 400 && error.status < 500) throw error;
+        lastError = error instanceof Error ? error : new Error(String(error));
+      } finally {
         clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const errorData: ApiErrorData = await response.json().catch(() => ({
-            error: "An error occurred",
-          }));
-          throw new ApiError(response.status, errorData);
-        }
-
-        if (response.status === 204) {
-          return {} as T;
-        }
-
-        return response.json();
-      } catch (err) {
-        clearTimeout(timeoutId);
-
-        if (err instanceof ApiError) {
-          if (err.status >= 400 && err.status < 500) {
-            throw err;
-          }
-        }
-
-        if (err instanceof Error && err.name === "AbortError") {
-          lastError = new ApiError(0, { error: `Request timeout after ${timeout}ms` });
-        } else {
-          lastError = err instanceof Error ? err : new Error(String(err));
-        }
-
-        if (attempt < retries) {
-          await sleep(RETRY_DELAY_MS * Math.pow(2, attempt));
-        }
       }
+      if (attempt < retries) await sleep(RETRY_DELAY_MS * Math.pow(2, attempt));
     }
-
     throw lastError;
+  }
+
+  getText(endpoint: string, options?: Omit<RequestOptions, "body" | "responseType">): Promise<string> {
+    return this.request<string>("GET", endpoint, { ...options, responseType: "text" });
   }
 
   get<T>(endpoint: string, options?: Omit<RequestOptions, "body">): Promise<T> {
@@ -175,33 +171,10 @@ export class ApiClient {
     return this.request<T>("DELETE", endpoint, options);
   }
 
-  async postFormData<T>(endpoint: string, formData: FormData): Promise<T> {
-    const headers: Record<string, string> = {
-      Accept: "application/json",
-      Authorization: `Bearer ${this.apiKey}`,
-    };
-
-    if (this.workspaceId) {
-      headers["X-Workspace-ID"] = String(this.workspaceId);
-    }
-
-    const url = `${this.baseUrl}${endpoint}`;
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers,
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        error: "An error occurred",
-      }));
-      throw new ApiError(response.status, errorData);
-    }
-
-    return response.json();
+  postFormData<T>(endpoint: string, formData: FormData, options?: Omit<RequestOptions, "body">): Promise<T> {
+    return this.request<T>("POST", endpoint, options, formData);
   }
+
 }
 
 // =============================================================================

@@ -10,6 +10,7 @@ jest.mock("expo-router", () => ({
   }),
   useLocalSearchParams: () => ({}),
   useSegments: () => [],
+  usePathname: () => "/test",
   Link: ({ children }) => children,
   Redirect: () => null,
   Stack: {
@@ -103,6 +104,9 @@ jest.mock("expo-notifications", () => ({
     DATE: "date",
     YEARLY: "yearly",
   },
+  DEFAULT_ACTION_IDENTIFIER: "default",
+  getLastNotificationResponse: jest.fn().mockReturnValue(null),
+  clearLastNotificationResponse: jest.fn(),
   addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
   getExpoPushTokenAsync: jest.fn().mockResolvedValue({ data: "ExponentPushToken[test]" }),
   getLastNotificationResponseAsync: jest.fn().mockResolvedValue(null),

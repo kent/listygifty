@@ -4,7 +4,7 @@ MCP (Model Context Protocol) server for Listy Gifty - manage gifts, holidays, wi
 
 ## Features
 
-- **35 tools** for full gift management:
+- **67 tools** for gift management:
   - Workspaces: Switch between personal and business contexts
   - Holidays: Create, manage, and share gift lists
   - Gifts: Track gifts with recipients, givers, and status
@@ -153,4 +153,4 @@ NIFTYGIFTY_API_KEY=ng_xxx npm start
 
 ## License
 
-Private - Listy Gifty
+MIT — see [LICENSE](LICENSE).

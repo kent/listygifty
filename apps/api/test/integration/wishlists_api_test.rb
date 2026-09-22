@@ -158,8 +158,7 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
     post claim_wishlist_wishlist_item_path(other_wishlist, item),
       headers: @auth_headers,
       as: :json
-    # May return 404 (not found/no access), 403 (forbidden), or 422 (validation error)
-    assert_includes [ 200, 201, 403, 404, 422 ], response.status
+    assert_response :not_found
   end
 
   test "unclaim item removes a claim" do
@@ -174,8 +173,7 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
     delete unclaim_wishlist_wishlist_item_path(@wishlist, item),
       headers: @auth_headers,
       as: :json
-    # May succeed or fail depending on ownership rules
-    assert_includes [ 200, 204, 403, 422 ], response.status
+    assert_response :no_content
   end
 
   test "mark_purchased updates claim status" do
@@ -190,13 +188,31 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
     patch mark_purchased_wishlist_wishlist_item_path(@wishlist, item),
       headers: @auth_headers,
       as: :json
-    # May succeed or fail depending on ownership rules
-    assert_includes [ 200, 403, 422 ], response.status
+    assert_response :success
   end
 
   # ============================================================================
   # Wishlist Items Reorder Tests
   # ============================================================================
+
+  test "reorder rejects malformed positions and rolls back invalid values" do
+    first = @wishlist.wishlist_items.create!(name: "First", position: 1)
+    second = @wishlist.wishlist_items.create!(name: "Second", position: 2)
+    [ nil, [], "bad", { "invalid" => 0 }, { first.id => 4, second.id => -1 },
+     { first.id => 4, second.id => 1.5 } ].each do |positions|
+      patch reorder_wishlist_wishlist_items_path(@wishlist),
+        headers: @auth_headers, params: { positions: positions }, as: :json
+      assert_response :unprocessable_entity
+      assert_equal 1, first.reload.position
+      assert_equal 2, second.reload.position
+    end
+  end
+
+  test "item quantities must be whole numbers" do
+    post wishlist_wishlist_items_path(@wishlist), headers: @auth_headers,
+      params: { wishlist_item: { name: "Fractional", quantity: 1.5 } }, as: :json
+    assert_response :unprocessable_entity
+  end
 
   test "reorder updates item positions" do
     item1 = @wishlist.wishlist_items.create!(name: "Item 1", priority: 0, position: 0)
@@ -240,8 +256,7 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
         }
       },
       as: :json
-    # Should succeed or fail based on rules
-    assert_includes [ 200, 201, 403, 422 ], response.status
+    assert_response :created
   end
 
   # ============================================================================

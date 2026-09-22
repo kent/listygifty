@@ -17,7 +17,8 @@ class RemindersMailer < ApplicationMailer
   def no_gifts_before_christmas(user, holiday)
     @user = user
     @holiday = holiday
-    @days_until = (holiday.date - Date.current).to_i
+    reminder_date = holiday.date || Date.new(Date.current.year, 12, 25)
+    @days_until = (reminder_date - Date.current).to_i
     @frontend_url = ENV.fetch("FRONTEND_URL", "https://listygifty.com")
     @unsubscribe_url = email_preferences_url(user)
 

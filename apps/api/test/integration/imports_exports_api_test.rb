@@ -13,6 +13,26 @@ class ImportsExportsApiTest < ActionDispatch::IntegrationTest
   # Import Tests
   # ============================================================================
 
+  test "imports ignore unrecognized columns while retaining recognized data" do
+    [ "people", "gifts" ].each do |resource|
+      file = Rack::Test::UploadedFile.new(StringIO.new("name,custom_column\nImported #{resource},extra\n"),
+        "text/csv", original_filename: "import.csv")
+      post "/imports/#{resource}", headers: @auth_headers.except("Content-Type"),
+        params: { file: file, holiday_id: @holiday.id }
+      assert_response :success
+      assert_equal 1, json_response["created"]
+      assert_empty json_response["errors"]
+    end
+  end
+
+  test "imports reject a non-file payload" do
+    [ "people", "gifts" ].each do |resource|
+      post "/imports/#{resource}", headers: @auth_headers,
+        params: { file: "not an uploaded file", holiday_id: @holiday.id }, as: :json
+      assert_response :bad_request
+    end
+  end
+
   test "imports people processes CSV" do
     csv_content = "name,email,birthday,milestone_label,milestone_date\nJohn Doe,john@example.com,1990-01-15,Work anniversary,2026-09-01\nJane Smith,jane@example.com,1985-06-20,,"
     file = Rack::Test::UploadedFile.new(

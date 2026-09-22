@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
   View,
@@ -13,7 +14,7 @@ import { ParticipantListItem } from "@/components/ParticipantListItem";
 import { ExchangeExclusionsSection } from "@/components/ExchangeExclusionsSection";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { formatBudgetRange, formatLongDate } from "@/lib/formatters";
-import { canManageExchangeWishlist, getExchangeWishlistSubtitle } from "@/lib/models";
+import { canManageExchangeWishlist, canViewExchangeMatch, getExchangeWishlistSubtitle } from "@/lib/models";
 import { useTheme } from "@/lib/theme";
 import { useExchangeDetailController } from "@/lib/controllers";
 
@@ -21,6 +22,15 @@ export default function ExchangeDetailScreen() {
   const { colors } = useTheme();
   const controller = useExchangeDetailController();
   const exchange = controller.exchange;
+  const scrollRef = useRef<ScrollView>(null);
+  const previousStatus = useRef(exchange?.status);
+
+  useEffect(() => {
+    if (exchange?.status === "active" && previousStatus.current && previousStatus.current !== "active") {
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    }
+    previousStatus.current = exchange?.status;
+  }, [exchange?.status]);
 
   if (controller.loading) {
     return <ScreenLoader />;
@@ -46,17 +56,17 @@ export default function ExchangeDetailScreen() {
 
   const formattedExchangeDate = formatLongDate(exchange.exchange_date);
   const formattedBudgetRange = formatBudgetRange(exchange.budget_min, exchange.budget_max);
-  const myParticipant = exchange.my_participant;
   const isActive = exchange.status === "active";
   const canAddParticipants =
     exchange.is_owner && exchange.status !== "active" && exchange.status !== "completed";
-  const hasMatch = myParticipant?.matched_participant_id != null;
+  const hasMatch = canViewExchangeMatch(exchange);
   const canManageWishlist = canManageExchangeWishlist(exchange);
   const shouldShowParticipantActions =
-    canManageWishlist || (isActive && hasMatch) || controller.canScheduleReminder;
+    canManageWishlist || hasMatch || controller.canScheduleReminder;
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{ padding: 16 }}
       refreshControl={
@@ -90,7 +100,7 @@ export default function ExchangeDetailScreen() {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
             <Ionicons name="people-outline" size={16} color={colors.muted} />
             <Text style={{ color: colors.muted, fontSize: 14 }}>
-              {exchange.accepted_count}/{exchange.participant_count}
+              {exchange.accepted_count}/{exchange.participant_count} joined
             </Text>
           </View>
         </View>
@@ -175,11 +185,41 @@ export default function ExchangeDetailScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+          <TouchableOpacity accessibilityRole="button" onPress={controller.goToNewParticipant} style={{ minHeight: 44, justifyContent: "center", alignItems: "center" }}>
+            <Text style={{ color: colors.primary, fontSize: 14, fontWeight: "600" }}>Invite by email</Text>
+          </TouchableOpacity>
         </View>
       ) : null}
 
       {shouldShowParticipantActions ? (
         <View style={{ gap: 12, marginBottom: 24 }}>
+          {hasMatch ? (
+            <TouchableOpacity
+              onPress={controller.goToMatch}
+              style={{
+                backgroundColor: colors.successLight,
+                padding: 16,
+                borderRadius: 12,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                <Ionicons name="gift-outline" size={24} color={colors.success} />
+                <View>
+                  <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600" }}>
+                    Unwrap My Match
+                  </Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+                    See your person and their gift ideas
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.success} />
+            </TouchableOpacity>
+          ) : null}
+
           {canManageWishlist ? (
             <TouchableOpacity
               onPress={controller.goToWishlist}
@@ -198,39 +238,12 @@ export default function ExchangeDetailScreen() {
                   <Text style={{ color: colors.textInverse, fontSize: 16, fontWeight: "600" }}>
                     My Wishlist
                   </Text>
-                  <Text style={{ color: colors.primaryLight, fontSize: 12 }}>
+                  <Text style={{ color: colors.textInverse, fontSize: 12 }}>
                     {getExchangeWishlistSubtitle(exchange)}
                   </Text>
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.textInverse} />
-            </TouchableOpacity>
-          ) : null}
-
-          {isActive && hasMatch ? (
-            <TouchableOpacity
-              onPress={controller.goToMatch}
-              style={{
-                backgroundColor: colors.successLight,
-                padding: 16,
-                borderRadius: 12,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                <Ionicons name="gift-outline" size={24} color={colors.success} />
-                <View>
-                  <Text style={{ color: colors.success, fontSize: 16, fontWeight: "600" }}>
-                    View My Match
-                  </Text>
-                  <Text style={{ color: colors.successDark, fontSize: 12 }}>
-                    See who you're buying for
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.success} />
             </TouchableOpacity>
           ) : null}
 
@@ -250,10 +263,10 @@ export default function ExchangeDetailScreen() {
               <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
                 <Ionicons name="notifications-outline" size={24} color={colors.info} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.info, fontSize: 16, fontWeight: "600" }}>
+                  <Text style={{ color: colors.infoText, fontSize: 16, fontWeight: "600" }}>
                     Set Reminder
                   </Text>
-                  <Text style={{ color: colors.infoDark, fontSize: 12 }}>
+                  <Text style={{ color: colors.infoText, fontSize: 12 }}>
                     Private notification before the exchange
                   </Text>
                 </View>
@@ -356,10 +369,10 @@ export default function ExchangeDetailScreen() {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
             <Ionicons name="shuffle-outline" size={24} color={colors.success} />
             <View>
-              <Text style={{ color: colors.success, fontSize: 16, fontWeight: "600" }}>
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600" }}>
                 Draw Matches
               </Text>
-              <Text style={{ color: colors.successDark, fontSize: 12 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
                 Assign participants and send match emails
               </Text>
             </View>
@@ -432,17 +445,21 @@ export default function ExchangeDetailScreen() {
           <ParticipantListItem
             key={participant.id}
             participant={participant}
+            onReinvite={canAddParticipants && participant.status === "declined"
+              ? () => controller.reinviteParticipant(participant)
+              : undefined}
+            reinviteDisabled={controller.resendingParticipantId !== null}
             onCopyInvite={
-              exchange.is_owner && participant.invite_token
+              canAddParticipants && participant.status === "invited" && participant.invite_token
                 ? () => controller.copyParticipantInvite(participant)
                 : undefined
             }
             onShareInvite={
-              exchange.is_owner && participant.invite_token
+              canAddParticipants && participant.status === "invited" && participant.invite_token
                 ? () => controller.shareParticipantInvite(participant)
                 : undefined
             }
-            showWishlistCount={isActive}
+            showWishlistCount
           />
         ))}
       </View>

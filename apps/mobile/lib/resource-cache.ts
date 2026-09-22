@@ -24,17 +24,23 @@ export async function readCachedResource<T>(
 
   const inflight = fetcher()
     .then((value) => {
-      resourceCache.set(key, {
-        value,
-        expiresAt: Date.now() + ttlMs,
-      });
+      // Invalidations, session changes and bootstrap priming replace this entry.
+      // Only the request that still owns it may update the shared cache.
+      if (resourceCache.get(key)?.inflight === inflight) {
+        resourceCache.set(key, {
+          value,
+          expiresAt: Date.now() + ttlMs,
+        });
+      }
       return value;
     })
     .catch((error) => {
-      if (existing) {
-        resourceCache.set(key, existing);
-      } else {
-        resourceCache.delete(key);
+      if (resourceCache.get(key)?.inflight === inflight) {
+        if (existing) {
+          resourceCache.set(key, existing);
+        } else {
+          resourceCache.delete(key);
+        }
       }
       throw error;
     });

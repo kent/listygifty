@@ -50,14 +50,37 @@ jobs:
       - name: Install root workspace dependencies
         run: npm ci --prefer-offline --no-audit --progress=false
 
-      - name: Reject critical root production vulnerabilities
-        run: npm audit --workspaces --omit=dev --audit-level=critical
+      - name: Reject high and critical root vulnerabilities
+        run: npm audit --audit-level=high
 
       - name: Install mobile dependencies
         run: npm ci --legacy-peer-deps --prefer-offline --no-audit --progress=false --prefix apps/mobile
 
-      - name: Reject critical mobile production vulnerabilities
-        run: npm audit --omit=dev --audit-level=critical --prefix apps/mobile
+      - name: Reject high and critical mobile vulnerabilities
+        run: npm audit --audit-level=high --prefix apps/mobile
+
+  infrastructure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: infra/pulumi/package-lock.json
+
+      - name: Install infrastructure dependencies
+        run: npm ci --prefer-offline --no-audit --progress=false --prefix infra/pulumi
+
+      - name: Scan infrastructure dependencies
+        run: npm audit --audit-level=high --prefix infra/pulumi
+
+      - name: Typecheck infrastructure
+        working-directory: infra/pulumi
+        run: npx tsc --noEmit
 
   lint:
     runs-on: ubuntu-latest
@@ -153,11 +176,13 @@ jobs:
       - name: Install root workspace dependencies
         run: npm ci --prefer-offline --no-audit --progress=false
 
-      - name: Build shared mobile packages
-        run: |
-          npm --prefix packages/types run build
-          npm --prefix packages/api-client run build
-          npm --prefix packages/services run build
+      - name: Build workspace packages and production web app
+        run: npm run build
+
+      - name: Run API client, services, web, and MCP tests
+        env:
+          TZ: America/Toronto
+        run: npm test
 
       - name: Run web component tests
         run: npm --prefix apps/web test

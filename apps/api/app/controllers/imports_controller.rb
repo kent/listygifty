@@ -5,6 +5,7 @@ class ImportsController < ApplicationController
 
   before_action :require_workspace_admin, only: :people
   rescue_from CsvImportLimits::PayloadTooLarge, with: :render_import_too_large
+  rescue_from CsvImportLimits::InvalidFile, with: :render_invalid_import
   rescue_from CsvImportLimits::TooManyRows, with: :render_import_row_limit
 
   def people
@@ -58,6 +59,10 @@ class ImportsController < ApplicationController
   end
 
   private
+
+  def render_invalid_import(error)
+    render json: { error: error.message }, status: :bad_request
+  end
 
   def render_import_too_large(error)
     render json: { error: error.message }, status: :content_too_large

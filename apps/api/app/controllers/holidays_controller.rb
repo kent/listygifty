@@ -66,8 +66,7 @@ class HolidaysController < ApplicationController
 
     # Send invite welcome email if user hasn't been welcomed yet
     if joined && current_user.welcomed_at.nil?
-      current_user.update!(welcomed_at: Time.current)
-      WelcomeMailer.welcome_from_invite(current_user, holiday).deliver_later
+      SendWelcomeEmailJob.perform_later(current_user.id, holiday_id: holiday.id)
     end
 
     render json: HolidayBlueprint.render(holiday, current_user: current_user), status: joined ? :created : :ok

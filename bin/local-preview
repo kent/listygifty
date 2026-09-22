@@ -32,7 +32,7 @@ check_docker() {
 
 up() {
   check_docker
-  "${COMPOSE[@]}" up --build --detach
+  "${COMPOSE[@]}" up --build --detach --renew-anon-volumes
   wait_for_url "Rails API" "${API_URL}/up"
   wait_for_url "Next.js" "${WEB_URL}/login"
   wait_for_url "Mailpit" "${MAIL_URL}/api/v1/info"

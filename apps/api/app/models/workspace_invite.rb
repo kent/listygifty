@@ -12,6 +12,7 @@ class WorkspaceInvite < ApplicationRecord
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
 
   before_validation :set_expiry, on: :create
+  before_destroy :lock_workspace
 
   scope :valid, -> { where("expires_at > ? AND accepted_at IS NULL", Time.current) }
   scope :expired, -> { where("expires_at <= ?", Time.current) }
@@ -30,15 +31,18 @@ class WorkspaceInvite < ApplicationRecord
   end
 
   def accept!(user)
-    return false unless valid_invite?
-    return false if workspace.member?(user)
+    workspace.with_lock do
+      with_lock do
+        return false unless valid_invite?
+        return false if workspace.member?(user)
+        return false if email.present? && !email.casecmp?(user.email)
 
-    transaction do
-      update!(accepted_at: Time.current, accepted_by: user)
-      workspace.workspace_memberships.create!(user: user, role: role)
+        update!(accepted_at: Time.current, accepted_by: user)
+        workspace.workspace_memberships.create!(user: user, role: role)
+      end
     end
     true
-  rescue ActiveRecord::RecordInvalid
+  rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound
     false
   end
 
@@ -47,6 +51,10 @@ class WorkspaceInvite < ApplicationRecord
   end
 
   private
+
+  def lock_workspace
+    Workspace.where(id: workspace_id).lock.pick(:id)
+  end
 
   def set_expiry
     self.expires_at ||= EXPIRY_DAYS.days.from_now

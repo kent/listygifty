@@ -1,5 +1,7 @@
 "use client";
 
+import { parseCalendarDate } from "@/lib/dates";
+
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -165,7 +167,7 @@ export default function JoinExchangePage({
               <div className="flex items-center gap-3 text-sm">
                 <Calendar className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                 <span className="text-slate-700 dark:text-slate-300">
-                  {new Date(invite.exchange.exchange_date).toLocaleDateString("en-US", {
+                  {parseCalendarDate(invite.exchange.exchange_date).toLocaleDateString("en-US", {
                     weekday: "long",
                     month: "long",
                     day: "numeric",

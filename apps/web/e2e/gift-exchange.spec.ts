@@ -87,13 +87,17 @@ test("five users complete a private exchange lifecycle with real local mail", as
 }) => {
   const runId = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
   const exchangeName = `Local E2E Gift Exchange ${runId}`;
+  const exchangeYear = new Date().getFullYear() + 1;
+  const previousMessageIds = new Set((await mailpitMessages(request)).messages.map((message) => message.ID));
 
   await page.goto("/exchanges/new");
   await page.getByLabel("Exchange Name *").fill(exchangeName);
+  await page.getByLabel("Exchange Date", { exact: true }).fill(`${exchangeYear}-12-25`);
   await page.getByRole("button", { name: "Create Exchange" }).click();
 
   await expect(page).toHaveURL(/\/exchanges\/local-e2e-gift-exchange-/);
   await expect(page.getByRole("heading", { name: exchangeName })).toBeVisible();
+  await expect(page.getByText(`December 25, ${exchangeYear}`, { exact: true })).toBeVisible();
   await expect(page.getByText("1/1 joined")).toBeVisible();
 
   const inviteUrls: string[] = [];
@@ -214,14 +218,15 @@ test("five users complete a private exchange lifecycle with real local mail", as
   await expect
     .poll(async () => {
       const messages = await mailpitMessages(request);
+      const currentMessages = messages.messages.filter((message) => !previousMessageIds.has(message.ID));
       return {
-        reveal: messages.messages.filter((message) =>
+        reveal: currentMessages.filter((message) =>
           message.Subject.includes("The names are in") && message.Subject.includes(exchangeName)
         ).length,
-        update: messages.messages.filter((message) =>
+        update: currentMessages.filter((message) =>
           message.Subject.includes("Good news: your match added an idea")
         ).length,
-        nudge: messages.messages.filter((message) =>
+        nudge: currentMessages.filter((message) =>
           message.Subject.includes("Your Secret Santa needs a little help")
         ).length,
       };

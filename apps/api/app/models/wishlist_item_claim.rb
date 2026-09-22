@@ -7,15 +7,20 @@ class WishlistItemClaim < ApplicationRecord
   has_secure_token :claim_token
 
   validates :status, presence: true, inclusion: { in: STATUSES }
-  validates :quantity, numericality: { greater_than: 0 }
+  validates :quantity, numericality: { only_integer: true, greater_than: 0 }
+  validates :user_id, uniqueness: { scope: :wishlist_item_id }, allow_nil: true
+  validates :claimer_email, uniqueness: { scope: :wishlist_item_id }, if: :guest?
   validates :claimer_email, length: { maximum: 254 }, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validates :claimer_name, length: { maximum: 200 }, allow_blank: true
   validates :message, length: { maximum: 2_000 }, allow_blank: true
   validate :user_or_guest_present
   validate :quantity_available, on: :create
+  validate :item_active, on: :create
 
   before_validation :set_claimed_at, on: :create
   before_validation :normalize_claimer_email
+  before_validation :lock_wishlist_item, on: :create
+  before_validation :sync_purchase_date
 
   scope :by_user, ->(user) { where(user: user) }
   scope :by_guest_email, ->(email) { where(claimer_email: email.downcase) }
@@ -56,6 +61,20 @@ class WishlistItemClaim < ApplicationRecord
 
   private
 
+  def lock_wishlist_item
+    WishlistItem.where(id: wishlist_item_id).lock.pick(:id)
+  end
+
+  def item_active
+    errors.add(:wishlist_item, "is archived") if wishlist_item&.archived?
+  end
+
+  def sync_purchase_date
+    return unless will_save_change_to_status?
+
+    self.purchased_at = purchased? ? (purchased_at || Time.current) : nil
+  end
+
   def user_or_guest_present
     if user_id.blank? && claimer_email.blank?
       errors.add(:base, "Must have either a user or guest email")
@@ -63,7 +82,7 @@ class WishlistItemClaim < ApplicationRecord
   end
 
   def quantity_available
-    return unless wishlist_item
+    return unless wishlist_item && quantity
 
     if quantity > wishlist_item.available_quantity
       errors.add(:quantity, "exceeds available quantity (#{wishlist_item.available_quantity} available)")

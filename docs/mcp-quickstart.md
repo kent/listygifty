@@ -49,8 +49,22 @@ claude mcp add listygifty https://api.listygifty.com/mcp
 
 ## For Runner Users
 
-Runner loads custom MCP servers from `mcp.json`. Create a Listy Gifty API key
-with `read` and `write` scopes, then save this as `~/.runner/mcp.json`:
+Runner supports remote OAuth MCP servers through **Connected Apps**:
+
+1. Open Runner and select **Connected Apps** in the sidebar.
+2. Select **Custom MCP**, then **Connect**.
+3. Enter `https://api.listygifty.com/mcp` as the full HTTPS endpoint.
+4. Choose **Sign in with the provider**.
+5. Complete the Listy Gifty login and consent flow in the browser.
+6. Return to Runner and select **Refresh tools** if the Listy Gifty tools do not appear immediately.
+
+Use **Reconnect** from the connection's settings if the OAuth session expires or
+the connection's requested scopes change. See
+[Runner's custom MCP guide](https://guides.runner.now/connections/connect-your-own-mcp).
+
+For clients that cannot launch remote OAuth, create a Listy Gifty API key with
+`read` and `write` scopes and configure a Bearer header. Runner's legacy
+`mcp.json` fallback is:
 
 ```json
 {
@@ -66,9 +80,8 @@ with `read` and `write` scopes, then save this as `~/.runner/mcp.json`:
 }
 ```
 
-Start a new Runner conversation after saving the file. Runner does not currently
-start OAuth for hand-written `mcp.json` entries, so the API key header is required.
-See [Runner's custom MCP guide](https://guides.runner.now/connections/connect-your-own-mcp).
+Start a new Runner conversation after saving the file. A hand-written entry is
+independent of the OAuth connection managed in Runner's Connected Apps.
 
 ## Connecting the Admin MCP
 
@@ -79,6 +92,15 @@ https://api.listygifty.com/admin/mcp
 ```
 
 An OAuth-capable HTTP MCP client will discover Listy Gifty's authorization server, open the first-party browser login, and show a red administrator consent warning. Only the allowlisted `kent.fenwick@gmail.com` account can approve or use this connection. Do not substitute the ordinary `/mcp` URL; its tokens intentionally cannot access admin tools.
+
+In Runner, add this as a second **Custom MCP** connection and choose **Sign in
+with the provider**. Name it something distinct such as `ListyGifty Admin`. If it
+was connected previously, open its connection settings and select **Reconnect**
+so Runner requests the exact `admin` scope and admin resource. Complete consent
+while signed in as `kent.fenwick@gmail.com`, then select **Refresh tools** and
+start a new conversation. The connection should expose tools including
+`admin_analytics_overview`, `admin_analytics_timeseries`, and
+`admin_analytics_acquisition`.
 
 Clients that cannot launch remote OAuth may temporarily use a dedicated, expiring admin API key as documented in [Admin MCP](admin-mcp.md).
 

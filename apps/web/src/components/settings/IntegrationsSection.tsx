@@ -75,15 +75,15 @@ export function IntegrationsSection({ onOpenApiKeys }: IntegrationsSectionProps)
           <div>
             <h3 className="font-semibold text-slate-900 dark:text-white">Two easy ways to authenticate</h3>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              Claude and other OAuth-capable clients open a secure Listy Gifty sign-in automatically.
-              Runner currently uses an API key in its MCP configuration.
+              Runner and other OAuth-capable clients open a secure Listy Gifty sign-in automatically.
+              API keys remain available as a fallback for clients that require a Bearer header.
             </p>
             <Link
               href="/settings?tab=api-keys"
               onClick={onOpenApiKeys}
               className="inline-flex items-center gap-2 mt-3 text-sm text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-medium"
             >
-              Create a Runner API key
+              Manage API keys
               <ExternalLink className="w-4 h-4" />
             </Link>
           </div>
@@ -145,7 +145,7 @@ export function IntegrationsSection({ onOpenApiKeys }: IntegrationsSectionProps)
             </div>
             <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Runner</h4>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-              Add Listy Gifty as a remote MCP server
+              Connect a Custom MCP app and sign in with OAuth
             </p>
             <a
               href="https://guides.runner.now/connections/connect-your-own-mcp"
@@ -176,13 +176,13 @@ export function IntegrationsSection({ onOpenApiKeys }: IntegrationsSectionProps)
         </div>
       </div>
 
-      {/* Runner configuration */}
+      {/* Bearer-token fallback */}
       <div className="p-6 rounded-2xl bg-slate-950 text-white border border-slate-800">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
-            <h3 className="text-lg font-semibold">Runner configuration</h3>
+            <h3 className="text-lg font-semibold">Bearer-token fallback</h3>
             <p className="text-sm text-slate-400 mt-1">
-              Save this as <code className="text-cyan-400">~/.runner/mcp.json</code>, replace the placeholder with your API key, then start a new Runner conversation.
+              Runner users should connect through Connected Apps with OAuth. If a client requires a manual configuration, save this as <code className="text-cyan-400">~/.runner/mcp.json</code>, replace the placeholder with your API key, then start a new conversation.
             </p>
           </div>
           <Button
@@ -191,7 +191,7 @@ export function IntegrationsSection({ onOpenApiKeys }: IntegrationsSectionProps)
             className="border-slate-700 bg-transparent text-white hover:bg-slate-800"
             onClick={() => {
               navigator.clipboard.writeText(RUNNER_MCP_CONFIG);
-              toast.success("Runner configuration copied");
+              toast.success("MCP fallback configuration copied");
             }}
           >
             Copy

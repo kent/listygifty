@@ -1,5 +1,7 @@
 "use client";
 
+import { parseCalendarDate } from "@/lib/dates";
+
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -144,7 +146,7 @@ export default function MyMatchPage({
               <p className="text-slate-600 dark:text-slate-400 flex items-center justify-center gap-2">
                 <Calendar className="h-4 w-4" />
                 Gift needed by{" "}
-                {new Date(exchange.exchange_date).toLocaleDateString("en-US", {
+                {parseCalendarDate(exchange.exchange_date).toLocaleDateString("en-US", {
                   month: "long",
                   day: "numeric",
                   year: "numeric",

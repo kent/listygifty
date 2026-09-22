@@ -186,7 +186,7 @@ export function ApiKeysSection() {
                   <DialogHeader>
                     <DialogTitle>Create API Key</DialogTitle>
                     <DialogDescription>
-                      Create a new API key for Runner or another MCP client that supports Bearer headers.
+                      Create a new API key for an MCP client that requires a Bearer header.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
@@ -227,10 +227,11 @@ export function ApiKeysSection() {
       {/* MCP Instructions */}
       <div className="rounded-2xl border border-slate-200 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/30 backdrop-blur-xl overflow-hidden p-6">
         <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-3">
-          Use an API key with Runner
+          Use an API key with a Bearer-token client
         </h3>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-          Create a key, replace the placeholder below, and save this as{" "}
+          OAuth is recommended for Runner. For a client that requires manual Bearer
+          authentication, create a key, replace the placeholder below, and save this as{" "}
           <code className="font-mono text-violet-600 dark:text-violet-400">
             ~/.runner/mcp.json
           </code>
@@ -253,7 +254,7 @@ export function ApiKeysSection() {
           </Button>
         </div>
         <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-          Claude and other OAuth-capable clients do not need an API key. Use the{" "}
+          Runner and other OAuth-capable clients do not need an API key. Use the{" "}
           <a
             href="/integrations"
             className="font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"

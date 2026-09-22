@@ -3,7 +3,7 @@
 import {
   createContext,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useCallback,
   useState,
   useMemo,
@@ -20,6 +20,7 @@ import {
 } from "@clerk/nextjs";
 import { billingService, mapClerkUser } from "@/services";
 import { apiClient } from "@/lib/api-client";
+import { useRequestGuard } from "@/hooks/use-request-guard";
 
 interface AuthContextType {
   user: User | null;
@@ -44,10 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clerk = useClerk();
   const router = useRouter();
 
-  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
+  const userId = clerkUser?.id ?? null;
+  const [billingSnapshot, setBillingSnapshot] = useState<{ userId: string; status: BillingStatus | null } | null>(null);
+  const billingStatus = billingSnapshot?.userId === userId ? billingSnapshot.status : null;
+  const { start, invalidate, isActive } = useRequestGuard(userId);
 
   // Configure apiClient to use Clerk token
-  useEffect(() => {
+  useLayoutEffect(() => {
     apiClient.setTokenGetter(async () => {
       return await getToken();
     });
@@ -63,27 +67,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const refreshBillingStatus = useCallback(async () => {
-    if (isAuthenticated) {
+    if (userId && isActive()) {
+      const isCurrent = start();
       try {
         const status = await billingService.getStatus();
-        setBillingStatus(status);
+        if (isCurrent()) setBillingSnapshot({ userId, status });
       } catch {
         // Silently fail - billing might not be set up yet
       }
     }
-  }, [isAuthenticated]);
+  }, [userId, isActive, start]);
 
   const hydrateBillingStatus = useCallback((status: BillingStatus | null) => {
-    setBillingStatus(status);
-  }, []);
+    if (!userId || !isActive()) return;
+    invalidate();
+    setBillingSnapshot({ userId, status });
+  }, [userId, invalidate, isActive]);
 
   // Sign out via Clerk and redirect to homepage
   const signOut = useCallback(async () => {
-    setBillingStatus(null);
+    invalidate();
+    setBillingSnapshot(null);
     await clerk.signOut();
     toast.success("Signed out");
     router.push("/");
-  }, [clerk, router]);
+  }, [clerk, router, invalidate]);
 
   // Memoize derived billing values
   const billingValues = useMemo(() => {

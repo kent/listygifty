@@ -7,6 +7,8 @@ interface ParticipantListItemProps {
   participant: ExchangeParticipant;
   onCopyInvite?: () => void;
   onShareInvite?: () => void;
+  onReinvite?: () => void;
+  reinviteDisabled?: boolean;
   showWishlistCount?: boolean;
 }
 
@@ -14,6 +16,8 @@ export function ParticipantListItem({
   participant,
   onCopyInvite,
   onShareInvite,
+  onReinvite,
+  reinviteDisabled = false,
   showWishlistCount = false,
 }: ParticipantListItemProps) {
   const { colors, isDark } = useTheme();
@@ -52,13 +56,23 @@ export function ParticipantListItem({
           <Text style={{ color: colors.muted, fontSize: 12 }} numberOfLines={1}>
             {participant.email}
           </Text>
-        ) : (
-          <Text style={{ color: statusIcon.color, fontSize: 12 }}>{statusLabel}</Text>
-        )}
+        ) : null}
+        <Text style={{ color: statusIcon.color, fontSize: 12 }}>{statusLabel}</Text>
       </View>
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        {showWishlistCount && participant.wishlist_count > 0 ? (
+        {onReinvite && participant.status === "declined" ? (
+          <TouchableOpacity
+            onPress={onReinvite}
+            disabled={reinviteDisabled}
+            accessibilityRole="button"
+            accessibilityLabel={`Invite ${participant.display_name || participant.name} again`}
+            style={{ minHeight: 44, justifyContent: "center", paddingHorizontal: 8, opacity: reinviteDisabled ? 0.5 : 1 }}
+          >
+            <Text style={{ color: colors.primary, fontSize: 12, fontWeight: "700" }}>Invite again</Text>
+          </TouchableOpacity>
+        ) : null}
+        {showWishlistCount && participant.status === "accepted" ? (
           <View
             style={{
               backgroundColor: isDark ? "#4c1d95" : "#f3e8ff",
@@ -74,12 +88,12 @@ export function ParticipantListItem({
                 fontWeight: "600",
               }}
             >
-              {participant.wishlist_count} items
+              {participant.wishlist_count === 0 ? "No ideas yet" : `${participant.wishlist_count} ${participant.wishlist_count === 1 ? "idea" : "ideas"}`}
             </Text>
           </View>
         ) : null}
 
-        {onCopyInvite ? (
+        {onCopyInvite && participant.status === "invited" ? (
           <TouchableOpacity
             onPress={onCopyInvite}
             accessibilityRole="button"
@@ -90,7 +104,8 @@ export function ParticipantListItem({
               gap: 4,
               borderRadius: 12,
               paddingHorizontal: 8,
-              paddingVertical: 4,
+              paddingVertical: 10,
+              minHeight: 44,
               backgroundColor: colors.surfaceSecondary,
             }}
           >
@@ -101,7 +116,7 @@ export function ParticipantListItem({
           </TouchableOpacity>
         ) : null}
 
-        {onShareInvite ? (
+        {onShareInvite && participant.status === "invited" ? (
           <TouchableOpacity
             onPress={onShareInvite}
             accessibilityRole="button"
@@ -112,7 +127,8 @@ export function ParticipantListItem({
               gap: 4,
               borderRadius: 12,
               paddingHorizontal: 8,
-              paddingVertical: 4,
+              paddingVertical: 10,
+              minHeight: 44,
               backgroundColor: colors.primarySurface,
             }}
           >

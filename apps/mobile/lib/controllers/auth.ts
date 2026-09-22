@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import type { SignInResource } from "@clerk/types";
 import { Alert, Platform } from "react-native";
 import {
   useAuth,
@@ -164,43 +165,104 @@ export function useLoginController() {
     }
   }, [redirectUrl, startAppleAuthenticationFlow, startSSOFlow]);
 
-  const handlePasswordSignIn = useCallback(async () => {
-    if (!isLoaded) {
+  const [verification, setVerification] = useState<"email_first" | "email_second" | "totp" | null>(null);
+  const [code, setCode] = useState("");
+
+  const continueSignIn = useCallback(async (result: SignInResource) => {
+    if (result.status === "complete" && result.createdSessionId) {
+      await setActive!({ session: result.createdSessionId });
       return;
     }
 
+    if (result.status === "needs_second_factor") {
+      const emailFactor = result.supportedSecondFactors?.find((factor) => factor.strategy === "email_code");
+      if (emailFactor) {
+        await result.prepareSecondFactor({ strategy: "email_code", emailAddressId: emailFactor.emailAddressId });
+        setVerification("email_second");
+        setCode("");
+        return;
+      }
+      if (result.supportedSecondFactors?.some((factor) => factor.strategy === "totp")) {
+        setVerification("totp");
+        setCode("");
+        return;
+      }
+    }
+
+    if (result.status === "needs_first_factor") {
+      const factor = result.supportedFirstFactors?.find((factor) => factor.strategy === "email_code");
+      if (factor) {
+        await result.prepareFirstFactor({ strategy: "email_code", emailAddressId: factor.emailAddressId });
+        setVerification("email_first");
+        setCode("");
+        return;
+      }
+    }
+
+    setError("This account needs another sign-in method. Try Continue with Google or Apple.");
+  }, [setActive]);
+
+  const handlePasswordSignIn = useCallback(async () => {
+    if (!isLoaded || loading) return;
     setError("");
     setLoading(true);
-
     try {
-      const result = await signIn.create({
-        identifier: email,
-        password,
-      });
-
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-      }
+      await continueSignIn(await signIn.create({ identifier: email.trim(), password }));
     } catch (error) {
       setError(getClerkErrorMessage(error, "Failed to sign in"));
     } finally {
       setLoading(false);
     }
-  }, [email, isLoaded, password, setActive, signIn]);
+  }, [continueSignIn, email, isLoaded, loading, password, signIn]);
+
+  const handleEmailCodeSignIn = useCallback(async () => {
+    if (!isLoaded || loading) return;
+    if (!email.trim()) { setError("Enter your email address first."); return; }
+    setError("");
+    setLoading(true);
+    try {
+      await continueSignIn(await signIn.create({ identifier: email.trim() }));
+    } catch (error) {
+      setError(getClerkErrorMessage(error, "Could not send a sign-in code"));
+    } finally {
+      setLoading(false);
+    }
+  }, [continueSignIn, email, isLoaded, loading, signIn]);
+
+  const handleVerify = useCallback(async () => {
+    if (!isLoaded || !verification || loading) return;
+    setError("");
+    setLoading(true);
+    try {
+      const result = verification === "email_first"
+        ? await signIn.attemptFirstFactor({ strategy: "email_code", code: code.trim() })
+        : await signIn.attemptSecondFactor({ strategy: verification === "totp" ? "totp" : "email_code", code: code.trim() });
+      await continueSignIn(result);
+    } catch (error) {
+      setError(getClerkErrorMessage(error, "Check the code and try again."));
+    } finally {
+      setLoading(false);
+    }
+  }, [code, continueSignIn, isLoaded, loading, signIn, verification]);
+
+  const handleResendCode = useCallback(async () => {
+    if (!isLoaded || loading || !verification || verification === "totp") return;
+    setError("");
+    setLoading(true);
+    try {
+      await continueSignIn(signIn);
+    } catch (error) {
+      setError(getClerkErrorMessage(error, "Could not resend the code. Try again."));
+    } finally {
+      setLoading(false);
+    }
+  }, [continueSignIn, isLoaded, loading, signIn, verification]);
 
   return {
-    appleLoading,
-    email,
-    error,
-    googleLoading,
-    handleAppleSignIn,
-    handleGoogleSignIn,
-    handlePasswordSignIn,
-    loading,
-    password,
-    returnTo,
-    setEmail,
-    setPassword,
+    appleLoading, email, error, googleLoading, handleAppleSignIn, handleGoogleSignIn,
+    handlePasswordSignIn, handleEmailCodeSignIn, handleVerify, handleResendCode,
+    loading, password, returnTo, setEmail, setPassword, verification, code, setCode,
+    cancelVerification: () => { setVerification(null); setCode(""); setError(""); },
   };
 }
 
@@ -212,6 +274,8 @@ export function useSignupController() {
   const returnTo = useAuthReturnPath();
   useBrowserWarmup();
 
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -305,15 +369,25 @@ export function useSignupController() {
       return;
     }
 
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("Enter your first and last name so people know who joined.");
+      return;
+    }
     setError("");
     setLoading(true);
 
     try {
-      await signUp.create({
-        emailAddress: email,
+      const result = await signUp.create({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        emailAddress: email.trim(),
         password,
       });
 
+      if (result.status === "complete" && result.createdSessionId) {
+        await setActive({ session: result.createdSessionId });
+        return;
+      }
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setPendingVerification(true);
     } catch (error) {
@@ -321,7 +395,7 @@ export function useSignupController() {
     } finally {
       setLoading(false);
     }
-  }, [email, isLoaded, password, signUp]);
+  }, [email, firstName, lastName, isLoaded, password, setActive, signUp]);
 
   const handleVerify = useCallback(async () => {
     if (!isLoaded) {
@@ -336,6 +410,8 @@ export function useSignupController() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
+      } else {
+        setError("Your account still needs some details. Go back and check your name and email.");
       }
     } catch (error) {
       setError(getClerkErrorMessage(error, "Verification failed"));
@@ -344,7 +420,23 @@ export function useSignupController() {
     }
   }, [code, isLoaded, setActive, signUp]);
 
+  const handleResendCode = useCallback(async () => {
+    if (!isLoaded || loading) return;
+    setLoading(true);
+    setError("");
+    try {
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      setCode("");
+    } catch (error) {
+      setError(getClerkErrorMessage(error, "Could not resend the code. Try again."));
+    } finally {
+      setLoading(false);
+    }
+  }, [isLoaded, loading, signUp]);
+
   return {
+    firstName, lastName, setFirstName, setLastName, handleResendCode,
+    cancelVerification: () => { setPendingVerification(false); setCode(""); setError(""); },
     appleLoading,
     code,
     email,
