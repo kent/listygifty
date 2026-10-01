@@ -868,6 +868,22 @@ let nextExchangeExclusionId = 600;
 let nextWishlistItemId = 800;
 let exchangeExclusionsStore: ExchangeExclusion[] = [];
 
+// Each demo starts from the same isolated sample records. No live API is used.
+const initialSampleState = clone({
+  giftStatusesStore, peopleStore, holidaysStore, holidayCollaboratorsStore,
+  giftsStore, exchangesStore, exchangeParticipantsStore, wishlistItemsStore,
+  exchangeExclusionsStore, nextPersonId, nextHolidayId, nextGiftId,
+  nextExchangeId, nextExchangeParticipantId, nextExchangeExclusionId, nextWishlistItemId,
+});
+
+export function resetSampleData() {
+  ({ giftStatusesStore, peopleStore, holidaysStore, holidayCollaboratorsStore,
+    giftsStore, exchangesStore, exchangeParticipantsStore, wishlistItemsStore,
+    exchangeExclusionsStore, nextPersonId, nextHolidayId, nextGiftId,
+    nextExchangeId, nextExchangeParticipantId, nextExchangeExclusionId, nextWishlistItemId,
+  } = clone(initialSampleState));
+}
+
 function getExchangeParticipants(exchangeId: number): ExchangeParticipant[] {
   return exchangeParticipantsStore[exchangeId] ?? [];
 }
@@ -991,6 +1007,7 @@ function buildExchangeSummary(exchange: GiftExchange): GiftExchange {
   return {
     ...exchange,
     accepted_count: participants.filter((participant) => participant.status === "accepted").length,
+    can_start: exchange.is_owner && (exchange.status === "draft" || exchange.status === "inviting") && participants.filter((participant) => participant.status === "accepted").length >= 2,
     my_participant: myParticipant,
     participant_count: participants.length,
   };
@@ -1191,6 +1208,7 @@ export const screenshotServices = {
         id: exchangeId,
         name: data.name || "New Exchange",
         slug: `new-exchange-${exchangeId}`,
+        share_url: `https://listygifty.com/e/demo-exchange-${exchangeId}`,
         exchange_date: data.exchange_date ?? null,
         status: "draft",
         budget_min: data.budget_min ?? null,
@@ -1234,6 +1252,34 @@ export const screenshotServices = {
       return clone(buildExchangeSummary(exchange));
     },
     async start(id: number) {
+      const exchangeToStart = exchangesStore.find((exchange) => exchange.id === id);
+      if (!exchangeToStart || !buildExchangeSummary(exchangeToStart).can_start) {
+        throw new Error("Add at least two accepted participants before drawing matches.");
+      }
+      const accepted = getExchangeParticipants(id).filter((participant) => participant.status === "accepted");
+      const rules = exchangeExclusionsStore.filter((exclusion) => exclusion.gift_exchange_id === id);
+      const assigned = new Map<number, number>();
+      const used = new Set<number>();
+      function assign(index: number): boolean {
+        if (index === accepted.length) return true;
+        const giver = accepted[index];
+        for (const receiver of accepted) {
+          if (giver.id === receiver.id || used.has(receiver.id)) continue;
+          if (rules.some((rule) =>
+            (rule.participant_a_id === giver.id && rule.participant_b_id === receiver.id) ||
+            (rule.participant_b_id === giver.id && rule.participant_a_id === receiver.id))) continue;
+          assigned.set(giver.id, receiver.id);
+          used.add(receiver.id);
+          if (assign(index + 1)) return true;
+          assigned.delete(giver.id);
+          used.delete(receiver.id);
+        }
+        return false;
+      }
+      if (!assign(0)) throw new Error("These exclusion rules prevent a complete draw. Remove a rule and try again.");
+      exchangeParticipantsStore[id] = getExchangeParticipants(id).map((participant) => ({
+        ...participant, matched_participant_id: assigned.get(participant.id) ?? null,
+      }));
       exchangesStore = exchangesStore.map((exchange) =>
         exchange.id === id
           ? {
@@ -1261,11 +1307,11 @@ export const screenshotServices = {
         user_id: null,
         name: data.name || "New Participant",
         email: data.email || "participant@example.com",
-        status: "invited",
+        status: data.status ?? "invited",
         display_name: data.name || "New Participant",
         has_user: false,
         wishlist_count: 0,
-        invite_token: "review-invite-token",
+        invite_token: `demo-invite-${exchangeId}-${nextExchangeParticipantId}`,
         matched_participant_id: null,
         created_at: nowIso,
         updated_at: nowIso,

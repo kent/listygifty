@@ -59,7 +59,7 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <McpOAuthUrlCard />
+      {controller.demo ? <Text style={{ color: colors.textTertiary }}>Demo changes stay on this device and reset when you exit. Sign in with email to save your own gift plans and connect other apps.</Text> : <McpOAuthUrlCard />}
 
       <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
         <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
@@ -119,7 +119,7 @@ export default function ProfileScreen() {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           <Ionicons name="log-out-outline" size={18} color={isDark ? "#fca5a5" : "#dc2626"} />
           <Text style={{ color: isDark ? "#fca5a5" : "#dc2626", fontSize: 16, fontWeight: "600" }}>
-            Sign Out
+            {controller.demo ? "Exit demo" : "Sign Out"}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={isDark ? "#fca5a5" : "#dc2626"} />

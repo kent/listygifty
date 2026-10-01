@@ -236,6 +236,9 @@ jobs:
         working-directory: apps/mobile
         run: npm test -- --runInBand
 
+      - name: Test App Store review transitions
+        run: node --test scripts/ci/review-submission.test.mjs
+
   release-preflight:
     name: Mobile Release Preflight
     runs-on: ubuntu-latest

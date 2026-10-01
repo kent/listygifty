@@ -99,10 +99,10 @@ export default function MyMatchScreen() {
             {controller.nudgeError ? <InlineError message={controller.nudgeError} /> : null}
             {controller.exchange.capabilities.nudge_match ? (
               <View style={{ marginTop: 20, paddingHorizontal: 20, width: "100%" }}>
-                <PrimaryButton label={controller.nudgeSent ? "Request sent!" : "Ask for gift ideas"}
+                <PrimaryButton label={controller.nudgeSent ? (controller.demo ? "Request simulated" : "Request sent!") : "Ask for gift ideas"}
                   icon="mail-outline" onPress={controller.nudgeMatch} loading={controller.nudging} disabled={controller.nudgeSent} />
                 <Text style={{ color: colors.textTertiary, fontSize: 12, textAlign: "center", marginTop: 10 }}>
-                  {controller.nudgeSent ? "We'll email you when they add an idea." : "We'll send an anonymous email. Your match stays a secret."}
+                  {controller.demo ? "This demo simulates the request. No email is sent." : controller.nudgeSent ? "We'll email you when they add an idea." : "We'll send an anonymous email. Your match stays a secret."}
                 </Text>
               </View>
             ) : null}

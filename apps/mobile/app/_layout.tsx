@@ -11,6 +11,8 @@ import { normalizeAuthReturnPath } from "@/lib/auth-return";
 import { flushAnalyticsEvents, useAnalytics } from "@/lib/analytics";
 import { setupNotificationHandlers } from "@/lib/notifications";
 import { useApiSetup } from "@/lib/use-api";
+import { useDemoMode } from "@/lib/demo-mode";
+import { DemoBanner } from "@/components/DemoBanner";
 import {
   getActiveScreenshotRouteName,
   getScreenshotRouteTarget,
@@ -50,6 +52,7 @@ function ScreenshotRouter() {
 
 function AuthRouter() {
   const { isLoaded, isSignedIn, userId } = useAuth();
+  const demo = useDemoMode();
   const segments = useSegments();
   const { returnTo } = useGlobalSearchParams<{ returnTo?: string | string[] }>();
   const router = useRouter();
@@ -84,17 +87,17 @@ function AuthRouter() {
       return;
     }
 
-    if (isSignedIn && inAuthGroup) {
-      router.replace(authReturnPath || "/(tabs)/lists");
-    } else if (!isSignedIn && !inAuthGroup && !inJoinGroup && !inSharedExchangeGroup) {
+    if ((isSignedIn || demo) && inAuthGroup) {
+      router.replace(demo ? "/(tabs)/lists" : authReturnPath || "/(tabs)/lists");
+    } else if (!isSignedIn && !demo && !inAuthGroup && !inJoinGroup && !inSharedExchangeGroup) {
       router.replace("/auth/login");
     }
-  }, [isLoaded, isSignedIn, returnTo, router, segments]);
+  }, [demo, isLoaded, isSignedIn, returnTo, router, segments]);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
+    if (!isLoaded || !isSignedIn || demo) return;
     return setupNotificationHandlers();
-  }, [isLoaded, isSignedIn, userId]);
+  }, [demo, isLoaded, isSignedIn, userId]);
 
   if (!isLoaded) {
     return <ScreenLoader />;
@@ -103,7 +106,8 @@ function AuthRouter() {
   return (
     <>
       <StatusBar style={isDark ? "light" : "dark"} />
-      <Slot key={userId ?? "signed-out"} />
+      {demo ? <DemoBanner /> : null}
+      <Slot key={demo ? "demo" : userId ?? "signed-out"} />
     </>
   );
 }

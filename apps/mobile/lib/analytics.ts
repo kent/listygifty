@@ -5,6 +5,7 @@ import { Platform } from "react-native";
 import type { AnalyticsEventInput, AnalyticsProperties } from "@niftygifty/types";
 import { analyticsService } from "@/lib/api";
 import { runtimeConfig } from "@/lib/runtime-config";
+import { isDemoMode } from "@/lib/demo-mode";
 
 const VISITOR_KEY = "listygifty.analytics.visitor";
 const SESSION_KEY = "listygifty.analytics.session";
@@ -74,7 +75,7 @@ export function useAnalytics() {
 }
 
 export async function captureMobileEvent(event: string, properties?: AnalyticsProperties) {
-  if (runtimeConfig.screenshotMode) return;
+  if (runtimeConfig.screenshotMode || isDemoMode()) return;
 
   try {
     const [anonymousId, currentSessionId] = await Promise.all([visitorId(), sessionId()]);
@@ -105,6 +106,7 @@ function enqueue(event: AnalyticsEventInput) {
 export async function flushAnalyticsEvents() {
   if (flushTimer) clearTimeout(flushTimer);
   flushTimer = null;
+  if (isDemoMode()) { queue.length = 0; return; }
   if (sessionPersistTimer) {
     clearTimeout(sessionPersistTimer);
     sessionPersistTimer = null;
