@@ -7,6 +7,7 @@ import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { useServices } from "@/lib/use-api";
+import { useDemoMode } from "@/lib/demo-mode";
 import { useScreenActivity } from "@/lib/controllers/use-screen-activity";
 import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import { scheduleExchangeReminder } from "@/lib/notifications";
@@ -161,6 +162,7 @@ export function useNewExchangeController() {
 }
 
 export function useExchangeDetailController() {
+  const demo = useDemoMode();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { giftExchanges, exchangeExclusions, exchangeParticipants } = useServices();
@@ -263,6 +265,10 @@ export function useExchangeDetailController() {
     if (!resource.data) {
       return;
     }
+    if (demo) {
+      Alert.alert("Demo reminder", "In your own exchange, this schedules a private notification before the exchange date. No reminder is scheduled for sample data.");
+      return;
+    }
 
     setSchedulingReminder(true);
 
@@ -286,7 +292,7 @@ export function useExchangeDetailController() {
     } finally {
       setSchedulingReminder(false);
     }
-  }, [resource.data, track]);
+  }, [demo, resource.data, track]);
 
   const shareExchangeJoinLink = useCallback(async () => {
     const exchange = resource.data;
@@ -503,10 +509,10 @@ export function useExchangeDetailController() {
 
   const reinviteParticipant = useCallback((participant: ExchangeParticipant) => {
     if (resendingParticipantId !== null || participant.status !== "declined") return;
-    Alert.alert("Invite again?", `Email a new invitation to ${participant.email}? They can choose whether to join.`, [
+    Alert.alert(demo ? "Simulate invitation?" : "Invite again?", demo ? "This sample participant will accept immediately. No email is sent." : `Email a new invitation to ${participant.email}? They can choose whether to join.`, [
       { text: "Cancel", style: "cancel" },
       {
-        text: "Send invitation",
+        text: demo ? "Simulate invitation" : "Send invitation",
         onPress: async () => {
           setResendingParticipantId(participant.id);
           try {
@@ -521,7 +527,7 @@ export function useExchangeDetailController() {
         },
       },
     ]);
-  }, [exchangeId, exchangeParticipants, resendingParticipantId, resource]);
+  }, [demo, exchangeId, exchangeParticipants, resendingParticipantId, resource]);
 
   const triggerRefresh = useCallback(() => {
     resource.refresh();
@@ -580,6 +586,7 @@ export function useExchangeDetailController() {
 }
 
 export function useNewExchangeParticipantController() {
+  const demo = useDemoMode();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const captureScreen = useScreenActivity();
@@ -637,6 +644,7 @@ export function useNewExchangeParticipantController() {
   }, [captureScreen, exchangeId, exchangeParticipants, form, isValidExchangeId, router, track]);
 
   return {
+    demo,
     error,
     form,
     handleCancel: () => router.back(),
@@ -647,6 +655,7 @@ export function useNewExchangeParticipantController() {
 }
 
 export function useExchangeMatchController() {
+  const demo = useDemoMode();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { giftExchanges, wishlistItems } = useServices();
   const exchangeId = Number.parseInt(id ?? "", 10);
@@ -689,6 +698,7 @@ export function useExchangeMatchController() {
   }, [exchangeId, giftExchanges, nudgeSent, nudging, resource.data.exchange]);
 
   return {
+    demo,
     nudgeMatch, nudging, nudgeSent, nudgeError,
     error: !isValidExchangeId ? "Invalid exchange ID" : resource.error,
     exchange: resource.data.exchange,
@@ -874,8 +884,9 @@ export function useExchangeShareJoinController() {
   const router = useRouter();
   const captureScreen = useScreenActivity();
   const clerkAuth = useAuth();
-  const isSignedIn = runtimeConfig.screenshotMode ? false : clerkAuth.isSignedIn;
-  const isLoaded = runtimeConfig.screenshotMode ? true : clerkAuth.isLoaded;
+  const demo = useDemoMode();
+  const isSignedIn = demo || (runtimeConfig.screenshotMode ? false : clerkAuth.isSignedIn);
+  const isLoaded = demo || runtimeConfig.screenshotMode ? true : clerkAuth.isLoaded;
   const { exchangeJoins } = useServices();
   const track = useAnalytics();
   const [name, setName] = useState("");
@@ -964,8 +975,9 @@ export function useExchangeInviteController() {
   const router = useRouter();
   const captureScreen = useScreenActivity();
   const clerkAuth = useAuth();
-  const isSignedIn = runtimeConfig.screenshotMode ? false : clerkAuth.isSignedIn;
-  const isLoaded = runtimeConfig.screenshotMode ? true : clerkAuth.isLoaded;
+  const demo = useDemoMode();
+  const isSignedIn = demo || (runtimeConfig.screenshotMode ? false : clerkAuth.isSignedIn);
+  const isLoaded = demo || runtimeConfig.screenshotMode ? true : clerkAuth.isLoaded;
   const { exchangeInvites } = useServices();
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);

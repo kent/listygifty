@@ -15,6 +15,7 @@
 //   ASC_LOCALE            default en-US
 
 import { createSign } from "node:crypto";
+import { ensureReviewSubmission, isInitialRelease, assertEditableVersion } from "./review-submission.mjs";
 
 const required = [
   "ASC_KEY_ID",
@@ -151,6 +152,7 @@ async function attachBuild(versionId, buildId) {
     data: {
       type: "appStoreVersions",
       id: versionId,
+      attributes: { releaseType: RELEASE_TYPE },
       relationships: {
         build: { data: { type: "builds", id: buildId } },
       },
@@ -188,53 +190,6 @@ async function setWhatsNew(versionId) {
   return created.data.id;
 }
 
-async function ensureReviewSubmission(versionId) {
-  const existing = await asc(
-    "GET",
-    `/reviewSubmissions?filter[app]=${APP_ID}&filter[state]=READY_FOR_REVIEW,WAITING_FOR_REVIEW,IN_REVIEW`,
-  );
-
-  let submissionId;
-  if (existing.data?.length) {
-    submissionId = existing.data[0].id;
-  } else {
-    const created = await asc("POST", "/reviewSubmissions", {
-      data: {
-        type: "reviewSubmissions",
-        attributes: { platform: "IOS" },
-        relationships: { app: { data: { type: "apps", id: APP_ID } } },
-      },
-    });
-    submissionId = created.data.id;
-  }
-
-  const items = await asc("GET", `/reviewSubmissions/${submissionId}/items?limit=50`);
-  const alreadyAttached = items.data?.some(
-    (item) => item.relationships?.appStoreVersion?.data?.id === versionId,
-  );
-
-  if (!alreadyAttached) {
-    await asc("POST", "/reviewSubmissionItems", {
-      data: {
-        type: "reviewSubmissionItems",
-        relationships: {
-          reviewSubmission: { data: { type: "reviewSubmissions", id: submissionId } },
-          appStoreVersion: { data: { type: "appStoreVersions", id: versionId } },
-        },
-      },
-    });
-  }
-
-  await asc("PATCH", `/reviewSubmissions/${submissionId}`, {
-    data: {
-      type: "reviewSubmissions",
-      id: submissionId,
-      attributes: { submitted: true },
-    },
-  });
-
-  return submissionId;
-}
 
 const build = await findProcessedBuild();
 console.log(`Using build ${build.attributes.version} (${build.id}) for ${VERSION}.`);
@@ -242,7 +197,12 @@ console.log(`Using build ${build.attributes.version} (${build.id}) for ${VERSION
 const version = await findOrCreateVersion(build.id);
 console.log(`App Store version ${VERSION} -> ${version.id}.`);
 
+assertEditableVersion(version);
 await attachBuild(version.id, build.id);
-await setWhatsNew(version.id);
-const submissionId = await ensureReviewSubmission(version.id);
+if (await isInitialRelease(asc, APP_ID, version.id)) {
+  console.log("Skipping What’s New for the first App Store release; Apple does not allow this field yet.");
+} else {
+  await setWhatsNew(version.id);
+}
+const submissionId = await ensureReviewSubmission(asc, APP_ID, version.id);
 console.log(`Submitted version ${VERSION} for review (submission ${submissionId}).`);

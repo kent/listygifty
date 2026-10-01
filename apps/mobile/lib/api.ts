@@ -14,6 +14,7 @@ import {
   createAnalyticsService,
 } from "@niftygifty/services";
 import { runtimeConfig } from "@/lib/runtime-config";
+import { isDemoMode } from "@/lib/demo-mode";
 import {
   clearCachedResources as clearResourceCache,
   invalidateCachedResources,
@@ -64,7 +65,10 @@ export function configureApiSession(userId: string | null, getToken: () => Promi
     clearCachedResources();
     apiClient.setWorkspaceId(null);
   }
-  apiClient.setTokenGetter(userId ? getToken : async () => null);
+  apiClient.setTokenGetter(async () => {
+    if (isDemoMode()) throw new Error("Demo mode uses sample data and cannot access live accounts.");
+    return userId ? getToken() : null;
+  });
 }
 
 function resetBootstrapState() {

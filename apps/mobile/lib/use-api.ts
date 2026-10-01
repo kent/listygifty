@@ -15,6 +15,8 @@ import {
 } from "./api";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { screenshotServices } from "@/lib/screenshot-mocks";
+import { useDemoMode } from "@/lib/demo-mode";
+import { demoServices } from "@/lib/demo-services";
 
 /**
  * Hook that configures the API client with the current Clerk session token.
@@ -22,11 +24,12 @@ import { screenshotServices } from "@/lib/screenshot-mocks";
  */
 export function useApiSetup() {
   const { getToken, userId, isLoaded } = useAuth();
+  const demo = useDemoMode();
 
   useLayoutEffect(() => {
     if (runtimeConfig.screenshotMode || !isLoaded) return;
-    configureApiSession(userId ?? null, getToken);
-  }, [getToken, userId, isLoaded]);
+    configureApiSession(demo ? null : userId ?? null, getToken);
+  }, [demo, getToken, userId, isLoaded]);
 }
 
 /**
@@ -34,24 +37,10 @@ export function useApiSetup() {
  * Ensures the API client is set up with auth before returning services.
  */
 export function useServices() {
-  if (runtimeConfig.screenshotMode) {
-    return screenshotServices as unknown as {
-      holidays: typeof holidaysService;
-      gifts: typeof giftsService;
-      giftStatuses: typeof giftStatusesService;
-      people: typeof peopleService;
-      giftExchanges: typeof giftExchangesService;
-      exchangeParticipants: typeof exchangeParticipantsService;
-      exchangeExclusions: typeof exchangeExclusionsService;
-      wishlistItems: typeof wishlistItemsService;
-      exchangeInvites: typeof exchangeInvitesService;
-      exchangeJoins: typeof exchangeJoinsService;
-    };
-  }
-
+  const demo = useDemoMode();
   useApiSetup();
 
-  return useMemo(
+  const services = useMemo(
     () => ({
       holidays: holidaysService,
       gifts: giftsService,
@@ -66,4 +55,6 @@ export function useServices() {
     }),
     []
   );
+  if (demo) return demoServices as unknown as typeof services;
+  return runtimeConfig.screenshotMode ? screenshotServices as unknown as typeof services : services;
 }

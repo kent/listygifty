@@ -8,6 +8,7 @@ import { runtimeConfig } from "@/lib/runtime-config";
 import { prefetchAppShellData } from "@/lib/api";
 import { useSessionController } from "@/lib/controllers";
 import { useApiSetup } from "@/lib/use-api";
+import { useDemoMode } from "@/lib/demo-mode";
 
 const screenshotInitialRoute: "lists" | "exchanges" | "people/index" | "profile/index" = "exchanges";
 export const unstable_settings = {
@@ -80,11 +81,12 @@ function ScreenshotTabLayout() {
 
 function AuthenticatedTabLayout() {
   const { colors } = useTheme();
+  const demo = useDemoMode();
   const { signOutAndRedirect } = useSessionController();
 
   return (
     <>
-      <AppDataWarmup />
+      {!demo ? <AppDataWarmup /> : null}
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: colors.tabBarActive,
@@ -102,7 +104,7 @@ function AuthenticatedTabLayout() {
           },
           headerRight: () => (
             <TouchableOpacity onPress={signOutAndRedirect} style={{ marginRight: 16 }}>
-              <Text style={{ color: colors.primary }}>Sign Out</Text>
+              <Text style={{ color: colors.primary }}>{demo ? "Exit demo" : "Sign Out"}</Text>
             </TouchableOpacity>
           ),
         }}

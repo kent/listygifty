@@ -106,6 +106,32 @@ Manual mobile releases and manual production deploys refuse to run from any
 branch other than `main`. Version tags must point to commits already contained
 in `main`.
 
+## Email sign-in and review access
+
+The mobile app uses email verification codes for sign-in and account creation.
+Production Clerk must enable email codes for both flows, require a verified
+email at signup, and disable password, social, and phone sign-in. The production
+session policy is 90 days with no inactivity timeout. SecureStore keeps the
+Clerk session on the device; API access tokens still refresh normally.
+
+App Review can tap **Explore demo** on the login screen without an account or
+code. The demo supports editing sample lists, people, gifts, wishlists, and
+exchanges, including drawing matches. Invitations and reminders are simulated.
+Sample edits reset when the demo ends or the app restarts. The demo cannot call
+the live API or send analytics. Reviewers can also create a real account using
+their own email address.
+
+Before promotion, replace any old demo-account credentials in App Store Connect
+with these instructions. Test production code delivery, signup, sign-in after
+an app restart, and demo entry/exit on an iPad. Keep Clerk's production test mode
+off.
+
+The review script reuses a submission with unresolved issues and resolves only
+the app version being promoted. It stops if other rejected items need attention.
+For an app's first release, it skips **What's New**, which Apple does not allow
+until a later version. `AFTER_APPROVAL` releases automatically once Apple approves
+the app; `MANUAL` waits for a separate release action.
+
 ## Version And Tag Helper
 
 Use the pull-request flow above for normal releases. Version changes belong in

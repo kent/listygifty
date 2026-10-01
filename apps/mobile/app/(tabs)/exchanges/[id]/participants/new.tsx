@@ -80,7 +80,7 @@ export default function NewExchangeParticipantScreen() {
             <ActivityIndicator color={colors.primary} />
           ) : (
             <Text style={{ color: colors.textInverse, fontSize: 16, fontWeight: "600" }}>
-              Send Invite
+              {controller.demo ? "Add sample participant" : "Send Invite"}
             </Text>
           )}
         </TouchableOpacity>

@@ -16,7 +16,6 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.ewakened.niftygifty",
-      "usesAppleSignIn": true,
       "associatedDomains": [
         "applinks:listygifty.com",
         "applinks:staging.listygifty.com"
@@ -72,7 +71,6 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-apple-authentication",
       "expo-web-browser",
       [
         "expo-notifications",
