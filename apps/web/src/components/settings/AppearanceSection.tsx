@@ -21,15 +21,15 @@ export function AppearanceSection() {
           <Monitor className="h-5 w-5 text-slate-900" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Appearance</h2>
-          <p className="text-sm text-slate-600">Listy Gifty is running in Retro &apos;96 mode.</p>
+          <h2>Appearance</h2>
+          <p className="text-sm text-slate-300">Listy Gifty is running in Retro &apos;96 mode.</p>
         </div>
       </div>
 
       <div className="retro-window max-w-xl">
         <div className="retro-titlebar">Display Properties</div>
         <div className="grid gap-6 p-6 sm:grid-cols-[160px_1fr]">
-          <div className="retro-sunken bg-slate-900 p-2">
+          <div className="retro-sunken bg-black p-2">
             <div className="flex aspect-[4/3] flex-col bg-violet-700">
               <div className="h-2 bg-gradient-to-r from-violet-900 to-violet-400" />
               <div className="flex flex-1 items-center justify-center">
@@ -38,10 +38,10 @@ export function AppearanceSection() {
               <div className="h-3 bg-red-600" />
             </div>
           </div>
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 font-mono text-lg text-slate-900">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 font-mono text-xl text-white">
             {SPECS.map(({ label, value }) => (
               <div key={label} className="contents">
-                <dt className="text-slate-600">{label}:</dt>
+                <dt className="text-slate-400">{label}:</dt>
                 <dd>{value}</dd>
               </div>
             ))}

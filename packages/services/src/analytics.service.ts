@@ -8,7 +8,7 @@ export interface AnalyticsService {
 export function createAnalyticsService(client: ApiClient): AnalyticsService {
   return {
     captureBatch(events) {
-      return client.post<AnalyticsIngestionResponse>("/analytics/events", { events }, { keepalive: true, timeout: 5_000 });
+      return client.post<AnalyticsIngestionResponse>("/analytics/events", { events }, { keepalive: true, timeout: 5_000, silent: true });
     },
   };
 }

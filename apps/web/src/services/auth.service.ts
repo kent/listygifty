@@ -38,10 +38,12 @@ export const PUBLIC_ROUTES = [
 // Retro '96 look: square, bevelled, pixel font, red "Enter" key buttons.
 const retroVariables: Appearance["variables"] = {
   colorPrimary: "#c8141c",
-  colorText: "#15114a",
-  colorTextSecondary: "#48427e",
-  colorBackground: "#ffffff",
-  colorInputBackground: "#ffffff",
+  colorText: "#f2f0ff",
+  colorTextSecondary: "#aaa4e0",
+  colorBackground: "#0b0838",
+  colorInputBackground: "#05031f",
+  colorInputText: "#ffffff",
+  colorNeutral: "#f2f0ff",
   borderRadius: "0px",
   fontFamily: "var(--font-pixelify), ui-sans-serif, system-ui, sans-serif",
 };
@@ -49,17 +51,17 @@ const retroVariables: Appearance["variables"] = {
 const sharedElements = {
   formButtonPrimary:
     "rounded-none bg-red-600 hover:bg-red-500 border-2 border-t-red-300 border-l-red-300 border-r-red-900 border-b-red-900 shadow-none",
-  footerActionLink: "text-violet-700 hover:text-fuchsia-600",
-  cardBox: "rounded-none! border-[3px]! border-slate-900! shadow-[6px_6px_0_0_rgb(21_17_74_/_0.6)]!",
+  footerActionLink: "text-amber-300 hover:text-amber-200",
+  cardBox: "rounded-none! border-[3px]! border-black! shadow-[8px_8px_0_0_rgb(110_106_168_/_0.85)]!",
   card: "rounded-none! shadow-none!",
   formFieldInput:
-    "rounded-none border-2 border-t-slate-700 border-l-slate-700 border-r-slate-200 border-b-slate-200",
+    "rounded-none border-2 border-t-black border-l-black border-r-slate-600 border-b-slate-600",
   socialButtonsBlockButton:
-    "rounded-none bg-[#c3c3c3] border-2 border-t-white border-l-white border-r-slate-900 border-b-slate-900",
-  headerTitle: "font-display text-sm tracking-wide",
+    "rounded-none bg-[#c3c3c3] border-2 border-t-white border-l-white border-r-black border-b-black",
+  headerTitle: "text-sm!",
 };
 
-// Dark theme appearance (kept for API compatibility; the retro build is always light)
+// Dark theme appearance (the retro build is always dark)
 export const clerkDarkAppearance: Appearance = {
   variables: retroVariables,
   elements: sharedElements,

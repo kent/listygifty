@@ -14,12 +14,12 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-white hover:bg-red-500 border-2 border-t-red-300 border-l-red-300 border-r-red-900 border-b-red-900 focus-visible:ring-destructive/20",
         outline:
-          "bg-[#c3c3c3] text-slate-900 border-2 border-t-white border-l-white border-r-slate-900 border-b-slate-900 hover:bg-[#d4d4d4] active:border-t-slate-900 active:border-l-slate-900 active:border-r-white active:border-b-white",
+          "bg-[#c3c3c3] text-slate-900 border-2 border-t-white border-l-white border-r-black border-b-black hover:bg-[#d4d4d4] active:border-t-black active:border-l-black active:border-r-white active:border-b-white",
         secondary:
-          "bg-[#c3c3c3] text-slate-900 border-2 border-t-white border-l-white border-r-slate-900 border-b-slate-900 hover:bg-[#d4d4d4] active:border-t-slate-900 active:border-l-slate-900 active:border-r-white active:border-b-white",
+          "bg-[#c3c3c3] text-[#0b0838] border-2 border-t-white border-l-white border-r-black border-b-black hover:bg-[#d4d4d4] active:border-t-slate-900 active:border-l-slate-900 active:border-r-white active:border-b-white",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+          "text-slate-200 hover:bg-slate-800 hover:text-white",
+        link: "text-amber-300 underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

@@ -65,6 +65,8 @@ interface RequestOptions {
   retries?: number;
   signal?: AbortSignal;
   keepalive?: boolean;
+  /** Best-effort requests (e.g. analytics) skip failure logging; the caller still gets the error. */
+  silent?: boolean;
 }
 
 // =============================================================================
@@ -185,6 +187,7 @@ export class ApiClient {
       retries = method === "GET" ? MAX_RETRIES : 0,
       signal: externalSignal,
       keepalive = false,
+      silent = false,
     } = options;
 
     if (!Number.isInteger(retries) || retries < 0) {
@@ -252,7 +255,7 @@ export class ApiClient {
           lastError = err instanceof Error ? err : new Error(String(err));
         }
 
-        this.log("warn", `${method} ${endpoint} failed`, {
+        if (!silent) this.log("warn", `${method} ${endpoint} failed`, {
           attempt: attempt + 1,
           error: lastError.message,
         });
@@ -265,9 +268,11 @@ export class ApiClient {
       if (attempt < retries) await sleep(RETRY_DELAY_MS * Math.pow(2, attempt), externalSignal);
     }
 
-    this.log("error", `${method} ${endpoint} exhausted retries`, {
-      error: lastError?.message,
-    });
+    if (!silent) {
+      this.log("error", `${method} ${endpoint} exhausted retries`, {
+        error: lastError?.message,
+      });
+    }
     throw lastError;
   }
 

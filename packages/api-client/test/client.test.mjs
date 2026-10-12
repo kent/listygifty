@@ -163,3 +163,14 @@ test("file downloads enforce the deadline through an unresponsive body read", as
   await assert.rejects(client().getBlob("/exports/people", { retries: 0, timeout: 10 }),
     (error) => error instanceof ApiError && /timeout/.test(error.message));
 });
+
+test("silent requests still reject but do not log transport failures", async (t) => {
+  t.mock.method(globalThis, "fetch", async () => {
+    throw new TypeError("Failed to fetch");
+  });
+  const errors = t.mock.method(console, "error", () => {});
+  await assert.rejects(client().post("/analytics/events", {}, { silent: true }), /Failed to fetch/);
+  assert.equal(errors.mock.callCount(), 0);
+  await assert.rejects(client().post("/people", {}), /Failed to fetch/);
+  assert.equal(errors.mock.callCount(), 1);
+});

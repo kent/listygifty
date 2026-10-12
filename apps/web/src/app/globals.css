@@ -104,44 +104,44 @@
 
 @theme {
   /* Snowy lavender greys -> deep VGA navy */
-  --color-slate-50: #f3f1fb;
-  --color-slate-100: #e5e2f4;
-  --color-slate-200: #bdb7dc;
-  --color-slate-300: #aaa4cf;
-  --color-slate-400: #8680b6;
-  --color-slate-500: #625c98;
-  --color-slate-600: #48427e;
-  --color-slate-700: #332e68;
-  --color-slate-800: #221e56;
-  --color-slate-900: #15114a;
+  --color-slate-50: #f7f6ff;
+  --color-slate-100: #eceaff;
+  --color-slate-200: #dcd9f7;
+  --color-slate-300: #c8c3f0;
+  --color-slate-400: #aaa4e0;
+  --color-slate-500: #8a84c4;
+  --color-slate-600: #5c56a0;
+  --color-slate-700: #2e2972;
+  --color-slate-800: #1c1858;
+  --color-slate-900: #110d48;
   --color-slate-950: #0b0838;
 
-  --color-gray-50: #f3f1fb;
-  --color-gray-100: #e5e2f4;
-  --color-gray-200: #c9c4e2;
-  --color-gray-300: #aaa4cf;
-  --color-gray-400: #8680b6;
-  --color-gray-500: #625c98;
-  --color-gray-600: #48427e;
-  --color-gray-700: #332e68;
-  --color-gray-800: #221e56;
-  --color-gray-900: #15114a;
+  --color-gray-50: #f7f6ff;
+  --color-gray-100: #eceaff;
+  --color-gray-200: #dcd9f7;
+  --color-gray-300: #c8c3f0;
+  --color-gray-400: #aaa4e0;
+  --color-gray-500: #8a84c4;
+  --color-gray-600: #5c56a0;
+  --color-gray-700: #2e2972;
+  --color-gray-800: #1c1858;
+  --color-gray-900: #110d48;
 
   /* HUD royal blue */
   --color-violet-50: #eef0ff;
   --color-violet-100: #dde1ff;
-  --color-violet-200: #b9c0ff;
-  --color-violet-300: #8f99ff;
-  --color-violet-400: #5f6dff;
-  --color-violet-500: #3344ee;
-  --color-violet-600: #1a22cc;
-  --color-violet-700: #0f15aa;
-  --color-violet-800: #0a0e88;
-  --color-violet-900: #060966;
-  --color-violet-950: #03053d;
+  --color-violet-200: #c9ceff;
+  --color-violet-300: #b3b9ff;
+  --color-violet-400: #8f99ff;
+  --color-violet-500: #5f6dff;
+  --color-violet-600: #3344ee;
+  --color-violet-700: #1a22cc;
+  --color-violet-800: #0f15aa;
+  --color-violet-900: #0a0e88;
+  --color-violet-950: #060966;
 
-  --color-indigo-500: #3344ee;
-  --color-indigo-600: #1a22cc;
+  --color-indigo-500: #5f6dff;
+  --color-indigo-600: #3344ee;
   --color-blue-400: #55aaff;
   --color-blue-500: #2277ee;
   --color-blue-600: #0055cc;
@@ -231,14 +231,20 @@
   --radius-3xl: 4px;
 
   /* Hard pixel drop shadows instead of soft blur */
-  --shadow-2xs: 1px 1px 0 0 rgb(21 17 74 / 0.35);
-  --shadow-xs: 2px 2px 0 0 rgb(21 17 74 / 0.35);
-  --shadow-sm: 3px 3px 0 0 rgb(21 17 74 / 0.45);
-  --shadow: 3px 3px 0 0 rgb(21 17 74 / 0.45);
-  --shadow-md: 4px 4px 0 0 rgb(21 17 74 / 0.5);
-  --shadow-lg: 5px 5px 0 0 rgb(21 17 74 / 0.55);
-  --shadow-xl: 6px 6px 0 0 rgb(21 17 74 / 0.6);
-  --shadow-2xl: 8px 8px 0 0 rgb(21 17 74 / 0.65);
+  --shadow-2xs: 1px 1px 0 0 rgb(74 69 144 / 0.9);
+  --shadow-xs: 2px 2px 0 0 rgb(74 69 144 / 0.9);
+  --shadow-sm: 3px 3px 0 0 rgb(74 69 144 / 0.9);
+  --shadow: 3px 3px 0 0 rgb(74 69 144 / 0.9);
+  --shadow-md: 4px 4px 0 0 rgb(74 69 144 / 0.9);
+  --shadow-lg: 5px 5px 0 0 rgb(74 69 144 / 0.9);
+  --shadow-xl: 6px 6px 0 0 rgb(74 69 144 / 0.9);
+  --shadow-2xl: 8px 8px 0 0 rgb(74 69 144 / 0.9);
+
+  /* Pixel fonts blur when tiny, so the small steps run a touch larger */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.35;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.45;
 
   --font-display: var(--font-press-start), ui-monospace, monospace;
   --font-terminal: var(--font-vt323), ui-monospace, monospace;
@@ -283,49 +289,52 @@
   --color-silver: var(--silver);
 }
 
-/* One look, day or night: the retro theme is always "light" (see providers). */
+/* One look: the fireplace window. Night-time navy, gold headings, red keys.
+   The app is forced into "dark" (see providers) so its dark: classes apply. */
 :root,
 .dark {
   --radius: 2px;
-  --background: #f3f1fb;
-  --foreground: #15114a;
-  --card: #ffffff;
-  --card-foreground: #15114a;
-  --popover: #ffffff;
-  --popover-foreground: #15114a;
+  --background: #0b0838;
+  --foreground: #f2f0ff;
+  --card: #110d48;
+  --card-foreground: #f2f0ff;
+  --popover: #110d48;
+  --popover-foreground: #f2f0ff;
   --primary: #c8141c;
   --primary-foreground: #ffffff;
-  --secondary: #e5e2f4;
-  --secondary-foreground: #15114a;
-  --muted: #e5e2f4;
-  --muted-foreground: #48427e;
-  --accent: #dde1ff;
-  --accent-foreground: #0a0e88;
+  --secondary: #1c1858;
+  --secondary-foreground: #f2f0ff;
+  --muted: #1c1858;
+  --muted-foreground: #aaa4e0;
+  --accent: #1c1858;
+  --accent-foreground: #ffffff;
   --destructive: #c8141c;
-  --border: #aaa4cf;
-  --input: #625c98;
-  --ring: #e02ad6;
-  --chart-1: #1a22cc;
-  --chart-2: #e02ad6;
-  --chart-3: #22bb22;
+  --border: #2e2972;
+  --input: #5c56a0;
+  --ring: #ff55ff;
+  --chart-1: #5f6dff;
+  --chart-2: #ff55ff;
+  --chart-3: #44dd44;
   --chart-4: #ffcc11;
-  --chart-5: #e8242a;
-  --sidebar: #e5e2f4;
-  --sidebar-foreground: #15114a;
-  --sidebar-primary: #1a22cc;
+  --chart-5: #ff5555;
+  --sidebar: #110d48;
+  --sidebar-foreground: #f2f0ff;
+  --sidebar-primary: #c8141c;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #dde1ff;
-  --sidebar-accent-foreground: #0a0e88;
-  --sidebar-border: #aaa4cf;
-  --sidebar-ring: #e02ad6;
+  --sidebar-accent: #1c1858;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2e2972;
+  --sidebar-ring: #ff55ff;
 
   --hud: #0f15aa;
   --hud-foreground: #ffffff;
   --silver: #c3c3c3;
   --bevel-light: #ffffff;
-  --bevel-dark: #15114a;
+  --bevel-dark: #000000;
   --bevel-mid: #808080;
-  color-scheme: light;
+  --gold: #ffdd44;
+  --gold-shadow: #a00a10;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -338,19 +347,23 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* Faint ordered-dither, like a 16-colour snow scene */
+    /* A faint field of pixel stars */
     background-image:
-      radial-gradient(rgb(98 92 152 / 0.12) 1px, transparent 1px),
-      radial-gradient(rgb(98 92 152 / 0.08) 1px, transparent 1px);
-    background-size: 8px 8px, 8px 8px;
-    background-position: 0 0, 4px 4px;
+      radial-gradient(rgb(255 255 255 / 0.10) 1px, transparent 1.5px),
+      radial-gradient(rgb(179 185 255 / 0.08) 1px, transparent 1.5px);
+    background-size: 48px 48px, 32px 32px;
+    background-position: 0 0, 16px 20px;
   }
   ::selection {
     background: #e02ad6;
     color: #ffffff;
   }
-  h1, h2, h3 {
+  h3, h4 {
     letter-spacing: 0.01em;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #8a84c4;
   }
   a,
   button,
@@ -361,21 +374,21 @@
 
 /* Chunky Win3.1-style scrollbars */
 * {
-  scrollbar-color: #625c98 #e5e2f4;
+  scrollbar-color: #8a84c4 #110d48;
 }
 ::-webkit-scrollbar {
   width: 16px;
   height: 16px;
 }
 ::-webkit-scrollbar-track {
-  background: #e5e2f4;
-  background-image: conic-gradient(#c9c4e2 25%, transparent 0 50%, #c9c4e2 0 75%, transparent 0);
+  background: #110d48;
+  background-image: conic-gradient(#1c1858 25%, transparent 0 50%, #1c1858 0 75%, transparent 0);
   background-size: 4px 4px;
 }
 ::-webkit-scrollbar-thumb {
   background: #c3c3c3;
   border: 2px solid;
-  border-color: #ffffff #15114a #15114a #ffffff;
+  border-color: #ffffff #000000 #000000 #ffffff;
 }
 ::-webkit-scrollbar-corner {
   background: #c3c3c3;
@@ -396,9 +409,10 @@
   }
   /* A window with an Encarta-style gradient title bar */
   .retro-window {
-    background: #ffffff;
-    border: 3px solid var(--bevel-dark);
-    box-shadow: 6px 6px 0 0 rgb(21 17 74 / 0.6);
+    background: #0b0838;
+    color: #f2f0ff;
+    border: 3px solid #000000;
+    box-shadow: 8px 8px 0 0 rgb(110 106 168 / 0.85);
   }
   .retro-titlebar {
     display: flex;
@@ -462,7 +476,7 @@
 [data-slot="dialog-content"],
 [data-slot="alert-dialog-content"] {
   border-top-width: 22px !important;
-  border-top-color: #0f15aa !important;
+  border-top-color: #1a22cc !important;
 }
 [data-slot="dialog-content"]::before,
 [data-slot="alert-dialog-content"]::before {
@@ -494,9 +508,9 @@
 }
 [data-slot="dialog-overlay"],
 [data-slot="alert-dialog-overlay"] {
-  background-color: rgb(11 8 56 / 0.55) !important;
+  background-color: rgb(0 0 0 / 0.6) !important;
   backdrop-filter: none !important;
-  background-image: conic-gradient(rgb(11 8 56 / 0.35) 25%, transparent 0 50%, rgb(11 8 56 / 0.35) 0 75%, transparent 0);
+  background-image: conic-gradient(rgb(0 0 0 / 0.35) 25%, transparent 0 50%, rgb(0 0 0 / 0.35) 0 75%, transparent 0);
   background-size: 4px 4px;
 }
 [data-slot="dropdown-menu-item"][data-highlighted],
@@ -541,4 +555,42 @@
   .retro-snowfall {
     animation: none !important;
   }
+}
+
+/* --------------------------------------------------------------------------
+   Fireplace typography: gold pixel headings with a red drop shadow.
+   Unlayered on purpose so it wins over per-page text-* utilities.
+   -------------------------------------------------------------------------- */
+h1,
+h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  color: var(--gold);
+  text-shadow: 3px 3px 0 var(--gold-shadow);
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+h1 {
+  font-size: clamp(1.25rem, 0.9rem + 1.6vw, 2.25rem);
+}
+h2 {
+  font-size: clamp(1rem, 0.85rem + 0.9vw, 1.6rem);
+}
+/* Small h2s inside dialogs, cards and popups */
+[data-slot="dialog-title"],
+[data-slot="alert-dialog-title"],
+[data-slot="sheet-title"],
+[data-slot="card"] h2 {
+  font-size: 0.9rem;
+  text-shadow: 2px 2px 0 var(--gold-shadow);
+}
+/* Gradient-filled heading words keep their gradient, no muddy shadow */
+.bg-clip-text {
+  text-shadow: none;
+}
+/* Cards: a slim title-bar stripe across the top, like a little window */
+[data-slot="card"] {
+  background-image: linear-gradient(90deg, #0a0e88, #3344ee 60%, #8f99ff);
+  background-size: 100% 8px;
+  background-repeat: no-repeat;
 }

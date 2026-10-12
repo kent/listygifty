@@ -95,26 +95,25 @@ export function RetroLandingHero() {
           <div
             className="relative grid gap-10 overflow-hidden p-6 md:grid-cols-[1.1fr_1fr] md:p-10"
             style={{
-              background:
-                "radial-gradient(circle at 20% 30%, #ffffff 0, #eef0ff 40%, #dde1ff 100%)",
+              background: "radial-gradient(circle at 20% 30%, #1c1858 0, #110d48 45%, #0b0838 100%)",
             }}
           >
             <span
               aria-hidden
-              className="pointer-events-none absolute -left-4 top-16 select-none font-serif text-[11rem] font-bold leading-none text-violet-200/70 md:left-24 md:top-10 md:text-[16rem]"
+              className="pointer-events-none absolute -left-4 top-16 select-none font-serif text-[11rem] font-bold leading-none text-violet-700/40 md:left-24 md:top-10 md:text-[16rem]"
             >
               96
             </span>
 
             <div className="relative flex flex-col">
-              <p className="retro-spaced mb-6 text-[10px] text-slate-600">Home Screen</p>
-              <p className="font-serif text-5xl font-bold tracking-tight text-violet-900 md:text-7xl">
+              <p className="retro-spaced mb-6 text-[10px] text-slate-400">Home Screen</p>
+              <p className="font-serif text-5xl font-bold tracking-tight text-white md:text-7xl">
                 LISTY GIFTY
               </p>
-              <h1 className="mt-2 font-serif text-xl italic tracking-[0.2em] text-slate-600 md:text-2xl">
+              <h1 className="mt-4">
                 Never stress about gifts again
               </h1>
-              <p className="mt-8 max-w-md text-lg leading-relaxed text-slate-800">
+              <p className="mt-8 max-w-md font-mono text-2xl leading-snug text-slate-100">
                 Capture gift ideas when they happen, organize every recipient and occasion, and
                 run gift exchanges without a group thread plus a spreadsheet.
               </p>
@@ -122,7 +121,7 @@ export function RetroLandingHero() {
               <div className="mt-auto flex flex-col gap-3 pt-10 sm:flex-row">
                 <a
                   href="#features"
-                  className="retro-spaced border-2 border-slate-700 bg-white/60 px-4 py-2 text-center text-[11px] text-slate-800 hover:bg-white"
+                  className="retro-spaced border-2 border-slate-400 px-4 py-2 text-center text-[11px] text-white hover:bg-slate-800"
                 >
                   Introduction
                 </a>
@@ -130,7 +129,7 @@ export function RetroLandingHero() {
                   href={AUTH_ROUTES.signUp}
                   analyticsEvent="homepage_cta_clicked"
                   analyticsProperties={{ location: "home_screen", destination: "signup" }}
-                  className="retro-spaced border-2 border-slate-700 bg-white/60 px-4 py-2 text-center text-[11px] text-slate-800 hover:bg-white"
+                  className="retro-spaced border-2 border-slate-400 px-4 py-2 text-center text-[11px] text-white hover:bg-slate-800"
                 >
                   Sign up free
                 </TrackedLink>
@@ -146,10 +145,10 @@ export function RetroLandingHero() {
                         <PixelSprite name={item.sprite} scale={3} />
                       </span>
                       <span>
-                        <span className="retro-spaced block text-[10px] text-slate-900 group-hover:text-red-600 md:text-xs">
+                        <span className="retro-spaced block text-[10px] text-amber-300 group-hover:text-white md:text-xs">
                           {item.title}
                         </span>
-                        <span className="block text-sm text-slate-600 group-hover:text-red-600">
+                        <span className="block text-base text-slate-300 group-hover:text-white">
                           {item.blurb}
                         </span>
                       </span>
@@ -170,8 +169,8 @@ export function RetroLandingHero() {
             <HeroPreview />
           </div>
         </div>
-        <p className="mt-6 text-center font-mono text-xl text-slate-600">
-          <span className="retro-blink text-red-600">&#9658;</span> Built for Christmas 2026 planning.
+        <p className="mt-6 text-center font-mono text-2xl text-slate-300">
+          <span className="retro-blink text-red-400">&#9658;</span> Built for Christmas 2026 planning.
           Families, exchanges, and teams welcome.
         </p>
       </section>
