@@ -1,0 +1,305 @@
+/* ==========================================================================
+   APPLE THEME
+   Bright, quiet and precise: white and soft-gray surfaces, the system font,
+   one confident blue, generous rounding and feather-light shadows.
+   Everything is scoped to [data-theme="apple"]; it is a light theme, so the
+   app's dark: utilities stay off.
+   ========================================================================== */
+
+:root[data-theme="apple"] {
+  color-scheme: light;
+
+  /* Neutral grays (Apple system grays) */
+  --color-slate-50: #fbfbfd;
+  --color-slate-100: #f5f5f7;
+  --color-slate-200: #e8e8ed;
+  --color-slate-300: #d2d2d7;
+  --color-slate-400: #aeaeb2;
+  --color-slate-500: #86868b;
+  --color-slate-600: #6e6e73;
+  --color-slate-700: #48484a;
+  --color-slate-800: #2c2c2e;
+  --color-slate-900: #1d1d1f;
+  --color-slate-950: #0b0b0c;
+  --color-gray-50: #fbfbfd;
+  --color-gray-100: #f5f5f7;
+  --color-gray-200: #e8e8ed;
+  --color-gray-300: #d2d2d7;
+  --color-gray-400: #aeaeb2;
+  --color-gray-500: #86868b;
+  --color-gray-600: #6e6e73;
+  --color-gray-700: #48484a;
+  --color-gray-800: #2c2c2e;
+  --color-gray-900: #1d1d1f;
+
+  /* The app's accent family becomes Apple blue */
+  --color-violet-50: #f0f6ff;
+  --color-violet-100: #e0edff;
+  --color-violet-200: #bfdbff;
+  --color-violet-300: #8cc0ff;
+  --color-violet-400: #4da2ff;
+  --color-violet-500: #0a84ff;
+  --color-violet-600: #0071e3;
+  --color-violet-700: #0062c3;
+  --color-violet-800: #004f9f;
+  --color-violet-900: #003b78;
+  --color-violet-950: #00264f;
+  --color-indigo-500: #5e5ce6;
+  --color-indigo-600: #5856d6;
+  --color-blue-400: #4da2ff;
+  --color-blue-500: #0a84ff;
+  --color-blue-600: #0071e3;
+
+  /* Secondary accent: system purple */
+  --color-fuchsia-50: #faf3ff;
+  --color-fuchsia-100: #f3e3ff;
+  --color-fuchsia-200: #e6c7fd;
+  --color-fuchsia-300: #d39ff8;
+  --color-fuchsia-400: #bf5af2;
+  --color-fuchsia-500: #af52de;
+  --color-fuchsia-600: #9442c4;
+  --color-fuchsia-700: #7a35a3;
+  --color-fuchsia-800: #602a80;
+  --color-fuchsia-900: #461f5e;
+  --color-fuchsia-950: #2c133b;
+  --color-purple-400: #bf5af2;
+  --color-purple-500: #af52de;
+  --color-purple-600: #9442c4;
+  --color-pink-400: #ff6482;
+  --color-pink-500: #ff2d55;
+  --color-pink-600: #e0254b;
+
+  /* System red, green, orange, cyan */
+  --color-red-50: #fff2f1;
+  --color-red-100: #ffe1df;
+  --color-red-200: #ffc4c0;
+  --color-red-300: #ff9a93;
+  --color-red-400: #ff6961;
+  --color-red-500: #ff3b30;
+  --color-red-600: #e0352b;
+  --color-red-700: #b82a22;
+  --color-red-800: #8f201a;
+  --color-red-900: #661713;
+  --color-green-50: #effbf2;
+  --color-green-100: #d9f6e0;
+  --color-green-200: #b0ecbf;
+  --color-green-300: #7edc98;
+  --color-green-400: #4cd471;
+  --color-green-500: #34c759;
+  --color-green-600: #28a745;
+  --color-green-700: #1f8a38;
+  --color-green-800: #186b2c;
+  --color-green-900: #114d20;
+  --color-emerald-50: #effbf2;
+  --color-emerald-100: #d9f6e0;
+  --color-emerald-200: #b0ecbf;
+  --color-emerald-300: #7edc98;
+  --color-emerald-400: #4cd471;
+  --color-emerald-500: #34c759;
+  --color-emerald-600: #28a745;
+  --color-emerald-700: #1f8a38;
+  --color-emerald-800: #186b2c;
+  --color-emerald-900: #114d20;
+  --color-amber-50: #fff8eb;
+  --color-amber-100: #ffefcc;
+  --color-amber-200: #ffdf99;
+  --color-amber-300: #ffcc5c;
+  --color-amber-400: #ffb627;
+  --color-amber-500: #ff9f0a;
+  --color-amber-600: #e08600;
+  --color-amber-700: #b36b00;
+  --color-amber-800: #855000;
+  --color-amber-900: #5c3700;
+  --color-orange-400: #ffaa33;
+  --color-orange-500: #ff9500;
+  --color-orange-600: #e07f00;
+  --color-cyan-50: #effaff;
+  --color-cyan-100: #d6f3ff;
+  --color-cyan-200: #a8e6ff;
+  --color-cyan-300: #70d5ff;
+  --color-cyan-400: #64d2ff;
+  --color-cyan-500: #32ade6;
+  --color-cyan-600: #0f8fc7;
+  --color-cyan-700: #0b70a0;
+
+  /* Generous, continuous-feeling corners */
+  --radius: 12px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
+  --radius-2xl: 22px;
+  --radius-3xl: 28px;
+
+  /* Feather-light shadows */
+  --sh-2xs: 0 1px 0 rgb(0 0 0 / 0.03);
+  --sh-xs: 0 1px 2px rgb(0 0 0 / 0.05);
+  --sh-sm: 0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04);
+  --sh: 0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04);
+  --sh-md: 0 4px 12px rgb(0 0 0 / 0.06);
+  --sh-lg: 0 8px 24px rgb(0 0 0 / 0.08);
+  --sh-xl: 0 16px 40px rgb(0 0 0 / 0.1);
+  --sh-2xl: 0 24px 64px rgb(0 0 0 / 0.12);
+
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.35;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.45;
+
+  --app-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", var(--font-inter),
+    "Helvetica Neue", Arial, sans-serif;
+  --app-font-mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), "Helvetica Neue",
+    Arial, sans-serif;
+
+  --background: #fbfbfd;
+  --foreground: #1d1d1f;
+  --card: #ffffff;
+  --card-foreground: #1d1d1f;
+  --popover: #ffffff;
+  --popover-foreground: #1d1d1f;
+  --primary: #0071e3;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f7;
+  --secondary-foreground: #1d1d1f;
+  --muted: #f5f5f7;
+  --muted-foreground: #6e6e73;
+  --accent: #f5f5f7;
+  --accent-foreground: #1d1d1f;
+  --destructive: #ff3b30;
+  --border: #e5e5ea;
+  --input: #d2d2d7;
+  --ring: #0071e3;
+  --link: #0066cc;
+  --chart-1: #0071e3;
+  --chart-2: #af52de;
+  --chart-3: #34c759;
+  --chart-4: #ff9f0a;
+  --chart-5: #ff3b30;
+  --sidebar: #f5f5f7;
+  --sidebar-foreground: #1d1d1f;
+  --sidebar-primary: #0071e3;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8e8ed;
+  --sidebar-accent-foreground: #1d1d1f;
+  --sidebar-border: #e5e5ea;
+  --sidebar-ring: #0071e3;
+}
+
+[data-theme="apple"] {
+  ::selection {
+    background: rgb(0 113 227 / 0.2);
+  }
+  h1,
+  h2 {
+    letter-spacing: -0.022em;
+  }
+  h3,
+  h4 {
+    letter-spacing: -0.012em;
+  }
+
+  /* Sheets, dialogs and menus: frosted, rounded, softly lifted */
+  [data-slot="dialog-content"],
+  [data-slot="alert-dialog-content"] {
+    border: 1px solid rgb(0 0 0 / 0.06);
+    border-radius: 22px;
+    box-shadow: 0 24px 64px rgb(0 0 0 / 0.16);
+  }
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"],
+  [data-slot="select-content"] {
+    border: 1px solid rgb(0 0 0 / 0.08);
+    border-radius: 14px;
+    background-color: rgb(255 255 255 / 0.88);
+    backdrop-filter: saturate(180%) blur(20px);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.12);
+  }
+  [data-slot="dialog-overlay"],
+  [data-slot="alert-dialog-overlay"] {
+    background-color: rgb(0 0 0 / 0.22);
+    backdrop-filter: blur(8px);
+  }
+  [data-slot="dropdown-menu-item"][data-highlighted],
+  [data-slot="select-item"][data-highlighted],
+  [data-slot="command-item"][data-selected="true"] {
+    background: #0071e3;
+    color: #ffffff;
+    border-radius: 8px;
+  }
+  [data-slot="tooltip-content"] {
+    background: rgb(29 29 31 / 0.92);
+    color: #ffffff;
+    border-radius: 8px;
+  }
+}
+
+/* Primitive hooks (lg-*) */
+@layer components {
+  [data-theme="apple"] {
+    .lg-btn {
+      border-radius: 980px;
+      font-weight: 500;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+    }
+    .lg-btn-outline {
+      background-color: #ffffff;
+      color: #1d1d1f;
+      border: 1px solid #d2d2d7;
+    }
+    .lg-btn-outline:hover {
+      background-color: #f5f5f7;
+    }
+    .lg-btn-secondary {
+      background-color: #e8e8ed;
+      color: #1d1d1f;
+    }
+    .lg-btn-secondary:hover {
+      background-color: #dcdce1;
+    }
+    .lg-card {
+      border: 1px solid rgb(0 0 0 / 0.06);
+      box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.05);
+    }
+    .lg-input {
+      background-color: #ffffff;
+      color: #1d1d1f;
+      border: 1px solid #d2d2d7;
+      border-radius: 10px;
+    }
+    .lg-input:focus-visible {
+      border-color: #0071e3;
+      box-shadow: 0 0 0 4px rgb(0 113 227 / 0.16);
+    }
+    .lg-tabs {
+      background-color: #e8e8ed;
+      color: #1d1d1f;
+      border-radius: 10px;
+    }
+    .lg-tab {
+      color: #48484a;
+      border-radius: 8px;
+    }
+    .lg-tab[data-state="active"] {
+      background-color: #ffffff;
+      color: #1d1d1f;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+    }
+    .theme-switcher {
+      background-color: #e8e8ed;
+      border-radius: 980px;
+    }
+    .theme-switcher-option {
+      color: #48484a;
+      border-radius: 980px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .theme-switcher-option[data-active] {
+      background-color: #ffffff;
+      color: #1d1d1f;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+    }
+  }
+}

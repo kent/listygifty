@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { RetroLandingHero } from "@/components/retro/RetroLandingHero";
 import { RetroFireplaceCta } from "@/components/retro/RetroFireplaceCta";
+import { AppleCta, AppleLandingHero } from "@/components/apple/AppleLanding";
 import { AUTH_ROUTES } from "@/services";
 import { AuthRedirect } from "@/components/auth-redirect";
 import { JsonLd } from "@/components/json-ld";
@@ -122,7 +123,7 @@ export default function HomePage() {
   const baseUrl = absoluteUrl("/");
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col overflow-x-clip">
       <JsonLd
         data={{
           "@context": "https://schema.org",
@@ -182,7 +183,12 @@ export default function HomePage() {
 
       {/* Hero: MathStorm-style game screen + Encarta-style home screen */}
       <main className="relative flex-1 z-10">
-        <RetroLandingHero />
+        <div className="theme-festive-only">
+          <RetroLandingHero />
+        </div>
+        <div className="theme-apple-only">
+          <AppleLandingHero />
+        </div>
         {/* Features Section */}
         <section id="features" className="container mx-auto px-4 py-20">
           <div className="text-center mb-16">
@@ -201,7 +207,7 @@ export default function HomePage() {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="group relative p-8 rounded-2xl bg-white/50 dark:bg-slate-900/50 border-2 border-slate-900 shadow-md dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                className="group relative p-8 rounded-2xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 shadow-sm dark:border-2 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
               >
                 {/* Icon */}
                 <div className={`w-14 h-14 mb-6 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center text-white shadow-lg`}>
@@ -252,7 +258,7 @@ export default function HomePage() {
             ].map((holiday) => (
               <div
                 key={holiday.name}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 dark:bg-slate-800/50 border-2 border-slate-900 shadow-md dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 dark:bg-slate-800/50 border border-slate-200 shadow-sm dark:border-2 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-800 transition-colors"
               >
                 <span className="text-lg">{holiday.emoji}</span>
                 <span className="text-sm font-medium">{holiday.name}</span>
@@ -264,7 +270,7 @@ export default function HomePage() {
         {/* Sharing & Privacy Section */}
         <section id="sharing" className="container mx-auto px-4 py-20">
           <div className="max-w-4xl mx-auto">
-            <div className="relative p-10 md:p-14 rounded-3xl bg-gradient-to-br from-white dark:from-slate-900 to-slate-50 dark:to-slate-800 border-2 border-slate-900 shadow-md dark:border-slate-700 overflow-hidden">
+            <div className="relative p-10 md:p-14 rounded-3xl bg-gradient-to-br from-white dark:from-slate-900 to-slate-50 dark:to-slate-800 border border-slate-200 shadow-sm dark:border-2 dark:border-slate-700 overflow-hidden">
               {/* Background decoration */}
               <div className="absolute inset-0 overflow-hidden pointer-events-none">
               </div>
@@ -487,7 +493,7 @@ export default function HomePage() {
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12">
             {/* Claude Card */}
-            <div className="group relative p-8 rounded-2xl bg-white/50 dark:bg-slate-900/50 border-2 border-slate-900 shadow-md dark:border-slate-800 hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/5">
+            <div className="group relative p-8 rounded-2xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 shadow-sm dark:border-2 dark:border-slate-800 hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/5">
               <div className="w-14 h-14 mb-6 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white shadow-lg">
                 <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
@@ -501,7 +507,7 @@ export default function HomePage() {
             </div>
 
             {/* ChatGPT Card */}
-            <div className="group relative p-8 rounded-2xl bg-white/50 dark:bg-slate-900/50 border-2 border-slate-900 shadow-md dark:border-slate-800 hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/5">
+            <div className="group relative p-8 rounded-2xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 shadow-sm dark:border-2 dark:border-slate-800 hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/5">
               <div className="w-14 h-14 mb-6 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg">
                 <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/>
@@ -515,7 +521,7 @@ export default function HomePage() {
             </div>
 
             {/* Any MCP Client Card */}
-            <div className="group relative p-8 rounded-2xl bg-white/50 dark:bg-slate-900/50 border-2 border-slate-900 shadow-md dark:border-slate-800 hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/5">
+            <div className="group relative p-8 rounded-2xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 shadow-sm dark:border-2 dark:border-slate-800 hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/5">
               <div className="w-14 h-14 mb-6 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -597,7 +603,7 @@ export default function HomePage() {
             {planningScenarios.map((scenario, index) => (
               <div
                 key={index}
-                className="p-8 rounded-2xl bg-white/50 dark:bg-slate-900/50 border-2 border-slate-900 shadow-md dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300"
+                className="p-8 rounded-2xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 shadow-sm dark:border-2 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300"
               >
                 <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-sm font-bold text-white">
                   {index + 1}
@@ -628,7 +634,7 @@ export default function HomePage() {
               {faqItems.map((item) => (
                 <section
                   key={item.question}
-                  className="rounded-2xl border-2 border-slate-900 shadow-md bg-white/60 p-6 dark:border-slate-800 dark:bg-slate-900/60"
+                  className="rounded-2xl border border-slate-200 shadow-sm dark:border-2 bg-white/60 p-6 dark:border-slate-800 dark:bg-slate-900/60"
                 >
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{item.question}</h3>
                   <p className="mt-3 leading-relaxed text-slate-600 dark:text-slate-400">{item.answer}</p>
@@ -639,7 +645,12 @@ export default function HomePage() {
         </section>
 
         {/* Final CTA: the EGA fireplace */}
-        <RetroFireplaceCta />
+        <div className="theme-festive-only">
+          <RetroFireplaceCta />
+        </div>
+        <div className="theme-apple-only">
+          <AppleCta />
+        </div>
       </main>
 
 

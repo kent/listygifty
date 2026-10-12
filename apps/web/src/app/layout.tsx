@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { IBM_Plex_Sans, Press_Start_2P, VT323 } from "next/font/google";
+import { IBM_Plex_Sans, Inter, Press_Start_2P, VT323 } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@/components/analytics";
@@ -9,6 +9,7 @@ import { JsonLd } from "@/components/json-ld";
 import { Footer } from "@/components/layout";
 import { ChristmasBackdrop } from "@/components/retro/ChristmasBackdrop";
 import { BRAND_NAME } from "@/lib/brand";
+import { DEFAULT_THEME } from "@/lib/themes";
 import {
   BASE_KEYWORDS,
   DEFAULT_OG_IMAGE,
@@ -20,6 +21,13 @@ import {
 const plex = IBM_Plex_Sans({
   variable: "--font-plex",
   weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  display: "swap",
+});
+
+// Apple theme: system font on Apple devices, Inter everywhere else.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
 });
@@ -103,7 +111,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f15aa",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbfbfd" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f15aa" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -119,7 +130,8 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${plex.variable} ${pressStart.variable} ${vt323.variable}`}
+      data-theme={DEFAULT_THEME}
+      className={`${plex.variable} ${inter.variable} ${pressStart.variable} ${vt323.variable}`}
     >
       <body className="font-sans">
         <JsonLd
@@ -155,7 +167,9 @@ export default function RootLayout({
             description: DEFAULT_SEO_DESCRIPTION,
           }}
         />
-        <ChristmasBackdrop />
+        <div className="theme-festive-only">
+          <ChristmasBackdrop />
+        </div>
         <Providers>
           <div className="flex min-h-screen flex-col">
             <div className="flex-1">{children}</div>

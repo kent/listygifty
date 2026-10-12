@@ -35,8 +35,8 @@ export const PUBLIC_ROUTES = [
 // Clerk Appearance Configuration
 // =============================================================================
 
-// Retro '96 look: square, bevelled, pixel font, red "Enter" key buttons.
-const retroVariables: Appearance["variables"] = {
+// Festive: square, bevelled, gold title, red "Enter" key buttons.
+const festiveVariables: Appearance["variables"] = {
   colorPrimary: "#c8141c",
   colorText: "#f2f0ff",
   colorTextSecondary: "#aaa4e0",
@@ -46,10 +46,10 @@ const retroVariables: Appearance["variables"] = {
   colorNeutral: "#f2f0ff",
   fontSize: "1rem",
   borderRadius: "0px",
-  fontFamily: "var(--font-plex), ui-sans-serif, system-ui, sans-serif",
+  fontFamily: "var(--app-font-sans)",
 };
 
-const sharedElements = {
+const festiveElements = {
   formButtonPrimary:
     "text-white! text-base! rounded-none bg-red-600 hover:bg-red-500 border-2 border-t-red-300 border-l-red-300 border-r-red-900 border-b-red-900 shadow-none",
   footerActionLink: "text-amber-300! hover:text-amber-200! underline underline-offset-4",
@@ -70,24 +70,40 @@ const sharedElements = {
   headerTitle: "text-amber-300! text-xl! font-bold!",
 };
 
-// Dark theme appearance (the retro build is always dark)
-export const clerkDarkAppearance: Appearance = {
-  variables: retroVariables,
-  elements: sharedElements,
+export const clerkFestiveAppearance: Appearance = {
+  variables: festiveVariables,
+  elements: festiveElements,
 };
 
-// Light theme appearance
-export const clerkLightAppearance: Appearance = {
-  variables: retroVariables,
-  elements: sharedElements,
+// Apple: light, rounded, system type, blue pill button.
+export const clerkAppleAppearance: Appearance = {
+  variables: {
+    colorPrimary: "#0071e3",
+    colorText: "#1d1d1f",
+    colorTextSecondary: "#6e6e73",
+    colorBackground: "#ffffff",
+    colorInputBackground: "#ffffff",
+    colorInputText: "#1d1d1f",
+    fontSize: "1rem",
+    borderRadius: "12px",
+    fontFamily: "var(--app-font-sans)",
+  },
+  elements: {
+    cardBox: "rounded-[22px]! border! border-black/5! shadow-[0_24px_64px_rgb(0_0_0_/_0.10)]!",
+    formButtonPrimary: "rounded-full! bg-[#0071e3]! hover:bg-[#0077ed]! shadow-none! text-base!",
+    headerTitle: "text-2xl! font-semibold! tracking-tight!",
+    footerActionLink: "text-[#0066cc]!",
+  },
 };
 
-// Default appearance (for backwards compatibility)
-export const clerkAppearance = clerkDarkAppearance;
+// Kept for existing imports.
+export const clerkDarkAppearance = clerkFestiveAppearance;
+export const clerkLightAppearance = clerkAppleAppearance;
+export const clerkAppearance = clerkFestiveAppearance;
 
-// Function to get appearance based on theme
-export function getClerkAppearance(theme: "light" | "dark" | undefined): Appearance {
-  return theme === "light" ? clerkLightAppearance : clerkDarkAppearance;
+/** Clerk appearance for an app theme id (see src/lib/themes.ts). */
+export function getClerkAppearance(theme: string | undefined): Appearance {
+  return theme === "apple" ? clerkAppleAppearance : clerkFestiveAppearance;
 }
 
 // =============================================================================
