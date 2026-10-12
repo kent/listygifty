@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { Pixelify_Sans, Press_Start_2P, VT323 } from "next/font/google";
+import { IBM_Plex_Sans, Press_Start_2P, VT323 } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@/components/analytics";
 import { Providers } from "@/components/providers";
 import { JsonLd } from "@/components/json-ld";
 import { Footer } from "@/components/layout";
+import { ChristmasBackdrop } from "@/components/retro/ChristmasBackdrop";
 import { BRAND_NAME } from "@/lib/brand";
 import {
   BASE_KEYWORDS,
@@ -15,8 +16,10 @@ import {
   getSiteUrl,
 } from "@/lib/seo";
 
-const pixelify = Pixelify_Sans({
-  variable: "--font-pixelify",
+// Body and UI text: crisp and unambiguous (pixel fonts blur digits like 5/S and 8/B).
+const plex = IBM_Plex_Sans({
+  variable: "--font-plex",
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
   display: "swap",
 });
@@ -112,10 +115,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${pixelify.variable} ${pressStart.variable} ${vt323.variable} font-sans`}
-      >
+    // Font variables live on <html> so :root theme tokens (e.g. --font-display) can resolve them.
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${plex.variable} ${pressStart.variable} ${vt323.variable}`}
+    >
+      <body className="font-sans">
         <JsonLd
           data={{
             "@context": "https://schema.org",
@@ -149,6 +155,7 @@ export default function RootLayout({
             description: DEFAULT_SEO_DESCRIPTION,
           }}
         />
+        <ChristmasBackdrop />
         <Providers>
           <div className="flex min-h-screen flex-col">
             <div className="flex-1">{children}</div>

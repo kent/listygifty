@@ -44,21 +44,30 @@ const retroVariables: Appearance["variables"] = {
   colorInputBackground: "#05031f",
   colorInputText: "#ffffff",
   colorNeutral: "#f2f0ff",
+  fontSize: "1rem",
   borderRadius: "0px",
-  fontFamily: "var(--font-pixelify), ui-sans-serif, system-ui, sans-serif",
+  fontFamily: "var(--font-plex), ui-sans-serif, system-ui, sans-serif",
 };
 
 const sharedElements = {
   formButtonPrimary:
-    "rounded-none bg-red-600 hover:bg-red-500 border-2 border-t-red-300 border-l-red-300 border-r-red-900 border-b-red-900 shadow-none",
-  footerActionLink: "text-amber-300 hover:text-amber-200",
+    "text-white! text-base! rounded-none bg-red-600 hover:bg-red-500 border-2 border-t-red-300 border-l-red-300 border-r-red-900 border-b-red-900 shadow-none",
+  footerActionLink: "text-amber-300! hover:text-amber-200! underline underline-offset-4",
+  formFieldAction: "text-amber-300! hover:text-amber-200!",
+  formResendCodeLink: "text-amber-300!",
+  identityPreviewEditButton: "text-amber-300!",
+  formFieldLabel: "text-white!",
+  headerSubtitle: "text-slate-300!",
+  dividerText: "text-slate-300!",
+  socialButtonsIconButton:
+    "rounded-none! bg-[#c3c3c3]! hover:bg-[#d4d4d4]! border-2! border-t-white! border-l-white! border-r-black! border-b-black!",
   cardBox: "rounded-none! border-[3px]! border-black! shadow-[8px_8px_0_0_rgb(110_106_168_/_0.85)]!",
   card: "rounded-none! shadow-none!",
   formFieldInput:
     "rounded-none border-2 border-t-black border-l-black border-r-slate-600 border-b-slate-600",
   socialButtonsBlockButton:
     "rounded-none bg-[#c3c3c3] border-2 border-t-white border-l-white border-r-black border-b-black",
-  headerTitle: "text-sm!",
+  headerTitle: "text-amber-300! text-xl! font-bold!",
 };
 
 // Dark theme appearance (the retro build is always dark)

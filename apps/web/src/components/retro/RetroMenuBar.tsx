@@ -25,11 +25,8 @@ function isTyping(target: EventTarget | null) {
   return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
 }
 
-/**
- * The "Help F1 | File F2 | Options F3" strip from early-90s DOS games.
- * Function keys really do work as shortcuts.
- */
-export function RetroMenuBar({ items, right, className }: RetroMenuBarProps) {
+/** Binds F-keys to menu items (ignored while typing or with modifier keys). */
+export function useFunctionKeys(items: readonly Pick<RetroMenuItem, "href" | "fkey">[]) {
   const router = useRouter();
 
   useEffect(() => {
@@ -49,6 +46,14 @@ export function RetroMenuBar({ items, right, className }: RetroMenuBarProps) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [items, router]);
+}
+
+/**
+ * The "Help F1 | File F2 | Options F3" strip from early-90s DOS games.
+ * Function keys really do work as shortcuts.
+ */
+export function RetroMenuBar({ items, right, className }: RetroMenuBarProps) {
+  useFunctionKeys(items);
 
   return (
     <div

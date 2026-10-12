@@ -37,9 +37,12 @@ export default function AuthLayout({
         <PixelSprite name="snowman" scale={7} />
       </div>
       <div className="relative z-10 flex w-full max-w-md flex-col items-center gap-6">
-        <Link href="/" className="flex items-center gap-3">
-          <PixelSprite name="gift" scale={4} />
-          <span className="font-display text-lg text-amber-300 [text-shadow:3px_3px_0_#15114a]">
+        <Link
+          href="/"
+          className="flex items-center gap-3 border-[3px] border-black bg-[#0b0838] px-4 py-2 shadow-[6px_6px_0_0_rgb(110_106_168_/_0.85)]"
+        >
+          <PixelSprite name="gift" scale={3} />
+          <span className="font-display text-base text-amber-300 [text-shadow:2px_2px_0_#a00a10]">
             LISTY GIFTY
           </span>
         </Link>

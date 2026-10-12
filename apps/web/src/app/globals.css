@@ -108,8 +108,8 @@
   --color-slate-100: #eceaff;
   --color-slate-200: #dcd9f7;
   --color-slate-300: #c8c3f0;
-  --color-slate-400: #aaa4e0;
-  --color-slate-500: #8a84c4;
+  --color-slate-400: #bdb8ec;
+  --color-slate-500: #a29dd8;
   --color-slate-600: #5c56a0;
   --color-slate-700: #2e2972;
   --color-slate-800: #1c1858;
@@ -120,8 +120,8 @@
   --color-gray-100: #eceaff;
   --color-gray-200: #dcd9f7;
   --color-gray-300: #c8c3f0;
-  --color-gray-400: #aaa4e0;
-  --color-gray-500: #8a84c4;
+  --color-gray-400: #bdb8ec;
+  --color-gray-500: #a29dd8;
   --color-gray-600: #5c56a0;
   --color-gray-700: #2e2972;
   --color-gray-800: #1c1858;
@@ -240,11 +240,11 @@
   --shadow-xl: 6px 6px 0 0 rgb(74 69 144 / 0.9);
   --shadow-2xl: 8px 8px 0 0 rgb(74 69 144 / 0.9);
 
-  /* Pixel fonts blur when tiny, so the small steps run a touch larger */
-  --text-xs: 0.8125rem;
-  --text-xs--line-height: 1.35;
-  --text-sm: 0.9375rem;
-  --text-sm--line-height: 1.45;
+  /* Slightly roomier small text on the dark background */
+  --text-xs: 0.78rem;
+  --text-xs--line-height: 1.4;
+  --text-sm: 0.9rem;
+  --text-sm--line-height: 1.5;
 
   --font-display: var(--font-press-start), ui-monospace, monospace;
   --font-terminal: var(--font-vt323), ui-monospace, monospace;
@@ -253,7 +253,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-pixelify), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-vt323), ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -305,7 +305,7 @@
   --secondary: #1c1858;
   --secondary-foreground: #f2f0ff;
   --muted: #1c1858;
-  --muted-foreground: #aaa4e0;
+  --muted-foreground: #bdb8ec;
   --accent: #1c1858;
   --accent-foreground: #ffffff;
   --destructive: #c8141c;
@@ -342,8 +342,8 @@
     @apply border-border outline-ring/50;
   }
   html {
-    -webkit-font-smoothing: none;
-    font-smooth: never;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   body {
     @apply bg-background text-foreground;
@@ -561,8 +561,9 @@
    Fireplace typography: gold pixel headings with a red drop shadow.
    Unlayered on purpose so it wins over per-page text-* utilities.
    -------------------------------------------------------------------------- */
-h1,
-h2 {
+/* Clerk renders its own headings (cl-*); leave those to the Clerk appearance. */
+h1:not([class*="cl-"]),
+h2:not([class*="cl-"]) {
   font-family: var(--font-display);
   font-weight: 400;
   color: var(--gold);
@@ -570,10 +571,10 @@ h2 {
   line-height: 1.45;
   letter-spacing: 0;
 }
-h1 {
+h1:not([class*="cl-"]) {
   font-size: clamp(1.25rem, 0.9rem + 1.6vw, 2.25rem);
 }
-h2 {
+h2:not([class*="cl-"]) {
   font-size: clamp(1rem, 0.85rem + 0.9vw, 1.6rem);
 }
 /* Small h2s inside dialogs, cards and popups */
@@ -593,4 +594,90 @@ h2 {
   background-image: linear-gradient(90deg, #0a0e88, #3344ee 60%, #8f99ff);
   background-size: 100% 8px;
   background-repeat: no-repeat;
+}
+
+/* Page roots stay see-through so the Christmas backdrop shows behind them.
+   (Scenes that paint their own sky set it inline and are left alone.) */
+.min-h-screen:not([style*="background"]) {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Content panels are solid so the backdrop never runs through text.
+   Colours match what the translucent versions looked like over a card. */
+.dark [class*="dark:bg-slate-950/"] {
+  background-color: #0b0838 !important;
+}
+.dark [class*="dark:bg-slate-900/"] {
+  background-color: #110d48 !important;
+}
+.dark [class*="dark:bg-slate-800/50"] {
+  background-color: #16124f !important;
+}
+.dark [class*="dark:bg-slate-800/30"] {
+  background-color: #140f4b !important;
+}
+
+/* --------------------------------------------------------------------------
+   Backdrop motion: sleigh fly-by, stars, smoke. Stepped timing for a
+   low-frame-rate, 90s game feel.
+   -------------------------------------------------------------------------- */
+@keyframes retro-sleigh-fly {
+  0% { transform: translateX(-40vw); }
+  45% { transform: translateX(110vw); }
+  100% { transform: translateX(110vw); }
+}
+@keyframes retro-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes retro-nose {
+  0%, 100% { box-shadow: 0 0 0 2px rgb(255 85 85 / 0.5), 0 0 8px 3px rgb(255 85 85 / 0.6); }
+  50% { box-shadow: 0 0 0 1px rgb(255 85 85 / 0.2), 0 0 3px 1px rgb(255 85 85 / 0.2); }
+}
+@keyframes retro-twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.9; }
+}
+@keyframes retro-shooting {
+  0%, 88% { opacity: 0; transform: translate(0, 0) rotate(-20deg); }
+  90% { opacity: 1; }
+  96% { opacity: 0; transform: translate(-30vw, 11vw) rotate(-20deg); }
+  100% { opacity: 0; transform: translate(-30vw, 11vw) rotate(-20deg); }
+}
+@keyframes retro-smoke {
+  0% { opacity: 0; transform: translate(0, 0); }
+  20% { opacity: 0.7; }
+  100% { opacity: 0; transform: translate(10px, -36px) scale(2.2); }
+}
+@keyframes retro-tree-glow {
+  0%, 100% { opacity: 0.18; }
+  50% { opacity: 0.3; }
+}
+@keyframes retro-window-flicker {
+  0%, 100% { opacity: 0.8; }
+  40% { opacity: 0.55; }
+  60% { opacity: 0.9; }
+}
+.retro-sleigh { animation: retro-sleigh-fly 36s steps(240) 4s infinite; transform: translateX(-40vw); }
+.retro-bob { animation: retro-bob 1.6s steps(4) infinite; }
+.retro-nose { animation: retro-nose 0.9s steps(2) infinite; }
+.retro-twinkle { animation-name: retro-twinkle; animation-timing-function: steps(3); animation-iteration-count: infinite; }
+.retro-shooting-star { opacity: 0; animation: retro-shooting 23s linear 9s infinite; }
+.retro-smoke { opacity: 0; animation: retro-smoke 3.9s steps(8) infinite; }
+.retro-tree-glow { animation: retro-tree-glow 4s steps(4) infinite; }
+.retro-window-flicker { animation: retro-window-flicker 2.4s steps(3) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .retro-sleigh,
+  .retro-bob,
+  .retro-nose,
+  .retro-twinkle,
+  .retro-shooting-star,
+  .retro-smoke,
+  .retro-tree-glow,
+  .retro-window-flicker {
+    animation: none !important;
+  }
+  .retro-sleigh { display: none; }
 }
