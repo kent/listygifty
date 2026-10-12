@@ -264,8 +264,6 @@ export function DemoSlideshow({ onClose }: DemoSlideshowProps) {
       <div className="flex-1 px-4 pb-8">
         <div className={`relative h-full rounded-3xl bg-gradient-to-br ${currentSlideData.gradient} p-8 overflow-hidden`}>
           <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/10 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-white/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
           </div>
 
           <div className="relative z-10 flex flex-col items-center justify-center h-full text-center">

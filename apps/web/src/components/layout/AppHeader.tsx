@@ -1,22 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { User } from "@niftygifty/types";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Gift, Calendar, Users, Settings, Crown, Sparkles, Menu, LogOut, Home, ArrowLeftRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Crown, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { WorkspaceSwitcher } from "@/components/workspace/WorkspaceSwitcher";
+import { PixelSprite, RetroMenuBar } from "@/components/retro";
 
 interface AppHeaderProps {
   user: User | null;
@@ -24,177 +14,66 @@ interface AppHeaderProps {
 }
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/holidays", label: "Gift Lists", icon: Calendar },
-  { href: "/exchanges", label: "Exchanges", icon: ArrowLeftRight },
-  { href: "/people", label: "People", icon: Users },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Home", fkey: 1 },
+  { href: "/holidays", label: "Gift Lists", fkey: 2 },
+  { href: "/exchanges", label: "Exchanges", fkey: 3 },
+  { href: "/people", label: "People", fkey: 4 },
+  { href: "/settings", label: "Options", fkey: 6 },
 ] as const;
 
 export function AppHeader({ user, onSignOut }: AppHeaderProps) {
   const pathname = usePathname();
   const { isPremium, billingStatus } = useAuth();
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  const items = NAV_ITEMS.map((item) => ({
+    ...item,
+    active: pathname === item.href || pathname.startsWith(`${item.href}/`),
+  }));
 
   return (
-    <header className="relative z-10 border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
-      <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4 md:gap-8">
-          {/* Mobile menu button */}
-          <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 w-72">
-              <SheetHeader className="mb-4">
-                <SheetTitle className="flex items-center gap-3 text-slate-900 dark:text-white">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500">
-                    <Gift className="h-5 w-5 text-white" />
-                  </div>
-                  Listy Gifty
-                </SheetTitle>
-              </SheetHeader>
-              {/* Workspace Switcher - Mobile */}
-              <div className="mb-4 pb-4 border-b border-slate-200 dark:border-slate-800">
-                <WorkspaceSwitcher />
-              </div>
-              <nav className="space-y-1">
-                {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-                  const isActive = pathname === href || pathname.startsWith(`${href}/`);
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      onClick={() => setMobileNavOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-colors",
-                        isActive
-                          ? "bg-violet-500/20 text-violet-600 dark:text-violet-300"
-                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                      {label}
-                    </Link>
-                  );
-                })}
-              </nav>
-              <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 space-y-4">
-                {/* Premium/Upgrade in mobile nav */}
-                {isPremium ? (
-                  <Link href="/billing" onClick={() => setMobileNavOpen(false)}>
-                    <Badge className="bg-gradient-to-r from-amber-500 to-orange-600 border-0 text-white w-full justify-center py-2">
-                      <Crown className="w-4 h-4 mr-2" />
-                      Premium Member
-                    </Badge>
-                  </Link>
-                ) : billingStatus ? (
-                  <Link href="/billing" onClick={() => setMobileNavOpen(false)}>
-                    <Button className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white border-0">
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Upgrade to Premium
-                    </Button>
-                  </Link>
-                ) : null}
-                {user && (
-                  <p className="text-sm text-slate-500 dark:text-slate-400 px-4 truncate">{user.email}</p>
-                )}
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setMobileNavOpen(false);
-                    onSignOut();
-                  }}
-                  className="w-full justify-start gap-3 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  <LogOut className="h-5 w-5" />
-                  Sign out
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
+    <header className="relative z-10 border-b-4 border-slate-900">
+      <RetroMenuBar items={items} />
 
-          <Link href="/dashboard" className="flex items-center gap-2 md:gap-3">
-            <div className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500">
-              <Gift className="h-4 w-4 md:h-5 md:w-5 text-white" />
+      <div className="retro-hud">
+        <div className="container mx-auto flex flex-wrap items-center justify-between gap-3 px-4 py-2">
+          <div className="flex min-w-0 items-center gap-3 md:gap-6">
+            <Link href="/dashboard" className="flex items-center gap-2" aria-label="Listy Gifty home">
+              <PixelSprite name="gift" scale={3} />
+              <span className="font-display text-[11px] text-amber-300 [text-shadow:2px_2px_0_#03053d] md:text-sm">
+                LISTY GIFTY
+              </span>
+            </Link>
+            <div className="min-w-0 [&_button]:!py-1 [&_button]:border-2 [&_button]:border-t-white [&_button]:border-l-white [&_button]:border-r-slate-900 [&_button]:border-b-slate-900 [&_button]:bg-[#c3c3c3] [&_button]:text-slate-900">
+              <WorkspaceSwitcher />
             </div>
-            <span className="text-lg md:text-xl font-bold text-slate-900 dark:text-white">Listy Gifty</span>
-          </Link>
-
-          {/* Workspace Switcher - Desktop */}
-          <div className="hidden md:block">
-            <WorkspaceSwitcher />
           </div>
 
-          {/* Desktop navigation */}
-          <nav className="hidden md:flex items-center gap-1">
-            {NAV_ITEMS.filter(item => item.href !== "/dashboard").map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href || pathname.startsWith(`${href}/`);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-violet-500/20 text-violet-600 dark:text-violet-300"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Desktop right section */}
-        <div className="hidden md:flex items-center gap-4">
-          {/* Premium badge or upgrade button */}
-          {isPremium ? (
-            <Link href="/billing">
-              <Badge className="bg-gradient-to-r from-amber-500 to-orange-600 border-0 text-white cursor-pointer hover:opacity-90 transition-opacity">
-                <Crown className="w-3 h-3 mr-1" />
-                Premium
-              </Badge>
-            </Link>
-          ) : billingStatus ? (
-            <Link href="/billing">
-              <Button
-                size="sm"
-                className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white border-0"
+          <div className="flex items-center gap-3">
+            {isPremium ? (
+              <Link
+                href="/billing"
+                className="retro-hud-panel flex items-center gap-1.5 px-2 py-1 text-sm text-amber-300"
               >
-                <Sparkles className="w-3 h-3" />
+                <Crown className="h-4 w-4" />
+                <span className="hidden sm:inline">Premium</span>
+              </Link>
+            ) : billingStatus ? (
+              <Link href="/billing" className="retro-key text-sm">
+                <Sparkles className="h-3.5 w-3.5" />
                 Upgrade
-              </Button>
-            </Link>
-          ) : null}
-          {user && <span className="text-sm text-slate-500 dark:text-slate-400">{user.email}</span>}
-          <Button
-            variant="outline"
-            onClick={onSignOut}
-            className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
-          >
-            Sign out
-          </Button>
-        </div>
-
-        {/* Mobile: just show premium badge if applicable */}
-        <div className="flex md:hidden items-center gap-2">
-          {isPremium && (
-            <Link href="/billing">
-              <Badge className="bg-gradient-to-r from-amber-500 to-orange-600 border-0 text-white text-xs">
-                <Crown className="w-3 h-3" />
-              </Badge>
-            </Link>
-          )}
+              </Link>
+            ) : null}
+            {user && (
+              <span className="hidden max-w-[220px] truncate font-mono text-lg text-violet-100 lg:inline">
+                {user.email}
+              </span>
+            )}
+            <button type="button" onClick={onSignOut} className="retro-key text-sm">
+              Sign out
+            </button>
+          </div>
         </div>
       </div>
     </header>
   );
 }
-

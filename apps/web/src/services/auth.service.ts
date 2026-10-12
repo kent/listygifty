@@ -1,7 +1,6 @@
 import type { User, BillingStatus } from "@niftygifty/types";
 import type { UserResource } from "@clerk/types";
 import type { Appearance } from "@clerk/types";
-import { dark } from "@clerk/themes";
 import { PUBLIC_MARKETING_PAGES, PUBLIC_STATIC_TEXT_ROUTES } from "@/lib/seo";
 
 // =============================================================================
@@ -36,30 +35,40 @@ export const PUBLIC_ROUTES = [
 // Clerk Appearance Configuration
 // =============================================================================
 
-// Shared elements that work for both themes
-const sharedElements = {
-  formButtonPrimary:
-    "bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500",
-  footerActionLink: "text-violet-400 hover:text-violet-300",
+// Retro '96 look: square, bevelled, pixel font, red "Enter" key buttons.
+const retroVariables: Appearance["variables"] = {
+  colorPrimary: "#c8141c",
+  colorText: "#15114a",
+  colorTextSecondary: "#48427e",
+  colorBackground: "#ffffff",
+  colorInputBackground: "#ffffff",
+  borderRadius: "0px",
+  fontFamily: "var(--font-pixelify), ui-sans-serif, system-ui, sans-serif",
 };
 
-// Dark theme appearance
+const sharedElements = {
+  formButtonPrimary:
+    "rounded-none bg-red-600 hover:bg-red-500 border-2 border-t-red-300 border-l-red-300 border-r-red-900 border-b-red-900 shadow-none",
+  footerActionLink: "text-violet-700 hover:text-fuchsia-600",
+  cardBox: "rounded-none! border-[3px]! border-slate-900! shadow-[6px_6px_0_0_rgb(21_17_74_/_0.6)]!",
+  card: "rounded-none! shadow-none!",
+  formFieldInput:
+    "rounded-none border-2 border-t-slate-700 border-l-slate-700 border-r-slate-200 border-b-slate-200",
+  socialButtonsBlockButton:
+    "rounded-none bg-[#c3c3c3] border-2 border-t-white border-l-white border-r-slate-900 border-b-slate-900",
+  headerTitle: "font-display text-sm tracking-wide",
+};
+
+// Dark theme appearance (kept for API compatibility; the retro build is always light)
 export const clerkDarkAppearance: Appearance = {
-  baseTheme: dark,
-  variables: { colorPrimary: "#8b5cf6" },
-  elements: {
-    ...sharedElements,
-    card: "bg-slate-900/80 backdrop-blur-sm border-slate-800",
-  },
+  variables: retroVariables,
+  elements: sharedElements,
 };
 
 // Light theme appearance
 export const clerkLightAppearance: Appearance = {
-  variables: { colorPrimary: "#8b5cf6" },
-  elements: {
-    ...sharedElements,
-    card: "bg-white/90 backdrop-blur-sm border-slate-200 shadow-lg",
-  },
+  variables: retroVariables,
+  elements: sharedElements,
 };
 
 // Default appearance (for backwards compatibility)

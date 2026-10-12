@@ -1,4 +1,6 @@
 import { Metadata } from "next";
+import Link from "next/link";
+import { PixelSprite, Snowfall } from "@/components/retro";
 
 // Force dynamic rendering for auth pages to avoid Clerk SSG issues
 export const dynamic = "force-dynamic";
@@ -20,10 +22,29 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-500/10 dark:from-violet-900/20 via-transparent to-transparent" />
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMyMDIwMjAiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnY0em0wLTZ2LTJoMnYyaC0yem0tNCAyaDJ2Mmgt MnYtMnptMC02aDJ2Mmgt MnYtMnptLTQgOGgydjJoLTJ2LTJ6bTAtNmgydjJoLTJ2LTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30 dark:opacity-30" />
-      <div className="relative z-10 w-full max-w-md">{children}</div>
+    <div
+      className="relative flex min-h-screen items-center justify-center overflow-hidden p-4"
+      style={{
+        background:
+          "linear-gradient(#5b4fa8 0 18%, #6d61b8 18% 34%, #8277c6 34% 48%, #988fd3 48% 60%, #aea6de 60% 72%, #e9e7f7 72%)",
+      }}
+    >
+      <Snowfall />
+      <div className="absolute bottom-[10%] left-[6%] hidden md:block">
+        <PixelSprite name="tree" scale={10} />
+      </div>
+      <div className="absolute bottom-[10%] right-[8%] hidden md:block">
+        <PixelSprite name="snowman" scale={7} />
+      </div>
+      <div className="relative z-10 flex w-full max-w-md flex-col items-center gap-6">
+        <Link href="/" className="flex items-center gap-3">
+          <PixelSprite name="gift" scale={4} />
+          <span className="font-display text-lg text-amber-300 [text-shadow:3px_3px_0_#15114a]">
+            LISTY GIFTY
+          </span>
+        </Link>
+        {children}
+      </div>
     </div>
   );
 }

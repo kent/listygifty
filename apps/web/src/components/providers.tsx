@@ -35,7 +35,7 @@ function ThemedClerkProvider({ children }: { children: ReactNode }) {
 
   // Use dark theme appearance during SSR and before mount
   const appearance = getClerkAppearance(
-    mounted ? (resolvedTheme as "light" | "dark" | undefined) : "dark"
+    mounted ? (resolvedTheme as "light" | "dark" | undefined) : "light"
   );
 
   return (
@@ -57,8 +57,8 @@ export function Providers({ children }: ProvidersProps) {
     return (
       <ThemeProvider
         attribute="class"
-        defaultTheme="dark"
-        enableSystem
+        defaultTheme="light"
+        forcedTheme="light"
         disableTransitionOnChange
       >
         <NoopAuthProvider>
@@ -71,8 +71,8 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="dark"
-      enableSystem
+      defaultTheme="light"
+      forcedTheme="light"
       disableTransitionOnChange
     >
       <ThemedClerkProvider>{children}</ThemedClerkProvider>

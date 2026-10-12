@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Pixelify_Sans, Press_Start_2P, VT323 } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@/components/analytics";
@@ -15,14 +15,22 @@ import {
   getSiteUrl,
 } from "@/lib/seo";
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-sans",
+const pixelify = Pixelify_Sans({
+  variable: "--font-pixelify",
   subsets: ["latin"],
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-mono",
+const pressStart = Press_Start_2P({
+  variable: "--font-press-start",
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const vt323 = VT323({
+  variable: "--font-vt323",
+  weight: "400",
   subsets: ["latin"],
   display: "swap",
 });
@@ -92,10 +100,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#8b5cf6" },
-    { media: "(prefers-color-scheme: dark)", color: "#020617" },
-  ],
+  themeColor: "#0f15aa",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -109,7 +114,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        className={`${pixelify.variable} ${pressStart.variable} ${vt323.variable} font-sans`}
       >
         <JsonLd
           data={{

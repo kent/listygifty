@@ -1,26 +1,35 @@
 import Link from "next/link";
+import { PixelSprite } from "@/components/retro/PixelSprite";
+
+const LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/business/signup", label: "Business" },
+  { href: "/integrations", label: "Integrations" },
+  { href: "/support", label: "Support" },
+  { href: "/privacy-policy", label: "Privacy" },
+];
 
 export function Footer() {
   return (
-    <footer className="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-white/10 dark:text-muted-foreground">
-      <nav aria-label="Footer" className="mb-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-        <Link href="/" className="hover:text-slate-700 dark:hover:text-slate-200">
-          Home
-        </Link>
-        <Link href="/business/signup" className="hover:text-slate-700 dark:hover:text-slate-200">
-          Business
-        </Link>
-        <Link href="/integrations" className="hover:text-slate-700 dark:hover:text-slate-200">
-          Integrations
-        </Link>
-        <Link href="/support" className="hover:text-slate-700 dark:hover:text-slate-200">
-          Support
-        </Link>
-        <Link href="/privacy-policy" className="hover:text-slate-700 dark:hover:text-slate-200">
-          Privacy
-        </Link>
-      </nav>
-      <span>© {new Date().getFullYear()} Listy Gifty</span>
+    <footer className="retro-hud mt-8">
+      <div className="container mx-auto flex flex-col items-center gap-3 px-4 py-4 md:flex-row md:justify-between">
+        <div className="flex items-center gap-2">
+          <PixelSprite name="gift" scale={2} />
+          <span className="font-display text-[10px] text-amber-300">LISTY GIFTY</span>
+        </div>
+        <nav aria-label="Footer" className="flex flex-wrap items-center justify-center gap-1.5">
+          {LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="retro-hud-panel px-3 py-1 text-sm text-white hover:bg-violet-500"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+        <span className="font-mono text-lg text-violet-200">© {new Date().getFullYear()} Listy Gifty</span>
+      </div>
     </footer>
   );
 }

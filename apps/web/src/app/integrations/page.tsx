@@ -138,9 +138,6 @@ export default function IntegrationsPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden">
       {/* Animated background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-cyan-500/10 dark:bg-cyan-500/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/2 -left-40 w-80 h-80 bg-blue-500/10 dark:bg-blue-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute -bottom-40 right-1/3 w-80 h-80 bg-violet-500/10 dark:bg-violet-500/20 rounded-full blur-3xl animate-pulse delay-500" />
       </div>
 
       {/* Header */}
@@ -357,8 +354,6 @@ export default function IntegrationsPage() {
           <div className="max-w-4xl mx-auto">
             <div className="relative p-10 md:p-14 rounded-3xl bg-gradient-to-br from-slate-100 dark:from-slate-900 to-slate-50 dark:to-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden">
               <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-24 -right-24 w-48 h-48 bg-green-500/10 rounded-full blur-3xl" />
-                <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl" />
               </div>
 
               <div className="relative z-10">
@@ -442,8 +437,6 @@ export default function IntegrationsPage() {
         <section className="container mx-auto px-4 py-20">
           <div className="relative max-w-4xl mx-auto text-center p-12 md:p-16 rounded-3xl bg-gradient-to-br from-cyan-600/10 dark:from-cyan-600/20 to-blue-600/10 dark:to-blue-600/20 border border-cyan-500/20 overflow-hidden">
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute -top-20 -right-20 w-60 h-60 bg-cyan-500/10 dark:bg-cyan-500/20 rounded-full blur-3xl" />
-              <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-blue-500/10 dark:bg-blue-500/20 rounded-full blur-3xl" />
             </div>
 
             <div className="relative z-10">
