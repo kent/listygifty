@@ -32,7 +32,7 @@ export function BillingSection() {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 mb-6 relative">
               <Crown className="h-10 w-10 text-amber-800 dark:text-amber-400" />
               <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                <Sparkles className="h-3 w-3 text-white" />
+                <Sparkles className="h-3 w-3 text-amber-900 dark:text-white" />
               </div>
             </div>
             
