@@ -9,7 +9,7 @@ import { AppHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Gift, Calendar, Users, ChevronRight, Crown } from "lucide-react";
+import { AlertCircle, Plus, Gift, Calendar, Users, ChevronRight, Crown, RefreshCw } from "lucide-react";
 import type { GiftExchange } from "@niftygifty/types";
 
 function getStatusColor(status: string) {
@@ -81,6 +81,9 @@ function ExchangeCard({ exchange }: { exchange: GiftExchange }) {
 export default function ExchangesPage() {
   const {
     data: exchanges,
+    isLoading,
+    error,
+    refetch,
     user,
     signOut,
   } = useWorkspaceData<GiftExchange[]>({
@@ -113,7 +116,25 @@ export default function ExchangesPage() {
           </Link>
         </div>
 
-        {exchanges.length === 0 ? (
+        {isLoading && exchanges.length === 0 ? (
+          <div role="status" aria-label="Loading exchanges" className="flex justify-center py-12">
+            <div className="animate-spin h-8 w-8 border-4 border-violet-500 border-t-transparent rounded-full" />
+          </div>
+        ) : error && exchanges.length === 0 ? (
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 p-12 text-center">
+            <AlertCircle className="h-12 w-12 mx-auto text-red-500 mb-4" />
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+              We couldn&apos;t load your exchanges
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">
+              Check your connection and try again.
+            </p>
+            <Button onClick={() => refetch()} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        ) : exchanges.length === 0 ? (
           <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 p-12 text-center">
             <Gift className="h-12 w-12 mx-auto text-slate-400 dark:text-slate-600 mb-4" />
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">No Exchanges Yet</h2>
