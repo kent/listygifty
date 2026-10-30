@@ -77,6 +77,10 @@ import type {
   ExchangeNotification,
 } from "@niftygifty/types";
 
+// Dark enough for white text in both themes.
+const PUBLISH_BUTTON =
+  "bg-gradient-to-r from-green-800 to-emerald-800 hover:from-green-900 hover:to-emerald-900 dark:from-green-700 dark:to-emerald-700 dark:hover:from-green-800 dark:hover:to-emerald-800";
+
 // Tap targets are 44px on phones and stay compact from the sm breakpoint up.
 const CARD_ACTION_CLASS = "h-11 sm:h-8 border-slate-200 dark:border-slate-700";
 const ROW_ICON_BUTTON_CLASS = "size-11 sm:size-8";
@@ -463,7 +467,7 @@ export default function ExchangeDetailPage({
           {isOwner && exchange.can_start && (
             <Dialog open={showStartDialog} onOpenChange={setShowStartDialog}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
+                <Button className={PUBLISH_BUTTON}>
                   <Play className="h-4 w-4 mr-2" />
                   Publish Exchange
                 </Button>
@@ -494,7 +498,7 @@ export default function ExchangeDetailPage({
                   <Button
                     onClick={handleStartExchange}
                     disabled={starting}
-                    className="bg-gradient-to-r from-green-500 to-emerald-500"
+                    className={PUBLISH_BUTTON}
                   >
                     {starting ? "Publishing..." : "Publish Exchange"}
                   </Button>
