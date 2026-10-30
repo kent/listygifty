@@ -53,16 +53,16 @@ export function HolidayTemplateCard({
   const currentYear = new Date().getFullYear();
 
   return (
-    <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm hover:border-slate-700 transition-all group">
+    <Card className="border-border bg-card/50 backdrop-blur-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all group">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-violet-500/30 group-hover:from-violet-500/30 group-hover:to-fuchsia-500/30 transition-colors">
-              <IconComponent className="h-5 w-5 text-violet-400" />
+              <IconComponent className="h-5 w-5 text-violet-700 dark:text-violet-400" />
             </div>
             <div>
-              <h3 className="font-medium text-white">{holiday.name}</h3>
-              <p className="text-xs text-slate-500">Gift-giving occasion</p>
+              <h3 className="font-medium text-foreground">{holiday.name}</h3>
+              <p className="text-xs text-muted-foreground">Gift-giving occasion</p>
             </div>
           </div>
         </div>
@@ -70,7 +70,7 @@ export function HolidayTemplateCard({
           onClick={() => onStartPlanning(holiday)}
           disabled={isLoading}
           size="sm"
-          className="w-full mt-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white border-0"
+          className="w-full mt-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 border-0"
         >
           {isLoading ? "Creating..." : `Plan ${holiday.name} ${currentYear}`}
         </Button>

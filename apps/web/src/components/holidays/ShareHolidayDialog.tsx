@@ -111,9 +111,9 @@ export function ShareHolidayDialog({ holiday, trigger }: ShareHolidayDialogProps
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="bg-slate-900 border-slate-800">
+      <DialogContent className="bg-card">
         <DialogHeader>
-          <DialogTitle className="text-white">Share {holiday.name}</DialogTitle>
+          <DialogTitle className="text-foreground">Share {holiday.name}</DialogTitle>
           <DialogDescription>
             Share this gift list with family or friends so they can add gifts and people.
           </DialogDescription>
@@ -127,12 +127,13 @@ export function ShareHolidayDialog({ holiday, trigger }: ShareHolidayDialogProps
           <div className="space-y-6">
             {/* Share Link */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Share Link</label>
+              <label htmlFor="share-link" className="text-sm font-medium text-muted-foreground">Share Link</label>
               <div className="flex gap-2">
                 <Input
+                  id="share-link"
                   value={shareUrl || ""}
                   readOnly
-                  className="bg-slate-800 border-slate-700 text-slate-300"
+                  className="bg-muted border-border text-foreground"
                 />
                 <Button
                   onClick={handleCopy}
@@ -140,9 +141,10 @@ export function ShareHolidayDialog({ holiday, trigger }: ShareHolidayDialogProps
                   size="icon"
                   className="shrink-0"
                   disabled={!shareUrl}
+                  aria-label="Copy share link"
                 >
                   {copied ? (
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="h-4 w-4 text-green-700 dark:text-green-500" />
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}
@@ -153,23 +155,24 @@ export function ShareHolidayDialog({ holiday, trigger }: ShareHolidayDialogProps
                   size="icon"
                   className="shrink-0"
                   disabled={regenerating}
+                  aria-label="Regenerate share link"
                 >
                   <RefreshCw className={`h-4 w-4 ${regenerating ? "animate-spin" : ""}`} />
                 </Button>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Anyone with this link can join this gift list as a collaborator.
               </p>
             </div>
 
             {/* Collaborators */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-slate-300">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <Users className="h-4 w-4" />
                 <span>Collaborators ({collaborators.length})</span>
               </div>
               {collaborators.length === 0 ? (
-                <p className="text-sm text-slate-500 py-2">
+                <p className="text-sm text-muted-foreground py-2">
                   No collaborators yet. Share the link to invite people.
                 </p>
               ) : (
@@ -177,7 +180,7 @@ export function ShareHolidayDialog({ holiday, trigger }: ShareHolidayDialogProps
                   {collaborators.map((collab) => (
                     <li
                       key={collab.user_id}
-                      className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-800"
+                      className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted"
                     >
                       <div className="flex items-center gap-3">
                         {collab.image_url ? (
@@ -188,13 +191,13 @@ export function ShareHolidayDialog({ holiday, trigger }: ShareHolidayDialogProps
                             className="h-8 w-8 rounded-full object-cover"
                           />
                         ) : (
-                          <div className="h-8 w-8 rounded-full bg-violet-500/20 flex items-center justify-center text-sm font-medium text-violet-300">
+                          <div className="h-8 w-8 rounded-full bg-violet-500/20 flex items-center justify-center text-sm font-medium text-violet-800 dark:text-violet-300">
                             {getInitials(collab)}
                           </div>
                         )}
                         <div>
-                          <p className="text-sm text-white">{getDisplayName(collab)}</p>
-                          <p className="text-xs text-slate-500 capitalize">{collab.role}</p>
+                          <p className="text-sm text-foreground">{getDisplayName(collab)}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{collab.role}</p>
                         </div>
                       </div>
                       {collab.role !== "owner" && (
@@ -202,7 +205,8 @@ export function ShareHolidayDialog({ holiday, trigger }: ShareHolidayDialogProps
                           variant="ghost"
                           size="sm"
                           onClick={() => handleRemoveCollaborator(collab.user_id)}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          aria-label={`Remove ${getDisplayName(collab)}`}
+                          className="text-red-700 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-500/10"
                         >
                           Remove
                         </Button>
