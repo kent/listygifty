@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, use } from "react";
+import { pluralize } from "@/components/exchanges/pluralize";
 import Link from "next/link";
 import { wishlistsService } from "@/services";
 import { useWorkspaceData } from "@/hooks";
@@ -585,7 +586,7 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
               <p className="text-slate-600 dark:text-slate-400 mb-2">{wishlist.description}</p>
             )}
             <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
-              <span>{items.length} items</span>
+              <span>{pluralize(items.length, "item")}</span>
               {wishlist.claimed_count > 0 && (
                 <span className="text-green-600 dark:text-green-400">
                   {wishlist.claimed_count} claimed

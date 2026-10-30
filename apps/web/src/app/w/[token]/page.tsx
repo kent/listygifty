@@ -3,6 +3,7 @@
 import { parseCalendarDate } from "@/lib/dates";
 
 import { useState, use, useEffect, useCallback } from "react";
+import { pluralize } from "@/components/exchanges/pluralize";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { wishlistsService } from "@/services";
@@ -277,7 +278,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
           <div className="flex items-center justify-center gap-4 text-sm text-slate-600 dark:text-slate-400">
             <span className="flex items-center gap-1">
               <Gift className="h-4 w-4" />
-              {items.length} items
+              {pluralize(items.length, "item")}
             </span>
             {formattedDate && (
               <span className="flex items-center gap-1">
