@@ -7,6 +7,13 @@
     "recommendation": "Check the request logs for /w/ links, and use the gift_changes table to find gifts that lost people through that dialog. Decide on any notice to users once you know the scale."
   },
   {
+    "id": "clerk-signin-hang",
+    "severity": 3,
+    "title": "Sign-in sometimes hangs after the code is accepted",
+    "question": "Now and then, Clerk's own form shows Success and then sits on a spinner at /login/factor-one, logging needs_first_factor not supported yet. The server reports the sign-in as complete. It happened in about 1 in 6 repro sign-ins for some accounts, and once in the final run, where a retry passed. Clerk's dev API was rejecting requests around the same time, so it may only affect dev. I couldn't confirm that, and I couldn't test whether a reload recovers.",
+    "recommendation": "Sign in repeatedly on production and on a real phone. If it reproduces, upgrade the Clerk packages and raise it with Clerk."
+  },
+  {
     "id": "reply-address",
     "severity": 3,
     "title": "Replies to invite emails go nowhere",
@@ -82,17 +89,10 @@
   },
   {
     "id": "owner-share-spoiler",
-    "severity": 2,
-    "title": "Opening your own share link shows what's claimed",
-    "question": "Anti-spoiler now holds on your wishlist page, but your public link has to show real status so guests don't double up, and that page doesn't know who you are.",
-    "recommendation": "Show a notice on the share dialog saying your own link will show claims. Recognizing the signed-in owner on that page can come later."
-  },
-  {
-    "id": "form-drafts",
-    "severity": 2,
-    "title": "Refreshing a half-filled form loses it",
-    "question": "New exchange and new wishlist forms start blank after a refresh or a back and forward. The forms are short, and saving drafts is new behaviour.",
-    "recommendation": "Leave it for now. Revisit it if the hallway test shows people losing work."
+    "severity": 3,
+    "title": "Opening your own share link reveals what was claimed",
+    "question": "Anti-spoiler now holds on your wishlist page, but your public link must show real status so guests don't double up, and that page treats you as a guest. The final first-time tester opened their own link while signed in, saw a green Claimed badge, and now knew what they were getting. The page also offered them Claim This on their own list.",
+    "recommendation": "Have the page recognize a signed-in owner and hide claims, with a notice in the meantime on the share dialog saying your link shows claims."
   },
   {
     "id": "reinvite-declined",
@@ -142,5 +142,19 @@
     "title": "Settings opens with developer tools",
     "question": "Settings leads with Your MCP OAuth URL, above the person's profile. That means nothing to most families. The tester also found Vendors, Partners and Investors in People, and Upgrade on every page while Billing says Soon.",
     "recommendation": "Lead Settings with profile and notifications, and move MCP to an Integrations section. Hide business categories in personal workspaces."
+  },
+  {
+    "id": "live-updates",
+    "severity": 2,
+    "title": "Pages don't update when other people act",
+    "question": "The final tester's organizer page stayed at 1/5 joined after everyone had joined, and Publish appeared only after a manual refresh. The email said people had joined, but the page didn't.",
+    "recommendation": "Refresh the exchange when the tab regains focus, then consider live updates over the existing ActionCable connection."
+  },
+  {
+    "id": "home-counts",
+    "severity": 2,
+    "title": "Home's checklist doesn't refresh",
+    "question": "Found in the last validation pass, after the proof was finished, so it wasn't changed. The checklist showed Add people 0/3 and Capture gifts 0/5 after adding 2 and 1, and a full refresh corrected it. It's an objective bug, not a product call, but fixing it would have invalidated the final proof.",
+    "recommendation": "Fix it in the next pass by refreshing the bootstrap data when returning to Home."
   }
 ]

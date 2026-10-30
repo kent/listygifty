@@ -698,5 +698,27 @@
       "b6543b5"
     ],
     "frames": []
+  },
+  {
+    "id": "form-drafts",
+    "severity": 2,
+    "journey": "Exchange",
+    "title": "Refreshing a half-filled form lost it",
+    "heuristic": "Error prevention",
+    "problem": "New exchange and new wishlist forms started blank after a refresh or a trip back, so anything typed was gone.",
+    "repro": "Type a name into the new exchange form, then refresh the page.",
+    "evidence": "The unhappy path failed this step in all four runs, and the new tests failed on the old code.",
+    "change": "A draft now stays in this tab until the form is submitted. Drafts clear on sign-out, so nothing typed stays behind on a shared laptop.",
+    "commits": [
+      "4ca2fac"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "u1-unhappy-paths",
+        "before": "06-going-back-mid-form-keeps-a-new-exchange-from-vanishing-sile.png",
+        "after": "06-going-back-mid-form-keeps-a-new-exchange-from-vanishing-sile.png"
+      }
+    ]
   }
 ]
