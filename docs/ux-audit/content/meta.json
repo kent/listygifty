@@ -10,7 +10,7 @@
     "Keyboard: the keyboard-only passes of journeys 2 and 5 pass in both themes.",
     "Unhappy paths: 16 of 16 checks pass in all four runs, including refresh mid-form, reused and made-up invites, signing in with a different email, an invitee who never joins, dropout through Redo, impossible rules, minimum group size, empty states and logged-out deep links.",
     "Late fixes: a scripted browser check in all four combinations covers the owner's share link, the self-updating exchange page, Home's checklist, the rename box, the phone claim label and sign-in recovery after a forced failure.",
-    "The draw: 1,000 random groups and exclusions, plus up to 100 redraws, checked against a brute-force oracle. Nobody drew themselves, everyone gave and received once, and every exclusion held.",
+    "The draw: run on its own on the final code, the matching tests passed 12 runs and 11,184 assertions with 0 failures. That covers 1,000 random groups and exclusions, plus up to 100 redraws, checked against a brute-force oracle. Nobody drew themselves, everyone gave and received once, and every exclusion held.",
     "Secrecy: in every Journey 2 run, no API response any participant's browser received, and no post-draw email, revealed who drew them.",
     "Email: all 15 email types reached local Mailpit through real SMTP, each with text and HTML parts and correct links. Every address was @example.com, and no real email was sent.",
     "Database: Journey 2 confirms the saved draw is valid, and no background job failed.",
@@ -34,7 +34,7 @@
     "Disk space ran out during testing and crashed Docker once. It only interrupted the fresh agent's run, and no final results came from that session.",
     "A phone tap problem appeared in about 1 in 10 journey runs during the audit. It was the audit's own screenshot setting, not the app: 60 of 60 phone runs passed once it was removed, and it only affected the test tool.",
     "Fresh agents are not real people, and their no-code rule was an instruction, not a technical block. Run the hallway test too.",
-    "A sign-in hang appeared in some automated runs. It was the test script typing the code before Clerk had sent it: Clerk answered verification_not_sent. A person has no code until the email arrives, so this can't happen to real people through that path. A forced failure also proved that reloading and retyping recovers.",
+    "A sign-in hang appeared in some automated runs. Clerk answered verification_not_sent, because the script typed the code before Clerk had sent it. A person has no code until the email arrives. At the same fast typing speed, but waiting for the code to be sent, 16 of 16 sign-ins that stayed online were clean, with no such errors. I planned 30, but this machine's internet kept dropping: two more runs hung as it went offline and weren't counted. A forced failure also proved that reloading and retyping recovers. Production sign-in itself is untested.",
     "One final pass was interrupted when this machine lost its network connection, which stopped Clerk loading and Docker reaching its registry. That pass was discarded and the whole run repeated. The published results are from the clean rerun."
   ],
   "fresh": {
