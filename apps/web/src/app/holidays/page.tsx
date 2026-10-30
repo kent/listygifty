@@ -3,7 +3,7 @@
 import { parseCalendarDate } from "@/lib/dates";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { holidaysService } from "@/services";
 import { useWorkspaceData } from "@/hooks";
@@ -771,6 +771,7 @@ interface HolidaysData {
 }
 
 export default function HolidaysPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const {
@@ -804,6 +805,7 @@ export default function HolidaysPage() {
     setData((prev) => ({ ...prev, holidays: [...prev.holidays, holiday] }));
     setActiveSection("active");
     toast.success(`Created "${holiday.name}"`);
+    router.push(`/holidays/${holiday.id}`);
   };
 
   const handleToggleComplete = async (holiday: Holiday) => {
