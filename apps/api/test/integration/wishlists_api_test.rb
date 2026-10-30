@@ -432,6 +432,58 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
     assert_item_claims json_response["wishlist_items"].find { |seen| seen["id"] == item.id }, item, quantity: 2, count: 1
   end
 
+  test "an owner opening their own share link can't see what was claimed" do
+    @wishlist.update!(visibility: "shared", share_token: "own_link", anti_spoiler_enabled: true)
+    item = @wishlist.wishlist_items.create!(name: "Surprise")
+    item.claims.create!(user: users(:two))
+
+    get "/w/own_link", headers: auth_headers_for(@wishlist.user), as: :json
+
+    assert_response :success
+    assert json_response["viewer_is_owner"]
+    seen = json_response["wishlist_items"].find { |candidate| candidate["id"] == item.id }
+    assert seen["is_available"]
+    assert_equal 0, seen["claimed_quantity"]
+    assert_empty seen["claims"]
+    assert_equal 0, json_response["claimed_count"]
+  end
+
+  test "an owner sees claims on their share link once anti-spoiler is off" do
+    @wishlist.update!(visibility: "shared", share_token: "open_link", anti_spoiler_enabled: false)
+    item = @wishlist.wishlist_items.create!(name: "Surprise")
+    item.claims.create!(user: users(:two))
+
+    get "/w/open_link", headers: auth_headers_for(@wishlist.user), as: :json
+
+    seen = json_response["wishlist_items"].find { |candidate| candidate["id"] == item.id }
+    assert_not seen["is_available"]
+  end
+
+  test "guests and other signed-in people still see real status on a share link" do
+    @wishlist.update!(visibility: "shared", share_token: "guest_link", anti_spoiler_enabled: true)
+    item = @wishlist.wishlist_items.create!(name: "Surprise")
+    item.claims.create!(user: users(:two))
+
+    [ {}, auth_headers_for(users(:two)) ].each do |headers|
+      get "/w/guest_link", headers: headers, as: :json
+
+      assert_response :success
+      assert_not json_response["viewer_is_owner"]
+      seen = json_response["wishlist_items"].find { |candidate| candidate["id"] == item.id }
+      assert_not seen["is_available"]
+      assert_equal 1, seen["claimed_quantity"]
+    end
+  end
+
+  test "a bad token on a share link is treated as a guest" do
+    @wishlist.update!(visibility: "shared", share_token: "bad_token_link")
+
+    get "/w/bad_token_link", headers: { "Authorization" => "Bearer nonsense" }, as: :json
+
+    assert_response :success
+    assert_not json_response["viewer_is_owner"]
+  end
+
   test "the public wishlist shows that an item was claimed but never by whom" do
     @wishlist.update!(visibility: "shared", share_token: "no_claimer_details")
     item = @wishlist.wishlist_items.create!(name: "Surprise")

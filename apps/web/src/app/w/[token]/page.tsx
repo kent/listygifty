@@ -3,6 +3,8 @@
 import { parseCalendarDate } from "@/lib/dates";
 
 import { useState, use, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { useAuth } from "@/contexts/auth-context";
 import { wishlistsService } from "@/services";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,9 +58,11 @@ function PriorityBadge({ priority }: { priority: number }) {
 
 function PublicItemCard({
   item,
+  isOwner,
   onClaim,
 }: {
   item: StandaloneWishlistItem;
+  isOwner: boolean;
   onClaim: (item: StandaloneWishlistItem) => void;
 }) {
   return (
@@ -107,7 +111,7 @@ function PublicItemCard({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {item.is_available && (
+            {item.is_available && !isOwner && (
               <Button
                 size="sm"
                 onClick={() => onClaim(item)}
@@ -132,6 +136,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
   const [error, setError] = useState<string | null>(null);
 
   // Claim dialog state
+  const { isLoading: authLoading } = useAuth();
   const [claimingItem, setClaimingItem] = useState<StandaloneWishlistItem | null>(null);
   const [claimerName, setClaimerName] = useState("");
   const [claimerEmail, setClaimerEmail] = useState("");
@@ -151,9 +156,10 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
     }
   }, [token]);
 
+  // A signed-in owner must be recognized, or they'd get the guest's real claim status.
   useEffect(() => {
-    fetchWishlist();
-  }, [fetchWishlist]);
+    if (!authLoading) fetchWishlist();
+  }, [authLoading, fetchWishlist]);
 
   const handleClaim = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -291,9 +297,20 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
         <Card className="mb-6 bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800">
           <CardContent className="py-4">
             <p className="text-sm text-violet-700 dark:text-violet-300 text-center">
-              Claim items to let others know what you&apos;re planning to get.
-              {wishlist.anti_spoiler_enabled && (
-                <> The owner won&apos;t see who claimed what until they choose to reveal it.</>
+              {wishlist.viewer_is_owner ? (
+                <>
+                  This is your wishlist, so claims stay hidden here too.{" "}
+                  <Link href={`/wishlists/${wishlist.id}`} className="font-medium underline">
+                    Manage your wishlist
+                  </Link>
+                </>
+              ) : (
+                <>
+                  Claim items to let others know what you&apos;re planning to get.
+                  {wishlist.anti_spoiler_enabled && (
+                    <> The owner won&apos;t see who claimed what until they choose to reveal it.</>
+                  )}
+                </>
               )}
             </p>
           </CardContent>
@@ -316,6 +333,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
               <PublicItemCard
                 key={item.id}
                 item={item}
+                isOwner={Boolean(wishlist.viewer_is_owner)}
                 onClaim={(i) => setClaimingItem(i)}
               />
             ))}

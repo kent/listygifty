@@ -51,6 +51,10 @@ class WishlistBlueprint < ApplicationBlueprint
   view :public do
     excludes :share_token, :share_url
 
+    field :viewer_is_owner do |wishlist, options|
+      wishlist.owner?(options[:current_user])
+    end
+
     # Blueprinter only merges a Hash here. A lambda is silently ignored.
     association :wishlist_items, blueprint: WishlistItemBlueprint, options: { public_view: true } do |wishlist, _options|
       wishlist.wishlist_items.active.by_priority

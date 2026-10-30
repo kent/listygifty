@@ -7,7 +7,10 @@ import PublicWishlistPage from "./page";
 const mocks = vi.hoisted(() => ({
   getPublicWishlist: vi.fn(),
   publicClaimItem: vi.fn(),
+  auth: { isLoading: false },
 }));
+
+vi.mock("@/contexts/auth-context", () => ({ useAuth: () => mocks.auth }));
 
 vi.mock("@/services", () => ({
   wishlistsService: {
@@ -102,5 +105,47 @@ describe("after a guest claims an item", () => {
     await claim();
     expect(screen.queryByText("Claimed")).toBeNull();
     expect(screen.getByLabelText("Claim this Lego set to reserve it")).toBeTruthy();
+  });
+});
+
+describe("an owner opening their own share link", () => {
+  beforeEach(() => {
+    mocks.getPublicWishlist.mockReset();
+    mocks.auth.isLoading = false;
+  });
+
+  async function renderLink() {
+    await act(async () => {
+      render(
+        <Suspense fallback={null}>
+          <PublicWishlistPage params={Promise.resolve({ token: "abc" })} />
+        </Suspense>
+      );
+    });
+  }
+
+  it("waits for sign-in to load, so the owner isn't treated as a guest", async () => {
+    mocks.auth.isLoading = true;
+    mocks.getPublicWishlist.mockResolvedValue(wishlist());
+    await renderLink();
+
+    expect(mocks.getPublicWishlist).not.toHaveBeenCalled();
+  });
+
+  it("says it's their list and offers no claim button", async () => {
+    mocks.getPublicWishlist.mockResolvedValue({ ...wishlist(), id: 7, viewer_is_owner: true });
+    await renderLink();
+
+    expect(await screen.findByText(/This is your wishlist/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Manage your wishlist/ }).getAttribute("href")).toBe("/wishlists/7");
+    expect(screen.queryByRole("button", { name: /Claim this/ })).toBeNull();
+  });
+
+  it("still lets guests claim", async () => {
+    mocks.getPublicWishlist.mockResolvedValue(wishlist());
+    await renderLink();
+
+    expect(await screen.findByRole("button", { name: /Claim this/ })).toBeTruthy();
+    expect(screen.queryByText(/This is your wishlist/)).toBeNull();
   });
 });

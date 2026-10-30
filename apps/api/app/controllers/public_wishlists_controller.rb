@@ -6,7 +6,7 @@ class PublicWishlistsController < ApplicationController
 
   # GET /w/:token
   def show
-    render json: WishlistBlueprint.render(@wishlist, view: :public)
+    render json: WishlistBlueprint.render(@wishlist, view: :public, current_user: owner_viewing)
   end
 
   # POST /w/:token/items/:item_id/claim
@@ -44,6 +44,15 @@ class PublicWishlistsController < ApplicationController
   end
 
   private
+
+  # Guests need real claim status, so only the owner is recognized here. Anyone
+  # else stays anonymous, and a missing or bad token is simply a guest.
+  def owner_viewing
+    token = extract_bearer_token
+    payload = verify_clerk_token(token) if token
+    viewer = User.find_by(clerk_user_id: payload["sub"]) if payload
+    viewer if @wishlist.owner?(viewer) && viewer
+  end
 
   def set_wishlist
     @wishlist = Wishlist.includes(wishlist_items: :claims)

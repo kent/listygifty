@@ -1381,6 +1381,8 @@ export interface Wishlist extends BaseEntity {
 
 export interface WishlistWithItems extends Wishlist {
   wishlist_items: StandaloneWishlistItem[];
+  /** Set on the public share page when the signed-in viewer owns the list. */
+  viewer_is_owner?: boolean;
 }
 
 export interface StandaloneWishlistItem extends BaseEntity {
