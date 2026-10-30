@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { exchangeInvitesService, AUTH_ROUTES } from "@/services";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, DollarSign, User, Check, X, LogIn } from "lucide-react";
+import { Calendar, DollarSign, User, Check, X, LogIn, Lock } from "lucide-react";
 import { toast } from "sonner";
 import type { ExchangeInviteDetails } from "@niftygifty/types";
 
@@ -19,11 +19,11 @@ export default function JoinExchangePage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = use(params);
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const router = useRouter();
   const [invite, setInvite] = useState<ExchangeInviteDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [declining, setDeclining] = useState(false);
   const authReturn = encodeURIComponent(`/join/exchange/${token}`);
@@ -33,9 +33,8 @@ export default function JoinExchangePage({
       try {
         const data = await exchangeInvitesService.getInviteDetails(token);
         setInvite(data);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Invalid or expired invite link";
-        setError(message);
+      } catch {
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -89,7 +88,33 @@ export default function JoinExchangePage({
               <X className="h-8 w-8 text-red-500 dark:text-red-400" />
             </div>
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Invalid Invite</h2>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">{error || "This invite link is invalid or has expired."}</p>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">
+              This invite link doesn&apos;t work anymore. Ask the person who invited you for a new one.
+            </p>
+            <Link href="/">
+              <Button>Go Home</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (invite.join_open === false && invite.participant.status !== "accepted") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex items-center justify-center p-4">
+        <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 max-w-md w-full">
+          <CardContent className="py-12 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 mx-auto mb-4">
+              <Lock className="h-8 w-8 text-slate-500 dark:text-slate-400" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">This exchange has closed</h2>
+            <p className="text-slate-600 dark:text-slate-400 mb-2">
+              {invite.closed_reason || "This exchange is no longer accepting new people."}
+            </p>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">
+              Ask {invite.exchange.owner_name} if you think you should be in.
+            </p>
             <Link href="/">
               <Button>Go Home</Button>
             </Link>
@@ -142,6 +167,8 @@ export default function JoinExchangePage({
       </div>
     );
   }
+
+  const emailMismatch = !!user?.email && user.email.toLowerCase() !== invite.participant.email.toLowerCase();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex items-center justify-center p-4">
@@ -203,32 +230,42 @@ export default function JoinExchangePage({
               <div className="animate-spin h-6 w-6 border-2 border-violet-500 border-t-transparent rounded-full" />
             </div>
           ) : isAuthenticated ? (
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1 border-slate-300 dark:border-slate-700"
-                onClick={handleDecline}
-                disabled={declining || accepting}
-              >
-                {declining ? "Declining..." : "Decline"}
-              </Button>
-              <Button
-                className="flex-1 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
-                onClick={handleAccept}
-                disabled={accepting || declining}
-              >
-                {accepting ? (
-                  "Joining..."
-                ) : (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Join Exchange
-                  </>
-                )}
-              </Button>
+            <div className="space-y-4">
+              {emailMismatch && (
+                <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm break-words text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                  This invite was sent to {invite.participant.email}. You&apos;re signed in as {user.email}.
+                </p>
+              )}
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1 border-slate-300 dark:border-slate-700"
+                  onClick={handleDecline}
+                  disabled={declining || accepting}
+                >
+                  {declining ? "Declining..." : "Decline"}
+                </Button>
+                <Button
+                  className="flex-1 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
+                  onClick={handleAccept}
+                  disabled={accepting || declining}
+                >
+                  {accepting ? (
+                    "Joining..."
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Join Exchange
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
+              <p className="text-center text-sm text-slate-600 dark:text-slate-400">
+                Listy Gifty draws names so everyone gets one person to buy for. It&apos;s free.
+              </p>
               <p className="text-center text-sm text-slate-600 dark:text-slate-400">
                 Sign in or create an account to join this exchange
               </p>

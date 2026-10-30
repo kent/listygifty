@@ -1099,6 +1099,8 @@ export interface ExchangeInviteDetails {
     email: string;
     status: ParticipantStatus;
   };
+  join_open: boolean;
+  closed_reason: string | null;
 }
 
 export interface AcceptInviteResponse {
