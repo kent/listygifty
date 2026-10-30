@@ -6,7 +6,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
-import { peopleService, giftSuggestionsService, } from "@/services";
+import { peopleService, giftSuggestionsService } from "@/services";
 import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { AppHeader } from "@/components/layout";
 import { GiftSuggestionsTab } from "@/components/gift-suggestions-tab";
