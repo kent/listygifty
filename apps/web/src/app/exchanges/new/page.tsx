@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { giftExchangesService } from "@/services";
+import { humanizeError } from "@/lib/error-message";
 import { AppHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,8 +85,8 @@ export default function NewExchangePage() {
       });
       toast.success(`Created "${exchange.name}"`);
       router.push(`/exchanges/${exchange.slug}`);
-    } catch {
-      toast.error("Failed to create exchange");
+    } catch (err: unknown) {
+      toast.error(humanizeError(err, "Failed to create exchange"));
     } finally {
       setSubmitting(false);
     }
