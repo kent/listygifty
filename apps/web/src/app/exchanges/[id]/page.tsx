@@ -105,15 +105,15 @@ function getParticipantStatusLabel(status: ExchangeParticipant["status"]) {
 function getStatusColor(status: string) {
   switch (status) {
     case "draft":
-      return "bg-slate-500/20 text-slate-600 dark:text-slate-400 border-slate-500/50";
+      return "bg-slate-500/20 text-slate-700 dark:text-slate-400 border-slate-500/50";
     case "inviting":
-      return "bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/50";
+      return "bg-amber-500/20 text-amber-800 dark:text-amber-400 border-amber-500/50";
     case "active":
-      return "bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/50";
+      return "bg-green-500/20 text-green-800 dark:text-green-400 border-green-500/50";
     case "completed":
-      return "bg-violet-500/20 text-violet-600 dark:text-violet-400 border-violet-500/50";
+      return "bg-violet-500/20 text-violet-700 dark:text-violet-400 border-violet-500/50";
     default:
-      return "bg-slate-500/20 text-slate-600 dark:text-slate-400 border-slate-500/50";
+      return "bg-slate-500/20 text-slate-700 dark:text-slate-400 border-slate-500/50";
   }
 }
 
@@ -379,7 +379,7 @@ export default function ExchangeDetailPage({
       <main className="relative z-10 container mx-auto px-4 py-8">
         <Link
           href="/exchanges"
-          className="inline-flex items-center text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6"
+          className="inline-flex items-center text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Exchanges
@@ -394,7 +394,7 @@ export default function ExchangeDetailPage({
                 {exchange.status}
               </Badge>
             </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
               {exchange.exchange_date && (
                 <span className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
@@ -544,7 +544,7 @@ export default function ExchangeDetailPage({
                 <Button
                   variant="outline"
                   data-testid="delete-exchange"
-                  className="border-red-400/40 text-red-600 hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
+                  className="border-red-400/40 text-red-700 hover:bg-red-500/10 hover:text-red-700 dark:hover:bg-red-100"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete exchange
@@ -688,7 +688,7 @@ export default function ExchangeDetailPage({
             </CardHeader>
             <CardContent>
               {participants.length === 0 ? (
-                <p className="text-slate-500 text-center py-8">
+                <p className="text-slate-600 dark:text-slate-400 text-center py-8">
                   No participants yet. Add people to get started!
                 </p>
               ) : (
@@ -703,7 +703,7 @@ export default function ExchangeDetailPage({
                         <div className="min-w-0">
                           <p className="break-words text-slate-900 dark:text-white font-medium">{participant.display_name}</p>
                           {participant.email && (
-                            <p className="break-words text-xs text-slate-500">{participant.email}</p>
+                            <p className="break-words text-xs text-slate-600 dark:text-slate-400">{participant.email}</p>
                           )}
                         </div>
                       </div>
@@ -712,10 +712,10 @@ export default function ExchangeDetailPage({
                           variant="outline"
                           className={
                             participant.status === "accepted"
-                              ? "border-green-500/40 text-green-600 dark:text-green-400"
+                              ? "border-green-500/40 text-green-800 dark:text-green-400"
                               : participant.status === "declined"
-                                ? "border-red-500/40 text-red-600 dark:text-red-400"
-                                : "border-amber-500/40 text-amber-600 dark:text-amber-400"
+                                ? "border-red-500/40 text-red-700 dark:text-red-400"
+                                : "border-amber-500/40 text-amber-800 dark:text-amber-400"
                           }
                         >
                           {getParticipantStatusLabel(participant.status)}
@@ -859,7 +859,7 @@ export default function ExchangeDetailPage({
               </CardHeader>
               <CardContent>
                 {exclusions.length === 0 ? (
-                  <p className="text-slate-500 text-center py-8">
+                  <p className="text-slate-600 dark:text-slate-400 text-center py-8">
                     No exclusion rules. Everyone can be matched with anyone.
                   </p>
                 ) : (
@@ -925,11 +925,11 @@ export default function ExchangeDetailPage({
                       );
                     }}
                   >
-                    <span className={notification.read_at ? "text-slate-500" : "text-slate-900 dark:text-white"}>
+                    <span className={notification.read_at ? "text-slate-600 dark:text-slate-400" : "text-slate-900 dark:text-white"}>
                       {notification.message}
                     </span>
                     {!notification.read_at && (
-                      <span className="ml-2 text-xs text-violet-500">Mark read</span>
+                      <span className="ml-2 text-xs text-violet-700 dark:text-violet-300">Mark read</span>
                     )}
                   </button>
                 ))}

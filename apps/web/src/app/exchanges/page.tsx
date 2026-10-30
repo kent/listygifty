@@ -15,15 +15,15 @@ import type { GiftExchange } from "@niftygifty/types";
 function getStatusColor(status: string) {
   switch (status) {
     case "draft":
-      return "bg-slate-500/20 text-slate-600 dark:text-slate-400 border-slate-500/50";
+      return "bg-slate-500/20 text-slate-700 dark:text-slate-400 border-slate-500/50";
     case "inviting":
-      return "bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/50";
+      return "bg-amber-500/20 text-amber-800 dark:text-amber-400 border-amber-500/50";
     case "active":
-      return "bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/50";
+      return "bg-green-500/20 text-green-800 dark:text-green-400 border-green-500/50";
     case "completed":
-      return "bg-violet-500/20 text-violet-600 dark:text-violet-400 border-violet-500/50";
+      return "bg-violet-500/20 text-violet-700 dark:text-violet-400 border-violet-500/50";
     default:
-      return "bg-slate-500/20 text-slate-600 dark:text-slate-400 border-slate-500/50";
+      return "bg-slate-500/20 text-slate-700 dark:text-slate-400 border-slate-500/50";
   }
 }
 
@@ -52,7 +52,7 @@ function ExchangeCard({ exchange }: { exchange: GiftExchange }) {
                   <Crown className="h-4 w-4 text-amber-500 dark:text-amber-400 shrink-0" />
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
                 {formattedDate && (
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />

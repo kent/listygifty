@@ -131,7 +131,7 @@ export default function MyMatchPage({
       <main className="relative z-10 container mx-auto px-4 py-8 max-w-3xl">
         <Link
           href={`/exchanges/${slug}`}
-          className="inline-flex items-center text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6"
+          className="inline-flex items-center text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to {exchange.name}
@@ -140,7 +140,7 @@ export default function MyMatchPage({
         {/* Match Reveal Card */}
         <Card className="border-amber-200 dark:border-slate-800 bg-gradient-to-br from-amber-500/10 to-orange-500/10 mb-8">
           <CardContent className="py-8 text-center">
-            <p className="text-sm text-amber-600 dark:text-amber-400 mb-2">You are getting a gift for...</p>
+            <p className="text-sm text-amber-800 dark:text-amber-400 mb-2">You are getting a gift for...</p>
             <h1 className="break-words text-4xl font-bold text-slate-900 dark:text-white mb-4">🎁 {match.display_name}</h1>
             {exchange.exchange_date && (
               <p className="text-slate-600 dark:text-slate-400 flex items-center justify-center gap-2">
@@ -249,7 +249,7 @@ export default function MyMatchPage({
           </div>
         )}
 
-        <p className="text-center text-sm text-slate-500 mt-8">
+        <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-8">
           🤫 Remember: Keep your match a secret!
         </p>
       </main>

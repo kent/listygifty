@@ -141,7 +141,7 @@ export default function MyWishlistPage({
       <main className="relative z-10 container mx-auto px-4 py-8 max-w-3xl">
         <Link
           href={`/exchanges/${slug}`}
-          className="inline-flex items-center text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6"
+          className="inline-flex items-center text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to {exchange.name}

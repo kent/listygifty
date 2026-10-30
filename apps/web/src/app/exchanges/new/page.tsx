@@ -100,7 +100,7 @@ export default function NewExchangePage() {
       <main className="relative z-10 container mx-auto px-4 py-8 max-w-2xl">
         <Link
           href="/exchanges"
-          className="inline-flex items-center text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6"
+          className="inline-flex items-center text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Exchanges
@@ -181,7 +181,7 @@ export default function NewExchangePage() {
                   onChange={(e) => setFormData({ ...formData, exchange_date: e.target.value })}
                   className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 />
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   When should participants exchange gifts?
                 </p>
               </div>
@@ -235,7 +235,7 @@ export default function NewExchangePage() {
                   >
                     Include me in the exchange
                   </Label>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
                     Your wishlist is ready right away, no invite acceptance needed.
                   </p>
                 </div>
@@ -246,7 +246,7 @@ export default function NewExchangePage() {
                   <Button
                     type="button"
                     variant="ghost"
-                    className="w-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    className="w-full text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   >
                     Cancel
                   </Button>
