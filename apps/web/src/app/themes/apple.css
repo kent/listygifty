@@ -119,7 +119,7 @@
   --color-cyan-300: #70d5ff;
   --color-cyan-400: #64d2ff;
   --color-cyan-500: #32ade6;
-  --color-cyan-600: #0f8fc7;
+  --color-cyan-600: #0e7490;
   --color-cyan-700: #0b70a0;
 
   /* Generous, continuous-feeling corners */
@@ -302,4 +302,9 @@
       box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
     }
   }
+}
+
+/* The accent is too light on its own tint, so tinted badges use a darker ink. */
+[data-theme="apple"] [class*="bg-violet-500/"][class*="text-violet-600"] {
+  color: var(--color-violet-800);
 }
