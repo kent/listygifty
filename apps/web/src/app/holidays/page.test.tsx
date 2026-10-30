@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
+import { ApiError } from "@/lib/api-client";
 import HolidaysPage from "./page";
 
 const mocks = vi.hoisted(() => ({
@@ -55,5 +56,43 @@ describe("creating a gift list", () => {
 
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/holidays/42"));
     expect(toast.success).toHaveBeenCalled();
+  });
+
+  describe("when the list can't be created", () => {
+    function submitCustomForm() {
+      render(<HolidaysPage />);
+      fireEvent.click(screen.getByRole("button", { name: /Custom Holiday/ }));
+      fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Mom's Birthday" } });
+      fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2026-12-01" } });
+      fireEvent.click(screen.getByRole("button", { name: "Create" }));
+    }
+
+    it("shows what went wrong in a toast", async () => {
+      mocks.create.mockRejectedValue(new ApiError(0, { error: "Request timeout after 30000ms" }));
+      submitCustomForm();
+
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Couldn't reach the server. Check your connection and try again."));
+      expect(mocks.push).not.toHaveBeenCalled();
+      expect(toast.success).not.toHaveBeenCalled();
+    });
+
+    it("keeps the form and what was typed so it can be tried again", async () => {
+      mocks.create.mockRejectedValue(new ApiError(422, { errors: ["Name is too long"] }));
+      submitCustomForm();
+
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Name is too long"));
+      expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("Mom's Birthday");
+      await waitFor(() => expect((screen.getByRole("button", { name: "Create" }) as HTMLButtonElement).disabled).toBe(false));
+    });
+
+    it("shows a toast for a one-tap suggestion too", async () => {
+      mocks.search = "";
+      mocks.create.mockRejectedValue(new ApiError(503, undefined));
+      render(<HolidaysPage />);
+      fireEvent.click(await screen.findByRole("button", { name: /Coming up/ }));
+
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith("The server hit a snag. Try again in a moment."));
+      expect(mocks.push).not.toHaveBeenCalled();
+    });
   });
 });

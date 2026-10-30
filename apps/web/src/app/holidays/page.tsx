@@ -1,6 +1,7 @@
 "use client";
 
 import { parseCalendarDate } from "@/lib/dates";
+import { humanizeError } from "@/lib/error-message";
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -370,7 +371,7 @@ function EmptyHolidaysState({
   onCreateHoliday,
   onShowCustomForm,
 }: {
-  onCreateHoliday: (name: string, date: string, icon?: string) => Promise<void>;
+  onCreateHoliday: (name: string, date: string, icon?: string) => Promise<boolean>;
   onShowCustomForm: () => void;
 }) {
   const [creatingHoliday, setCreatingHoliday] = useState<string | null>(null);
@@ -489,7 +490,7 @@ function ActiveSection({
   holidays: Holiday[];
   onToggleComplete: (holiday: Holiday) => void;
   onToggleArchive?: (holiday: Holiday) => void;
-  onCreateHoliday: (name: string, date: string, icon?: string) => Promise<void>;
+  onCreateHoliday: (name: string, date: string, icon?: string) => Promise<boolean>;
   onShowNewSection: () => void;
 }) {
   if (holidays.length === 0) {
@@ -625,7 +626,7 @@ function NewHolidaySection({
   onCreateHoliday,
 }: {
   templates: Holiday[];
-  onCreateHoliday: (name: string, date: string, icon?: string) => Promise<void>;
+  onCreateHoliday: (name: string, date: string, icon?: string) => Promise<boolean>;
 }) {
   const [selectedTemplate, setSelectedTemplate] = useState<Holiday | null>(null);
   const [showCustomForm, setShowCustomForm] = useState(false);
@@ -641,7 +642,7 @@ function NewHolidaySection({
   }, []);
 
   const handleSubmit = async (name: string, date: string, icon?: string) => {
-    await onCreateHoliday(name, date, icon);
+    if (!(await onCreateHoliday(name, date, icon))) return;
     setSelectedTemplate(null);
     setShowCustomForm(false);
   };
@@ -801,11 +802,17 @@ export default function HolidaysPage() {
 
 
   const handleCreateHoliday = async (name: string, date: string, icon?: string) => {
-    const holiday = await holidaysService.create({ name, date, icon });
-    setData((prev) => ({ ...prev, holidays: [...prev.holidays, holiday] }));
-    setActiveSection("active");
-    toast.success(`Created "${holiday.name}"`);
-    router.push(`/holidays/${holiday.id}`);
+    try {
+      const holiday = await holidaysService.create({ name, date, icon });
+      setData((prev) => ({ ...prev, holidays: [...prev.holidays, holiday] }));
+      setActiveSection("active");
+      toast.success(`Created "${holiday.name}"`);
+      router.push(`/holidays/${holiday.id}`);
+      return true;
+    } catch (err) {
+      toast.error(humanizeError(err, "Failed to create gift list"));
+      return false;
+    }
   };
 
   const handleToggleComplete = async (holiday: Holiday) => {
