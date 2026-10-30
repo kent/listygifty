@@ -358,6 +358,7 @@ export default function HolidayDetailPage() {
                   variant="outline"
                   size="sm"
                   onClick={handleToggleArchive}
+                  aria-label={holiday.archived ? "Unarchive gift list" : "Archive gift list"}
                   className="gap-1.5 md:gap-2 flex-1 md:flex-none"
                 >
                   {holiday.archived ? (
@@ -378,6 +379,7 @@ export default function HolidayDetailPage() {
                 size="sm"
                 onClick={handleDownloadCalendarEvent}
                 disabled={!holiday.date}
+                aria-label="Add to calendar"
                 className="gap-1.5 md:gap-2 flex-1 md:flex-none"
               >
                 <Calendar className="h-4 w-4" />
@@ -387,6 +389,7 @@ export default function HolidayDetailPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setImportGiftsOpen(true)}
+                aria-label="Import gifts"
                 className="gap-1.5 md:gap-2 flex-1 md:flex-none"
               >
                 <Upload className="h-4 w-4" />
@@ -396,6 +399,7 @@ export default function HolidayDetailPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => handleExportGifts("header")}
+                aria-label="Export gifts"
                 className="gap-1.5 md:gap-2 flex-1 md:flex-none"
               >
                 <Download className="h-4 w-4" />
