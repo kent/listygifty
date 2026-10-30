@@ -82,6 +82,12 @@ describe("gift row controls", () => {
     expect(handle.className).toContain("[@media(hover:none)]:opacity-100");
   });
 
+  it("names the recipient and giver pickers after the gift", () => {
+    renderRow();
+    expect(screen.getByRole("combobox", { name: "To: recipients of Lego set" })).toBeTruthy();
+    expect(screen.getByRole("combobox", { name: "From: givers of Lego set" })).toBeTruthy();
+  });
+
   it("still names the controls of a gift with no name yet", () => {
     renderRow({ name: "" });
     expect(screen.getByRole("button", { name: "Actions for untitled gift" })).toBeTruthy();

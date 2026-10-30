@@ -28,6 +28,7 @@ interface PeopleCellProps {
   onPersonCreated?: (person: Person) => void;
   placeholder?: string;
   className?: string;
+  "aria-label"?: string;
 }
 
 export function PeopleCell({
@@ -38,6 +39,7 @@ export function PeopleCell({
   onPersonCreated,
   placeholder = "Select...",
   className,
+  "aria-label": ariaLabel,
 }: PeopleCellProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -61,8 +63,7 @@ export function PeopleCell({
     }
   };
 
-  const removePerson = (e: React.MouseEvent, personId: number) => {
-    e.stopPropagation();
+  const removePerson = (personId: number) => {
     onChange(selectedIds.filter((id) => id !== personId));
   };
 
@@ -83,45 +84,54 @@ export function PeopleCell({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
-          type="button"
-          variant="ghost"
-          role="combobox"
-          aria-expanded={open}
-          className={cn(
-            "w-full justify-between h-auto min-h-[28px] py-1 px-2 font-normal hover:bg-muted/50",
-            className
-          )}
-        >
-          <div className="flex flex-wrap gap-1 flex-1">
-            {selectedPeople.length > 0 ? (
-              selectedPeople.map((person) => (
-                <Badge
-                  key={person.id}
-                  variant="secondary"
-                  className="text-xs font-normal"
+      {/* The chips sit over the trigger, not inside it, so their remove buttons
+          aren't nested in another control. Clicks on anything else fall through. */}
+      <div
+        className={cn(
+          "lg-btn relative flex w-full items-center justify-between gap-2 whitespace-nowrap min-h-[28px] py-1 px-2 font-normal transition-colors hover:bg-muted/50 has-[:disabled]:opacity-50",
+          className
+        )}
+      >
+        <PopoverTrigger asChild>
+          <Button
+            id={id}
+            type="button"
+            variant="ghost"
+            role="combobox"
+            aria-expanded={open}
+            aria-label={ariaLabel}
+            className="absolute inset-0 h-auto w-full rounded-[inherit] bg-transparent p-0 hover:bg-transparent"
+          >
+            <span className="sr-only">
+              {selectedPeople.map((person) => person.name).join(", ") || placeholder}
+            </span>
+          </Button>
+        </PopoverTrigger>
+        <div className="pointer-events-none relative flex flex-wrap gap-1 flex-1">
+          {selectedPeople.length > 0 ? (
+            selectedPeople.map((person) => (
+              <Badge
+                key={person.id}
+                variant="secondary"
+                className="text-xs font-normal"
+              >
+                {person.name}
+                <button
+                  type="button"
+                  aria-label={`Remove ${person.name}`}
+                  className="pointer-events-auto ml-1 rounded-sm outline-none hover:text-destructive focus-visible:text-destructive focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset"
+                  onClick={() => removePerson(person.id)}
                 >
-                  {person.name}
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    className="ml-1 hover:text-destructive cursor-pointer"
-                    onClick={(e) => removePerson(e, person.id)}
-                    onKeyDown={(e) => e.key === "Enter" && removePerson(e as unknown as React.MouseEvent, person.id)}
-                  >
-                    <X className="h-3 w-3" />
-                  </span>
-                </Badge>
-              ))
-            ) : (
-              <span className="text-muted-foreground text-sm">{placeholder}</span>
-            )}
-          </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
+                  <X className="size-4" />
+                </button>
+              </Badge>
+            ))
+          ) : (
+            <span aria-hidden="true" className="text-muted-foreground text-sm">{placeholder}</span>
+          )}
+        </div>
+        <ChevronsUpDown className="pointer-events-none relative ml-2 h-4 w-4 shrink-0 opacity-50" />
+      </div>
       <PopoverContent className="w-[200px] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput

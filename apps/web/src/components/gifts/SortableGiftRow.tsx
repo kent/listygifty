@@ -142,6 +142,7 @@ export function SortableGiftRow({
           onChange={(ids) => onUpdateRecipients(gift.id, ids)}
           onPersonCreated={onPersonCreated}
           placeholder="Select recipient..."
+          aria-label={`To: recipients of ${giftLabel}`}
         />
       </TableCell>
       {showAddresses && (
@@ -162,6 +163,7 @@ export function SortableGiftRow({
           onChange={(ids) => onUpdateGivers(gift.id, ids)}
           onPersonCreated={onPersonCreated}
           placeholder="Select giver..."
+          aria-label={`From: givers of ${giftLabel}`}
         />
       </TableCell>
       <TableCell className="p-1">

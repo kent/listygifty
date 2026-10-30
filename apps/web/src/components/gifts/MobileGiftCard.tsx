@@ -139,6 +139,7 @@ export function MobileGiftCard({
                   onChange={(ids) => onUpdateRecipients(gift.id, ids)}
                   onPersonCreated={onPersonCreated}
                   placeholder="Recipient..."
+                  aria-label={`To: recipients of ${gift.name || "untitled gift"}`}
                 />
               </div>
               <div className="space-y-2">
@@ -149,6 +150,7 @@ export function MobileGiftCard({
                   onChange={(ids) => onUpdateGivers(gift.id, ids)}
                   onPersonCreated={onPersonCreated}
                   placeholder="Giver..."
+                  aria-label={`From: givers of ${gift.name || "untitled gift"}`}
                 />
               </div>
             </div>
