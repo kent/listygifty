@@ -124,7 +124,7 @@ export function GiftListSummaryBar({
 
   return (
     <section className={cn("space-y-3", className)} aria-label="Gift list summary">
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {items.map((item) => {
           const Icon = item.icon;
           return (
