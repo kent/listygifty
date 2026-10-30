@@ -131,7 +131,9 @@ export class Journey {
     try {
       await page.waitForLoadState("domcontentloaded", { timeout: 5_000 }).catch(() => {});
       await page.waitForTimeout(350);
-      await page.screenshot({ path: path.join(this.dir, file), animations: "disabled", style: SCREENSHOT_STYLE });
+      // Don't pass animations: "disabled". On an emulated phone it leaves about 1 in
+      // 10 pages laid out too wide, and later taps land on the wrong element.
+      await page.screenshot({ path: path.join(this.dir, file), style: SCREENSHOT_STYLE });
       await this.audit(page);
       return file;
     } catch {
