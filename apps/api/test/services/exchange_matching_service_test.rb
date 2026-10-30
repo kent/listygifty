@@ -100,9 +100,11 @@ class ExchangeMatchingServiceTest < ActiveSupport::TestCase
       )
     end
 
-    assert_raises(ExchangeMatchingService::ImpossibleMatchError) do
+    err = assert_raises(ExchangeMatchingService::ImpossibleMatchError) do
       service.perform!(redraw: true)
     end
+    assert_equal "Everyone needs someone new, but this group is too small or the rules are too tight. " \
+      "Reopen the exchange to change the rules or add people.", err.message
     assert_equal first_draw, @exchange.exchange_participants.pluck(:id, :matched_participant_id).to_h
   end
 
@@ -129,6 +131,8 @@ class ExchangeMatchingServiceTest < ActiveSupport::TestCase
     end
 
     service = ExchangeMatchingService.new(@exchange)
-    assert_raises(ExchangeMatchingService::ImpossibleMatchError) { service.perform! }
+    err = assert_raises(ExchangeMatchingService::ImpossibleMatchError) { service.perform! }
+    assert_equal "These rules leave someone with nobody to draw. Remove a rule or add another person, then try again.",
+      err.message
   end
 end

@@ -27,8 +27,8 @@ class ExchangeMatchingService
     return if matching_possible?
 
     message = @redraw ?
-      "A completely new draw is not possible with the current exclusion rules" :
-      "No valid matching exists"
+      "Everyone needs someone new, but this group is too small or the rules are too tight. Reopen the exchange to change the rules or add people." :
+      "These rules leave someone with nobody to draw. Remove a rule or add another person, then try again."
     raise ImpossibleMatchError, message
   end
 
