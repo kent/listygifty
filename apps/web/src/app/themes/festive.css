@@ -388,6 +388,21 @@
     background-color: #140f4b !important;
   }
 
+  /* Outline buttons are silver keys. Pages tint their text and hover for a dark
+     surface, which can't be read on silver, so the key keeps its own ink.
+     Buttons that paint their own dark surface are left alone. */
+  .lg-btn-outline:not([class*="dark:bg-"], .bg-transparent) {
+    color: #0b0838;
+  }
+  .lg-btn-outline:not([class*="dark:bg-"], .bg-transparent):hover {
+    background-color: #d4d4d4;
+    color: #0b0838;
+  }
+  .lg-btn-outline[class*="text-red-"]:not([class*="dark:bg-"], .bg-transparent),
+  .lg-btn-outline[class*="text-red-"]:not([class*="dark:bg-"], .bg-transparent):hover {
+    color: #a00a10;
+  }
+
 }
 
 @layer components {
