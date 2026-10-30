@@ -56,7 +56,8 @@ async function unlabelledStops(page: Page, stops: number) {
     await page.keyboard.press("Tab");
     const element = await page.evaluate(() => {
       const el = document.activeElement as HTMLElement | null;
-      if (!el || el === document.body) return null;
+      // The Next.js dev badge exists only in local dev.
+      if (!el || el === document.body || el.tagName === "NEXTJS-PORTAL") return null;
       const name = el.getAttribute("aria-label") || el.innerText || (el as HTMLInputElement).placeholder || "";
       return name.trim() ? null : el.outerHTML.slice(0, 120);
     });
