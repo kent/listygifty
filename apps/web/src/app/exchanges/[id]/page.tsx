@@ -32,6 +32,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -128,6 +138,7 @@ export default function ExchangeDetailPage({
   const [starting, setStarting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [redoingMode, setRedoingMode] = useState<"reopen" | "redraw" | null>(null);
+  const [participantToRemove, setParticipantToRemove] = useState<ExchangeParticipant | null>(null);
   const [newParticipant, setNewParticipant] = useState({ name: "", email: "" });
   const [newExclusion, setNewExclusion] = useState({ participant_a_id: "", participant_b_id: "" });
 
@@ -740,7 +751,7 @@ export default function ExchangeDetailPage({
                             size="icon-sm"
                             variant="ghost"
                             className={ROW_REMOVE_BUTTON_CLASS}
-                            onClick={() => handleRemoveParticipant(participant)}
+                            onClick={() => setParticipantToRemove(participant)}
                             aria-label={`Remove ${participant.display_name}`}
                             title="Remove"
                           >
@@ -948,6 +959,36 @@ export default function ExchangeDetailPage({
             </Card>
           )}
         </div>
+
+        {participantToRemove && (
+          <AlertDialog
+            open
+            onOpenChange={(open) => {
+              if (!open) setParticipantToRemove(null);
+            }}
+          >
+            <AlertDialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="[overflow-wrap:anywhere] text-slate-900 dark:text-white">
+                  Remove {participantToRemove.display_name} from {exchange.name}?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-slate-600 dark:text-slate-400">
+                  They&apos;ll lose their spot and their invite link, along with their wishlist and
+                  any exclusion rules that include them.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="h-11 sm:h-9">Keep them</AlertDialogCancel>
+                <AlertDialogAction
+                  className="h-11 sm:h-9 bg-red-600 hover:bg-red-700 text-white"
+                  onClick={() => handleRemoveParticipant(participantToRemove)}
+                >
+                  Remove
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </main>
     </div>
   );

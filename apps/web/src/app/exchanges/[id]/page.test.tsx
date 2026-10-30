@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   ExchangeExclusion,
@@ -133,6 +133,12 @@ async function addPerson(name: string) {
     target: { value: `${name.toLowerCase()}@example.com` },
   });
   fireEvent.click(screen.getByRole("button", { name: "Add & Invite" }));
+}
+
+async function removePerson(name: string) {
+  fireEvent.click(screen.getByRole("button", { name: `Remove ${name}` }));
+  const dialog = await screen.findByRole("alertdialog");
+  fireEvent.click(within(dialog).getByRole("button", { name: "Remove" }));
 }
 
 beforeEach(() => {
@@ -295,8 +301,7 @@ describe("keeping the exchange current after roster changes", () => {
     await renderPage();
     expect(screen.getByRole("button", { name: "Publish Exchange" })).toBeTruthy();
 
-    const row = screen.getByText("ana@example.com").closest(".rounded-lg") as HTMLElement;
-    fireEvent.click(row.querySelector("button:last-of-type") as HTMLElement);
+    await removePerson("Ana");
 
     await waitFor(() =>
       expect(screen.queryByRole("button", { name: "Publish Exchange" })).toBeNull()
@@ -319,8 +324,7 @@ describe("keeping the exchange current after roster changes", () => {
     await renderPage();
     await screen.findAllByText("Ana");
 
-    const row = screen.getByText("ana@example.com").closest(".rounded-lg") as HTMLElement;
-    fireEvent.click(row.querySelector("button:last-of-type") as HTMLElement);
+    await removePerson("Ana");
 
     await waitFor(() => expect(screen.queryByText("ana@example.com")).toBeNull());
     expect(screen.queryByText("Ana")).toBeNull();
@@ -338,6 +342,63 @@ describe("keeping the exchange current after roster changes", () => {
 
     await waitFor(() => expect(mocks.resendInvite).toHaveBeenCalledWith(7, 2));
     await waitFor(() => expect(mocks.getBySlug).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe("confirming before removing someone", () => {
+  const ana = person(2, "Ana", { status: "accepted" });
+
+  beforeEach(() => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({ status: "inviting", exchange_participants: [organizer, ana] })
+    );
+  });
+
+  it("asks first and says what they lose", async () => {
+    await renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove Ana" }));
+
+    const dialog = await screen.findByRole("alertdialog");
+    expect(
+      within(dialog).getByRole("heading", { name: "Remove Ana from Family Christmas?" })
+    ).toBeTruthy();
+    expect(dialog.textContent).toContain("wishlist");
+    expect(dialog.textContent).toContain("exclusion rules");
+    expect(mocks.deleteParticipant).not.toHaveBeenCalled();
+  });
+
+  it("keeps them when the organizer backs out", async () => {
+    await renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove Ana" }));
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Keep them" }));
+
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(mocks.deleteParticipant).not.toHaveBeenCalled();
+    expect(screen.getByText("ana@example.com")).toBeTruthy();
+  });
+
+  it("removes them once confirmed", async () => {
+    await renderPage();
+
+    await removePerson("Ana");
+
+    await waitFor(() => expect(mocks.deleteParticipant).toHaveBeenCalledWith(7, 2));
+    expect(mocks.deleteParticipant).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(mocks.toastSuccess).toHaveBeenCalledWith("Removed Ana");
+  });
+
+  it("reports a failed removal and keeps them on the roster", async () => {
+    mocks.deleteParticipant.mockRejectedValue(new Error("nope"));
+    await renderPage();
+
+    await removePerson("Ana");
+
+    await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith("Failed to remove participant"));
+    expect(screen.getByText("ana@example.com")).toBeTruthy();
   });
 });
 
