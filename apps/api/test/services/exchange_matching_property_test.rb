@@ -36,7 +36,8 @@ class ExchangeMatchingPropertyTest < ActiveSupport::TestCase
       outcomes[:drawn] += 1
     end
 
-    assert_operator outcomes[:drawn], :>, RUNS / 2, "Too few draws to prove anything: #{outcomes} seed=#{@seed}"
+    # Random exclusions leave about half the groups with no valid draw.
+    assert_operator outcomes[:drawn], :>, RUNS / 4, "Too few draws to prove anything: #{outcomes} seed=#{@seed}"
     assert_operator outcomes[:refused], :>, 0, "No impossible group was generated: #{outcomes} seed=#{@seed}"
   end
 
