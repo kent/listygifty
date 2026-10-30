@@ -238,7 +238,7 @@ export default function GuestClaimPage({ params }: { params: Promise<{ token: st
             <Button
               onClick={handleMarkPurchased}
               disabled={isUpdating}
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+              className="w-full bg-gradient-to-r from-green-800 to-emerald-800 hover:from-green-900 hover:to-emerald-900 dark:from-green-700 dark:to-emerald-700 dark:hover:from-green-800 dark:hover:to-emerald-800"
             >
               {isUpdating ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
