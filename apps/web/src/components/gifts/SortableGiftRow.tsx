@@ -86,6 +86,7 @@ export function SortableGiftRow({
   };
 
   const isShared = !gift.is_mine;
+  const giftLabel = gift.name || "untitled gift";
   const creatorName = gift.created_by?.safe_name;
   const linkHref = normalizeExternalUrl(gift.link);
   const merchantLabel = getMerchantLabel(gift.link);
@@ -108,10 +109,13 @@ export function SortableGiftRow({
           <button
             {...attributes}
             {...listeners}
+            type="button"
+            aria-label={`Reorder ${giftLabel}`}
             className={cn(
-              "flex items-center justify-center h-8 w-8 cursor-grab active:cursor-grabbing",
+              "flex items-center justify-center h-8 w-8 rounded cursor-grab active:cursor-grabbing",
               "text-muted-foreground/50 hover:text-muted-foreground transition-colors",
-              "opacity-0 group-hover:opacity-100 focus:opacity-100",
+              "outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "opacity-0 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100",
               isDragging && "opacity-100 cursor-grabbing"
             )}
           >
@@ -199,7 +203,8 @@ export function SortableGiftRow({
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground"
+              aria-label={`Actions for ${giftLabel}`}
+              className="h-7 w-7 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity text-muted-foreground"
             >
               <MoreVertical className="h-4 w-4" />
             </Button>
