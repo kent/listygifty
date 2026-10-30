@@ -15,7 +15,7 @@ export async function allowClerkTestSession(page: Page) {
   await setupClerkTestingToken({ page });
 }
 
-async function enterCode(page: Page) {
+export async function enterCode(page: Page) {
   const code = page.getByRole("textbox", { name: /code/i }).first();
   await code.waitFor({ timeout: 15_000 });
   // A person takes a moment per digit. Clerk submits on the sixth.

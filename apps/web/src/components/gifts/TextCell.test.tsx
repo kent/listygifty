@@ -28,7 +28,7 @@ describe("TextCell", () => {
   });
 
   it("doesn't let the Enter that saved also press the rename button", () => {
-    render(<TextCell value="Lego set" onChange={vi.fn()} aria-label="Rename gift: Lego set" />);
+    render(<TextCell value="Lego set" onChange={vi.fn()} aria-label="Rename gift" />);
     fireEvent.click(editButton());
 
     const notPrevented = fireEvent.keyDown(screen.getByRole("textbox"), { key: "Enter" });
