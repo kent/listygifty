@@ -402,6 +402,79 @@ describe("confirming before removing someone", () => {
   });
 });
 
+describe("the publish dialog", () => {
+  const ana = person(2, "Ana", { status: "accepted" });
+  const bea = person(3, "Bea");
+
+  async function openPublishDialog() {
+    await renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Publish Exchange" }));
+    return screen.findByRole("dialog");
+  }
+
+  it("is honest that the draw can be redone", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({ status: "inviting", can_start: true, exchange_participants: [organizer, ana] })
+    );
+
+    const dialog = await openPublishDialog();
+
+    expect(dialog.textContent).toContain(
+      "You can redo the draw later, but everyone will get a new match and a new email."
+    );
+    expect(dialog.textContent).not.toContain("cannot be undone");
+  });
+
+  it("uses the singular for one of each", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({
+        status: "inviting",
+        can_start: true,
+        accepted_count: 1,
+        exchange_participants: [organizer, bea],
+      })
+    );
+    mocks.getExclusions.mockResolvedValue([rule(50, organizer, bea)]);
+
+    const dialog = await openPublishDialog();
+
+    expect(within(dialog).getByText(/^• 1 joined participant$/)).toBeTruthy();
+    expect(within(dialog).getByText(/^• 1 pending invitation will close$/)).toBeTruthy();
+    expect(within(dialog).getByText(/^• 1 exclusion rule$/)).toBeTruthy();
+  });
+
+  it("uses the plural otherwise", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({
+        status: "inviting",
+        can_start: true,
+        exchange_participants: [organizer, ana, bea, person(4, "Cy")],
+      })
+    );
+    mocks.getExclusions.mockResolvedValue([rule(50, organizer, ana), rule(51, ana, bea)]);
+
+    const dialog = await openPublishDialog();
+
+    expect(within(dialog).getByText(/^• 2 joined participants$/)).toBeTruthy();
+    expect(within(dialog).getByText(/^• 2 pending invitations will close$/)).toBeTruthy();
+    expect(within(dialog).getByText(/^• 2 exclusion rules$/)).toBeTruthy();
+  });
+
+  it("doesn't count someone who declined as a pending invitation", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({
+        status: "inviting",
+        can_start: true,
+        exchange_participants: [organizer, ana, bea, person(4, "Cy", { status: "declined" })],
+      })
+    );
+
+    const dialog = await openPublishDialog();
+
+    expect(within(dialog).getByText(/^• 1 pending invitation will close$/)).toBeTruthy();
+  });
+});
+
 describe("icon buttons in the roster", () => {
   const ana = person(2, "Ana");
   const bea = person(3, "Bea", { status: "accepted" });

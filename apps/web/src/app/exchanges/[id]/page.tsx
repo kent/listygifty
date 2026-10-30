@@ -366,6 +366,7 @@ export default function ExchangeDetailPage({
   const participants = exchange.exchange_participants || [];
   const myParticipant = exchange.my_participant;
   const nextStep = getExchangeNextStep({ ...exchange, exchange_participants: participants });
+  const pendingCount = participants.filter((p) => p.status === "invited").length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -442,15 +443,15 @@ export default function ExchangeDetailPage({
                 <div className="py-4">
                   <DialogDescription className="text-slate-600 dark:text-slate-400">
                     This will match all joined participants and email them to sign in and privately
-                    reveal their assignments. Pending invitations will be closed. This action cannot
-                    be undone.
+                    reveal their assignments. Pending invitations will be closed. You can redo the
+                    draw later, but everyone will get a new match and a new email.
                   </DialogDescription>
                   <div className="mt-4 p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
                     <p className="text-sm text-slate-900 dark:text-white font-medium mb-2">Ready to publish:</p>
                     <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
-                      <li>• {exchange.accepted_count} joined participants</li>
-                      <li>• {exchange.participant_count - exchange.accepted_count} pending invitations will close</li>
-                      <li>• {exclusions.length} exclusion rules</li>
+                      <li>• {pluralize(exchange.accepted_count, "joined participant")}</li>
+                      <li>• {pluralize(pendingCount, "pending invitation")} will close</li>
+                      <li>• {pluralize(exclusions.length, "exclusion rule")}</li>
                     </ul>
                   </div>
                 </div>
