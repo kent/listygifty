@@ -41,7 +41,7 @@ class WishlistsController < ApplicationController
 
   # POST /wishlists/:id/share
   def share
-    @wishlist.regenerate_share_link!
+    @wishlist.ensure_share_link!
 
     render json: {
       share_token: @wishlist.share_token,

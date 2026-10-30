@@ -81,6 +81,69 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
     assert_equal "shared", @wishlist.visibility
   end
 
+  test "sharing a shared wishlist again keeps the link already sent" do
+    post share_wishlist_path(@wishlist), headers: @auth_headers, as: :json
+    first_share = json_response
+    shared_at = @wishlist.reload.updated_at
+
+    post share_wishlist_path(@wishlist), headers: @auth_headers, as: :json
+
+    assert_response :success
+    assert_equal first_share, json_response
+    assert_equal shared_at, @wishlist.reload.updated_at
+
+    get "/w/#{first_share["share_token"]}", as: :json
+    assert_response :success
+  end
+
+  test "sharing a private wishlist that already holds a token issues a new one" do
+    held_token = @wishlist.share_token
+    assert held_token.present?
+
+    post share_wishlist_path(@wishlist), headers: @auth_headers, as: :json
+
+    assert_response :success
+    assert_not_equal held_token, json_response["share_token"]
+    assert_equal "shared", json_response["visibility"]
+    assert_equal json_response["share_token"], @wishlist.reload.share_token
+
+    get "/w/#{held_token}", as: :json
+    assert_response :not_found
+  end
+
+  test "sharing after a revoke issues a fresh token and the revoked link stays dead" do
+    post share_wishlist_path(@wishlist), headers: @auth_headers, as: :json
+    revoked_token = json_response["share_token"]
+
+    delete revoke_share_wishlist_path(@wishlist), headers: @auth_headers, as: :json
+    assert_response :success
+    assert_nil @wishlist.reload.share_token
+    assert_equal "private", @wishlist.visibility
+
+    post share_wishlist_path(@wishlist), headers: @auth_headers, as: :json
+    assert_response :success
+    fresh_token = json_response["share_token"]
+    assert fresh_token.present?
+    assert_not_equal revoked_token, fresh_token
+
+    get "/w/#{revoked_token}", as: :json
+    assert_response :not_found
+
+    get "/w/#{fresh_token}", as: :json
+    assert_response :success
+  end
+
+  test "two presses racing on the first share end on one link" do
+    first_press = Wishlist.find(@wishlist.id)
+    second_press = Wishlist.find(@wishlist.id)
+
+    first_press.ensure_share_link!
+    second_press.ensure_share_link!
+
+    assert_equal first_press.share_token, second_press.share_token
+    assert_equal first_press.share_token, @wishlist.reload.share_token
+  end
+
   test "revoke_share removes share token" do
     @wishlist.update!(share_token: "test_token")
 

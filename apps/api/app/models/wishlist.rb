@@ -26,8 +26,19 @@ class Wishlist < ApplicationRecord
   def accessible_by?(check_user, token: nil)
     return true if owner?(check_user)
     return true if visibility == "workspace" && workspace.member?(check_user)
-    return true if visibility == "shared" && share_token.present? && share_token == token
+    return true if share_link_live? && share_token == token
     false
+  end
+
+  # A private list can hold a token nobody was given, or one that was switched
+  # off, so a token alone does not mean the link works.
+  def share_link_live?
+    visibility == "shared" && share_token.present?
+  end
+
+  # Links get sent to family, so sharing again must hand back the same one.
+  def ensure_share_link!
+    with_lock { regenerate_share_link! unless share_link_live? }
   end
 
   def regenerate_share_link!

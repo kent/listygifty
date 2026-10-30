@@ -606,12 +606,12 @@ class McpController < ApplicationController
         }
       },
       "share_wishlist" => {
-        description: "Create or regenerate a public share link for an owned wishlist",
+        description: "Get the public share link for an owned wishlist, creating one if it is not shared yet. A link that is already live is returned unchanged, so links already sent keep working.",
         scope: "write",
         schema: tool_schema({ wishlist_id: integer_property("Wishlist ID") }, [ "wishlist_id" ]),
         handler: ->(args) {
           wishlist = find_owned_wishlist(args["wishlist_id"])
-          wishlist.regenerate_share_link!
+          wishlist.ensure_share_link!
           serialize_wishlist(wishlist)
         }
       },

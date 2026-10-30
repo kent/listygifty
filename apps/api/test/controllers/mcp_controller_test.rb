@@ -645,6 +645,26 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     assert shared["share_url"].present?
   end
 
+  test "share_wishlist keeps the link already sent and issues a fresh one after a revoke" do
+    wishlist = Wishlist.create!(user: @user, workspace: @workspace, name: "Family List")
+    held_token = wishlist.share_token
+
+    first = tool_payload(call_tool("share_wishlist", { wishlist_id: wishlist.id }))
+    assert_equal "shared", first["visibility"]
+    assert_not_includes first["share_url"], held_token
+
+    again = tool_payload(call_tool("share_wishlist", { wishlist_id: wishlist.id }))
+    assert_equal first["share_url"], again["share_url"]
+
+    revoked = tool_payload(call_tool("revoke_wishlist_share", { wishlist_id: wishlist.id }))
+    assert_equal "private", revoked["visibility"]
+
+    fresh = tool_payload(call_tool("share_wishlist", { wishlist_id: wishlist.id }))
+    assert_equal "shared", fresh["visibility"]
+    assert fresh["share_url"].present?
+    assert_not_equal first["share_url"], fresh["share_url"]
+  end
+
   test "creates and administers a gift exchange" do
     exchange = tool_payload(call_tool("create_gift_exchange", {
       workspace_id: @workspace.id,
