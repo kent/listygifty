@@ -72,6 +72,7 @@ export function GroupManageModal({
                 variant="ghost"
                 size="sm"
                 onClick={() => handleRemove(gift.id)}
+                aria-label={`Remove ${gift.name} from group`}
                 className="text-muted-foreground hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10 ml-2"
               >
                 <X className="h-4 w-4" />

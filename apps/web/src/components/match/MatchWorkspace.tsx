@@ -779,6 +779,7 @@ export function MatchWorkspace({
                   <span className="text-foreground font-medium">{person.name}</span>
                   <button
                     onClick={() => handleRemovePerson(person.id)}
+                    aria-label={`Remove ${person.name} from comparison`}
                     className="text-muted-foreground hover:text-red-700 dark:hover:text-red-400 transition-colors"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -787,7 +788,7 @@ export function MatchWorkspace({
               ))}
               {selectedPersonIds.length < MAX_PEOPLE && availablePeopleToAdd.length > 0 && (
                 <Select onValueChange={handleAddPerson}>
-                  <SelectTrigger className="w-[180px] border-dashed border-input">
+                  <SelectTrigger aria-label="Add person" className="w-[180px] border-dashed border-input">
                     <SelectValue placeholder="Add person..." />
                   </SelectTrigger>
                   <SelectContent>

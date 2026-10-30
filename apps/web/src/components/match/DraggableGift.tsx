@@ -19,7 +19,7 @@ export function DraggableGift({
   onRemoveGroup,
   onEdit,
 }: DraggableGiftProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } = useDraggable({
     id: item.id,
   });
 
@@ -47,7 +47,6 @@ export function DraggableGift({
       ref={setRefs}
       style={style}
       {...listeners}
-      {...attributes}
       className={`group/gift flex items-center gap-2 px-3 py-2 rounded-lg border cursor-grab active:cursor-grabbing transition-all ${
         isDragging
           ? "opacity-50 bg-violet-600/50 border-violet-400"
@@ -56,7 +55,17 @@ export function DraggableGift({
             : "bg-muted/50 border-border hover:border-violet-500/50 hover:bg-muted"
       }`}
     >
-      <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+      {/* The whole row drags by pointer. Only the handle takes keyboard focus, so the
+          row's own buttons aren't nested in another control and keep their keys. */}
+      <button
+        ref={setActivatorNodeRef}
+        {...attributes}
+        type="button"
+        aria-label={`Move ${item.name}`}
+        className="flex-shrink-0 rounded-sm text-muted-foreground cursor-grab active:cursor-grabbing outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
       {isGroup && <Layers className="h-4 w-4 text-fuchsia-700 dark:text-fuchsia-400 flex-shrink-0" />}
       <span className="text-foreground font-medium truncate flex-1">{item.name}</span>
       {Number.isFinite(item.cost) && (
@@ -72,6 +81,7 @@ export function DraggableGift({
               e.stopPropagation();
               onRenameGroup?.(item.groupId!);
             }}
+            aria-label={`Rename group ${item.name}`}
             className="text-muted-foreground hover:text-foreground transition-colors"
           >
             <Pencil className="h-4 w-4" />
@@ -82,6 +92,7 @@ export function DraggableGift({
               e.stopPropagation();
               onRemoveGroup?.(item.groupId!);
             }}
+            aria-label={`Remove group ${item.name}`}
             className="text-muted-foreground hover:text-red-700 dark:hover:text-red-400 transition-colors"
           >
             <X className="h-4 w-4" />
@@ -94,7 +105,8 @@ export function DraggableGift({
             e.stopPropagation();
             onEdit();
           }}
-          className="opacity-0 group-hover/gift:opacity-100 text-muted-foreground hover:text-violet-700 dark:hover:text-violet-400 transition-all"
+          aria-label={`Edit ${item.name}`}
+          className="opacity-0 group-hover/gift:opacity-100 focus:opacity-100 text-muted-foreground hover:text-violet-700 dark:hover:text-violet-400 transition-all"
         >
           <Pencil className="h-4 w-4" />
         </button>

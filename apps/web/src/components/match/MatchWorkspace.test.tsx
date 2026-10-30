@@ -142,6 +142,107 @@ describe("in the light Apple theme", () => {
   );
 });
 
+describe("naming controls", () => {
+  const button = (name: string) => screen.getByRole("button", { name });
+
+  it("names the remove button for each person being compared", () => {
+    renderWorkspace(everyGift, fullArrangement);
+    expect(button("Remove Alex from comparison")).toBeTruthy();
+    expect(button("Remove Sam from comparison")).toBeTruthy();
+  });
+
+  it("names the add person picker", () => {
+    renderWorkspace(everyGift, fullArrangement);
+    expect(screen.getByRole("combobox", { name: "Add person" })).toBeTruthy();
+  });
+
+  it("names each drag handle after what it moves", () => {
+    renderWorkspace(everyGift, fullArrangement);
+    for (const item of ["Lego", "Sam bundle", "Scarf", "Alex bundle"]) {
+      expect(button(`Move ${item}`)).toBeTruthy();
+    }
+  });
+
+  it("names the actions on slots, gifts and groups", () => {
+    renderWorkspace(everyGift, fullArrangement);
+    expect(button("Remove Lego from slot")).toBeTruthy();
+    expect(button("Remove Sam bundle from slot")).toBeTruthy();
+    expect(button("Edit Scarf")).toBeTruthy();
+    expect(button("Rename group Alex bundle")).toBeTruthy();
+    expect(button("Remove group Alex bundle")).toBeTruthy();
+  });
+
+  it("names the remove buttons in the manage group dialog", () => {
+    renderWorkspace(everyGift, fullArrangement);
+    fireEvent.click(screen.getByText("Sam bundle"));
+    const dialog = within(screen.getByRole("dialog"));
+    expect(dialog.getByRole("button", { name: "Remove Socks from group" })).toBeTruthy();
+    expect(dialog.getByRole("button", { name: "Remove Mug from group" })).toBeTruthy();
+  });
+
+  it("leaves no button without a name", () => {
+    renderWorkspace(everyGift, fullArrangement);
+    const unnamed = screen
+      .getAllByRole("button")
+      .filter((control) => !(control.getAttribute("aria-label") || control.textContent)?.trim());
+    expect(unnamed).toEqual([]);
+  });
+});
+
+// jsdom has no PointerEvent, so fireEvent.pointerDown loses isPrimary and button,
+// and dnd-kit ignores it. A MouseEvent carrying them is what the sensor reads.
+function pointerEvent(type: string, clientX: number) {
+  const event = new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX, clientY: 0 });
+  Object.defineProperty(event, "isPrimary", { value: true });
+  return event;
+}
+
+describe("drag rows", () => {
+  it("keeps a row's other buttons out of the drag handle", () => {
+    renderWorkspace(everyGift, fullArrangement);
+    const handles = [...document.querySelectorAll('[aria-roledescription="draggable"]')];
+    expect(handles.length).toBe(4);
+    for (const handle of handles) {
+      expect(handle.querySelector("button, a, input, [tabindex]")).toBeNull();
+    }
+  });
+
+  it.each(["Edit Scarf", "Rename group Alex bundle", "Remove group Alex bundle", "Remove Lego from slot"])(
+    "leaves Enter on %s to that button",
+    (name) => {
+      renderWorkspace(everyGift, fullArrangement);
+      const notTakenByDrag = fireEvent.keyDown(screen.getByRole("button", { name }), { code: "Enter" });
+      expect(notTakenByDrag).toBe(true);
+    }
+  );
+
+  it("starts a keyboard drag from the handle", () => {
+    renderWorkspace(everyGift, fullArrangement);
+    const notTakenByDrag = fireEvent.keyDown(screen.getByRole("button", { name: "Move Scarf" }), { code: "Space" });
+    expect(notTakenByDrag).toBe(false);
+  });
+
+  it("still drags by pointer from anywhere on the row", async () => {
+    renderWorkspace(everyGift, fullArrangement);
+    const handle = screen.getByRole("button", { name: "Move Scarf" });
+
+    fireEvent(screen.getByText("Scarf"), pointerEvent("pointerdown", 0));
+    fireEvent(document, pointerEvent("pointermove", 20));
+
+    await waitFor(() => expect(handle.getAttribute("aria-pressed")).toBe("true"));
+
+    // Finish the drag. The sensor blocks clicks until 50ms after it ends, and a
+    // drag left running would swallow the next test's click.
+    fireEvent(document, pointerEvent("pointerup", 20));
+    await new Promise((resolve) => setTimeout(resolve, 60));
+  });
+
+  it("shows the hover-only edit button when it gets keyboard focus", () => {
+    renderWorkspace(everyGift, fullArrangement);
+    expect(screen.getByRole("button", { name: "Edit Scarf" }).className).toContain("focus:opacity-100");
+  });
+});
+
 describe("editing a shared gift from the workspace", () => {
   it("opens with the gift's people and keeps them on save", async () => {
     vi.mocked(giftsService.update).mockResolvedValue(sharedGift);

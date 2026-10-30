@@ -23,7 +23,7 @@ function DraggableSlotItem({
 }) {
   const combineId = `combine-${item.personId}-${item.id}`;
   const { isOver, setNodeRef: setDropRef } = useDroppable({ id: combineId });
-  const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef: setDragRef, setActivatorNodeRef, isDragging } = useDraggable({
     id: item.id,
   });
 
@@ -51,7 +51,6 @@ function DraggableSlotItem({
     <div
       ref={setRefs}
       {...listeners}
-      {...attributes}
       onClick={handleClick}
       className={`flex items-center gap-2 px-3 py-2 rounded transition-all cursor-grab active:cursor-grabbing ${
         isDragging ? "opacity-50" : ""
@@ -59,7 +58,17 @@ function DraggableSlotItem({
         isGroup ? "hover:bg-accent" : ""
       }`}
     >
-      <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+      {/* The whole row drags by pointer. Only the handle takes keyboard focus, so the
+          remove button isn't nested in another control and keeps its keys. */}
+      <button
+        ref={setActivatorNodeRef}
+        {...attributes}
+        type="button"
+        aria-label={`Move ${item.name}`}
+        className="flex-shrink-0 rounded-sm text-muted-foreground cursor-grab active:cursor-grabbing outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
       {isGroup && <Layers className="h-4 w-4 text-fuchsia-700 dark:text-fuchsia-400 flex-shrink-0" />}
       <span className="text-foreground font-medium truncate flex-1 min-w-0">{item.name}</span>
       {isGroup && (
@@ -75,6 +84,7 @@ function DraggableSlotItem({
       <button
         onClick={handleRemove}
         onPointerDown={(e) => e.stopPropagation()}
+        aria-label={`Remove ${item.name} from slot`}
         className="text-muted-foreground hover:text-red-700 dark:hover:text-red-400 transition-colors flex-shrink-0 ml-1"
       >
         <X className="h-4 w-4" />
