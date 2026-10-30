@@ -23,31 +23,28 @@ interface SharedGiftEditDialogProps {
   onPersonCreated: (person: Person) => void;
 }
 
-export function SharedGiftEditDialog({
+// Each save sends the whole list and the API replaces what's there, so the pickers
+// must start from the gift's real people. Mounting per gift and per opening does
+// that: the parent opens this through props, so there's no open event to sync on.
+export function SharedGiftEditDialog({ gift, open, ...props }: SharedGiftEditDialogProps) {
+  if (!gift || !open) return null;
+  return <OpenSharedGiftEditDialog key={gift.id} gift={gift} {...props} />;
+}
+
+function OpenSharedGiftEditDialog({
   gift,
   people,
-  open,
   onOpenChange,
   onGiftUpdated,
   onPersonCreated,
-}: SharedGiftEditDialogProps) {
+}: Omit<SharedGiftEditDialogProps, "open"> & { gift: Gift }) {
   const [isPending, startTransition] = useTransition();
-  const [localRecipients, setLocalRecipients] = useState<number[]>([]);
-  const [localGivers, setLocalGivers] = useState<number[]>([]);
-
-  // Sync local state when gift changes
-  const handleOpenChange = useCallback((isOpen: boolean) => {
-    if (isOpen && gift) {
-      setLocalRecipients(gift.recipients.map(r => r.id));
-      setLocalGivers(gift.givers.map(g => g.id));
-    }
-    onOpenChange(isOpen);
-  }, [gift, onOpenChange]);
+  const [localRecipients, setLocalRecipients] = useState(() => gift.recipients.map(r => r.id));
+  const [localGivers, setLocalGivers] = useState(() => gift.givers.map(g => g.id));
 
   const updateRecipients = useCallback((ids: number[]) => {
-    if (!gift) return;
     setLocalRecipients(ids);
-    
+
     startTransition(async () => {
       try {
         const updated = await giftsService.update(gift.id, { recipient_ids: ids });
@@ -60,9 +57,8 @@ export function SharedGiftEditDialog({
   }, [gift, onGiftUpdated]);
 
   const updateGivers = useCallback((ids: number[]) => {
-    if (!gift) return;
     setLocalGivers(ids);
-    
+
     startTransition(async () => {
       try {
         const updated = await giftsService.update(gift.id, { giver_ids: ids });
@@ -74,10 +70,8 @@ export function SharedGiftEditDialog({
     });
   }, [gift, onGiftUpdated]);
 
-  if (!gift) return null;
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
