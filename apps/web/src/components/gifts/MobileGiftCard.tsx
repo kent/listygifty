@@ -43,6 +43,7 @@ export function MobileGiftCard({
 }: MobileGiftCardProps) {
   const [expanded, setExpanded] = useState(false);
   const isShared = !gift.is_mine;
+  const giftLabel = gift.name || "untitled gift";
   const recipientNames = gift.recipients.map((r) => r.name).join(", ") || "No recipient";
   const merchantLabel = getMerchantLabel(gift.link);
   const linkHref = normalizeExternalUrl(gift.link);
@@ -139,7 +140,7 @@ export function MobileGiftCard({
                   onChange={(ids) => onUpdateRecipients(gift.id, ids)}
                   onPersonCreated={onPersonCreated}
                   placeholder="Recipient..."
-                  aria-label={`To: recipients of ${gift.name || "untitled gift"}`}
+                  aria-label={`To: recipients of ${giftLabel}`}
                 />
               </div>
               <div className="space-y-2">
@@ -150,7 +151,7 @@ export function MobileGiftCard({
                   onChange={(ids) => onUpdateGivers(gift.id, ids)}
                   onPersonCreated={onPersonCreated}
                   placeholder="Giver..."
-                  aria-label={`From: givers of ${gift.name || "untitled gift"}`}
+                  aria-label={`From: givers of ${giftLabel}`}
                 />
               </div>
             </div>
@@ -164,6 +165,7 @@ export function MobileGiftCard({
                   onChange={(statusId) =>
                     onUpdateGift(gift.id, { gift_status_id: statusId }, { source: "mobile_gift_card" })
                   }
+                  aria-label={`Status of ${giftLabel}`}
                 />
               </div>
               <div className="space-y-2">
@@ -171,6 +173,7 @@ export function MobileGiftCard({
                 <CurrencyCell
                   value={gift.cost}
                   onChange={(cost) => onUpdateGift(gift.id, { cost: cost ? Number(cost) : undefined })}
+                  aria-label={`Edit cost of ${giftLabel}`}
                 />
               </div>
             </div>

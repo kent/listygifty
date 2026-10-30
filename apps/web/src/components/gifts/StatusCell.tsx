@@ -16,6 +16,8 @@ interface StatusCellProps {
   statuses: GiftStatus[];
   onChange: (statusId: number) => void;
   className?: string;
+  id?: string;
+  "aria-label"?: string;
 }
 
 export function StatusCell({
@@ -23,6 +25,8 @@ export function StatusCell({
   statuses,
   onChange,
   className,
+  id,
+  "aria-label": ariaLabel,
 }: StatusCellProps) {
   const currentStatus = statuses.find((s) => s.id === value);
 
@@ -32,6 +36,8 @@ export function StatusCell({
       onValueChange={(val) => onChange(parseInt(val, 10))}
     >
       <SelectTrigger
+        id={id}
+        aria-label={ariaLabel}
         className={cn(
           "border-none shadow-none h-auto py-1 px-2 hover:bg-muted/50 focus:ring-0",
           className

@@ -76,6 +76,7 @@ export function AddressCell({
         <Button
           variant="ghost"
           size="sm"
+          aria-label={`Shipping addresses: ${addressedCount} of ${totalCount} set`}
           className={cn(
             "h-auto py-1 px-2 hover:bg-muted/50 font-normal gap-1.5",
             !allAddressed && "text-muted-foreground",
@@ -106,7 +107,7 @@ export function AddressCell({
                     onUpdateAddress(recipient.id, addressId);
                   }}
                 >
-                  <SelectTrigger className="h-8 text-sm">
+                  <SelectTrigger className="h-8 text-sm" aria-label={`Shipping address for ${recipient.person.name}`}>
                     <SelectValue placeholder="Select address..." />
                   </SelectTrigger>
                   <SelectContent>

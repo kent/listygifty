@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext } from "@dnd-kit/sortable";
-import type { Gift, GiftStatus } from "@niftygifty/types";
+import type { Address, Gift, GiftStatus } from "@niftygifty/types";
 import { SortableGiftRow } from "./SortableGiftRow";
 
 vi.mock("@/services", () => ({ peopleService: { create: vi.fn() } }));
@@ -23,7 +23,10 @@ const gift = {
   created_at: "2026-01-01T00:00:00Z",
 } as unknown as Gift;
 
-function renderRow(overrides: Partial<Gift> = {}) {
+function renderRow(
+  overrides: Partial<Gift> = {},
+  rowProps: { showAddresses?: boolean; addresses?: Address[] } = {}
+) {
   render(
     <DndContext>
       <SortableContext items={[1]}>
@@ -32,8 +35,8 @@ function renderRow(overrides: Partial<Gift> = {}) {
             gift={{ ...gift, ...overrides }}
             people={[]}
             statuses={[{ id: 1, name: "Idea" }] as GiftStatus[]}
-            addresses={[]}
-            showAddresses={false}
+            addresses={rowProps.addresses ?? []}
+            showAddresses={rowProps.showAddresses ?? false}
             deletingId={null}
             onUpdateGift={vi.fn()}
             onUpdateRecipients={vi.fn()}
@@ -86,6 +89,24 @@ describe("gift row controls", () => {
     renderRow();
     expect(screen.getByRole("combobox", { name: "To: recipients of Lego set" })).toBeTruthy();
     expect(screen.getByRole("combobox", { name: "From: givers of Lego set" })).toBeTruthy();
+  });
+
+  it("names the status and cost controls after the gift", () => {
+    renderRow();
+    expect(screen.getByRole("combobox", { name: "Status of Lego set" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Edit cost of Lego set: $24.50" })).toBeTruthy();
+  });
+
+  it("names the shipping address controls after the counts and recipients", () => {
+    const recipient = { id: 3, shipping_address_id: null, person: { id: 7, name: "Alex" } };
+    const address = { id: 9, label: "Home", formatted_address_single_line: "1 Main St" };
+    renderRow({ gift_recipients: [recipient] } as unknown as Partial<Gift>, {
+      showAddresses: true,
+      addresses: [address] as unknown as Address[],
+    });
+    const trigger = screen.getByRole("button", { name: "Shipping addresses: 0 of 1 set" });
+    fireEvent.click(trigger);
+    expect(screen.getByRole("combobox", { name: "Shipping address for Alex" })).toBeTruthy();
   });
 
   it("still names the controls of a gift with no name yet", () => {

@@ -192,12 +192,14 @@ export function SortableGiftRow({
           onChange={(statusId) =>
             onUpdateGift(gift.id, { gift_status_id: statusId }, { source: "gift_grid_row" })
           }
+          aria-label={`Status of ${giftLabel}`}
         />
       </TableCell>
       <TableCell className="p-1">
         <CurrencyCell
           value={gift.cost}
           onChange={(cost) => onUpdateGift(gift.id, { cost: cost ? Number(cost) : undefined })}
+          aria-label={`Edit cost of ${giftLabel}`}
         />
       </TableCell>
       <TableCell className="p-1">
