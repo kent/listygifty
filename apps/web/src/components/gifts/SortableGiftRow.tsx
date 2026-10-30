@@ -125,7 +125,7 @@ export function SortableGiftRow({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Users className="h-3 w-3 text-cyan-400" />
+                  <Users className="h-3 w-3 text-cyan-600 dark:text-cyan-400" />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Added by {creatorName}</p>
@@ -266,7 +266,7 @@ export function SortableGiftRow({
                 href={linkHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-violet-400 hover:text-violet-300 flex items-center gap-1"
+                className="text-sm text-violet-600 hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300 flex items-center gap-1"
               >
                 {merchantLabel || gift.link}
                 <ExternalLink className="h-3 w-3" />
@@ -307,7 +307,7 @@ export function SortableGiftRow({
             <p className="text-sm font-medium text-muted-foreground">Added by</p>
             <p className="text-sm flex items-center gap-2">
               {creatorName || "Unknown"}
-              {isShared && <Users className="h-3 w-3 text-cyan-400" />}
+              {isShared && <Users className="h-3 w-3 text-cyan-600 dark:text-cyan-400" />}
             </p>
           </div>
 

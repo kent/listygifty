@@ -43,6 +43,55 @@ beforeAll(() => {
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
 });
 
+// A bare dark palette class is unreadable in the light Apple theme. Classes with
+// a dark: prefix are fine, since they only apply under the dark Festive theme.
+const DARK_ONLY = /^(text-white|text-slate-|bg-slate-|border-slate-|text-violet-[34]00|text-cyan-400|text-red-400)/;
+
+function darkOnlyClasses(container: HTMLElement) {
+  return [...container.querySelectorAll("*")]
+    .flatMap((element) => [...element.classList])
+    .filter((name) => DARK_ONLY.test(name));
+}
+
+describe("mobile gift card in the light theme", () => {
+  const shared = { is_mine: false, link: "https://example.com/lego" };
+
+  it("uses no dark-only colours when collapsed", () => {
+    const { container } = renderCard(shared);
+    expect(darkOnlyClasses(container)).toEqual([]);
+  });
+
+  it("uses no dark-only colours when expanded", () => {
+    const { container } = renderCard(shared);
+    fireEvent.click(screen.getByRole("button", { name: /^Lego set/ }));
+    expect(darkOnlyClasses(container)).toEqual([]);
+  });
+});
+
+describe("mobile gift card labels", () => {
+  it("connects every visible label to its control", () => {
+    renderCard();
+    expand();
+    for (const label of ["Name", "To", "From", "Status", "Cost"]) {
+      expect(screen.getByLabelText(label)).toBeTruthy();
+    }
+  });
+
+  it("gives each card its own ids so two cards don't collide", () => {
+    renderCard();
+    expand();
+    expect(screen.getByLabelText("Status").id).toContain("1");
+  });
+
+  it("reports whether the card is expanded", () => {
+    renderCard();
+    const toggle = screen.getByRole("button", { name: /^Lego set/ });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+  });
+});
+
 describe("mobile gift card control names", () => {
   it("names every edit control after the gift", () => {
     renderCard();

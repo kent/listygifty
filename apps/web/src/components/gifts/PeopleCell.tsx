@@ -161,7 +161,7 @@ export function PeopleCell({
               {search.trim() && !exactMatch && (
                 <CommandItem
                   onSelect={createPerson}
-                  className="text-violet-400"
+                  className="text-violet-600 dark:text-violet-400"
                   disabled={creating}
                 >
                   {creating ? (

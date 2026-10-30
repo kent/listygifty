@@ -198,7 +198,7 @@ function PersonSummaryTable({
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/30 hover:bg-muted/30">
-            <TableHead className="w-[180px] font-semibold text-white">
+            <TableHead className="w-[180px] font-semibold">
               {person.name}
             </TableHead>
             <TableHead className="w-[140px] font-semibold">Status</TableHead>
@@ -262,7 +262,7 @@ function SummaryView({
 
   if (recipientsWithGifts.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-12 text-center">
+      <div className="rounded-lg border border-border/50 bg-card/50 p-12 text-center">
         <p className="text-muted-foreground">
           No gifts assigned to recipients yet. Add gifts and assign recipients to
           see the report.
@@ -307,7 +307,7 @@ function PersonView({
   const renderContent = () => {
     if (!selectedPerson) {
       return (
-        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-12 text-center">
+        <div className="rounded-lg border border-border/50 bg-card/50 p-12 text-center">
           <User className="h-12 w-12 mx-auto text-slate-600 mb-4" />
           <p className="text-muted-foreground">
             Select a person to view their gift report.
@@ -318,11 +318,11 @@ function PersonView({
 
     if (stats && stats.totalCount === 0) {
       return (
-        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-12 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-800/50 mb-4">
-            <User className="h-8 w-8 text-slate-500" />
+        <div className="rounded-lg border border-border/50 bg-card/50 p-12 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
+            <User className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-medium text-white mb-2">{selectedPerson.name}</h3>
+          <h3 className="text-lg font-medium text-foreground mb-2">{selectedPerson.name}</h3>
           <p className="text-muted-foreground max-w-sm mx-auto">
             No gifts assigned yet. Add gifts to this gift list and assign {selectedPerson.name} as a recipient to see their report.
           </p>
@@ -379,7 +379,7 @@ function ComparisonTable({
             {selectedPeople.map((person) => (
               <TableHead
                 key={person.id}
-                className="text-center font-semibold text-white min-w-[120px]"
+                className="text-center font-semibold min-w-[120px]"
               >
                 {person.name}
               </TableHead>
@@ -529,7 +529,7 @@ function CompareView({
           statsMap={statsMap}
         />
       ) : (
-        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-12 text-center">
+        <div className="rounded-lg border border-border/50 bg-card/50 p-12 text-center">
           <Scale className="h-12 w-12 mx-auto text-slate-600 mb-4" />
           <p className="text-muted-foreground">
             Select people above to compare their gift totals.
@@ -557,7 +557,7 @@ function FulfillmentView({
 
   if (gifts.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-12 text-center">
+      <div className="rounded-lg border border-border/50 bg-card/50 p-12 text-center">
         <Truck className="h-12 w-12 mx-auto text-slate-600 mb-4" />
         <p className="text-muted-foreground">
           No gifts are ready for fulfillment yet.
@@ -652,7 +652,7 @@ function ExceptionsView({
 
   if (exceptions.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-12 text-center">
+      <div className="rounded-lg border border-border/50 bg-card/50 p-12 text-center">
         <AlertTriangle className="h-12 w-12 mx-auto text-emerald-500 mb-4" />
         <p className="text-muted-foreground">
           No fulfillment exceptions found for this gift list.

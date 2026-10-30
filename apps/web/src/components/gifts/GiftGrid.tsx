@@ -435,7 +435,7 @@ export function GiftGrid({
             asChild
             variant="outline"
             size="sm"
-            className="gap-2 border-violet-500/50 text-violet-400 hover:bg-violet-500/10"
+            className="gap-2 border-violet-500/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10"
           >
             <Link href="/billing">
               <Crown className="h-4 w-4" />
@@ -554,8 +554,8 @@ export function GiftGrid({
       {/* Mobile card view */}
       <div className="md:hidden space-y-3 pb-20">
         {gifts.length === 0 ? (
-          <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-8 text-center">
-            <p className="text-slate-400">No gifts yet. Tap + to add one.</p>
+          <div className="rounded-lg border border-border/50 bg-card/50 p-8 text-center">
+            <p className="text-muted-foreground">No gifts yet. Tap + to add one.</p>
           </div>
         ) : (
           gifts.map((gift) => (
