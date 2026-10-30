@@ -30,6 +30,9 @@ function metrics(run, project, journey) {
   return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : null;
 }
 
+const EXPECTED_ERRORS = /broken link|made-up invite|Impossible rules/;
+const realErrors = (m) => m.events.filter((event) => !EXPECTED_ERRORS.test(event.step)).length;
+
 function allRuns(run, journey) {
   return PROJECTS.map((project) => metrics(run, project, journey)).filter(Boolean);
 }
@@ -64,7 +67,7 @@ function scoreRow([id, name]) {
     <td class="num">${steps(b)}</td><td class="num">${steps(a)}</td>
     ${stat(b.map((m) => m.clicks), a.map((m) => m.clicks), round)}
     ${stat(b.map((m) => m.activeMs / 1000), a.map((m) => m.activeMs / 1000), (v) => `${round(v)}s`)}
-    ${stat(b.map((m) => m.errors), a.map((m) => m.errors), round)}
+    ${stat(b.map(realErrors), a.map(realErrors), round)}
     ${stat(b.map(serious), a.map(serious), round)}
   </tr>`;
 }
@@ -109,6 +112,7 @@ function decisionCard(item, repo) {
     <header><span class="sev s${item.severity}">Severity ${item.severity}</span><h3>${esc(item.title)}</h3></header>
     <dl>
       <div><dt>Problem</dt><dd>${esc(item.problem)}</dd></div>
+      <div><dt>Repro</dt><dd>${esc(item.repro)}</dd></div>
       <div><dt>Evidence</dt><dd>${esc(item.evidence)}</dd></div>
       <div><dt>Change and why</dt><dd>${esc(item.change)}</dd></div>
       <div><dt>Heuristic</dt><dd>${esc(item.heuristic)}</dd></div>

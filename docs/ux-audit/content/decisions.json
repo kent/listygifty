@@ -1,0 +1,709 @@
+[
+  {
+    "id": "privacy-leak",
+    "severity": 4,
+    "journey": "Wishlist",
+    "title": "Shared wishlist links exposed who claimed what",
+    "heuristic": "Error prevention",
+    "problem": "Anyone holding a shared wishlist link could read each claimer's user ID, avatar, private message and name. The name can fall back to their email address. No login was needed.",
+    "repro": "Claim an item on a shared wishlist, then request /w/:token with no sign-in.",
+    "evidence": "The new test fails on the old code and passes with the fix. The filter was written as a lambda, which the serializer library silently ignores.",
+    "change": "The public view now returns only claim status and quantity. This one fix shipped to production on October 30, 2026, ahead of the rest.",
+    "commits": [
+      "ad0c0e8",
+      "f6fb256"
+    ],
+    "frames": []
+  },
+  {
+    "id": "invite-lost",
+    "severity": 4,
+    "journey": "Exchange",
+    "title": "New relatives lost their invite at sign-up",
+    "heuristic": "Visibility of system status",
+    "problem": "A relative who tapped the invite and created an account landed on the dashboard with no sign of the exchange. The only way back was to find the email again.",
+    "repro": "Open an invite while logged out, choose Sign Up, and finish creating the account.",
+    "evidence": "Journey 2 failed at this step in all four runs. The links used a redirect parameter that nothing reads.",
+    "change": "Sign In and Sign Up now carry redirect_url, so people return to the invite and can join straight away.",
+    "commits": [
+      "31ab699"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "j2-exchange",
+        "before": "18-nana-lands-back-on-the-invite.png",
+        "after": "18-nana-lands-back-on-the-invite.png"
+      }
+    ]
+  },
+  {
+    "id": "phone-overflow",
+    "severity": 4,
+    "journey": "Exchange",
+    "title": "The exchange page ran off the side of phones",
+    "heuristic": "Flexibility and efficiency of use",
+    "problem": "At 390px the page was far wider than the screen. The Add button sat off to the right, so the script could not tap it and an organizer on a phone would have to scroll sideways to invite anyone.",
+    "repro": "Open an exchange at 390px and try to add a participant.",
+    "evidence": "Journey 2 stopped at the first invite in both phone runs. Measured overflow was 245 to 260px.",
+    "change": "Rows wrap and contain long names and emails, and the page no longer scrolls sideways.",
+    "commits": [
+      "74bed0b",
+      "5626dee"
+    ],
+    "frames": [
+      {
+        "project": "mobile-apple",
+        "journey": "j2-exchange",
+        "before": "05-invite-parker-by-email.png",
+        "after": "05-invite-parker-by-email.png"
+      }
+    ]
+  },
+  {
+    "id": "guest-links",
+    "severity": 4,
+    "journey": "Wishlist",
+    "title": "Guest links demanded a sign-in",
+    "heuristic": "Match between system and the real world",
+    "problem": "The Share dialog promises that anyone with the link can view the list and claim items, but the link forced a sign-in. The guest's confirmation email link did the same.",
+    "repro": "Open a shared /w/ link or a /claim/ link while logged out.",
+    "evidence": "Journey 5 failed here in all four runs. Neither route was on the public list.",
+    "change": "Both routes are public now, and the pages already worked without an account.",
+    "commits": [
+      "27b9890"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "j5-wishlist",
+        "before": "09-my-cousin-opens-the-link-with-no-account.png",
+        "after": "09-my-cousin-opens-the-link-with-no-account.png"
+      }
+    ]
+  },
+  {
+    "id": "spoiler",
+    "severity": 4,
+    "journey": "Wishlist",
+    "title": "Anti-spoiler still showed owners what was claimed",
+    "heuristic": "Consistency and standards",
+    "problem": "Anti-spoiler is on by default, yet an owner saw a green Claimed badge on their own wishlist, which gives away the surprise.",
+    "repro": "Have a guest claim an item on a list with anti-spoiler on, then open the list as its owner.",
+    "evidence": "Competitor research flagged the risk, then the running app confirmed it in all four runs.",
+    "change": "For an owner with anti-spoiler on, every claim count now uses revealed claims only. Guests still see real status, so they can avoid doubling up.",
+    "commits": [
+      "3a9b945"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "j5-wishlist",
+        "before": "12-i-can-still-see-my-list-and-it-isn-t-spoiled.png",
+        "after": "12-i-can-still-see-my-list-and-it-isn-t-spoiled.png"
+      }
+    ]
+  },
+  {
+    "id": "wishlists-nav",
+    "severity": 4,
+    "journey": "Navigation",
+    "title": "Nobody could find Wishlists",
+    "heuristic": "Recognition rather than recall",
+    "problem": "Nothing in the app linked to wishlists. The only way in was typing the address.",
+    "repro": "From Home, try to reach your wishlists using only what is on screen.",
+    "evidence": "A code search found no link outside the wishlist pages themselves.",
+    "change": "Added Wishlists to every header, and the phone menu now shows the current item and hints that it scrolls.",
+    "commits": [
+      "887124e"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "j4-navigation",
+        "before": "08-find-wishlists-in-the-menu.png",
+        "after": "08-find-wishlists-in-the-menu.png"
+      },
+      {
+        "project": "mobile-apple",
+        "journey": "j4-navigation",
+        "before": "08-find-wishlists-in-the-menu.png",
+        "after": "08-find-wishlists-in-the-menu.png"
+      }
+    ]
+  },
+  {
+    "id": "first-request-401",
+    "severity": 4,
+    "journey": "Exchange",
+    "title": "Join could fail with an auth error on a first visit",
+    "heuristic": "Help users recognize, diagnose, and recover from errors",
+    "problem": "A first page load fires several requests at once. They raced to create the same user, and the loser came back as 401 Unauthorized, even though the person was signed in.",
+    "repro": "Open an invite as someone with no local account yet, and press Join Exchange quickly.",
+    "evidence": "API logs showed \"Clerk user has already been taken\" next to the 401. One or two joiners hit it in most runs.",
+    "change": "The losing request now finds the winner's record and carries on, with one welcome email.",
+    "commits": [
+      "f9ac193"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "j2-exchange",
+        "before": "12-parker-joins-from-the-invite-email.png",
+        "after": "12-parker-joins-from-the-invite-email.png"
+      }
+    ]
+  },
+  {
+    "id": "join-emails",
+    "severity": 3,
+    "journey": "Email",
+    "title": "Emailed invites never sent join emails",
+    "heuristic": "Visibility of system status",
+    "problem": "People who joined from an emailed invite triggered no email at all, so the organizer never heard and the joiner got no confirmation. Share-link joins did send them.",
+    "repro": "Invite someone by email, have them join, and check the inbox.",
+    "evidence": "Mailpit showed 0 of these emails after 5 emailed-invite joins. After the fix, both arrive in every run.",
+    "change": "Accepting an invite now sends both emails, including through MCP. The organizer is not emailed about themselves.",
+    "commits": [
+      "62603f2",
+      "7d40d9e"
+    ],
+    "frames": []
+  },
+  {
+    "id": "stale-draft",
+    "severity": 3,
+    "journey": "Exchange",
+    "title": "The page still said draft after four invites",
+    "heuristic": "Visibility of system status",
+    "problem": "After inviting people, the badge stayed on draft and the button to draw names stayed hidden until a reload.",
+    "repro": "Create an exchange, add participants, and look at the status.",
+    "evidence": "Journey 2 failed this step in the desktop runs, where it could be reached.",
+    "change": "The page refreshes the exchange after every roster change.",
+    "commits": [
+      "8ec906e"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "j2-exchange",
+        "before": "09-the-page-shows-the-invites-went-out.png",
+        "after": "09-the-page-shows-the-invites-went-out.png"
+      }
+    ]
+  },
+  {
+    "id": "next-step",
+    "severity": 3,
+    "journey": "Exchange",
+    "title": "Nothing said what to do next",
+    "heuristic": "Visibility of system status",
+    "problem": "With one person in, the draw button simply wasn't there. Invitees who joined saw no sign of what was coming.",
+    "repro": "Create an exchange and stay alone in it, or join as an invitee.",
+    "evidence": "Journey 2 and the unhappy paths failed these checks.",
+    "change": "A short line now says how many people are needed, who is still pending, or that you are waiting on the organizer.",
+    "commits": [
+      "fd23156"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "j2-exchange",
+        "before": "10-the-organizer-knows-what-happens-next.png",
+        "after": "10-the-organizer-knows-what-happens-next.png"
+      },
+      {
+        "project": "desktop-apple",
+        "journey": "u1-unhappy-paths",
+        "before": "05-alone-in-an-exchange-i-am-told-why-i-can-t-draw-yet.png",
+        "after": "05-alone-in-an-exchange-i-am-told-why-i-can-t-draw-yet.png"
+      }
+    ]
+  },
+  {
+    "id": "wishlist-before-draw",
+    "severity": 3,
+    "journey": "Exchange",
+    "title": "The invite promised wishlists people could not reach",
+    "heuristic": "Consistency and standards",
+    "problem": "The invite email says to add wishlist ideas after joining, but the link only appeared after the draw and never for an organizer taking part.",
+    "repro": "Join an exchange and look for your wishlist before names are drawn.",
+    "evidence": "Journey 2 failed this step for both the organizer and the invitee.",
+    "change": "Everyone who has joined gets an Edit Wishlist link in every status.",
+    "commits": [
+      "d73ad1d"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "j2-exchange",
+        "before": "15-parker-can-add-wishes-right-after-joining.png",
+        "after": "15-parker-can-add-wishes-right-after-joining.png"
+      }
+    ]
+  },
+  {
+    "id": "logged-out-pages",
+    "severity": 3,
+    "journey": "Log in and out",
+    "title": "Signed-out people saw a working form and lost their place",
+    "heuristic": "Error prevention",
+    "problem": "A pattern meant for /e/ links also matched /exchanges, so a signed-out person saw the New Exchange form with a Sign out button. Links from emails also lost their destination at sign-in.",
+    "repro": "Sign out, then open /exchanges/new or a my-match link.",
+    "evidence": "Journey 3 failed in all four runs. The unhappy paths confirmed the lost match link.",
+    "change": "Exchange pages are protected now, and sign-in returns people to where they were, including after a session expires.",
+    "commits": [
+      "27b9890",
+      "86e8d58",
+      "e94c5e5"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "j3-log-in-out",
+        "before": "06-a-saved-link-asks-me-to-sign-in.png",
+        "after": "06-a-saved-link-asks-me-to-sign-in.png"
+      }
+    ]
+  },
+  {
+    "id": "not-found",
+    "severity": 3,
+    "journey": "Navigation",
+    "title": "Broken links hit a dead end",
+    "heuristic": "Help users recognize, diagnose, and recover from errors",
+    "problem": "Unknown addresses showed a bare, unstyled 404 with no way back.",
+    "repro": "Open any address that doesn't exist while signed in.",
+    "evidence": "Journey 4 failed in all four runs.",
+    "change": "Added a Page not found screen in both themes, with a Back to home link.",
+    "commits": [
+      "18bbbbd"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "j4-navigation",
+        "before": "12-a-broken-link-explains-itself-and-offers-a-way-back.png",
+        "after": "12-a-broken-link-explains-itself-and-offers-a-way-back.png"
+      }
+    ]
+  },
+  {
+    "id": "closed-not-declined",
+    "severity": 3,
+    "journey": "Exchange",
+    "title": "People who never answered were told they declined",
+    "heuristic": "Match between system and the real world",
+    "problem": "Drawing names closes pending invites by marking them declined, so someone arriving late read \"You previously declined this invitation\".",
+    "repro": "Invite someone, draw names without them, then open their invite.",
+    "evidence": "The unhappy path failed in all four runs.",
+    "change": "The invite now reports that the exchange closed and suggests asking the organizer.",
+    "commits": [
+      "2ce5c80",
+      "334d137"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "u1-unhappy-paths",
+        "before": "14-someone-who-never-joined-is-told-it-closed-not-that-they-dec.png",
+        "after": "14-someone-who-never-joined-is-told-it-closed-not-that-they-dec.png"
+      }
+    ]
+  },
+  {
+    "id": "remove-confirm",
+    "severity": 3,
+    "journey": "Exchange",
+    "title": "One click removed a person",
+    "heuristic": "Error prevention",
+    "problem": "The trash icon removed a participant instantly, with no confirmation and no undo.",
+    "repro": "Press the trash icon on a participant.",
+    "evidence": "The unhappy path failed in all four runs.",
+    "change": "Removing now asks first, with Keep them and Remove.",
+    "commits": [
+      "6e55a7d"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "u1-unhappy-paths",
+        "before": "10-removing-a-person-asks-first.png",
+        "after": "10-removing-a-person-asks-first.png"
+      }
+    ]
+  },
+  {
+    "id": "share-twice",
+    "severity": 3,
+    "journey": "Wishlist",
+    "title": "Pressing Share again broke the link you had already sent",
+    "heuristic": "Error prevention",
+    "problem": "Every press of Share replaced the link, so re-copying it killed the one family already had. Guests then saw Wishlist Not Found.",
+    "repro": "Press Share, copy the link, close, and press Share again. Then open the first link.",
+    "evidence": "The new tests failed on the old code.",
+    "change": "Share now returns the existing link. A revoked link stays dead, and sharing after a revoke issues a new one.",
+    "commits": [
+      "7747be1"
+    ],
+    "frames": []
+  },
+  {
+    "id": "claim-state",
+    "severity": 3,
+    "journey": "Wishlist",
+    "title": "Claimed items showed the wrong state",
+    "heuristic": "Visibility of system status",
+    "problem": "Right after a claim, the availability flag was inverted. A guest could keep claiming the last item, and items with stock left showed as Claimed.",
+    "repro": "Claim an item with a guest and check its state.",
+    "evidence": "Two new tests failed on the old code.",
+    "change": "The page now shows the correct state straight after a claim.",
+    "commits": [
+      "eb5e97a"
+    ],
+    "frames": []
+  },
+  {
+    "id": "mobile-cards",
+    "severity": 3,
+    "journey": "Gift lists",
+    "title": "Phone gift cards were unreadable in the Apple theme",
+    "heuristic": "Aesthetic and minimalist design",
+    "problem": "Cards kept hard-coded dark colours in the light theme, giving muddy grey cards with text at about 1.19:1 contrast.",
+    "repro": "Add a gift and open the list at 390px in the Apple theme.",
+    "evidence": "Visible in every Apple phone frame, and flagged by axe.",
+    "change": "Gift cards and related screens now use theme colours.",
+    "commits": [
+      "a775533"
+    ],
+    "frames": [
+      {
+        "project": "mobile-apple",
+        "journey": "j1-gift-lists",
+        "before": "06-both-gifts-show-who-they-are-for.png",
+        "after": "06-both-gifts-show-who-they-are-for.png"
+      }
+    ]
+  },
+  {
+    "id": "keyboard-gifts",
+    "severity": 3,
+    "journey": "Accessibility",
+    "title": "Gift rows could not be used with a keyboard or touch",
+    "heuristic": "Flexibility and efficiency of use",
+    "problem": "The row menu only appeared on mouse hover, gift names could only be edited by clicking, and several controls had no name.",
+    "repro": "Tab through a gift list, or open it on a tablet.",
+    "evidence": "Keyboard passes and axe button-name failures.",
+    "change": "Controls stay visible on focus and touch, gift names can be edited from the keyboard, and every control is named.",
+    "commits": [
+      "0f27b40",
+      "8810e73",
+      "a162c35",
+      "cc7b777"
+    ],
+    "frames": []
+  },
+  {
+    "id": "named-controls",
+    "severity": 3,
+    "journey": "Accessibility",
+    "title": "Icon buttons and form fields had no names",
+    "heuristic": "Consistency and standards",
+    "problem": "Screen reader users got nothing from many icon buttons, and wishlist labels were not tied to their fields. Phone buttons lost their names when text was hidden.",
+    "repro": "Run axe, or use a screen reader on the wishlist and exchange pages.",
+    "evidence": "Axe reported critical button-name and label failures on 8 routes.",
+    "change": "Every control now has a name, and labels are connected to their fields.",
+    "commits": [
+      "7c614f7",
+      "becd270",
+      "348fba4",
+      "3551614",
+      "1495430",
+      "9fd06ae",
+      "edd3b13"
+    ],
+    "frames": []
+  },
+  {
+    "id": "draw-errors",
+    "severity": 3,
+    "journey": "Exchange",
+    "title": "Impossible rules gave a dead-end message",
+    "heuristic": "Help users recognize, diagnose, and recover from errors",
+    "problem": "If the rules left someone with nobody to draw, the organizer read \"No valid matching exists\".",
+    "repro": "Exclude one person from everyone else, then draw.",
+    "evidence": "The unhappy path failed in all four runs.",
+    "change": "The message now explains the cause and what to do: remove a rule or add another person.",
+    "commits": [
+      "b652c9b"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "u1-unhappy-paths",
+        "before": "11-impossible-rules-get-an-explanation-i-can-act-on.png",
+        "after": "11-impossible-rules-get-an-explanation-i-can-act-on.png"
+      }
+    ]
+  },
+  {
+    "id": "new-list-opens",
+    "severity": 2,
+    "journey": "Gift lists",
+    "title": "A new list didn't open",
+    "heuristic": "Flexibility and efficiency of use",
+    "problem": "After creating a list, people stayed on the index and had to click again to start adding gifts.",
+    "repro": "Create a gift list from the New page or the dashboard.",
+    "evidence": "Seen in Journey 1, which passed but needed the extra click.",
+    "change": "The new list opens straight away.",
+    "commits": [
+      "f0be183",
+      "3c141d1"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "j1-gift-lists",
+        "before": "02-start-a-christmas-list.png",
+        "after": "02-start-a-christmas-list.png"
+      }
+    ]
+  },
+  {
+    "id": "dashboard-jargon",
+    "severity": 2,
+    "journey": "Gift lists",
+    "title": "The dashboard used internal growth language",
+    "heuristic": "Match between system and the real world",
+    "problem": "Customers saw \"Activation\", and the link \"Continue setup: Gift list created\" named a finished state as the next step.",
+    "repro": "Open the dashboard as a new user.",
+    "evidence": "Seen in the first frame of every run.",
+    "change": "It now says Get started, with plain actions such as Create a gift list.",
+    "commits": [
+      "f01166b"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "j1-gift-lists",
+        "before": "01-open-my-home-screen.png",
+        "after": "01-open-my-home-screen.png"
+      }
+    ]
+  },
+  {
+    "id": "publish-honesty",
+    "severity": 2,
+    "journey": "Exchange",
+    "title": "The draw warning said it could not be undone",
+    "heuristic": "Consistency and standards",
+    "problem": "The dialog said the action could not be undone, but Redo exists. It also said \"1 exclusion rules\".",
+    "repro": "Press Publish Exchange and read the dialog.",
+    "evidence": "The unhappy path failed in all four runs.",
+    "change": "The copy now explains that a redo gives everyone a new match and email, and the plurals are correct.",
+    "commits": [
+      "24adbdb"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "u1-unhappy-paths",
+        "before": "12-the-draw-warning-matches-what-redo-can-do.png",
+        "after": "12-the-draw-warning-matches-what-redo-can-do.png"
+      }
+    ]
+  },
+  {
+    "id": "invite-states",
+    "severity": 2,
+    "journey": "Exchange",
+    "title": "Invite pages didn't explain themselves",
+    "heuristic": "Help users recognize, diagnose, and recover from errors",
+    "problem": "A bad link gave no next step, an outage looked like a dead link, and signing in with a different email gave no warning. A stranger also got no explanation of the product.",
+    "repro": "Open a made-up invite, or open an invite while signed in with another email.",
+    "evidence": "The unhappy paths failed these checks in all four runs.",
+    "change": "Each state now says what happened and what to do. A wrong-account notice appears without blocking anyone.",
+    "commits": [
+      "334d137",
+      "96d854e"
+    ],
+    "frames": [
+      {
+        "project": "desktop-apple",
+        "journey": "u1-unhappy-paths",
+        "before": "07-a-made-up-invite-link-explains-what-to-do.png",
+        "after": "07-a-made-up-invite-link-explains-what-to-do.png"
+      },
+      {
+        "project": "desktop-apple",
+        "journey": "u1-unhappy-paths",
+        "before": "09-signed-in-with-a-different-email-i-am-warned-before-taking-t.png",
+        "after": "09-signed-in-with-a-different-email-i-am-warned-before-taking-t.png"
+      }
+    ]
+  },
+  {
+    "id": "error-messages",
+    "severity": 2,
+    "journey": "Exchange",
+    "title": "Failures gave vague or wrong messages",
+    "heuristic": "Help users recognize, diagnose, and recover from errors",
+    "problem": "A duplicate person showed only \"Failed to add participant\", a bad budget showed \"Failed to create exchange\", a network failure said \"Exchange not found\", an empty list could mean a failed load, and a failed gift list create showed nothing.",
+    "repro": "Add the same email twice, set the maximum budget below the minimum, or lose the network on an exchange page.",
+    "evidence": "Found in code review and covered by new tests.",
+    "change": "Messages now come from the API or say what happened, and network failures offer Try again.",
+    "commits": [
+      "a2d2edb",
+      "d4dac67",
+      "5096932",
+      "8a20339",
+      "895e7c7",
+      "75e4003",
+      "57aa15a"
+    ],
+    "frames": []
+  },
+  {
+    "id": "email-parts",
+    "severity": 2,
+    "journey": "Email",
+    "title": "One email had no plain text version",
+    "heuristic": "Consistency and standards",
+    "problem": "Guest claim confirmations had no text part, and email copy still had em dashes.",
+    "repro": "Render every mailer and inspect its parts.",
+    "evidence": "The render test failed on GuestClaimMailer. All 15 email types now reach Mailpit with text and HTML parts.",
+    "change": "Added the text version and a test covering every mailer, including that match emails never name who drew you.",
+    "commits": [
+      "6cd54a8",
+      "7708d1e",
+      "2e26544"
+    ],
+    "frames": []
+  },
+  {
+    "id": "console-noise",
+    "severity": 1,
+    "journey": "Exchange",
+    "title": "Participants triggered a failed request on every visit",
+    "heuristic": "Error prevention",
+    "problem": "The page requested exclusion rules for everyone, and non-owners got a 404 in the console.",
+    "repro": "Open an exchange as a participant with the console open.",
+    "evidence": "Recorded in the Journey 2 error counts.",
+    "change": "Only the organizer requests the rules now.",
+    "commits": [
+      "bb725ab"
+    ],
+    "frames": []
+  },
+  {
+    "id": "match-data-loss",
+    "severity": 4,
+    "journey": "Gift lists",
+    "title": "Editing a shared gift could wipe its recipients and givers",
+    "heuristic": "Error prevention",
+    "problem": "On the Match screen, the edit dialog opened with empty pickers. Picking one person replaced the gift's whole list, so everyone else was removed from the gift.",
+    "repro": "Open a gift with two recipients on the Match screen, edit it, and pick one person.",
+    "evidence": "Eight tests that open the dialog the way the page does failed on the old code. Before the fix, choosing one person sent a one-person list for a gift with two recipients. Nobody has checked how many production gifts were affected.",
+    "change": "The dialog now loads the gift's real people, and a failed save rolls back to the last saved state.",
+    "commits": [
+      "86aff1d",
+      "ec12a58"
+    ],
+    "frames": []
+  },
+  {
+    "id": "contrast",
+    "severity": 3,
+    "journey": "Accessibility",
+    "title": "Text failed contrast across both themes",
+    "heuristic": "Aesthetic and minimalist design",
+    "problem": "Axe found contrast failures on 15 routes. Apple greys, greens, reds and violets were too light, Festive silver keys and footer text were too faint, and white text on the green and pink gradients was hard to read.",
+    "repro": "Run axe on any page in either theme. Gradients need a manual check, because axe cannot score text on them.",
+    "evidence": "Axe reported color-contrast failures on every Apple route before. It reports none now, in 124 audits per project. Gradient stops were checked by calculation.",
+    "change": "Fixed at the theme level where possible, so one change covers every page. Festive keeps its look.",
+    "commits": [
+      "aad828b",
+      "f616631",
+      "58272fc",
+      "d69f2eb",
+      "2e9c27c",
+      "cc5a1d3",
+      "2665f25",
+      "ffc2c95",
+      "faded04",
+      "f3a689f",
+      "acff7b2",
+      "644605a",
+      "918d766",
+      "a2def2e",
+      "df9d317",
+      "0762dd4",
+      "5265369"
+    ],
+    "frames": [
+      {
+        "project": "mobile-apple",
+        "journey": "j4-navigation",
+        "before": "06-find-people-in-the-menu.png",
+        "after": "06-find-people-in-the-menu.png"
+      }
+    ]
+  },
+  {
+    "id": "structure-a11y",
+    "severity": 2,
+    "journey": "Accessibility",
+    "title": "Screen readers met broken structure",
+    "heuristic": "Consistency and standards",
+    "problem": "A link sat inside the gift list tabs, the workspace switcher had no name while loading, the remove chip was too small a target, and two buttons announced a different name from their visible label.",
+    "repro": "Run axe on /holidays/:id, /settings and /dashboard.",
+    "evidence": "Axe reported aria-required-children, target-size, button-name and label-content-name-mismatch.",
+    "change": "Match is a real link now, the remove target is 24px, and names match what people see.",
+    "commits": [
+      "7af0dd7",
+      "23bfa77",
+      "39364c4",
+      "d32463d",
+      "a1ddfb8"
+    ],
+    "frames": []
+  },
+  {
+    "id": "match-theme",
+    "severity": 2,
+    "journey": "Gift lists",
+    "title": "The Match screen stayed dark in the light theme",
+    "heuristic": "Consistency and standards",
+    "problem": "The Match screen had hard-coded dark colours, and pressing Enter on Edit started a drag.",
+    "repro": "Open the Match screen in the Apple theme, or use it with a keyboard.",
+    "evidence": "Tests that scan its colours and keyboard behaviour failed before.",
+    "change": "It now uses theme colours, and drag rows have a real handle.",
+    "commits": [
+      "605d575",
+      "25200ad"
+    ],
+    "frames": []
+  },
+  {
+    "id": "session-expiry-phone-summary",
+    "severity": 2,
+    "journey": "Gift lists",
+    "title": "Four summary cards pushed gifts a screen down on phones",
+    "heuristic": "Aesthetic and minimalist design",
+    "problem": "At 390px, stacked summary cards came before the gifts, so people scrolled past them to reach their list.",
+    "repro": "Open a gift list at 390px.",
+    "evidence": "Visible in every phone frame of Journey 1.",
+    "change": "The cards now sit in two columns on phones.",
+    "commits": [
+      "d99e71a"
+    ],
+    "frames": [
+      {
+        "project": "mobile-apple",
+        "journey": "j1-gift-lists",
+        "before": "05-add-a-gift-for-dad-with-a-price.png",
+        "after": "05-add-a-gift-for-dad-with-a-price.png"
+      }
+    ]
+  }
+]

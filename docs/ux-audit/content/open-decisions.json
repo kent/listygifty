@@ -1,0 +1,104 @@
+[
+  {
+    "id": "past-damage",
+    "severity": 3,
+    "title": "Decide whether to look for past damage",
+    "question": "Two bugs may already have affected real people. Shared wishlist links exposed claimer details until October 30, 2026, and the Match screen's edit dialog could remove recipients and givers from gifts. Fixing them doesn't tell you what already happened, and I did not look at production data.",
+    "recommendation": "Check the request logs for /w/ links, and use the gift_changes table to find gifts that lost people through that dialog. Decide on any notice to users once you know the scale."
+  },
+  {
+    "id": "reply-address",
+    "severity": 3,
+    "title": "Replies to invite emails go nowhere",
+    "question": "Mail comes from hello@listygifty.com, but a public DNS lookup finds no MX record, no SPF record on the domain and no DMARC record. A relative who replies to ask what this is gets a bounce, and a holiday spike is when inbox filters look hardest at new senders. I only checked public DNS. Postmark itself was not tested, and no real email was sent.",
+    "recommendation": "Add an MX record or a forwarding address for hello@, and a DMARC record starting at p=none. Then send yourself one real invite and check where it lands."
+  },
+  {
+    "id": "peak-readiness",
+    "severity": 3,
+    "title": "Be ready for the busiest week of the year",
+    "question": "Peak-day failures were the top complaint across competitor reviews, with 132 mentions across 5 sources, though a few bad days inflate that count. Production runs 1 to 10 instances and the repo has no load test.",
+    "recommendation": "Run a load test before Black Friday and freeze releases from about November 20 until Christmas."
+  },
+  {
+    "id": "draw-names",
+    "severity": 2,
+    "title": "Say Draw names instead of Publish Exchange",
+    "question": "Publish is software language. Nobody in a family says they're publishing the Secret Santa. The label stayed because existing tests and the mobile app depend on it.",
+    "recommendation": "Rename it to Draw names everywhere, including the mobile app and emails.",
+    "concept": "img/concept-draw-names.jpg"
+  },
+  {
+    "id": "signup-length",
+    "severity": 3,
+    "title": "Shorten sign-up for invited relatives",
+    "question": "A relative who taps an invite faces first name, last name, email, phone and password before they can join. The invite already knows their name and email. This is a Clerk setting and a product trade-off, so nothing changed.",
+    "recommendation": "Offer email code sign-in for invitees, with the email filled in from the invite and no password.",
+    "concept": "img/concept-signup-simple.jpg"
+  },
+  {
+    "id": "list-names",
+    "severity": 2,
+    "title": "Gift Lists and Wishlists sound like the same thing",
+    "question": "One is what you plan to give and the other is what you want, but the names don't say so. Adding Wishlists to the menu makes the overlap more visible. Options is also an odd name for settings.",
+    "recommendation": "Use Gifts I'm Giving, My Wishlist and Settings. Check the wording in the hallway test first.",
+    "concept": "img/concept-nav-names.jpg"
+  },
+  {
+    "id": "phone-landing",
+    "severity": 2,
+    "title": "Function key labels make no sense on a phone",
+    "question": "The Festive front page shows Enter Start free, F1 Tour and F4 Sign in on phones that have no such keys, and its top bar clips a menu item. It's part of the retro theme, so I left it.",
+    "recommendation": "Keep the keys on desktop and hide them on touch screens.",
+    "concept": "img/concept-landing-labels.jpg"
+  },
+  {
+    "id": "default-theme",
+    "severity": 2,
+    "title": "Which theme should a stranger see first?",
+    "question": "Festive is the default for everyone, all year. It has a lot of charm, but pixel lettering and busy backgrounds are a harder first impression for an older relative on a phone, and it's a Christmas look in July.",
+    "recommendation": "Default to Apple outside November and December, and test both with your hallway group."
+  },
+  {
+    "id": "dropout",
+    "severity": 2,
+    "title": "What happens when someone drops out after the draw",
+    "question": "The only path is Redo, which changes everyone's match and emails everyone. Removed people get no email. One person cancelling resets the whole family.",
+    "recommendation": "Add a replace-one-person flow that only changes the two affected people, and tell the person removed."
+  },
+  {
+    "id": "owner-share-spoiler",
+    "severity": 2,
+    "title": "Opening your own share link shows what's claimed",
+    "question": "Anti-spoiler now holds on your wishlist page, but your public link has to show real status so guests don't double up, and that page doesn't know who you are.",
+    "recommendation": "Show a notice on the share dialog saying your own link will show claims. Recognizing the signed-in owner on that page can come later."
+  },
+  {
+    "id": "form-drafts",
+    "severity": 2,
+    "title": "Refreshing a half-filled form loses it",
+    "question": "New exchange and new wishlist forms start blank after a refresh or a back and forward. The forms are short, and saving drafts is new behaviour.",
+    "recommendation": "Leave it for now. Revisit it if the hallway test shows people losing work."
+  },
+  {
+    "id": "reinvite-declined",
+    "severity": 2,
+    "title": "A declined invite can't be sent again from the page",
+    "question": "The API supports re-inviting someone who declined, but the button only shows for people who haven't answered. The organizer can also remove themselves from their own exchange.",
+    "recommendation": "Show Resend for declined people, and ask for confirmation when the organizer removes themselves."
+  },
+  {
+    "id": "affiliate-plan",
+    "severity": 2,
+    "title": "Be careful with the affiliate plan",
+    "question": "The roadmap ranks affiliate conversion first, and distrust of sponsors came up 25 times across 6 sources. Giftful users complain about rewritten links that fail. Having no ads or commission links is an advantage today.",
+    "recommendation": "If affiliate links ship, keep the original link working and say so plainly."
+  },
+  {
+    "id": "app-store-deletion",
+    "severity": 2,
+    "title": "Check account deletion before the App Store launch",
+    "question": "The research pass found no account deletion path on mobile and no API handling. As far as I know Apple requires in-app deletion for apps with accounts. This is outside the five journeys and I didn't test it.",
+    "recommendation": "Confirm the requirement and add it before the public launch."
+  }
+]
