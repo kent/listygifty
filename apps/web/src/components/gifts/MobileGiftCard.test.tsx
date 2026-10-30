@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { Gift, GiftStatus } from "@niftygifty/types";
+import { darkOnlyClasses } from "@/test/dark-only";
 import { MobileGiftCard } from "./MobileGiftCard";
 
 vi.mock("@/services", () => ({ peopleService: { create: vi.fn() } }));
@@ -42,16 +43,6 @@ function expand() {
 beforeAll(() => {
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
 });
-
-// A bare dark palette class is unreadable in the light Apple theme. Classes with
-// a dark: prefix are fine, since they only apply under the dark Festive theme.
-const DARK_ONLY = /^(text-white|text-slate-|bg-slate-|border-slate-|text-violet-[34]00|text-cyan-400|text-red-400)/;
-
-function darkOnlyClasses(container: HTMLElement) {
-  return [...container.querySelectorAll("*")]
-    .flatMap((element) => [...element.classList])
-    .filter((name) => DARK_ONLY.test(name));
-}
 
 describe("mobile gift card in the light theme", () => {
   const shared = { is_mine: false, link: "https://example.com/lego" };

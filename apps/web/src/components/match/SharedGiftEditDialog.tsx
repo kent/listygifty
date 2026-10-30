@@ -81,68 +81,70 @@ export function SharedGiftEditDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <GiftIcon className="h-5 w-5 text-violet-400" />
+            <GiftIcon className="h-5 w-5 text-violet-700 dark:text-violet-400" />
             Edit Gift
-            {isPending && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
+            {isPending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           {/* Gift Name & Link */}
-          <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700">
-            <p className="font-medium text-white">{gift.name}</p>
+          <div className="p-3 rounded-lg bg-muted/50 border border-border">
+            <p className="font-medium text-foreground">{gift.name}</p>
             {gift.link && (
               <a
                 href={gift.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-violet-400 hover:text-violet-300 flex items-center gap-1 mt-1"
+                className="text-sm text-violet-700 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300 flex items-center gap-1 mt-1"
               >
                 View link <ExternalLink className="h-3 w-3" />
               </a>
             )}
             {gift.description && (
-              <p className="text-sm text-slate-400 mt-2">{gift.description}</p>
+              <p className="text-sm text-muted-foreground mt-2">{gift.description}</p>
             )}
           </div>
 
-          {/* Cost & Status */}
-          <div className="flex gap-4">
+          {/* Cost & Status are read-only here, so they're captions rather than labels */}
+          <dl className="flex gap-4">
             <div className="flex-1">
-              <Label className="text-sm text-slate-400">Cost</Label>
-              <p className="font-medium text-white">
-                {gift.cost ? `$${parseFloat(gift.cost).toFixed(0)}` : "—"}
-              </p>
+              <dt className="text-sm text-muted-foreground">Cost</dt>
+              <dd className="font-medium text-foreground">
+                {gift.cost ? `$${parseFloat(gift.cost).toFixed(0)}` : "Not set"}
+              </dd>
             </div>
             <div className="flex-1">
-              <Label className="text-sm text-slate-400">Status</Label>
-              <p className="font-medium text-white">{gift.gift_status.name}</p>
+              <dt className="text-sm text-muted-foreground">Status</dt>
+              <dd className="font-medium text-foreground">{gift.gift_status.name}</dd>
             </div>
-          </div>
+          </dl>
 
           {/* Recipients (To) */}
           <div>
-            <Label className="text-sm text-slate-400 mb-2 block">To (Recipients)</Label>
+            <Label htmlFor="shared-gift-recipients" className="text-sm text-muted-foreground mb-2 block">To (Recipients)</Label>
             <PeopleCell
+              id="shared-gift-recipients"
               selectedIds={localRecipients}
               people={people}
               onChange={updateRecipients}
               onPersonCreated={onPersonCreated}
               placeholder="Select recipients..."
-              className="bg-slate-800/50 border border-slate-700 hover:bg-slate-800"
+              className="bg-muted/50 border border-border hover:bg-muted"
             />
           </div>
 
           {/* Givers (From) */}
           <div>
-            <Label className="text-sm text-slate-400 mb-2 block">From (Givers)</Label>
+            <Label htmlFor="shared-gift-givers" className="text-sm text-muted-foreground mb-2 block">From (Givers)</Label>
             <PeopleCell
+              id="shared-gift-givers"
               selectedIds={localGivers}
               people={people}
               onChange={updateGivers}
               onPersonCreated={onPersonCreated}
               placeholder="Select givers..."
-              className="bg-slate-800/50 border border-slate-700 hover:bg-slate-800"
+              className="bg-muted/50 border border-border hover:bg-muted"
             />
           </div>
         </div>
