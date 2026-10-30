@@ -53,13 +53,13 @@ function SuggestionCard({
   const disabled = isAccepting || isDiscarding;
 
   return (
-    <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm overflow-hidden group">
+    <Card className="border-border bg-card/50 backdrop-blur-sm overflow-hidden group">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-white">{suggestion.name}</h4>
+            <h4 className="font-medium text-foreground">{suggestion.name}</h4>
             {suggestion.description && (
-              <p className="text-sm text-slate-400 mt-1 line-clamp-2">
+              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                 {suggestion.description}
               </p>
             )}
@@ -68,7 +68,7 @@ function SuggestionCard({
 
         <div className="flex items-center gap-3 mt-3">
           {suggestion.approximate_price && (
-            <span className="text-sm text-emerald-400 flex items-center gap-1">
+            <span className="text-sm text-emerald-800 dark:text-emerald-400 flex items-center gap-1">
               <DollarSign className="h-3 w-3" />
               {suggestion.approximate_price.replace("$", "")}
             </span>
@@ -76,7 +76,7 @@ function SuggestionCard({
           {suggestion.holiday && (
             <Badge
               variant="secondary"
-              className="bg-slate-700/50 text-slate-300 border-0"
+              className="bg-muted text-muted-foreground border-0"
             >
               <Calendar className="h-3 w-3 mr-1" />
               {suggestion.holiday.name}
@@ -85,7 +85,7 @@ function SuggestionCard({
           )}
         </div>
 
-        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-800">
+        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
           <Button
             size="sm"
             onClick={onAccept}
@@ -106,7 +106,7 @@ function SuggestionCard({
             variant="ghost"
             onClick={onDiscard}
             disabled={disabled}
-            className="text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+            className="text-muted-foreground hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10"
           >
             {isDiscarding ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -125,17 +125,17 @@ function SuggestionCard({
 
 function PremiumUpsell() {
   return (
-    <Card className="border-violet-500/30 bg-gradient-to-br from-violet-950/50 to-fuchsia-950/30">
+    <Card className="border-violet-500/30 bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-950/50 dark:to-fuchsia-950/30">
       <CardContent className="py-8 text-center">
         <div className="flex justify-center mb-4">
           <div className="p-3 rounded-full bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20">
-            <Crown className="h-8 w-8 text-violet-400" />
+            <Crown className="h-8 w-8 text-violet-700 dark:text-violet-400" />
           </div>
         </div>
-        <h3 className="text-xl font-semibold text-white mb-2">
+        <h3 className="text-xl font-semibold text-foreground mb-2">
           Gift Idea Generator
         </h3>
-        <p className="text-slate-400 mb-6 max-w-md mx-auto">
+        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
           Brainstorm ideas from age, relationship, occasion, and gift history,
           then save the strongest options to the gift list.
         </p>
@@ -223,12 +223,12 @@ export function GiftSuggestionsTab({
   return (
     <div className="space-y-4">
       {/* Generate Button */}
-      <Card className="border-slate-800 bg-slate-900/30">
+      <Card className="border-border bg-card/30">
         <CardContent className="p-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="font-medium text-white">Idea Generator</h3>
-              <p className="text-sm text-slate-400">
+              <h3 className="font-medium text-foreground">Idea Generator</h3>
+              <p className="text-sm text-muted-foreground">
                 Brainstorm gift ideas for {personName}, then add the useful ones
                 to the list.
               </p>
@@ -256,17 +256,17 @@ export function GiftSuggestionsTab({
 
       {/* Error Message */}
       {error && (
-        <Card className="border-red-500/30 bg-red-950/20">
-          <CardContent className="p-4 text-red-400 text-sm">{error}</CardContent>
+        <Card className="border-red-500/30 bg-red-50 dark:bg-red-950/20">
+          <CardContent className="p-4 text-red-700 dark:text-red-400 text-sm">{error}</CardContent>
         </Card>
       )}
 
       {/* Suggestions List */}
       {suggestions.length === 0 ? (
-        <Card className="border-slate-800 bg-slate-900/30">
+        <Card className="border-border bg-card/30">
           <CardContent className="py-8 text-center">
-            <Sparkles className="h-10 w-10 mx-auto text-slate-600 mb-3" />
-            <p className="text-slate-500">
+            <Sparkles className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+            <p className="text-muted-foreground">
               No suggestions yet. Click &quot;Generate Ideas&quot; to get started.
             </p>
           </CardContent>
