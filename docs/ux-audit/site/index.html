@@ -97,7 +97,7 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
     <div class="counts">
       <div><b>57</b><span>issues found</span></div>
       <div><b>41</b><span>fixed</span></div>
-      <div><b>16</b><span>open for you</span></div>
+      <div><b>16</b><span>open product decisions</span></div>
     </div>
   </div>
   <nav aria-label="Sections">
@@ -649,84 +649,84 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
   </section>
   <section id="open">
     <h2>Your calls</h2>
-    <p>These need a product decision, so nothing was built. Mockups are concepts.</p>
+    <p>All open items are logged here as product decisions, each with a recommendation. Nothing was built for them. Mockups are concepts.</p>
     <div class="list"><article class="open" id="past-damage">
-    <header><span class="sev s3">Severity 3</span><h3>Decide whether to look for past damage</h3></header>
+    <header><span class="sev s3">Severity 3 · Product decision</span><h3>Decide whether to look for past damage</h3></header>
     <p>Two bugs may already have affected real people. Shared wishlist links exposed claimer details until October 30, 2026, and the Match screen's edit dialog could remove recipients and givers from gifts. Fixing them doesn't tell you what already happened, and I did not look at production data.</p>
     <p class="rec"><strong>Recommendation.</strong> Check the request logs for /w/ links, and use the gift_changes table to find gifts that lost people through that dialog. Decide on any notice to users once you know the scale.</p>
     
   </article><article class="open" id="reply-address">
-    <header><span class="sev s3">Severity 3</span><h3>Replies to invite emails go nowhere</h3></header>
+    <header><span class="sev s3">Severity 3 · Product decision</span><h3>Replies to invite emails go nowhere</h3></header>
     <p>Mail comes from hello@listygifty.com, but a public DNS lookup finds no MX record, no SPF record on the domain and no DMARC record. A relative who replies to ask what this is gets a bounce, and a holiday spike is when inbox filters look hardest at new senders. I only checked public DNS. Postmark itself was not tested, and no real email was sent.</p>
     <p class="rec"><strong>Recommendation.</strong> Add an MX record or a forwarding address for hello@, and a DMARC record starting at p=none. Then send yourself one real invite and check where it lands.</p>
     
   </article><article class="open" id="phone-summary-cards">
-    <header><span class="sev s2">Severity 2</span><h3>Summary cards push gifts down on phones</h3></header>
+    <header><span class="sev s2">Severity 2 · Product decision</span><h3>Summary cards push gifts down on phones</h3></header>
     <p>Four stacked summary cards sit above the gifts at 390px, so people scroll about a screen to reach their list. I tried a two column layout and reverted it while chasing a phone tap problem. That problem later turned out to be the audit's own screenshot setting, so the layout wasn't at fault, but it is still a layout choice rather than a bug.</p>
     <p class="rec"><strong>Recommendation.</strong> Use two columns on phones, or collapse the summary. Commit d99e71a has the two column version.</p>
     
   </article><article class="open" id="peak-readiness">
-    <header><span class="sev s3">Severity 3</span><h3>Be ready for the busiest week of the year</h3></header>
+    <header><span class="sev s3">Severity 3 · Product decision</span><h3>Be ready for the busiest week of the year</h3></header>
     <p>Peak-day failures were the top complaint across competitor reviews, with 132 mentions across 5 sources, though a few bad days inflate that count. Production runs 1 to 10 instances and the repo has no load test.</p>
     <p class="rec"><strong>Recommendation.</strong> Run a load test before Black Friday and freeze releases from about November 20 until Christmas.</p>
     
   </article><article class="open" id="draw-names">
-    <header><span class="sev s2">Severity 2</span><h3>Say Draw names instead of Publish Exchange</h3></header>
+    <header><span class="sev s2">Severity 2 · Product decision</span><h3>Say Draw names instead of Publish Exchange</h3></header>
     <p>Publish is software language. Nobody in a family says they're publishing the Secret Santa. The label stayed because existing tests and the mobile app depend on it.</p>
     <p class="rec"><strong>Recommendation.</strong> Rename it to Draw names everywhere, including the mobile app and emails.</p>
     <figure class="shot concept"><button type="button" class="zoom" data-full="img/concept-draw-names.jpg" aria-label="Enlarge concept for Say Draw names instead of Publish Exchange"><img src="img/concept-draw-names.jpg" alt="Concept mockup: Say Draw names instead of Publish Exchange" loading="lazy"></button><figcaption><strong>Concept, not built</strong></figcaption></figure>
   </article><article class="open" id="signup-length">
-    <header><span class="sev s3">Severity 3</span><h3>Shorten sign-up for invited relatives</h3></header>
+    <header><span class="sev s3">Severity 3 · Product decision</span><h3>Shorten sign-up for invited relatives</h3></header>
     <p>A relative who taps an invite faces first name, last name, email, phone and password before they can join. The invite already knows their name and email. This is a Clerk setting and a product trade-off, so nothing changed.</p>
     <p class="rec"><strong>Recommendation.</strong> Offer email code sign-in for invitees, with the email filled in from the invite and no password.</p>
     <figure class="shot concept"><button type="button" class="zoom" data-full="img/concept-signup-simple.jpg" aria-label="Enlarge concept for Shorten sign-up for invited relatives"><img src="img/concept-signup-simple.jpg" alt="Concept mockup: Shorten sign-up for invited relatives" loading="lazy"></button><figcaption><strong>Concept, not built</strong></figcaption></figure>
   </article><article class="open" id="list-names">
-    <header><span class="sev s2">Severity 2</span><h3>Gift Lists and Wishlists sound like the same thing</h3></header>
+    <header><span class="sev s2">Severity 2 · Product decision</span><h3>Gift Lists and Wishlists sound like the same thing</h3></header>
     <p>One is what you plan to give and the other is what you want, but the names don't say so. Adding Wishlists to the menu makes the overlap more visible. Options is also an odd name for settings.</p>
     <p class="rec"><strong>Recommendation.</strong> Use Gifts I'm Giving, My Wishlist and Settings. Check the wording in the hallway test first.</p>
     <figure class="shot concept"><button type="button" class="zoom" data-full="img/concept-nav-names.jpg" aria-label="Enlarge concept for Gift Lists and Wishlists sound like the same thing"><img src="img/concept-nav-names.jpg" alt="Concept mockup: Gift Lists and Wishlists sound like the same thing" loading="lazy"></button><figcaption><strong>Concept, not built</strong></figcaption></figure>
   </article><article class="open" id="phone-landing">
-    <header><span class="sev s2">Severity 2</span><h3>Function key labels make no sense on a phone</h3></header>
+    <header><span class="sev s2">Severity 2 · Product decision</span><h3>Function key labels make no sense on a phone</h3></header>
     <p>The Festive front page shows Enter Start free, F1 Tour and F4 Sign in on phones that have no such keys, and its top bar clips a menu item. It's part of the retro theme, so I left it.</p>
     <p class="rec"><strong>Recommendation.</strong> Keep the keys on desktop and hide them on touch screens.</p>
     <figure class="shot concept"><button type="button" class="zoom" data-full="img/concept-landing-labels.jpg" aria-label="Enlarge concept for Function key labels make no sense on a phone"><img src="img/concept-landing-labels.jpg" alt="Concept mockup: Function key labels make no sense on a phone" loading="lazy"></button><figcaption><strong>Concept, not built</strong></figcaption></figure>
   </article><article class="open" id="default-theme">
-    <header><span class="sev s2">Severity 2</span><h3>Which theme should a stranger see first?</h3></header>
+    <header><span class="sev s2">Severity 2 · Product decision</span><h3>Which theme should a stranger see first?</h3></header>
     <p>Festive is the default for everyone, all year. It has a lot of charm, but pixel lettering and busy backgrounds are a harder first impression for an older relative on a phone, and it's a Christmas look in July.</p>
     <p class="rec"><strong>Recommendation.</strong> Default to Apple outside November and December, and test both with your hallway group.</p>
     
   </article><article class="open" id="dropout">
-    <header><span class="sev s2">Severity 2</span><h3>What happens when someone drops out after the draw</h3></header>
+    <header><span class="sev s2">Severity 2 · Product decision</span><h3>What happens when someone drops out after the draw</h3></header>
     <p>The only path is Redo, which changes everyone's match and emails everyone. Removed people get no email. One person cancelling resets the whole family.</p>
     <p class="rec"><strong>Recommendation.</strong> Add a replace-one-person flow that only changes the two affected people, and tell the person removed.</p>
     
   </article><article class="open" id="affiliate-plan">
-    <header><span class="sev s2">Severity 2</span><h3>Be careful with the affiliate plan</h3></header>
+    <header><span class="sev s2">Severity 2 · Product decision</span><h3>Be careful with the affiliate plan</h3></header>
     <p>The roadmap ranks affiliate conversion first, and distrust of sponsors came up 25 times across 6 sources. Giftful users complain about rewritten links that fail. Having no ads or commission links is an advantage today.</p>
     <p class="rec"><strong>Recommendation.</strong> If affiliate links ship, keep the original link working and say so plainly.</p>
     
   </article><article class="open" id="app-store-deletion">
-    <header><span class="sev s2">Severity 2</span><h3>Check account deletion before the App Store launch</h3></header>
+    <header><span class="sev s2">Severity 2 · Product decision</span><h3>Check account deletion before the App Store launch</h3></header>
     <p>The research pass found no account deletion path on mobile and no API handling. As far as I know Apple requires in-app deletion for apps with accounts. This is outside the five journeys and I didn't test it.</p>
     <p class="rec"><strong>Recommendation.</strong> Confirm the requirement and add it before the public launch.</p>
     
   </article><article class="open" id="gift-list-expectations">
-    <header><span class="sev s2">Severity 2</span><h3>Gift list behaviour surprised the first-time tester</h3></header>
+    <header><span class="sev s2">Severity 2 · Product decision</span><h3>Gift list behaviour surprised the first-time tester</h3></header>
     <p>Marking a gift Purchased left Progress at 0% complete, and the gift stayed on To Do. Save &amp; Add Another kept the last person, so a gift for Dad also went to Maya. Keeping the person may suit someone buying several gifts for one child, so neither is clearly a bug.</p>
     <p class="rec"><strong>Recommendation.</strong> Count Purchased as progress, or label the card to say what it measures. Keep Save &amp; Add Another's person but make the carry-over obvious.</p>
     
   </article><article class="open" id="exchange-on-home">
-    <header><span class="sev s2">Severity 2</span><h3>Home doesn't mention your exchange</h3></header>
+    <header><span class="sev s2">Severity 2 · Product decision</span><h3>Home doesn't mention your exchange</h3></header>
     <p>Once an exchange exists, Home says nothing about it, and its date isn't in Upcoming Dates. Someone returning from an email has no way back from Home except the menu. The same tester also found that exchange relatives never appear in People.</p>
     <p class="rec"><strong>Recommendation.</strong> Show active exchanges on Home with one clear next step, and add their dates to Upcoming Dates.</p>
     
   </article><article class="open" id="share-makes-public">
-    <header><span class="sev s2">Severity 2</span><h3>Share quietly turns a private list public</h3></header>
+    <header><span class="sev s2">Severity 2 · Product decision</span><h3>Share quietly turns a private list public</h3></header>
     <p>A wishlist set to Only you can see this becomes Shared when you press Share, with no notice. The share dialog does say anyone with the link can view it, so this is a question of how loud to be.</p>
     <p class="rec"><strong>Recommendation.</strong> Say it at the moment it changes: This list is now shared. Offer Turn off link in the same place.</p>
     
   </article><article class="open" id="settings-first-screen">
-    <header><span class="sev s2">Severity 2</span><h3>Settings opens with developer tools</h3></header>
+    <header><span class="sev s2">Severity 2 · Product decision</span><h3>Settings opens with developer tools</h3></header>
     <p>Settings leads with Your MCP OAuth URL, above the person's profile. That means nothing to most families. The tester also found Vendors, Partners and Investors in People, and Upgrade on every page while Billing says Soon.</p>
     <p class="rec"><strong>Recommendation.</strong> Lead Settings with profile and notifications, and move MCP to an Integrations section. Hide business categories in personal workspaces.</p>
     

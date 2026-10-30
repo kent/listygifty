@@ -128,7 +128,7 @@ function openCard(item) {
     ? `<figure class="shot concept"><button type="button" class="zoom" data-full="${esc(item.concept)}" aria-label="Enlarge concept for ${esc(item.title)}"><img src="${esc(item.concept)}" alt="Concept mockup: ${esc(item.title)}" loading="lazy"></button><figcaption><strong>Concept, not built</strong></figcaption></figure>`
     : "";
   return `<article class="open" id="${esc(item.id)}">
-    <header><span class="sev s${item.severity}">Severity ${item.severity}</span><h3>${esc(item.title)}</h3></header>
+    <header><span class="sev s${item.severity}">Severity ${item.severity} · Product decision</span><h3>${esc(item.title)}</h3></header>
     <p>${esc(item.question)}</p>
     <p class="rec"><strong>Recommendation.</strong> ${esc(item.recommendation)}</p>
     ${concept}
