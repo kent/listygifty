@@ -53,7 +53,7 @@ export function McpOAuthUrlCard() {
                 type="button"
                 variant="outline"
                 onClick={copyUrl}
-                aria-label="Copy MCP OAuth URL"
+                aria-label="Copy URL for MCP OAuth"
                 className="w-full shrink-0 border-cyan-300 text-cyan-800 hover:bg-cyan-50 dark:border-cyan-800 dark:text-cyan-200 dark:hover:bg-cyan-950 sm:w-auto"
               >
                 <Copy className="h-4 w-4" aria-hidden="true" />

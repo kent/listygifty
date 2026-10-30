@@ -10,7 +10,7 @@ async function expectMcpOAuthCard(page: Page) {
   await expect(card.getByRole("heading", { name: "Your MCP OAuth URL" })).toBeVisible();
   await expect(card.getByText(MCP_OAUTH_URL, { exact: true })).toBeVisible();
 
-  await card.getByRole("button", { name: "Copy MCP OAuth URL" }).click();
+  await card.getByRole("button", { name: "Copy URL for MCP OAuth" }).click();
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(MCP_OAUTH_URL);
 
   const bounds = await card.boundingBox();
