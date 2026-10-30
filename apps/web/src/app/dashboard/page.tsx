@@ -2,7 +2,7 @@
 
 import { parseDateOnly } from "@/lib/dates";
 import { detectUserRegion, getNextHolidayDate } from "@/lib/regional-holidays";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
@@ -319,6 +319,15 @@ function UpcomingDatesCard({ dates }: { dates: UpcomingDate[] }) {
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading, signOut } = useAuth();
   const { bootstrapData, currentWorkspace, refreshWorkspaces } = useWorkspace();
+
+  // The app keeps one workspace snapshot, so counts go stale after adding people
+  // or gifts on other pages. Refresh once per visit.
+  const refreshedOnArrival = useRef(false);
+  useEffect(() => {
+    if (refreshedOnArrival.current || !currentWorkspace) return;
+    refreshedOnArrival.current = true;
+    void refreshWorkspaces();
+  }, [currentWorkspace, refreshWorkspaces]);
   const router = useRouter();
 
   const [templates, setTemplates] = useState<Holiday[]>([]);

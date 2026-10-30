@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   workspace: { current: null as unknown, bootstrap: null as unknown },
   push: vi.fn(),
   createHoliday: vi.fn(),
+  refreshWorkspaces: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
@@ -25,7 +26,7 @@ vi.mock("@/contexts/workspace-context", () => ({
   useWorkspace: () => ({
     bootstrapData: mocks.workspace.bootstrap,
     currentWorkspace: mocks.workspace.current,
-    refreshWorkspaces: vi.fn(),
+    refreshWorkspaces: mocks.refreshWorkspaces,
   }),
 }));
 vi.mock("@/services", () => ({
@@ -113,6 +114,17 @@ describe("dashboard checklist copy", () => {
       source: "checklist",
       step: "People added",
     }));
+  });
+});
+
+describe("coming back to the dashboard", () => {
+  it("refreshes the checklist, so counts match what was just added", async () => {
+    mocks.refreshWorkspaces.mockReset();
+    mocks.workspace.current = { id: 1, name: "Home", workspace_type: "personal" };
+    mocks.workspace.bootstrap = bootstrap({ holiday_templates: [] });
+    render(<DashboardPage />);
+
+    await waitFor(() => expect(mocks.refreshWorkspaces).toHaveBeenCalledTimes(1));
   });
 });
 
