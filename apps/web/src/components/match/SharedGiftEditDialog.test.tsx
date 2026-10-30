@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { Gift, Person } from "@niftygifty/types";
+import { toast } from "sonner";
 import { giftsService } from "@/services";
 import { darkOnlyClasses } from "@/test/dark-only";
 import { SharedGiftEditDialog } from "./SharedGiftEditDialog";
@@ -156,6 +157,35 @@ describe("shared gift dialog", () => {
       const saved = { ...gift, recipients: [{ id: 7 }, { id: 9 }] } as unknown as Gift;
       rerender(<SharedGiftEditDialog {...props} gift={saved} open />);
       expect(chosen(To)).toEqual(["Remove Alex", "Remove Priya"]);
+    });
+
+    // The parent never refreshes its gift after a save, so the prop stays a snapshot
+    // from when the dialog opened. Falling back to that would forget the first save,
+    // and the next save would then delete the person it added.
+    it("falls back to the last saved recipients when a later save fails", async () => {
+      vi.mocked(giftsService.update).mockResolvedValueOnce(gift).mockRejectedValueOnce(new Error("offline"));
+      const { props } = openLikeTheParent();
+
+      pick(To, "Priya");
+      await waitFor(() => expect(props.onGiftUpdated).toHaveBeenCalled());
+
+      fireEvent.click(pickerCell(To).getByRole("button", { name: "Remove Alex" }));
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to update recipients"));
+
+      await waitFor(() => expect(chosen(To)).toEqual(["Remove Alex", "Remove Sam", "Remove Priya"]));
+    });
+
+    it("falls back to the last saved givers when a later save fails", async () => {
+      vi.mocked(giftsService.update).mockResolvedValueOnce(gift).mockRejectedValueOnce(new Error("offline"));
+      const { props } = openLikeTheParent();
+
+      pick(From, "Sam");
+      await waitFor(() => expect(props.onGiftUpdated).toHaveBeenCalled());
+
+      fireEvent.click(pickerCell(From).getByRole("button", { name: "Remove Alex" }));
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to update givers"));
+
+      await waitFor(() => expect(chosen(From)).toEqual(["Remove Alex", "Remove Sam"]));
     });
 
     it("shows the read-only details straight from the gift", () => {

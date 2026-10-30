@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useTransition } from "react";
+import { useState, useCallback, useRef, useTransition } from "react";
 import { Gift as GiftIcon, ExternalLink, Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -42,19 +42,26 @@ function OpenSharedGiftEditDialog({
   const [localRecipients, setLocalRecipients] = useState(() => gift.recipients.map(r => r.id));
   const [localGivers, setLocalGivers] = useState(() => gift.givers.map(g => g.id));
 
+  // The gift prop stays as it was when the dialog opened, so a failed save falls
+  // back to the last list the server accepted. The opening list would forget
+  // earlier saves, and the next save would then delete those people.
+  const savedRecipients = useRef(localRecipients);
+  const savedGivers = useRef(localGivers);
+
   const updateRecipients = useCallback((ids: number[]) => {
     setLocalRecipients(ids);
 
     startTransition(async () => {
       try {
         const updated = await giftsService.update(gift.id, { recipient_ids: ids });
+        savedRecipients.current = ids;
         onGiftUpdated(updated);
       } catch {
         toast.error("Failed to update recipients");
-        setLocalRecipients(gift.recipients.map(r => r.id));
+        setLocalRecipients(savedRecipients.current);
       }
     });
-  }, [gift, onGiftUpdated]);
+  }, [gift.id, onGiftUpdated]);
 
   const updateGivers = useCallback((ids: number[]) => {
     setLocalGivers(ids);
@@ -62,13 +69,14 @@ function OpenSharedGiftEditDialog({
     startTransition(async () => {
       try {
         const updated = await giftsService.update(gift.id, { giver_ids: ids });
+        savedGivers.current = ids;
         onGiftUpdated(updated);
       } catch {
         toast.error("Failed to update givers");
-        setLocalGivers(gift.givers.map(g => g.id));
+        setLocalGivers(savedGivers.current);
       }
     });
-  }, [gift, onGiftUpdated]);
+  }, [gift.id, onGiftUpdated]);
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
