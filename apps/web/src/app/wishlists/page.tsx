@@ -102,7 +102,7 @@ function WishlistCard({ wishlist }: { wishlist: Wishlist }) {
             <div className="flex items-center gap-2 shrink-0">
               <Badge variant="outline" className={getVisibilityColor(wishlist.visibility)}>
                 {getVisibilityIcon(wishlist.visibility)}
-                <span className="ml-1 hidden sm:inline">{getVisibilityLabel(wishlist.visibility)}</span>
+                <span className="sr-only sm:not-sr-only sm:ml-1">{getVisibilityLabel(wishlist.visibility)}</span>
               </Badge>
               <ChevronRight className="h-5 w-5 text-slate-400 dark:text-slate-600 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors" />
             </div>

@@ -134,7 +134,7 @@ export default function NewWishlistPage() {
               <div className="space-y-2">
                 <Label htmlFor="visibility">Visibility</Label>
                 <Select value={visibility} onValueChange={(v) => setVisibility(v as WishlistVisibility)}>
-                  <SelectTrigger className="bg-white dark:bg-slate-900">
+                  <SelectTrigger id="visibility" className="bg-white dark:bg-slate-900">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

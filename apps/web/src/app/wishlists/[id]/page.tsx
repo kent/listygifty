@@ -177,6 +177,7 @@ function ItemCard({
                         onClick={handleMarkPurchased}
                         disabled={claiming}
                         title="Mark as purchased"
+                        aria-label={`Mark ${item.name} as purchased`}
                       >
                         {claiming ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -191,6 +192,7 @@ function ItemCard({
                       onClick={handleUnclaim}
                       disabled={claiming}
                       title="Remove claim"
+                      aria-label={`Remove claim on ${item.name}`}
                     >
                       {claiming ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -206,6 +208,7 @@ function ItemCard({
                       size="sm"
                       onClick={() => handleClaim(false)}
                       disabled={claiming}
+                      aria-label={`Reserve ${item.name}`}
                     >
                       {claiming ? (
                         <Loader2 className="h-4 w-4 mr-1 animate-spin" />
@@ -218,6 +221,7 @@ function ItemCard({
                       size="sm"
                       onClick={() => handleClaim(true)}
                       disabled={claiming}
+                      aria-label={`Mark ${item.name} as purchased`}
                       className="bg-gradient-to-r from-violet-500 to-fuchsia-500"
                     >
                       {claiming ? (
@@ -236,7 +240,7 @@ function ItemCard({
             {isOwner && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" aria-label={`Actions for ${item.name}`}>
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -593,12 +597,12 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
           <div className="flex items-center gap-2 shrink-0">
             {wishlist.is_owner && (
               <>
-                <Button variant="outline" size="sm" onClick={handleShare}>
+                <Button variant="outline" size="sm" onClick={handleShare} aria-label="Share wishlist">
                   <Share2 className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Share</span>
                 </Button>
                 {wishlist.anti_spoiler_enabled && (
-                  <Button variant="outline" size="sm" onClick={() => setShowRevealConfirm(true)}>
+                  <Button variant="outline" size="sm" onClick={() => setShowRevealConfirm(true)} aria-label="Reveal claims">
                     <Eye className="h-4 w-4 sm:mr-2" />
                     <span className="hidden sm:inline">Reveal</span>
                   </Button>
@@ -606,6 +610,7 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
                 <Button
                   size="sm"
                   onClick={() => setShowAddItemDialog(true)}
+                  aria-label="Add item"
                   className="bg-gradient-to-r from-violet-500 to-fuchsia-500"
                 >
                   <Plus className="h-4 w-4 sm:mr-2" />
@@ -686,9 +691,10 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
             <Input
               value={wishlist.share_url || ""}
               readOnly
+              aria-label="Share link"
               className="bg-slate-100 dark:bg-slate-800"
             />
-            <Button onClick={copyShareLink} variant="outline">
+            <Button onClick={copyShareLink} variant="outline" aria-label="Copy link">
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             </Button>
           </div>
@@ -719,8 +725,9 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
           </DialogHeader>
           <form onSubmit={editingItem ? handleEditItem : handleAddItem} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Name *</label>
+              <label htmlFor="item-name" className="text-sm font-medium">Name *</label>
               <Input
+                id="item-name"
                 value={itemName}
                 onChange={(e) => setItemName(e.target.value)}
                 placeholder="Item name"
@@ -728,8 +735,9 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Notes</label>
+              <label htmlFor="item-notes" className="text-sm font-medium">Notes</label>
               <Input
+                id="item-notes"
                 value={itemNotes}
                 onChange={(e) => setItemNotes(e.target.value)}
                 placeholder="Color, size, or other preferences"
@@ -737,8 +745,9 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Link</label>
+              <label htmlFor="item-url" className="text-sm font-medium">Link</label>
               <Input
+                id="item-url"
                 value={itemUrl}
                 onChange={(e) => setItemUrl(e.target.value)}
                 placeholder="https://..."
@@ -747,8 +756,9 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Min Price</label>
+                <label htmlFor="item-price-min" className="text-sm font-medium">Min Price</label>
                 <Input
+                  id="item-price-min"
                   type="number"
                   value={itemPriceMin}
                   onChange={(e) => setItemPriceMin(e.target.value)}
@@ -756,8 +766,9 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Max Price</label>
+                <label htmlFor="item-price-max" className="text-sm font-medium">Max Price</label>
                 <Input
+                  id="item-price-max"
                   type="number"
                   value={itemPriceMax}
                   onChange={(e) => setItemPriceMax(e.target.value)}
@@ -768,8 +779,9 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Priority</label>
+                <label htmlFor="item-priority" className="text-sm font-medium">Priority</label>
                 <select
+                  id="item-priority"
                   value={itemPriority}
                   onChange={(e) => setItemPriority(Number(e.target.value) as WishlistItemPriority)}
                   className="w-full h-10 px-3 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
@@ -780,8 +792,9 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Quantity</label>
+                <label htmlFor="item-quantity" className="text-sm font-medium">Quantity</label>
                 <Input
+                  id="item-quantity"
                   type="number"
                   min="1"
                   value={itemQuantity}
