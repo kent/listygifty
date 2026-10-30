@@ -7,9 +7,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { exchangeInvitesService, AUTH_ROUTES } from "@/services";
+import { ApiError } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, DollarSign, User, Check, X, LogIn, Lock } from "lucide-react";
+import { AlertCircle, Calendar, DollarSign, User, Check, X, LogIn, Lock, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import type { ExchangeInviteDetails } from "@niftygifty/types";
 
@@ -23,7 +24,8 @@ export default function JoinExchangePage({
   const router = useRouter();
   const [invite, setInvite] = useState<ExchangeInviteDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<"not-found" | "load-failed" | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [accepting, setAccepting] = useState(false);
   const [declining, setDeclining] = useState(false);
   const authReturn = encodeURIComponent(`/join/exchange/${token}`);
@@ -33,15 +35,21 @@ export default function JoinExchangePage({
       try {
         const data = await exchangeInvitesService.getInviteDetails(token);
         setInvite(data);
-      } catch {
-        setError(true);
+      } catch (err: unknown) {
+        setError(err instanceof ApiError && err.isNotFound ? "not-found" : "load-failed");
       } finally {
         setLoading(false);
       }
     }
 
     loadInvite();
-  }, [token]);
+  }, [token, loadAttempt]);
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    setLoadAttempt((attempt) => attempt + 1);
+  };
 
   const handleAccept = async () => {
     setAccepting(true);
@@ -79,7 +87,28 @@ export default function JoinExchangePage({
     );
   }
 
-  if (error || !invite) {
+  if (error === "load-failed") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex items-center justify-center p-4">
+        <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 max-w-md w-full">
+          <CardContent className="py-12 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10 mx-auto mb-4">
+              <AlertCircle className="h-8 w-8 text-red-500 dark:text-red-400" />
+            </div>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">
+              We couldn&apos;t load this invite. Check your connection and try again.
+            </p>
+            <Button onClick={handleRetry}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error === "not-found" || !invite) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex items-center justify-center p-4">
         <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 max-w-md w-full">

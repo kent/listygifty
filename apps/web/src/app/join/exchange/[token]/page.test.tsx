@@ -1,7 +1,8 @@
 import { Suspense } from "react";
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ExchangeInviteDetails } from "@niftygifty/types";
+import { ApiError } from "@/lib/api-client";
 import JoinExchangePage from "./page";
 
 const mocks = vi.hoisted(() => ({
@@ -67,11 +68,52 @@ describe("exchange invite page", () => {
   });
 
   it("shows friendly copy instead of the raw error for an invalid invite", async () => {
-    mocks.getInviteDetails.mockRejectedValue(new Error("Couldn't find ExchangeParticipant with token"));
+    mocks.getInviteDetails.mockRejectedValue(new ApiError(404, { error: "Invalid or expired invite link" }));
     await renderPage();
     expect(screen.getByRole("heading", { name: "Invalid Invite" })).toBeTruthy();
     expect(screen.getByText("This invite link doesn't work anymore. Ask the person who invited you for a new one.")).toBeTruthy();
-    expect(screen.queryByText(/Couldn't find/)).toBeNull();
+    expect(screen.queryByText(/Invalid or expired/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
+  describe("when the invite can't be loaded", () => {
+    const failures: Array<[string, Error]> = [
+      ["the network is down", new ApiError(0, { error: "Request timeout after 30000ms" })],
+      ["the server is having a bad time", new ApiError(503, undefined)],
+      ["fetch itself fails", new TypeError("Failed to fetch")],
+    ];
+
+    it.each(failures)("doesn't call the link dead when %s", async (_, failure) => {
+      mocks.getInviteDetails.mockRejectedValue(failure);
+      await renderPage();
+      expect(screen.getByText("We couldn't load this invite. Check your connection and try again.")).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+      expect(screen.queryByRole("heading", { name: "Invalid Invite" })).toBeNull();
+      expect(screen.queryByText(/doesn't work anymore/)).toBeNull();
+    });
+
+    it("loads the invite again from Try again", async () => {
+      mocks.getInviteDetails.mockRejectedValueOnce(new ApiError(503, undefined));
+      await renderPage();
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+      });
+      expect(mocks.getInviteDetails).toHaveBeenCalledTimes(2);
+      expect(screen.getByText("You Are Invited!")).toBeTruthy();
+      expect(screen.queryByText(/couldn't load this invite/)).toBeNull();
+    });
+
+    it("says the link is dead if the retry comes back with a 404", async () => {
+      mocks.getInviteDetails
+        .mockRejectedValueOnce(new ApiError(503, undefined))
+        .mockRejectedValueOnce(new ApiError(404, { error: "Invalid or expired invite link" }));
+      await renderPage();
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+      });
+      expect(screen.getByRole("heading", { name: "Invalid Invite" })).toBeTruthy();
+      expect(screen.queryByText(/couldn't load this invite/)).toBeNull();
+    });
   });
 
   describe("when the exchange has closed", () => {
