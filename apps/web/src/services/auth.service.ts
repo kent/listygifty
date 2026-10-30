@@ -19,7 +19,9 @@ export const PUBLIC_ROUTES = [
   ...PUBLIC_STATIC_TEXT_ROUTES,
   "/.well-known(.*)",
   "/apple-app-site-association",
-  "/e(.*)",
+  "/claim/(.*)",
+  "/e/(.*)",
+  "/email-preferences/(.*)",
   "/join(.*)",
   "/login(.*)",
   "/manifest.webmanifest",
@@ -29,6 +31,7 @@ export const PUBLIC_ROUTES = [
   "/signup(.*)",
   "/giving-pledge",
   "/billing(.*)",
+  "/w/(.*)",
 ] as const;
 
 // =============================================================================
