@@ -84,7 +84,7 @@ test("fixes found late: each one proven in a real browser", async ({ browser }, 
     await box.fill("Golf balls (Pro V1)");
     await page.keyboard.press("Enter");
     await expect(box).toHaveCount(0);
-    await expect(page.getByText("Golf balls (Pro V1)").first()).toBeVisible();
+    await expect(page.getByText("Golf balls (Pro V1)").locator("visible=true").first()).toBeVisible();
   });
 
   const stranger = await openSession(browser, journey, { phone: true });

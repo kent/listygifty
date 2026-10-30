@@ -25,7 +25,11 @@ export async function enterCode(page: Page) {
 /** The sign-in form as a person uses it, not Clerk's programmatic shortcut. */
 export async function signInThroughForm(page: Page, email: string) {
   await page.getByLabel(/email address/i).fill(email);
+  // A person has no code until it's sent. Typing sooner gets a 400 from Clerk
+  // (verification_not_sent) and leaves its form on a spinner.
+  const codeSent = page.waitForResponse(/prepare_first_factor/, { timeout: 15_000 });
   await page.getByRole("button", { name: /^continue/i }).click();
+  await codeSent;
   await enterCode(page);
 }
 
@@ -42,9 +46,8 @@ export async function signUpThroughForm(
 }
 
 /**
- * Clerk's own form occasionally hangs on a spinner after a code is submitted. A
- * person would reload and type the code again, so do that, and log it so the
- * hang is never hidden.
+ * If sign-in ever hangs, do what a person would: reload and type the code again.
+ * Every hang is logged, so it's never hidden.
  */
 export async function waitUntilSignedIn(page: Page) {
   const signedIn = () =>
