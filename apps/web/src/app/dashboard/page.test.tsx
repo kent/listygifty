@@ -1,14 +1,17 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import type { Holiday, Person } from "@niftygifty/types";
 import DashboardPage from "./page";
 import { captureWebEvent } from "@/lib/analytics";
 
 const mocks = vi.hoisted(() => ({
   workspace: { current: null as unknown, bootstrap: null as unknown },
+  push: vi.fn(),
+  createHoliday: vi.fn(),
 }));
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
 // jsdom can't navigate, so stop a clicked link before it tries.
 vi.mock("next/link", () => ({
   default: ({ onClick, ...props }: React.ComponentProps<"a">) => (
@@ -26,7 +29,7 @@ vi.mock("@/contexts/workspace-context", () => ({
   }),
 }));
 vi.mock("@/services", () => ({
-  holidaysService: { create: vi.fn() },
+  holidaysService: { create: mocks.createHoliday },
   peopleService: { create: vi.fn() },
   AUTH_ROUTES: { signIn: "/login" },
 }));
@@ -110,6 +113,32 @@ describe("dashboard checklist copy", () => {
       source: "checklist",
       step: "People added",
     }));
+  });
+});
+
+describe("starting a gift list from the dashboard", () => {
+  beforeEach(() => {
+    mocks.push.mockReset();
+    mocks.createHoliday.mockReset();
+    mocks.workspace.bootstrap = bootstrap({ holiday_templates: [{ id: 9, name: "Christmas", icon: null }] });
+  });
+
+  it("opens the new list and keeps the toast", async () => {
+    mocks.createHoliday.mockResolvedValue({ ...holiday, id: 42 });
+    render(<DashboardPage />);
+    fireEvent.click(screen.getByRole("button", { name: /Christmas/ }));
+
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/holidays/42"));
+    expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/^Started planning Christmas \d{4}!$/));
+  });
+
+  it("stays on the dashboard when the list can't be created", async () => {
+    mocks.createHoliday.mockRejectedValue(new Error("Nope"));
+    render(<DashboardPage />);
+    fireEvent.click(screen.getByRole("button", { name: /Christmas/ }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to create gift list"));
+    expect(mocks.push).not.toHaveBeenCalled();
   });
 });
 

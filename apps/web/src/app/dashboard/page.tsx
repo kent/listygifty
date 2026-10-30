@@ -448,6 +448,7 @@ export default function DashboardPage() {
       setUserHolidays((prev) => [...prev, newHoliday]);
       void refreshWorkspaces();
       toast.success(`Started planning ${template.name} ${currentYear}!`);
+      router.push(`/holidays/${newHoliday.id}`);
     } catch {
       toast.error("Failed to create gift list");
     } finally {
