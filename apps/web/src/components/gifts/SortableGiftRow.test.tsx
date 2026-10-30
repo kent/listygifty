@@ -109,6 +109,14 @@ describe("gift row controls", () => {
     expect(screen.getByRole("combobox", { name: "Shipping address for Alex" })).toBeTruthy();
   });
 
+  it("doesn't shadow the Gift name and Cost fields of the add gift dialog", () => {
+    // Playwright's getByLabel is a loose match that also reads aria-label, and it
+    // sees rows behind a modal. A second match fails the audit's add gift journey.
+    renderRow();
+    expect(screen.queryAllByLabelText(/gift name/i)).toEqual([]);
+    expect(screen.queryAllByLabelText(/cost/i)).toEqual([]);
+  });
+
   it("still names the controls of a gift with no name yet", () => {
     renderRow({ name: "" });
     expect(screen.getByRole("button", { name: "Actions for untitled gift" })).toBeTruthy();

@@ -69,7 +69,7 @@ beforeEach(() => {
 describe("wishlist item form", () => {
   it("connects every field to its label", async () => {
     await renderPage();
-    fireEvent.click(screen.getByLabelText("Add item"));
+    fireEvent.click(screen.getByLabelText("Add Item"));
 
     for (const label of [/^Name/, "Notes", "Link", "Min Price", "Max Price", "Priority", "Quantity"]) {
       expect(screen.getByLabelText(label)).toBeTruthy();
@@ -80,14 +80,14 @@ describe("wishlist item form", () => {
 describe("wishlist control names", () => {
   it("names the header buttons, whose text is hidden on mobile", async () => {
     await renderPage();
-    expect(screen.getByLabelText("Share wishlist")).toBeTruthy();
+    expect(screen.getByLabelText("Share")).toBeTruthy();
     expect(screen.getByLabelText("Reveal claims")).toBeTruthy();
-    expect(screen.getByLabelText("Add item")).toBeTruthy();
+    expect(screen.getByLabelText("Add Item")).toBeTruthy();
   });
 
   it("names the share dialog's link and copy button", async () => {
     await renderPage();
-    await act(async () => { fireEvent.click(screen.getByLabelText("Share wishlist")); });
+    await act(async () => { fireEvent.click(screen.getByLabelText("Share")); });
     expect(screen.getByRole("textbox", { name: "Share link" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Copy link" })).toBeTruthy();
   });

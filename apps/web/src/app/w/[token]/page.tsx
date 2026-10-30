@@ -111,7 +111,7 @@ function PublicItemCard({
               <Button
                 size="sm"
                 onClick={() => onClaim(item)}
-                aria-label={`Claim this ${item.name}`}
+                aria-label={`Claim this ${item.name} to reserve it`}
                 className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
               >
                 <Gift className="h-4 w-4 sm:mr-2" />

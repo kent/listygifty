@@ -49,26 +49,26 @@ beforeEach(() => {
 describe("guest wishlist claim form", () => {
   it("names the claim button after the item, since its text is hidden on mobile", async () => {
     await renderPage();
-    expect(screen.getByLabelText("Claim this Lego set")).toBeTruthy();
+    expect(screen.getByLabelText("Claim this Lego set to reserve it")).toBeTruthy();
   });
 
   it("connects the name and email fields to their labels", async () => {
     await renderPage();
-    fireEvent.click(screen.getByLabelText("Claim this Lego set"));
+    fireEvent.click(screen.getByLabelText("Claim this Lego set to reserve it"));
     expect(screen.getByLabelText(/Your Name/)).toBeTruthy();
     expect(screen.getByLabelText(/Your Email/)).toBeTruthy();
   });
 
   it("offers browser autofill so a guest doesn't retype their details", async () => {
     await renderPage();
-    fireEvent.click(screen.getByLabelText("Claim this Lego set"));
+    fireEvent.click(screen.getByLabelText("Claim this Lego set to reserve it"));
     expect(screen.getByLabelText(/Your Name/).getAttribute("autocomplete")).toBe("name");
     expect(screen.getByLabelText(/Your Email/).getAttribute("autocomplete")).toBe("email");
   });
 
   it("exposes the purchased choice as a labelled group of pressed buttons", async () => {
     await renderPage();
-    fireEvent.click(screen.getByLabelText("Claim this Lego set"));
+    fireEvent.click(screen.getByLabelText("Claim this Lego set to reserve it"));
     const planning = screen.getByRole("button", { name: "Planning to Buy" });
     const purchased = screen.getByRole("button", { name: "Already Purchased" });
     expect(screen.getByRole("group", { name: "Have you already purchased it?" })).toBeTruthy();
@@ -83,7 +83,7 @@ describe("guest wishlist claim form", () => {
 describe("after a guest claims an item", () => {
   async function claim() {
     await renderPage();
-    fireEvent.click(screen.getByLabelText("Claim this Lego set"));
+    fireEvent.click(screen.getByLabelText("Claim this Lego set to reserve it"));
     fireEvent.change(screen.getByLabelText(/Your Name/), { target: { value: "Sam" } });
     fireEvent.change(screen.getByLabelText(/Your Email/), { target: { value: "sam@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Claim Item" }));
@@ -94,13 +94,13 @@ describe("after a guest claims an item", () => {
   it("shows the last available item as claimed", async () => {
     await claim();
     expect(screen.getByText("Claimed")).toBeTruthy();
-    expect(screen.queryByLabelText("Claim this Lego set")).toBeNull();
+    expect(screen.queryByLabelText("Claim this Lego set to reserve it")).toBeNull();
   });
 
   it("keeps an item claimable while more of it are available", async () => {
     mocks.getPublicWishlist.mockResolvedValue(wishlist([{ ...item, quantity: 2, available_quantity: 2 }]));
     await claim();
     expect(screen.queryByText("Claimed")).toBeNull();
-    expect(screen.getByLabelText("Claim this Lego set")).toBeTruthy();
+    expect(screen.getByLabelText("Claim this Lego set to reserve it")).toBeTruthy();
   });
 });

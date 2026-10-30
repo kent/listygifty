@@ -72,9 +72,16 @@ describe("mobile gift card labels", () => {
   it("connects every visible label to its control", () => {
     renderCard();
     expand();
-    for (const label of ["Name", "To", "From", "Status", "Cost"]) {
+    for (const label of ["Name", "To", "From", "Status"]) {
       expect(screen.getByLabelText(label)).toBeTruthy();
     }
+  });
+
+  it("keeps Cost as a caption, so the cost button keeps its fuller name", () => {
+    renderCard();
+    expand();
+    expect(screen.getByText("Cost").tagName).toBe("SPAN");
+    expect(screen.getByRole("button", { name: /^Edit cost of Lego set: \$24\.50$/ })).toBeTruthy();
   });
 
   it("gives each card its own ids so two cards don't collide", () => {
@@ -96,7 +103,7 @@ describe("mobile gift card control names", () => {
   it("names every edit control after the gift", () => {
     renderCard();
     expand();
-    expect(screen.getByRole("button", { name: "Edit gift name: Lego set" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Rename gift: Lego set" })).toBeTruthy();
     expect(screen.getByRole("combobox", { name: "To: recipients of Lego set" })).toBeTruthy();
     expect(screen.getByRole("combobox", { name: "From: givers of Lego set" })).toBeTruthy();
     expect(screen.getByRole("combobox", { name: "Status of Lego set" })).toBeTruthy();

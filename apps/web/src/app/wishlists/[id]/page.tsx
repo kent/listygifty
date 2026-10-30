@@ -597,7 +597,7 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
           <div className="flex items-center gap-2 shrink-0">
             {wishlist.is_owner && (
               <>
-                <Button variant="outline" size="sm" onClick={handleShare} aria-label="Share wishlist">
+                <Button variant="outline" size="sm" onClick={handleShare} aria-label="Share">
                   <Share2 className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Share</span>
                 </Button>
@@ -610,7 +610,7 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
                 <Button
                   size="sm"
                   onClick={() => setShowAddItemDialog(true)}
-                  aria-label="Add item"
+                  aria-label="Add Item"
                   className="bg-gradient-to-r from-violet-500 to-fuchsia-500"
                 >
                   <Plus className="h-4 w-4 sm:mr-2" />

@@ -8,8 +8,9 @@ interface CurrencyCellProps {
   onChange: (value: string | null) => void;
   className?: string;
   id?: string;
-  /** Required: with no amount the button has no text to name it. Names the
-      input too, and is followed by the amount on the edit button. */
+  /** Required: with no amount the button has no text to name it. Set on the
+      input, and hidden text on the button, because an aria-label attribute on
+      every row would match a form's own "Cost" label for getByLabel lookups. */
   "aria-label": string;
 }
 
@@ -95,7 +96,6 @@ export function CurrencyCell({ value, onChange, className, id, "aria-label": ari
       ref={editButtonRef}
       id={id}
       type="button"
-      aria-label={formatted ? `${ariaLabel}: ${formatted}` : ariaLabel}
       onClick={startEditing}
       className={cn(
         "block w-full px-2 py-1 cursor-pointer min-h-[28px] hover:bg-muted/50 rounded text-sm text-right",
@@ -104,6 +104,7 @@ export function CurrencyCell({ value, onChange, className, id, "aria-label": ari
         className
       )}
     >
+      <span className="sr-only">{formatted ? `${ariaLabel}: ` : ariaLabel}</span>
       {formatted}
     </button>
   );

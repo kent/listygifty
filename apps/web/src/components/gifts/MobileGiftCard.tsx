@@ -119,7 +119,7 @@ export function MobileGiftCard({
                 value={gift.name}
                 onChange={(name) => onUpdateGift(gift.id, { name })}
                 placeholder="Gift name..."
-                aria-label="Edit gift name"
+                aria-label="Rename gift"
                 isLink={!!gift.link}
                 linkHref={linkHref}
                 linkLabel={merchantLabel || "Open link"}
@@ -175,9 +175,9 @@ export function MobileGiftCard({
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor={`${fieldId}-cost`} className="text-xs font-medium text-muted-foreground">Cost</label>
+                {/* Not a <label>: it would replace the button's fuller name with just "Cost". */}
+                <span className="block text-xs font-medium text-muted-foreground">Cost</span>
                 <CurrencyCell
-                  id={`${fieldId}-cost`}
                   value={gift.cost}
                   onChange={(cost) => onUpdateGift(gift.id, { cost: cost ? Number(cost) : undefined })}
                   aria-label={`Edit cost of ${giftLabel}`}

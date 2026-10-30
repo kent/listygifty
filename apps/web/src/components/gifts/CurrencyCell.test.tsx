@@ -12,6 +12,11 @@ describe("CurrencyCell", () => {
     expect(button.getAttribute("type")).toBe("button");
   });
 
+  it("names the button with text, not an attribute, so it can't shadow a form field's label", () => {
+    render(<CurrencyCell value="24.5" onChange={vi.fn()} aria-label={label} />);
+    expect(screen.getByRole("button").hasAttribute("aria-label")).toBe(false);
+  });
+
   it("is still named when there is no amount, so it isn't an empty button", () => {
     render(<CurrencyCell value={null} onChange={vi.fn()} aria-label={label} />);
     expect(screen.getByRole("button", { name: label })).toBeTruthy();

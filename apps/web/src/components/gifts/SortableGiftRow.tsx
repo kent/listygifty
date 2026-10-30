@@ -171,7 +171,7 @@ export function SortableGiftRow({
           value={gift.name}
           onChange={(name) => onUpdateGift(gift.id, { name })}
           placeholder="Gift name..."
-          aria-label="Edit gift name"
+          aria-label="Rename gift"
           isLink={!!gift.link}
           linkHref={linkHref}
           linkLabel={merchantLabel || "Open link"}
