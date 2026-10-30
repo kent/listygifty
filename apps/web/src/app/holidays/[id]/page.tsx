@@ -429,24 +429,25 @@ export default function HolidayDetailPage() {
           </div>
         ) : (
           <Tabs defaultValue="gifts" className="w-full">
-            <TabsList className="mb-6 w-full md:w-auto">
-              <TabsTrigger value="gifts" className="gap-1.5 md:gap-2 flex-1 md:flex-none">
-                <GiftIcon className="h-4 w-4" />
-                <span>Gifts</span>
-              </TabsTrigger>
-              <TabsTrigger value="reports" className="gap-1.5 md:gap-2 flex-1 md:flex-none hidden md:inline-flex">
-                <BarChart3 className="h-4 w-4" />
-                <span>Reports</span>
-              </TabsTrigger>
-              <Link href={`/match/${holidayId}`} className="flex-1 md:flex-none">
-                <button
-                  className="inline-flex h-[calc(100%-1px)] w-full items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] text-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground focus-visible:ring-[3px] focus-visible:outline-1 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
-                >
+            <div className="mb-6 flex items-center gap-2">
+              <TabsList className="flex-1 md:flex-none">
+                <TabsTrigger value="gifts" className="gap-1.5 md:gap-2 flex-1 md:flex-none">
+                  <GiftIcon className="h-4 w-4" />
+                  <span>Gifts</span>
+                </TabsTrigger>
+                <TabsTrigger value="reports" className="gap-1.5 md:gap-2 flex-1 md:flex-none hidden md:inline-flex">
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Reports</span>
+                </TabsTrigger>
+              </TabsList>
+              {/* A link to another page, so it sits beside the tabs rather than among them. */}
+              <Button variant="outline" asChild className="gap-1.5 flex-1 md:flex-none">
+                <Link href={`/match/${holidayId}`}>
                   <Scale className="h-4 w-4" />
-                  <span>Match</span>
-                </button>
-              </Link>
-            </TabsList>
+                  Match
+                </Link>
+              </Button>
+            </div>
             <TabsContent value="gifts" className="space-y-4">
               <GiftListSummaryBar
                 gifts={gifts}
