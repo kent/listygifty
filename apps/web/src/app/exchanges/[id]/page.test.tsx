@@ -214,6 +214,73 @@ describe("the wishlist card", () => {
   });
 });
 
+describe("when the exchange can't be loaded", () => {
+  async function renderFailingPage() {
+    const params = Promise.resolve({ id: "family-christmas" });
+    await act(async () => {
+      render(
+        <Suspense fallback={null}>
+          <ExchangeDetailPage params={params} />
+        </Suspense>
+      );
+    });
+  }
+
+  it("says not found only for a 404", async () => {
+    mocks.getBySlug.mockRejectedValue(new ApiError(404, { error: "Gift exchange not found" }));
+
+    await renderFailingPage();
+
+    expect(screen.getByText("Exchange not found")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Back to Exchanges" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
+  it.each<[string, Error]>([
+    ["the network is down", new ApiError(0, { error: "Request timeout after 30000ms" })],
+    ["the server fails", new ApiError(503, undefined)],
+    ["fetch itself fails", new TypeError("Failed to fetch")],
+  ])("offers Try again when %s", async (_, failure) => {
+    mocks.getBySlug.mockRejectedValue(failure);
+
+    await renderFailingPage();
+
+    expect(screen.queryByText("Exchange not found")).toBeNull();
+    expect(screen.getByText("We couldn't load this exchange. Check your connection and try again.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Back to Exchanges" })).toBeTruthy();
+  });
+
+  it("loads the exchange again from Try again", async () => {
+    mocks.getBySlug
+      .mockRejectedValueOnce(new ApiError(503, undefined))
+      .mockResolvedValueOnce(exchangeWith());
+
+    await renderFailingPage();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    });
+
+    expect(mocks.getBySlug).toHaveBeenCalledTimes(2);
+    expect(await screen.findByRole("heading", { name: "Family Christmas" })).toBeTruthy();
+    expect(screen.queryByText(/couldn't load this exchange/)).toBeNull();
+  });
+
+  it("says not found if the retry comes back with a 404", async () => {
+    mocks.getBySlug
+      .mockRejectedValueOnce(new ApiError(503, undefined))
+      .mockRejectedValueOnce(new ApiError(404, { error: "Gift exchange not found" }));
+
+    await renderFailingPage();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    });
+
+    expect(screen.getByText("Exchange not found")).toBeTruthy();
+    expect(screen.queryByText(/couldn't load this exchange/)).toBeNull();
+  });
+});
+
 describe("when someone can't be added", () => {
   it("says why, and keeps what was typed so it can be fixed", async () => {
     mocks.getBySlug.mockResolvedValue(exchangeWith());

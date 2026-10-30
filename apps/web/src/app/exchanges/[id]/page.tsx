@@ -12,6 +12,7 @@ import {
   exchangeExclusionsService,
   exchangeNotificationsService,
 } from "@/services";
+import { ApiError } from "@/lib/api-client";
 import { humanizeError } from "@/lib/error-message";
 import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { AppHeader } from "@/components/layout";
@@ -130,6 +131,8 @@ export default function ExchangeDetailPage({
   const [exclusions, setExclusions] = useState<ExchangeExclusion[]>([]);
   const [notifications, setNotifications] = useState<ExchangeNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<"not-found" | "load-failed" | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [addingParticipant, setAddingParticipant] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showExclusionDialog, setShowExclusionDialog] = useState(false);
@@ -164,13 +167,21 @@ export default function ExchangeDetailPage({
         setExchange(exchangeData);
         setExclusions(exclusionsData);
         setNotifications(notificationsData);
+      } catch (err: unknown) {
+        setLoadError(err instanceof ApiError && err.isNotFound ? "not-found" : "load-failed");
       } finally {
         setLoading(false);
       }
     }
 
     loadData();
-  }, [isAuthenticated, slug]);
+  }, [isAuthenticated, slug, loadAttempt]);
+
+  const handleRetryLoad = () => {
+    setLoadError(null);
+    setLoading(true);
+    setLoadAttempt((attempt) => attempt + 1);
+  };
 
   const refreshExchange = async () => {
     try {
@@ -352,7 +363,25 @@ export default function ExchangeDetailPage({
     );
   }
 
-  if (!exchange) {
+  if (loadError === "load-failed") {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+        <div className="text-center">
+          <p className="text-slate-600 dark:text-slate-400">
+            We couldn&apos;t load this exchange. Check your connection and try again.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+            <Button onClick={handleRetryLoad}>Try again</Button>
+            <Link href="/exchanges">
+              <Button variant="outline">Back to Exchanges</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError === "not-found" || !exchange) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center">
