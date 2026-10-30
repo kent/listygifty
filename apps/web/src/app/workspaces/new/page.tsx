@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { useWorkspace } from "@/contexts/workspace-context";
-import { workspacesService, AUTH_ROUTES } from "@/services";
+import { workspacesService } from "@/services";
+import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,8 +23,13 @@ export default function CreateWorkspacePage() {
   const [isCreating, setIsCreating] = useState(false);
 
   // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push(signInUrlForCurrentPage());
+    }
+  }, [authLoading, isAuthenticated, router]);
+
   if (!authLoading && !isAuthenticated) {
-    router.push(AUTH_ROUTES.signIn);
     return null;
   }
 

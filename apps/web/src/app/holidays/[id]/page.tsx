@@ -8,7 +8,8 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useGiftFilters } from "@/hooks";
-import { holidaysService, giftsService, peopleService, giftStatusesService, workspacesService, exportsService, AUTH_ROUTES } from "@/services";
+import { holidaysService, giftsService, peopleService, giftStatusesService, workspacesService, exportsService, } from "@/services";
+import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { captureWebEvent } from "@/lib/analytics";
 import { downloadIcsEvent } from "@/lib/calendar-download";
 import { AppHeader } from "@/components/layout";
@@ -96,7 +97,7 @@ export default function HolidayDetailPage() {
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push(AUTH_ROUTES.signIn);
+      router.push(signInUrlForCurrentPage());
     }
   }, [authLoading, isAuthenticated, router]);
 

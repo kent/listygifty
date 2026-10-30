@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { useWorkspace } from "@/contexts/workspace-context";
-import { holidaysService, peopleService, AUTH_ROUTES } from "@/services";
+import { holidaysService, peopleService, } from "@/services";
+import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { AppHeader } from "@/components/layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -423,7 +424,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push(AUTH_ROUTES.signIn);
+      router.push(signInUrlForCurrentPage());
     }
   }, [isLoading, isAuthenticated, router]);
 

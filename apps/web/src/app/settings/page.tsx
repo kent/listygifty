@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
-import { AUTH_ROUTES } from "@/services";
+import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { AppHeader } from "@/components/layout";
 import {
   ProfileSection,
@@ -38,7 +38,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push(AUTH_ROUTES.signIn);
+      router.push(signInUrlForCurrentPage());
     }
   }, [authLoading, isAuthenticated, router]);
 

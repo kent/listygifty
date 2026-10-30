@@ -6,7 +6,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
-import { holidaysService, giftsService, peopleService, matchArrangementsService, giftStatusesService, AUTH_ROUTES } from "@/services";
+import { holidaysService, giftsService, peopleService, matchArrangementsService, giftStatusesService, } from "@/services";
+import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { AppHeader } from "@/components/layout";
 import { MatchWorkspace } from "@/components/match";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,7 @@ export default function MatchPage() {
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push(AUTH_ROUTES.signIn);
+      router.push(signInUrlForCurrentPage());
     }
   }, [authLoading, isAuthenticated, router]);
 

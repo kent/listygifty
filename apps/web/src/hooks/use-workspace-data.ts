@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useState, useCallback, useRef } from "react
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useWorkspace } from "@/contexts/workspace-context";
-import { AUTH_ROUTES } from "@/services";
+import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { useRequestGuard } from "./use-request-guard";
 
 interface UseWorkspaceDataOptions<T> {
@@ -60,8 +60,7 @@ export function useWorkspaceData<T>({
   // Redirect to sign in if not authenticated
   useEffect(() => {
     if (requireAuth && !authLoading && !isAuthenticated) {
-      const { pathname, search } = window.location;
-      router.push(`${AUTH_ROUTES.signIn}?redirect_url=${encodeURIComponent(`${pathname}${search}`)}`);
+      router.push(signInUrlForCurrentPage());
     }
   }, [authLoading, isAuthenticated, requireAuth, router]);
 

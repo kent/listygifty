@@ -11,8 +11,8 @@ import {
   exchangeParticipantsService,
   exchangeExclusionsService,
   exchangeNotificationsService,
-  AUTH_ROUTES,
 } from "@/services";
+import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { AppHeader } from "@/components/layout";
 import { getExchangeNextStep } from "@/components/exchanges/exchange-next-step";
 import { MatchOverviewCard } from "@/components/exchanges/match-overview-card";
@@ -144,7 +144,7 @@ export default function ExchangeDetailPage({
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push(AUTH_ROUTES.signIn);
+      router.push(signInUrlForCurrentPage());
     }
   }, [authLoading, isAuthenticated, router]);
 
