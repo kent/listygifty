@@ -649,3 +649,14 @@
     }
   }
 }
+
+/* White button text has to clear AA on both stops of the shared gradient. */
+[data-theme="festive"] .from-violet-500.to-fuchsia-500 {
+  --tw-gradient-from: var(--color-violet-600);
+  --tw-gradient-to: var(--color-fuchsia-600);
+}
+
+[data-theme="festive"] .from-violet-500.to-fuchsia-500:hover {
+  --tw-gradient-from: var(--color-violet-700);
+  --tw-gradient-to: var(--color-fuchsia-700);
+}
