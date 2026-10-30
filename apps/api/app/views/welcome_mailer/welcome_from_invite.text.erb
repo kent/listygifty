@@ -1,6 +1,6 @@
 Welcome<%= ", #{@user.first_name}" if @user.first_name.present? %>!
 
-You've joined "<%= @holiday.name %>" on Listy Gifty — now you can collaborate on gift planning together!
+You've joined "<%= @holiday.name %>" on Listy Gifty. Now you can collaborate on gift planning together!
 
 <%= @holiday.icon.presence || '🎁' %> <%= @holiday.name %>
 <% if @holiday.date.present? %>
@@ -14,4 +14,4 @@ As a collaborator you can:
 
 View the list: <%= @frontend_url %>/holidays/<%= @holiday.id %>
 
-Questions? Just reply to this email — we're here to help!
+Questions? Just reply to this email. We're here to help!
