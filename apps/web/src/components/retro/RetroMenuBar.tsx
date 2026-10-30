@@ -75,7 +75,7 @@ export function RetroMenuBar({ items, right, className }: RetroMenuBarProps) {
             )}
           >
             <span className="normal-case">{item.label}</span>
-            <span className={cn("hidden sm:inline", item.active ? "text-amber-300" : "text-slate-500 group-hover:text-amber-300")}>
+            <span className={cn("hidden sm:inline", item.active ? "text-amber-300" : "text-slate-600 group-hover:text-amber-300")}>
               F{item.fkey}
             </span>
           </Link>
