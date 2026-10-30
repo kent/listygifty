@@ -65,14 +65,19 @@ import type {
   ExchangeNotification,
 } from "@niftygifty/types";
 
+// Tap targets are 44px on phones and stay compact from the sm breakpoint up.
+const CARD_ACTION_CLASS = "h-11 sm:h-8 border-slate-200 dark:border-slate-700";
+const ROW_ICON_BUTTON_CLASS = "size-11 sm:size-8";
+const ROW_REMOVE_BUTTON_CLASS = `${ROW_ICON_BUTTON_CLASS} text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300`;
+
 function getStatusIcon(status: string) {
   switch (status) {
     case "accepted":
-      return <Check className="h-4 w-4 text-green-400" />;
+      return <Check className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />;
     case "declined":
-      return <X className="h-4 w-4 text-red-400" />;
+      return <X className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />;
     default:
-      return <Clock className="h-4 w-4 text-amber-400" />;
+      return <Clock className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />;
   }
 }
 
@@ -368,14 +373,14 @@ export default function ExchangeDetailPage({
 
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{exchange.name}</h1>
-              <Badge variant="outline" className={getStatusColor(exchange.status)}>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
+              <h1 className="min-w-0 break-words text-3xl font-bold text-slate-900 dark:text-white">{exchange.name}</h1>
+              <Badge variant="outline" className={`capitalize ${getStatusColor(exchange.status)}`}>
                 {exchange.status}
               </Badge>
             </div>
-            <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
               {exchange.exchange_date && (
                 <span className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
@@ -588,24 +593,24 @@ export default function ExchangeDetailPage({
             />
           )}
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Participants */}
           <Card
             data-testid="participant-roster"
             className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50"
           >
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between">
               <CardTitle className="text-slate-900 dark:text-white flex items-center gap-2">
                 <Users className="h-5 w-5 text-violet-500 dark:text-violet-400" />
                 Participants
               </CardTitle>
               {isOwner && exchange.status !== "active" && exchange.status !== "completed" && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {exchange.share_url && (
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-slate-200 dark:border-slate-700"
+                      className={CARD_ACTION_CLASS}
                       onClick={handleCopyJoinLink}
                       data-testid="copy-join-link"
                     >
@@ -615,7 +620,7 @@ export default function ExchangeDetailPage({
                   )}
                 <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                   <DialogTrigger asChild>
-                    <Button size="sm" variant="outline" className="border-slate-200 dark:border-slate-700">
+                    <Button size="sm" variant="outline" className={CARD_ACTION_CLASS}>
                       <Plus className="h-4 w-4 mr-1" />
                       Add
                     </Button>
@@ -677,18 +682,18 @@ export default function ExchangeDetailPage({
                   {participants.map((participant) => (
                     <div
                       key={participant.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
+                      className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex min-w-0 grow basis-40 items-center gap-3">
                         {getStatusIcon(participant.status)}
-                        <div>
-                          <p className="text-slate-900 dark:text-white font-medium">{participant.display_name}</p>
+                        <div className="min-w-0">
+                          <p className="break-words text-slate-900 dark:text-white font-medium">{participant.display_name}</p>
                           {participant.email && (
-                            <p className="text-xs text-slate-500">{participant.email}</p>
+                            <p className="break-words text-xs text-slate-500">{participant.email}</p>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Badge
                           variant="outline"
                           className={
@@ -703,13 +708,14 @@ export default function ExchangeDetailPage({
                         </Badge>
                         {participant.wishlist_count > 0 && (
                           <Badge variant="outline" className="text-xs">
-                            {participant.wishlist_count} items
+                            {pluralize(participant.wishlist_count, "item")}
                           </Badge>
                         )}
                         {isOwner && participant.status === "invited" && (
                           <Button
-                            size="sm"
+                            size="icon-sm"
                             variant="ghost"
+                            className={ROW_ICON_BUTTON_CLASS}
                             onClick={() => handleCopyInvite(participant)}
                             aria-label={`Copy invite for ${participant.display_name}`}
                             title="Copy invite"
@@ -719,9 +725,11 @@ export default function ExchangeDetailPage({
                         )}
                         {isOwner && participant.status === "invited" && (
                           <Button
-                            size="sm"
+                            size="icon-sm"
                             variant="ghost"
+                            className={ROW_ICON_BUTTON_CLASS}
                             onClick={() => handleResendInvite(participant)}
+                            aria-label={`Resend invite to ${participant.display_name}`}
                             title="Resend invite"
                           >
                             <Send className="h-3 w-3" />
@@ -729,10 +737,12 @@ export default function ExchangeDetailPage({
                         )}
                         {isOwner && exchange.status !== "active" && exchange.status !== "completed" && (
                           <Button
-                            size="sm"
+                            size="icon-sm"
                             variant="ghost"
-                            className="text-red-400 hover:text-red-300"
+                            className={ROW_REMOVE_BUTTON_CLASS}
                             onClick={() => handleRemoveParticipant(participant)}
+                            aria-label={`Remove ${participant.display_name}`}
+                            title="Remove"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -748,7 +758,7 @@ export default function ExchangeDetailPage({
           {/* Exclusion Rules */}
           {isOwner && (
             <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-row flex-wrap items-center justify-between">
                 <CardTitle className="text-slate-900 dark:text-white flex items-center gap-2">
                   <Ban className="h-5 w-5 text-amber-500 dark:text-amber-400" />
                   Exclusion Rules
@@ -756,7 +766,7 @@ export default function ExchangeDetailPage({
                 {exchange.status !== "active" && exchange.status !== "completed" && participants.length >= 2 && (
                   <Dialog open={showExclusionDialog} onOpenChange={setShowExclusionDialog}>
                     <DialogTrigger asChild>
-                      <Button size="sm" variant="outline" className="border-slate-200 dark:border-slate-700">
+                      <Button size="sm" variant="outline" className={CARD_ACTION_CLASS}>
                         <Plus className="h-4 w-4 mr-1" />
                         Add Rule
                       </Button>
@@ -843,19 +853,21 @@ export default function ExchangeDetailPage({
                     {exclusions.map((exclusion) => (
                       <div
                         key={exclusion.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
+                        className="flex items-center justify-between gap-2 p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
                       >
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-slate-900 dark:text-white">{exclusion.participant_a.name}</span>
-                          <Ban className="h-4 w-4 text-amber-500 dark:text-amber-400" />
-                          <span className="text-slate-900 dark:text-white">{exclusion.participant_b.name}</span>
+                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                          <span className="min-w-0 break-words text-slate-900 dark:text-white">{exclusion.participant_a.name}</span>
+                          <Ban className="h-4 w-4 shrink-0 text-amber-500 dark:text-amber-400" />
+                          <span className="min-w-0 break-words text-slate-900 dark:text-white">{exclusion.participant_b.name}</span>
                         </div>
                         {exchange.status !== "active" && exchange.status !== "completed" && (
                           <Button
-                            size="sm"
+                            size="icon-sm"
                             variant="ghost"
-                            className="text-red-400 hover:text-red-300"
+                            className={ROW_REMOVE_BUTTON_CLASS}
                             onClick={() => handleRemoveExclusion(exclusion)}
+                            aria-label={`Remove rule between ${exclusion.participant_a.name} and ${exclusion.participant_b.name}`}
+                            title="Remove rule"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>

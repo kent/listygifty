@@ -340,3 +340,41 @@ describe("keeping the exchange current after roster changes", () => {
     await waitFor(() => expect(mocks.getBySlug).toHaveBeenCalledTimes(2));
   });
 });
+
+describe("icon buttons in the roster", () => {
+  const ana = person(2, "Ana");
+  const bea = person(3, "Bea", { status: "accepted" });
+
+  beforeEach(() => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({ status: "inviting", exchange_participants: [organizer, ana, bea] })
+    );
+    mocks.getExclusions.mockResolvedValue([rule(50, organizer, bea)]);
+  });
+
+  it("says who each one acts on", async () => {
+    await renderPage();
+    await screen.findByText("bea@example.com");
+
+    for (const name of [
+      "Copy invite for Ana",
+      "Resend invite to Ana",
+      "Remove Ana",
+      "Remove Bea",
+      "Remove rule between Kent and Bea",
+    ]) {
+      expect(screen.getByRole("button", { name })).toBeTruthy();
+    }
+  });
+
+  it("leaves no button on the page without a name", async () => {
+    await renderPage();
+    await screen.findByRole("button", { name: "Remove rule between Kent and Bea" });
+
+    const nameless = screen
+      .getAllByRole("button")
+      .filter((button) => !button.textContent?.trim() && !button.getAttribute("aria-label"));
+
+    expect(nameless).toEqual([]);
+  });
+});
