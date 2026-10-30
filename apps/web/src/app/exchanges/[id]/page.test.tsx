@@ -6,6 +6,7 @@ import type {
   ExchangeParticipant,
   GiftExchangeWithParticipants,
 } from "@niftygifty/types";
+import { ApiError } from "@/lib/api-client";
 import ExchangeDetailPage from "./page";
 
 const mocks = vi.hoisted(() => ({
@@ -210,6 +211,36 @@ describe("the wishlist card", () => {
     await renderPage();
 
     expect(screen.getByText("1 item")).toBeTruthy();
+  });
+});
+
+describe("when someone can't be added", () => {
+  it("says why, and keeps what was typed so it can be fixed", async () => {
+    mocks.getBySlug.mockResolvedValue(exchangeWith());
+    mocks.createParticipant.mockRejectedValue(
+      new ApiError(422, { errors: ["Email is already a participant"] })
+    );
+
+    await renderPage();
+    await addPerson("Bea");
+
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith("Email is already a participant")
+    );
+    const email = screen.getByPlaceholderText("john@example.com") as HTMLInputElement;
+    expect(email.value).toBe("bea@example.com");
+  });
+
+  it("doesn't print raw server errors", async () => {
+    mocks.getBySlug.mockResolvedValue(exchangeWith());
+    mocks.createParticipant.mockRejectedValue(new ApiError(500, { error: "PG::Error" }));
+
+    await renderPage();
+    await addPerson("Bea");
+
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith("The server hit a snag. Try again in a moment.")
+    );
   });
 });
 

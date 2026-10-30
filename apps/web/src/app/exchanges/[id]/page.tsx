@@ -12,6 +12,7 @@ import {
   exchangeExclusionsService,
   exchangeNotificationsService,
 } from "@/services";
+import { humanizeError } from "@/lib/error-message";
 import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { AppHeader } from "@/components/layout";
 import { getExchangeNextStep } from "@/components/exchanges/exchange-next-step";
@@ -203,8 +204,8 @@ export default function ExchangeDetailPage({
       setShowAddDialog(false);
       toast.success(`Invited ${participant.name}`);
       await refreshExchange();
-    } catch {
-      toast.error("Failed to add participant");
+    } catch (err: unknown) {
+      toast.error(humanizeError(err, "Failed to add participant"));
     } finally {
       setAddingParticipant(false);
     }
