@@ -86,7 +86,7 @@ export function JoinExchangeCard({
         <CardHeader className="text-center pb-2">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 mx-auto mb-4 text-4xl">🎁</div>
           <p className="text-sm font-medium uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400">You&apos;re invited</p>
-          <CardTitle className="text-3xl text-slate-900 dark:text-white">{details.exchange.name}</CardTitle>
+          <CardTitle className="break-words text-3xl text-slate-900 dark:text-white">{details.exchange.name}</CardTitle>
           <p className="text-slate-600 dark:text-slate-400">
             Organized by <span className="font-medium text-slate-900 dark:text-white">{details.exchange.owner_name}</span>
           </p>
@@ -122,7 +122,7 @@ export function JoinExchangeCard({
                 />
               </div>
               <Button
-                className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
+                className="h-auto min-h-9 w-full whitespace-normal bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
                 onClick={handleJoin}
                 disabled={joining}
                 data-testid="join-exchange"

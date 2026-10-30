@@ -141,7 +141,7 @@ export default function MyMatchPage({
         <Card className="border-amber-200 dark:border-slate-800 bg-gradient-to-br from-amber-500/10 to-orange-500/10 mb-8">
           <CardContent className="py-8 text-center">
             <p className="text-sm text-amber-600 dark:text-amber-400 mb-2">You are getting a gift for...</p>
-            <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">🎁 {match.display_name}</h1>
+            <h1 className="break-words text-4xl font-bold text-slate-900 dark:text-white mb-4">🎁 {match.display_name}</h1>
             {exchange.exchange_date && (
               <p className="text-slate-600 dark:text-slate-400 flex items-center justify-center gap-2">
                 <Calendar className="h-4 w-4" />
@@ -168,10 +168,10 @@ export default function MyMatchPage({
         </Card>
 
         {/* Wishlist */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <List className="h-5 w-5 text-violet-500 dark:text-violet-400" />
-            {match.display_name}&apos;s Wishlist
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h2 className="min-w-0 break-words text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <List className="h-5 w-5 shrink-0 text-violet-500 dark:text-violet-400" />
+            <span className="min-w-0 break-words">{match.display_name}&apos;s Wishlist</span>
           </h2>
           <Button
             variant="outline"
@@ -209,7 +209,7 @@ export default function MyMatchPage({
                       <img
                         src={item.photo_url}
                         alt={item.name}
-                        className="w-20 h-20 rounded-lg object-cover"
+                        className="w-20 h-20 rounded-lg object-cover shrink-0"
                       />
                     ) : (
                       <div className="w-20 h-20 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
@@ -218,11 +218,11 @@ export default function MyMatchPage({
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-slate-900 dark:text-white text-lg">{item.name}</h3>
+                      <h3 className="break-words font-semibold text-slate-900 dark:text-white text-lg">{item.name}</h3>
                       {item.description && (
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{item.description}</p>
+                        <p className="break-words text-sm text-slate-600 dark:text-slate-400 mt-1">{item.description}</p>
                       )}
-                      <div className="flex items-center gap-4 mt-3">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
                         {item.price && (
                           <span className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
                             <DollarSign className="h-3 w-3" />

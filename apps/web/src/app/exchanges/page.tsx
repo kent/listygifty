@@ -52,7 +52,7 @@ function ExchangeCard({ exchange }: { exchange: GiftExchange }) {
                   <Crown className="h-4 w-4 text-amber-500 dark:text-amber-400 shrink-0" />
                 )}
               </div>
-              <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
                 {formattedDate && (
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
@@ -66,7 +66,7 @@ function ExchangeCard({ exchange }: { exchange: GiftExchange }) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className={getStatusColor(exchange.status)}>
+              <Badge variant="outline" className={`capitalize ${getStatusColor(exchange.status)}`}>
                 {exchange.status}
               </Badge>
               <ChevronRight className="h-5 w-5 text-slate-400 dark:text-slate-600 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors" />
@@ -156,7 +156,7 @@ export default function ExchangesPage() {
                   <Crown className="h-5 w-5 text-amber-500 dark:text-amber-400" />
                   My Exchanges
                 </h2>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {myExchanges.map((exchange) => (
                     <ExchangeCard key={exchange.id} exchange={exchange} />
                   ))}
@@ -170,7 +170,7 @@ export default function ExchangesPage() {
                   <Users className="h-5 w-5 text-cyan-500 dark:text-cyan-400" />
                   Participating In
                 </h2>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {participatingIn.map((exchange) => (
                     <ExchangeCard key={exchange.id} exchange={exchange} />
                   ))}

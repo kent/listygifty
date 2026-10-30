@@ -147,10 +147,10 @@ export default function MyWishlistPage({
           Back to {exchange.name}
         </Link>
 
-        <div className="flex items-center justify-between mb-6">
-          <div>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">My Wishlist</h1>
-            <p className="text-slate-600 dark:text-slate-400">
+            <p className="break-words text-slate-600 dark:text-slate-400">
               Add items you would like to receive for {exchange.name}
             </p>
           </div>
@@ -252,20 +252,20 @@ export default function MyWishlistPage({
                       <img
                         src={item.photo_url}
                         alt={item.name}
-                        className="w-16 h-16 rounded-lg object-cover"
+                        className="w-16 h-16 rounded-lg object-cover shrink-0"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
                         {/* eslint-disable-next-line jsx-a11y/alt-text */}
                         <Image className="h-6 w-6 text-slate-400 dark:text-slate-600" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-slate-900 dark:text-white">{item.name}</h3>
+                      <h3 className="break-words font-semibold text-slate-900 dark:text-white">{item.name}</h3>
                       {item.description && (
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{item.description}</p>
+                        <p className="break-words text-sm text-slate-600 dark:text-slate-400 mt-1">{item.description}</p>
                       )}
-                      <div className="flex items-center gap-4 mt-2 text-sm">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm">
                         {item.price && (
                           <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
                             <DollarSign className="h-3 w-3" />
