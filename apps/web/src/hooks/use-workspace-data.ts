@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useState, useCallback, useRef } from "react
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useWorkspace } from "@/contexts/workspace-context";
+import { humanizeError } from "@/lib/error-message";
 import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { useRequestGuard } from "./use-request-guard";
 
@@ -77,7 +78,7 @@ export function useWorkspaceData<T>({
           scope,
           data: current?.scope === scope ? current.data : initialDataRef.current,
           loading: false,
-          error: err instanceof Error ? err.message : "Failed to load data. Please try again.",
+          error: humanizeError(err, "Failed to load data. Please try again."),
         }));
       }
     }
