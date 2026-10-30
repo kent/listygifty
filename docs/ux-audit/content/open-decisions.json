@@ -8,10 +8,10 @@
   },
   {
     "id": "clerk-signin-hang",
-    "severity": 3,
-    "title": "Sign-in sometimes hangs after the code is accepted",
-    "question": "Now and then, Clerk's own form shows Success and then sits on a spinner at /login/factor-one, logging needs_first_factor not supported yet. The server reports the sign-in as complete. It happened in about 1 in 6 repro sign-ins for some accounts, and once in the final run, where a retry passed. Clerk's dev API was rejecting requests around the same time, so it may only affect dev. I couldn't confirm that, and I couldn't test whether a reload recovers.",
-    "recommendation": "Sign in repeatedly on production and on a real phone. If it reproduces, upgrade the Clerk packages and raise it with Clerk."
+    "severity": 2,
+    "title": "Clerk sign-in hung a few times in testing",
+    "question": "I couldn't fix this and it isn't a product decision, because it lives inside Clerk's own form. Now and then, after a code was submitted, the form sat on a spinner, and once the attempt returned a 400. A reload brought back a fresh code box, so nobody is locked out. It hung in several automated runs when the script typed a digit every 40ms, and not at all in the final strict run at a person's pace. That suggests speed helped trigger it, but it doesn't prove it. I never saw retyping the code after a reload actually run, because no hang happened once the harness did that. Production is unverified.",
+    "recommendation": "Sign in a few times on production and on a real phone. If it happens there, upgrade the Clerk packages and raise it with Clerk."
   },
   {
     "id": "reply-address",
@@ -21,18 +21,11 @@
     "recommendation": "Add an MX record or a forwarding address for hello@, and a DMARC record starting at p=none. Then send yourself one real invite and check where it lands."
   },
   {
-    "id": "phone-tap-mismatch",
-    "severity": 2,
-    "title": "Phone runs sometimes tap the wrong spot",
-    "question": "In about 1 of 14 phone runs of the gift list journey, Chrome's phone emulation reported the page as more than twice its real width, and an automated tap landed on the wrong element. A reverted layout change made it more frequent, but the cause is still unknown. I could not reproduce it on a static page, and I don't know whether it reaches real phones.",
-    "recommendation": "Try the gift list journey on a real iPhone and Android phone during the hallway test. If taps misbehave there, treat this as a severity 3 bug."
-  },
-  {
     "id": "phone-summary-cards",
     "severity": 2,
     "title": "Summary cards push gifts down on phones",
-    "question": "Four stacked summary cards sit above the gifts at 390px, so people scroll about a screen to reach their list. I tried a two column layout and reverted it, because it was optional and it coincided with the tap problem above.",
-    "recommendation": "Collapse the summary on phones, or move it below the gifts, once the tap problem is understood."
+    "question": "Four stacked summary cards sit above the gifts at 390px, so people scroll about a screen to reach their list. I tried a two column layout and reverted it while chasing a phone tap problem. That problem later turned out to be the audit's own screenshot setting, so the layout wasn't at fault, but it is still a layout choice rather than a bug.",
+    "recommendation": "Use two columns on phones, or collapse the summary. Commit d99e71a has the two column version."
   },
   {
     "id": "peak-readiness",
@@ -88,20 +81,6 @@
     "recommendation": "Add a replace-one-person flow that only changes the two affected people, and tell the person removed."
   },
   {
-    "id": "owner-share-spoiler",
-    "severity": 3,
-    "title": "Opening your own share link reveals what was claimed",
-    "question": "Anti-spoiler now holds on your wishlist page, but your public link must show real status so guests don't double up, and that page treats you as a guest. The final first-time tester opened their own link while signed in, saw a green Claimed badge, and now knew what they were getting. The page also offered them Claim This on their own list.",
-    "recommendation": "Have the page recognize a signed-in owner and hide claims, with a notice in the meantime on the share dialog saying your link shows claims."
-  },
-  {
-    "id": "reinvite-declined",
-    "severity": 2,
-    "title": "A declined invite can't be sent again from the page",
-    "question": "The API supports re-inviting someone who declined, but the button only shows for people who haven't answered. The organizer can also remove themselves from their own exchange.",
-    "recommendation": "Show Resend for declined people, and ask for confirmation when the organizer removes themselves."
-  },
-  {
     "id": "affiliate-plan",
     "severity": 2,
     "title": "Be careful with the affiliate plan",
@@ -126,7 +105,7 @@
     "id": "exchange-on-home",
     "severity": 2,
     "title": "Home doesn't mention your exchange",
-    "question": "Once an exchange exists, Home says nothing about it, and its date isn't in Upcoming Dates. Someone returning from an email has no way back from Home except the menu.",
+    "question": "Once an exchange exists, Home says nothing about it, and its date isn't in Upcoming Dates. Someone returning from an email has no way back from Home except the menu. The same tester also found that exchange relatives never appear in People.",
     "recommendation": "Show active exchanges on Home with one clear next step, and add their dates to Upcoming Dates."
   },
   {
@@ -146,15 +125,8 @@
   {
     "id": "live-updates",
     "severity": 2,
-    "title": "Pages don't update when other people act",
-    "question": "The final tester's organizer page stayed at 1/5 joined after everyone had joined, and Publish appeared only after a manual refresh. The email said people had joined, but the page didn't.",
-    "recommendation": "Refresh the exchange when the tab regains focus, then consider live updates over the existing ActionCable connection."
-  },
-  {
-    "id": "home-counts",
-    "severity": 2,
-    "title": "Home's checklist doesn't refresh",
-    "question": "Found in the last validation pass, after the proof was finished, so it wasn't changed. The checklist showed Add people 0/3 and Capture gifts 0/5 after adding 2 and 1, and a full refresh corrected it. It's an objective bug, not a product call, but fixing it would have invalidated the final proof.",
-    "recommendation": "Fix it in the next pass by refreshing the bootstrap data when returning to Home."
+    "title": "An exchange page left open doesn't update itself",
+    "question": "The exchange now refreshes when you come back to its tab, but a page left in view stays as it was. The final tester's organizer page kept saying 1/5 joined while four joined-emails arrived, and called that the worst moment of the test. Fixing it properly means polling or a live connection, which is a design choice.",
+    "recommendation": "Poll the exchange every 20 seconds or so while it's inviting, or use the existing ActionCable connection."
   }
 ]

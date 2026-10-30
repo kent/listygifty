@@ -93,11 +93,11 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
 <div class="wrap">
   <div class="intro">
     <h1>Listy Gifty UX Audit</h1>
-    <p>On the starting code, only 4 of 20 journey runs passed, all of them gift lists. A new relative lost their invite at sign-up, guests could not open shared links, wishlists had no menu entry, and the exchange page ran off the side of phones. On the final commit, all 20 runs pass at 1440px and 390px in both themes. One privacy fix is live in production. Everything else is on the ux-audit branch and not deployed.</p>
+    <p>On the starting code, only 4 of 20 journey runs passed, all of them gift lists. A new relative lost their invite at sign-up, guests could not open shared links, wishlists had no menu entry, and the exchange page ran off the side of phones. On the final commit, all 20 runs pass at 1440px and 390px in both themes, with retries off. One privacy fix is live in production. Everything else is on the ux-audit branch and not deployed.</p>
     <div class="counts">
       <div><b>56</b><span>issues found</span></div>
-      <div><b>34</b><span>fixed</span></div>
-      <div><b>22</b><span>open for you</span></div>
+      <div><b>38</b><span>fixed</span></div>
+      <div><b>18</b><span>open for you</span></div>
     </div>
   </div>
   <nav aria-label="Sections">
@@ -120,7 +120,7 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
     <td class="chips"><span class="chip pass" title="desktop festive: pass" aria-label="desktop festive: pass">✓</span><span class="chip pass" title="desktop apple: pass" aria-label="desktop apple: pass">✓</span><span class="chip pass" title="mobile festive: pass" aria-label="mobile festive: pass">✓</span><span class="chip pass" title="mobile apple: pass" aria-label="mobile apple: pass">✓</span></td>
     <td class="num">40/40</td><td class="num">40/40</td>
     <td class="num">21</td><td class="num">21</td>
-    <td class="num">6s</td><td class="num">6s</td>
+    <td class="num">6s</td><td class="num">5s</td>
     <td class="num">0</td><td class="num">0</td>
     <td class="num">6</td><td class="num">0</td>
   </tr><tr>
@@ -129,7 +129,7 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
     <td class="chips"><span class="chip pass" title="desktop festive: pass" aria-label="desktop festive: pass">✓</span><span class="chip pass" title="desktop apple: pass" aria-label="desktop apple: pass">✓</span><span class="chip pass" title="mobile festive: pass" aria-label="mobile festive: pass">✓</span><span class="chip pass" title="mobile apple: pass" aria-label="mobile apple: pass">✓</span></td>
     <td class="num">74/156</td><td class="num">156/156</td>
     <td class="num">13</td><td class="num">24</td>
-    <td class="num">57s</td><td class="num">22s</td>
+    <td class="num">57s</td><td class="num">21s</td>
     <td class="num">8</td><td class="num">0</td>
     <td class="num">5</td><td class="num">0</td>
   </tr><tr>
@@ -138,7 +138,7 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
     <td class="chips"><span class="chip pass" title="desktop festive: pass" aria-label="desktop festive: pass">✓</span><span class="chip pass" title="desktop apple: pass" aria-label="desktop apple: pass">✓</span><span class="chip pass" title="mobile festive: pass" aria-label="mobile festive: pass">✓</span><span class="chip pass" title="mobile apple: pass" aria-label="mobile apple: pass">✓</span></td>
     <td class="num">20/28</td><td class="num">28/28</td>
     <td class="num">3</td><td class="num">4</td>
-    <td class="num">23s</td><td class="num">11s</td>
+    <td class="num">23s</td><td class="num">12s</td>
     <td class="num">0</td><td class="num">0</td>
     <td class="num">5</td><td class="num">0</td>
   </tr><tr>
@@ -156,7 +156,7 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
     <td class="chips"><span class="chip pass" title="desktop festive: pass" aria-label="desktop festive: pass">✓</span><span class="chip pass" title="desktop apple: pass" aria-label="desktop apple: pass">✓</span><span class="chip pass" title="mobile festive: pass" aria-label="mobile festive: pass">✓</span><span class="chip pass" title="mobile apple: pass" aria-label="mobile apple: pass">✓</span></td>
     <td class="num">24/52</td><td class="num">52/52</td>
     <td class="num">9</td><td class="num">13</td>
-    <td class="num">76s</td><td class="num">5s</td>
+    <td class="num">76s</td><td class="num">4s</td>
     <td class="num">0</td><td class="num">0</td>
     <td class="num">6</td><td class="num">0</td>
   </tr><tr>
@@ -449,6 +449,17 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
       <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/b6543b5">b6543b5</a></dd></div>
     </dl>
     
+  </article><article class="decision" data-journey="Wishlist" data-severity="3" id="owner-share-link">
+    <header><span class="sev s3">Severity 3</span><h3>Opening your own share link spoiled the surprise</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>Anti-spoiler held on the owner's wishlist page, but the public link treated them as a guest. They saw a green Claimed badge and could even claim their own items.</dd></div>
+      <div><dt>Repro</dt><dd>Have a guest reserve an item, then open your share link while signed in.</dd></div>
+      <div><dt>Evidence</dt><dd>The final first-time tester saw the badge. The new API and page tests failed on the old code.</dd></div>
+      <div><dt>Change and why</dt><dd>The API now recognizes a verified owner, and only the owner, and hides unrevealed claims. The page says it is your list and offers no claim button. Guests still see real status, so they can avoid doubling up.</dd></div>
+      <div><dt>Heuristic</dt><dd>Consistency and standards</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/073722d">073722d</a></dd></div>
+    </dl>
+    
   </article><article class="decision" data-journey="Gift lists" data-severity="2" id="new-list-opens">
     <header><span class="sev s2">Severity 2</span><h3>A new list didn't open</h3></header>
     <dl>
@@ -548,6 +559,39 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
       <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/4ca2fac">4ca2fac</a></dd></div>
     </dl>
     <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-u1-unhappy-paths-06-going-back-mid-form-keeps-a-new-exchange-from-vanishing-sile.jpg" aria-label="Enlarge: Before: Refreshing a half-filled form lost it"><img src="img/before-desktop-apple-u1-unhappy-paths-06-going-back-mid-form-keeps-a-new-exchange-from-vanishing-sile.jpg" alt="Before: Refreshing a half-filled form lost it" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-u1-unhappy-paths-06-going-back-mid-form-keeps-a-new-exchange-from-vanishing-sile.jpg" aria-label="Enlarge: After: Refreshing a half-filled form lost it"><img src="img/after-desktop-apple-u1-unhappy-paths-06-going-back-mid-form-keeps-a-new-exchange-from-vanishing-sile.jpg" alt="After: Refreshing a half-filled form lost it" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Gift lists" data-severity="2" id="home-counts">
+    <header><span class="sev s2">Severity 2</span><h3>Home's checklist stayed out of date</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>After adding people and gifts, the checklist still showed 0/3 and 0/5 until a full reload.</dd></div>
+      <div><dt>Repro</dt><dd>Add a person and a gift, then click back to Home.</dd></div>
+      <div><dt>Evidence</dt><dd>Found by the first-time tester. The new test failed on the old code.</dd></div>
+      <div><dt>Change and why</dt><dd>Home now refreshes once each time you arrive.</dd></div>
+      <div><dt>Heuristic</dt><dd>Visibility of system status</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/c762dd5">c762dd5</a></dd></div>
+    </dl>
+    
+  </article><article class="decision" data-journey="Exchange" data-severity="2" id="exchange-stale">
+    <header><span class="sev s2">Severity 2</span><h3>The organizer's page went stale in the background</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>An organizer's page stayed at 1/5 joined after everyone had joined, and the button to draw names appeared only after a manual reload.</dd></div>
+      <div><dt>Repro</dt><dd>Leave an exchange open while someone joins, then return to the tab.</dd></div>
+      <div><dt>Evidence</dt><dd>Found by the first-time tester. The new test failed on the old code.</dd></div>
+      <div><dt>Change and why</dt><dd>The page refreshes when its tab comes back into view.</dd></div>
+      <div><dt>Heuristic</dt><dd>Visibility of system status</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/89791e4">89791e4</a></dd></div>
+    </dl>
+    
+  </article><article class="decision" data-journey="Exchange" data-severity="2" id="reinvite-declined">
+    <header><span class="sev s2">Severity 2</span><h3>A declined invite could not be sent again</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>The API supports re-inviting someone who declined, but the button only showed for people who had not answered.</dd></div>
+      <div><dt>Repro</dt><dd>Have someone decline, then look for Resend on their row.</dd></div>
+      <div><dt>Evidence</dt><dd>The new test failed on the old code.</dd></div>
+      <div><dt>Change and why</dt><dd>Resend now appears for declined people until names are drawn.</dd></div>
+      <div><dt>Heuristic</dt><dd>User control and freedom</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/8a5362a">8a5362a</a></dd></div>
+    </dl>
+    
   </article><article class="decision" data-journey="Exchange" data-severity="1" id="console-noise">
     <header><span class="sev s1">Severity 1</span><h3>Participants triggered a failed request on every visit</h3></header>
     <dl>
@@ -570,24 +614,19 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
     <p class="rec"><strong>Recommendation.</strong> Check the request logs for /w/ links, and use the gift_changes table to find gifts that lost people through that dialog. Decide on any notice to users once you know the scale.</p>
     
   </article><article class="open" id="clerk-signin-hang">
-    <header><span class="sev s3">Severity 3</span><h3>Sign-in sometimes hangs after the code is accepted</h3></header>
-    <p>Now and then, Clerk's own form shows Success and then sits on a spinner at /login/factor-one, logging needs_first_factor not supported yet. The server reports the sign-in as complete. It happened in about 1 in 6 repro sign-ins for some accounts, and once in the final run, where a retry passed. Clerk's dev API was rejecting requests around the same time, so it may only affect dev. I couldn't confirm that, and I couldn't test whether a reload recovers.</p>
-    <p class="rec"><strong>Recommendation.</strong> Sign in repeatedly on production and on a real phone. If it reproduces, upgrade the Clerk packages and raise it with Clerk.</p>
+    <header><span class="sev s2">Severity 2</span><h3>Clerk sign-in hung a few times in testing</h3></header>
+    <p>I couldn't fix this and it isn't a product decision, because it lives inside Clerk's own form. Now and then, after a code was submitted, the form sat on a spinner, and once the attempt returned a 400. A reload brought back a fresh code box, so nobody is locked out. It hung in several automated runs when the script typed a digit every 40ms, and not at all in the final strict run at a person's pace. That suggests speed helped trigger it, but it doesn't prove it. I never saw retyping the code after a reload actually run, because no hang happened once the harness did that. Production is unverified.</p>
+    <p class="rec"><strong>Recommendation.</strong> Sign in a few times on production and on a real phone. If it happens there, upgrade the Clerk packages and raise it with Clerk.</p>
     
   </article><article class="open" id="reply-address">
     <header><span class="sev s3">Severity 3</span><h3>Replies to invite emails go nowhere</h3></header>
     <p>Mail comes from hello@listygifty.com, but a public DNS lookup finds no MX record, no SPF record on the domain and no DMARC record. A relative who replies to ask what this is gets a bounce, and a holiday spike is when inbox filters look hardest at new senders. I only checked public DNS. Postmark itself was not tested, and no real email was sent.</p>
     <p class="rec"><strong>Recommendation.</strong> Add an MX record or a forwarding address for hello@, and a DMARC record starting at p=none. Then send yourself one real invite and check where it lands.</p>
     
-  </article><article class="open" id="phone-tap-mismatch">
-    <header><span class="sev s2">Severity 2</span><h3>Phone runs sometimes tap the wrong spot</h3></header>
-    <p>In about 1 of 14 phone runs of the gift list journey, Chrome's phone emulation reported the page as more than twice its real width, and an automated tap landed on the wrong element. A reverted layout change made it more frequent, but the cause is still unknown. I could not reproduce it on a static page, and I don't know whether it reaches real phones.</p>
-    <p class="rec"><strong>Recommendation.</strong> Try the gift list journey on a real iPhone and Android phone during the hallway test. If taps misbehave there, treat this as a severity 3 bug.</p>
-    
   </article><article class="open" id="phone-summary-cards">
     <header><span class="sev s2">Severity 2</span><h3>Summary cards push gifts down on phones</h3></header>
-    <p>Four stacked summary cards sit above the gifts at 390px, so people scroll about a screen to reach their list. I tried a two column layout and reverted it, because it was optional and it coincided with the tap problem above.</p>
-    <p class="rec"><strong>Recommendation.</strong> Collapse the summary on phones, or move it below the gifts, once the tap problem is understood.</p>
+    <p>Four stacked summary cards sit above the gifts at 390px, so people scroll about a screen to reach their list. I tried a two column layout and reverted it while chasing a phone tap problem. That problem later turned out to be the audit's own screenshot setting, so the layout wasn't at fault, but it is still a layout choice rather than a bug.</p>
+    <p class="rec"><strong>Recommendation.</strong> Use two columns on phones, or collapse the summary. Commit d99e71a has the two column version.</p>
     
   </article><article class="open" id="peak-readiness">
     <header><span class="sev s3">Severity 3</span><h3>Be ready for the busiest week of the year</h3></header>
@@ -624,16 +663,6 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
     <p>The only path is Redo, which changes everyone's match and emails everyone. Removed people get no email. One person cancelling resets the whole family.</p>
     <p class="rec"><strong>Recommendation.</strong> Add a replace-one-person flow that only changes the two affected people, and tell the person removed.</p>
     
-  </article><article class="open" id="owner-share-spoiler">
-    <header><span class="sev s3">Severity 3</span><h3>Opening your own share link reveals what was claimed</h3></header>
-    <p>Anti-spoiler now holds on your wishlist page, but your public link must show real status so guests don't double up, and that page treats you as a guest. The final first-time tester opened their own link while signed in, saw a green Claimed badge, and now knew what they were getting. The page also offered them Claim This on their own list.</p>
-    <p class="rec"><strong>Recommendation.</strong> Have the page recognize a signed-in owner and hide claims, with a notice in the meantime on the share dialog saying your link shows claims.</p>
-    
-  </article><article class="open" id="reinvite-declined">
-    <header><span class="sev s2">Severity 2</span><h3>A declined invite can't be sent again from the page</h3></header>
-    <p>The API supports re-inviting someone who declined, but the button only shows for people who haven't answered. The organizer can also remove themselves from their own exchange.</p>
-    <p class="rec"><strong>Recommendation.</strong> Show Resend for declined people, and ask for confirmation when the organizer removes themselves.</p>
-    
   </article><article class="open" id="affiliate-plan">
     <header><span class="sev s2">Severity 2</span><h3>Be careful with the affiliate plan</h3></header>
     <p>The roadmap ranks affiliate conversion first, and distrust of sponsors came up 25 times across 6 sources. Giftful users complain about rewritten links that fail. Having no ads or commission links is an advantage today.</p>
@@ -651,7 +680,7 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
     
   </article><article class="open" id="exchange-on-home">
     <header><span class="sev s2">Severity 2</span><h3>Home doesn't mention your exchange</h3></header>
-    <p>Once an exchange exists, Home says nothing about it, and its date isn't in Upcoming Dates. Someone returning from an email has no way back from Home except the menu.</p>
+    <p>Once an exchange exists, Home says nothing about it, and its date isn't in Upcoming Dates. Someone returning from an email has no way back from Home except the menu. The same tester also found that exchange relatives never appear in People.</p>
     <p class="rec"><strong>Recommendation.</strong> Show active exchanges on Home with one clear next step, and add their dates to Upcoming Dates.</p>
     
   </article><article class="open" id="share-makes-public">
@@ -665,14 +694,9 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
     <p class="rec"><strong>Recommendation.</strong> Lead Settings with profile and notifications, and move MCP to an Integrations section. Hide business categories in personal workspaces.</p>
     
   </article><article class="open" id="live-updates">
-    <header><span class="sev s2">Severity 2</span><h3>Pages don't update when other people act</h3></header>
-    <p>The final tester's organizer page stayed at 1/5 joined after everyone had joined, and Publish appeared only after a manual refresh. The email said people had joined, but the page didn't.</p>
-    <p class="rec"><strong>Recommendation.</strong> Refresh the exchange when the tab regains focus, then consider live updates over the existing ActionCable connection.</p>
-    
-  </article><article class="open" id="home-counts">
-    <header><span class="sev s2">Severity 2</span><h3>Home's checklist doesn't refresh</h3></header>
-    <p>Found in the last validation pass, after the proof was finished, so it wasn't changed. The checklist showed Add people 0/3 and Capture gifts 0/5 after adding 2 and 1, and a full refresh corrected it. It's an objective bug, not a product call, but fixing it would have invalidated the final proof.</p>
-    <p class="rec"><strong>Recommendation.</strong> Fix it in the next pass by refreshing the bootstrap data when returning to Home.</p>
+    <header><span class="sev s2">Severity 2</span><h3>An exchange page left open doesn't update itself</h3></header>
+    <p>The exchange now refreshes when you come back to its tab, but a page left in view stays as it was. The final tester's organizer page kept saying 1/5 joined while four joined-emails arrived, and called that the worst moment of the test. Fixing it properly means polling or a live connection, which is a design choice.</p>
+    <p class="rec"><strong>Recommendation.</strong> Poll the exchange every 20 seconds or so while it's inviting, or use the existing ActionCable connection.</p>
     
   </article></div>
   </section>
@@ -773,16 +797,16 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
   </section>
   <section id="fresh">
     <h2>Fresh eyes</h2>
-    <p>Two separate fresh agents acted as first-time users. Neither knew about this audit, and each could only look at pages, click, type and read its email. Both were told not to read any code, though nothing technically prevented it. The first passed all five tasks on 149d47a and found the dashboard date bug. After that fix and the form draft fix, a brand-new agent passed all five tasks on the final commit, 4ca2fac. The results below are from the final agent, with earlier stumbles that still apply.</p>
-    <div class="tablewrap"><table class="plain"><thead><tr><th scope="col">Task</th><th scope="col">Result</th><th scope="col">Notes</th></tr></thead><tbody><tr><th scope="row">Manage gift lists</th><td><span class="pass-word">Pass</span></td><td>One try. One click made a correctly dated Christmas list.</td></tr><tr><th scope="row">Run an exchange</th><td><span class="pass-word">Pass</span></td><td>One try. Five sessions joined from real emails, the couple's rule held, and nothing showed who drew Olivia.</td></tr><tr><th scope="row">Log in and out</th><td><span class="pass-word">Pass</span></td><td>One try. Back landed on sign-in all three times, and nothing private showed.</td></tr><tr><th scope="row">Navigate</th><td><span class="pass-word">Pass</span></td><td>One try. Everything was in the menu, and /oops showed Page not found with a way home.</td></tr><tr><th scope="row">Wishlist</th><td><span class="pass-word">Pass</span></td><td>One try. A guest reserved an item with no account. Olivia's own page hid the claim, but her share link showed it.</td></tr></tbody></table></div>
-    <h3>Stumbles</h3><ul><li>Most serious: opening your own share link while signed in showed a green Claimed badge, which spoils the surprise. Logged as severity 3 under Your calls.</li><li>Annoying: the organizer's page stayed at 1/5 joined until a manual refresh, and Publish appeared only then.</li><li>Annoying: Save &amp; Add Another carried Maya onto Dad's gift.</li><li>Annoying: marking a gift Purchased left Progress at 0%.</li><li>Annoying: Home's checklist showed 0/3 and 0/5 until a full refresh.</li><li>Annoying: Nana's sign-up didn't fill in the invited email, so Nana typed four fields on a phone.</li><li>Annoying: Settings opens with an MCP OAuth URL above the profile.</li><li>Annoying: People doesn't list the relatives from an exchange.</li><li>Minor: the page says Draw names, but the button says Publish Exchange. After sign-up, Nana still had to press Join, right beside Decline.</li><li>Minor: on a phone the menu shows no Home button at first and cuts off an item, and the header takes about a sixth of the screen.</li><li>Minor: the person picker stays open and covers the Status buttons, and the rename box stays open after Enter, though it saved.</li><li>Minor: the menu says Options while the page says Settings, the F-key labels run out of order, and People shows Vendors and Investors in a family app.</li><li>Minor: Wishlists said No Wishlists Yet though the exchange has a My Wishlist, and the page says 1 items.</li><li>Minor: the guest's claim button on a phone is only a gift icon.</li><li>Confusing overall: Gift Lists, Wishlists and exchange wishlists are three separate things, Olivia sees her match right after publishing while everyone else gets an email, and What Match does, what Workspace means and whether the free gift limit is per list were all unclear.</li><li>Liked: a correctly dated list in one click, the prefilled Family Christmas form, the simple exclusion rule dialog, the funny invite and match emails, the anonymous ask, and warnings before Delete and Reveal.</li></ul>
+    <p>Fresh agents acted as first-time users. Each knew nothing about this audit and could only look at pages, click, type and read its email. They were told not to read any code, though nothing technically prevented it. An early agent found the dashboard date bug, and a later one found the share link spoiler. A brand-new agent then passed all five tasks on the final app code with no help. The results below are from that final agent.</p>
+    <div class="tablewrap"><table class="plain"><thead><tr><th scope="col">Task</th><th scope="col">Result</th><th scope="col">Notes</th></tr></thead><tbody><tr><th scope="row">Manage gift lists</th><td><span class="pass-word">Pass</span></td><td>Two tries. Save &amp; Add Another carried Maya onto Dad's gift, which it spotted and fixed. One click made a list.</td></tr><tr><th scope="row">Run an exchange</th><td><span class="pass-word">Pass</span></td><td>One try, with one forced page re-entry. Five sessions joined from real emails, the couple's rule held, and nothing showed who drew Olivia.</td></tr><tr><th scope="row">Log in and out</th><td><span class="pass-word">Pass</span></td><td>One try. Back three times gave only the sign-in page, never private content.</td></tr><tr><th scope="row">Navigate</th><td><span class="pass-word">Pass</span></td><td>One try. Everything was in the menu, and /oops showed Page not found with a way home.</td></tr><tr><th scope="row">Wishlist</th><td><span class="pass-word">Pass</span></td><td>One try. A guest reserved an item with no account. Olivia saw no claim on her page or her own share link, which said claims stay hidden here too.</td></tr></tbody></table></div>
+    <h3>Stumbles</h3><ul><li>Annoying, and the worst moment: Olivia's page stayed at 1/5 joined while everyone joined, and no draw button appeared until leaving and coming back. Logged under Your calls.</li><li>Annoying: Save &amp; Add Another kept Maya, so Dad's gift went to her until it was fixed by hand.</li><li>Annoying: the page says Draw names, but the button says Publish Exchange, which sounded like making it public.</li><li>Annoying: Settings opens with an MCP OAuth URL above the profile.</li><li>Annoying: on a phone, the guest's claim button is an unlabelled gift icon.</li><li>Minor: Purchased doesn't move Progress, and the gift stays in To Do.</li><li>Minor: the rename box stays open after Enter, the cost cell looks empty, and the Recipients card shows a warning triangle beside Ready.</li><li>Minor: Nana's sign-up doesn't fill in the invited email, and after sign-up Nana lands on Nana's Workspace with a red Upgrade button.</li><li>Minor: nothing nudges people to add wishlist items after joining, and each relative got four emails.</li><li>Minor: on a phone the menu shows only three items, with little sign of more.</li><li>Minor: Ask for more ideas sends on one click.</li><li>Minor: the menu says Options while the page says Settings, F-key labels run out of order, and People shows Favourites 1 though nobody was favourited.</li><li>Minor: exchange relatives don't appear in People, and the active exchange isn't in Upcoming Dates.</li><li>Minor: Visibility defaults to Private though sharing is the point, claim and reserve are mixed, and the page says 1 items.</li><li>Confusing overall: draft, inviting, active, Publish and Redo instead of plain draw names, Workspace for a family, what Match does on a gift list, the homepage counters that look like real data, and what the free gift limit does.</li><li>Liked: one-click Christmas list, the two-step Add Gift form, creating a person inline, the rule dialog, the invite page's one-line explanation, the emails' tone, the anonymous ask, and the spoiler protection.</li></ul>
   </section>
   <section id="limits">
     <h2>Proof and limits</h2>
     <h3>Verified</h3>
-    <ul><li>Journeys: 20 of 20 runs pass on commit 4ca2fac, up from 4 of 20 on the starting code. That covers 1440px and 390px in Festive and Apple. One run, Log in and out on mobile Festive, needed its one allowed retry after the Clerk sign-in hang listed below.</li><li>Accessibility: axe found serious or critical problems on 15 routes before and none after, in every journey run on the final commit. A separate sweep of 20 routes ran 124 audits per project on 918d766.</li><li>Keyboard: the keyboard-only passes of journeys 2 and 5 pass in both themes.</li><li>Unhappy paths: 16 of 16 checks pass in all four runs, including refresh mid-form, reused and made-up invites, signing in with a different email, an invitee who never joins, dropout through Redo, impossible rules, minimum group size, empty states and logged-out deep links.</li><li>The draw: 1,000 random groups and exclusions, plus up to 100 redraws, checked against a brute-force oracle. Nobody drew themselves, everyone gave and received once, and every exclusion held.</li><li>Secrecy: in every Journey 2 run, no API response any participant's browser received, and no post-draw email, revealed who drew them.</li><li>Email: all 15 email types reached local Mailpit through real SMTP, each with text and HTML parts and correct links. Every address was @example.com, and no real email was sent.</li><li>Database: Journey 2 confirms the saved draw is valid, and no background job failed.</li><li>Test suites on 4ca2fac: bin/local-preview e2e passed 6 of 6, Rails passed 620 runs with 0 failures, and npm test passed 7 of 7 tasks including 298 web tests.</li><li>Dashboard date fix: confirmed in a real browser and by the final tester. A Christmas list started from Home now reads Friday, December 25, 2026.</li><li>Production: the privacy fix deployed as f6fb256. The API and web services report that image, the deploy smoke tests passed, and health checks return 200.</li></ul>
+    <ul><li>Journeys: 20 of 20 runs pass on commit ceaa63d, up from 4 of 20 on the starting code. That's 1440px and 390px in Festive and Apple, with retries turned off. All 410 steps passed across journeys, unhappy paths and keyboard passes.</li><li>Accessibility: axe found serious or critical problems on 15 routes before and zero violations of any impact on the final run. A separate sweep of 20 routes ran 124 audits per project on 918d766.</li><li>Keyboard: the keyboard-only passes of journeys 2 and 5 pass in both themes.</li><li>Unhappy paths: 16 of 16 checks pass in all four runs, including refresh mid-form, reused and made-up invites, signing in with a different email, an invitee who never joins, dropout through Redo, impossible rules, minimum group size, empty states and logged-out deep links.</li><li>The draw: 1,000 random groups and exclusions, plus up to 100 redraws, checked against a brute-force oracle. Nobody drew themselves, everyone gave and received once, and every exclusion held.</li><li>Secrecy: in every Journey 2 run, no API response any participant's browser received, and no post-draw email, revealed who drew them.</li><li>Email: all 15 email types reached local Mailpit through real SMTP, each with text and HTML parts and correct links. Every address was @example.com, and no real email was sent.</li><li>Database: Journey 2 confirms the saved draw is valid, and no background job failed.</li><li>Test suites on ceaa63d: bin/local-preview e2e passed 6 of 6, Rails passed 624 runs with 0 failures, and npm test passed 7 of 7 tasks including 304 web tests.</li><li>Dashboard date fix: confirmed in a real browser. A Christmas list started from Home now reads Friday, December 25, 2026.</li><li>Production: the privacy fix deployed as f6fb256. The API and web services report that image, the deploy smoke tests passed, and health checks return 200.</li></ul>
     <h3>Not verified</h3>
-    <ul><li>Everything except the privacy fix is undeployed. The Match screen data-loss fix is on this branch and not in production.</li><li>The privacy fix was not checked against a real shared wishlist in production, because that means touching production data. The proof is the test, which fails on the old code, plus the deployed version.</li><li>Real email delivery was not tested. Mail stopped at Mailpit by instruction, so Postmark, spam placement and real inboxes are unverified.</li><li>Apple, Google, Facebook and LinkedIn sign-in were not tested. Only email codes were.</li><li>Clerk's human check is bypassed in test mode, so what a real relative sees at that step is unknown.</li><li>Phone means Chromium at 390px with touch emulation. No real iPhone, iOS Safari or Android device was used.</li><li>Time in the scoreboard is robot time on a local dev server, so it says nothing about real load speed or real people.</li><li>Intermittent: about 1 in 14 phone runs had an automated tap land on the wrong element. It didn't happen in the final run and the cause is unknown.</li><li>Axe can't score text on gradients and left thousands of nodes incomplete. Gradient stops were checked by calculation. Sampled items looked like false positives, but not all of them were reviewed.</li><li>Error pages were never rendered in an axe run, and /settings was audited in its default section only.</li><li>Known gaps left open: two quick picks in the Match dialog can overlap and the last save wins. Manage Group can't be opened by keyboard. The MCP share_holiday tool replaces the link on every call.</li><li>The first baseline had script mistakes on Festive and phones. Those journeys were fixed and rerun on the frozen starting code, so the before numbers are fair. The baseline also includes the local Clerk redirect setting, to match production.</li><li>Competitor research: Reddit refused automated reading, Google Play coverage was thin, and mention counts show how often something came up, not how common it is. Status notes on the feature list come from reading code.</li><li>GitHub reports 28 dependency vulnerabilities on the default branch, 1 of them critical. They were outside this audit and were not reviewed.</li><li>Disk space ran out during testing and crashed Docker once. It only interrupted the fresh agent's run, and no final results came from that session.</li><li>Fresh agents are not real people. Their no-code rule was an instruction, not a technical block, and the final agent made one curl status check outside the rules while diagnosing a test setup error.</li></ul>
+    <ul><li>Everything except the privacy fix is undeployed. The Match screen data-loss fix is on this branch and not in production.</li><li>The privacy fix was not checked against a real shared wishlist in production, because that means touching production data. The proof is the test, which fails on the old code, plus the deployed version.</li><li>Real email delivery was not tested. Mail stopped at Mailpit by instruction, so Postmark, spam placement and real inboxes are unverified.</li><li>Apple, Google, Facebook and LinkedIn sign-in were not tested. Only email codes were.</li><li>Clerk's human check is bypassed in test mode, so what a real relative sees at that step is unknown.</li><li>Phone means Chromium at 390px with touch emulation. No real iPhone, iOS Safari or Android device was used.</li><li>Time in the scoreboard is robot time on a local dev server, so it says nothing about real load speed or real people.</li><li>Clerk sign-in hang: unreproduced in 14 dedicated attempts, cause unknown, and production is unverified. See Your calls.</li><li>Axe can't score text on gradients and left thousands of nodes incomplete. Gradient stops were checked by calculation. Sampled items looked like false positives, but not all of them were reviewed.</li><li>Error pages were never rendered in an axe run, and /settings was audited in its default section only.</li><li>Known gaps left open: two quick picks in the Match dialog can overlap and the last save wins. Manage Group can't be opened by keyboard. The MCP share_holiday tool replaces the link on every call.</li><li>Competitor research: Reddit refused automated reading, Google Play coverage was thin, and mention counts show how often something came up, not how common it is. Status notes on the feature list come from reading code.</li><li>GitHub reports 28 dependency vulnerabilities on the default branch, 1 of them critical. They were outside this audit and were not reviewed.</li><li>Disk space ran out during testing and crashed Docker once. It only interrupted the fresh agent's run, and no final results came from that session.</li><li>A phone tap problem appeared in about 1 in 10 journey runs during the audit. It was the audit's own screenshot setting, not the app: 60 of 60 phone runs passed once it was removed, and it only affected the test tool.</li><li>Fresh agents are not real people, and their no-code rule was an instruction, not a technical block. Run the hallway test too.</li><li>The Clerk hang recovery was never seen end to end: a reload brought back the code box, but no hang occurred after the harness learned to retype the code.</li><li>The owner share link fix was checked by tests and the final agent, not by a dedicated scripted journey.</li></ul>
   </section>
 </div>
 <dialog id="lightbox" aria-label="Enlarged screenshot"><img id="lightbox-image" alt=""><form method="dialog"><button type="submit">Close</button></form></dialog>

@@ -720,5 +720,65 @@
         "after": "06-going-back-mid-form-keeps-a-new-exchange-from-vanishing-sile.png"
       }
     ]
+  },
+  {
+    "id": "owner-share-link",
+    "severity": 3,
+    "journey": "Wishlist",
+    "title": "Opening your own share link spoiled the surprise",
+    "heuristic": "Consistency and standards",
+    "problem": "Anti-spoiler held on the owner's wishlist page, but the public link treated them as a guest. They saw a green Claimed badge and could even claim their own items.",
+    "repro": "Have a guest reserve an item, then open your share link while signed in.",
+    "evidence": "The final first-time tester saw the badge. The new API and page tests failed on the old code.",
+    "change": "The API now recognizes a verified owner, and only the owner, and hides unrevealed claims. The page says it is your list and offers no claim button. Guests still see real status, so they can avoid doubling up.",
+    "commits": [
+      "073722d"
+    ],
+    "frames": []
+  },
+  {
+    "id": "home-counts",
+    "severity": 2,
+    "journey": "Gift lists",
+    "title": "Home's checklist stayed out of date",
+    "heuristic": "Visibility of system status",
+    "problem": "After adding people and gifts, the checklist still showed 0/3 and 0/5 until a full reload.",
+    "repro": "Add a person and a gift, then click back to Home.",
+    "evidence": "Found by the first-time tester. The new test failed on the old code.",
+    "change": "Home now refreshes once each time you arrive.",
+    "commits": [
+      "c762dd5"
+    ],
+    "frames": []
+  },
+  {
+    "id": "exchange-stale",
+    "severity": 2,
+    "journey": "Exchange",
+    "title": "The organizer's page went stale in the background",
+    "heuristic": "Visibility of system status",
+    "problem": "An organizer's page stayed at 1/5 joined after everyone had joined, and the button to draw names appeared only after a manual reload.",
+    "repro": "Leave an exchange open while someone joins, then return to the tab.",
+    "evidence": "Found by the first-time tester. The new test failed on the old code.",
+    "change": "The page refreshes when its tab comes back into view.",
+    "commits": [
+      "89791e4"
+    ],
+    "frames": []
+  },
+  {
+    "id": "reinvite-declined",
+    "severity": 2,
+    "journey": "Exchange",
+    "title": "A declined invite could not be sent again",
+    "heuristic": "User control and freedom",
+    "problem": "The API supports re-inviting someone who declined, but the button only showed for people who had not answered.",
+    "repro": "Have someone decline, then look for Resend on their row.",
+    "evidence": "The new test failed on the old code.",
+    "change": "Resend now appears for declined people until names are drawn.",
+    "commits": [
+      "8a5362a"
+    ],
+    "frames": []
   }
 ]
