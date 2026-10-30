@@ -636,6 +636,24 @@ describe("icon buttons in the roster", () => {
   });
 });
 
+describe("coming back to the exchange page", () => {
+  it("picks up people who joined while the tab was in the background", async () => {
+    const joined = person(201, "Parker", { status: "accepted" });
+    mocks.getBySlug
+      .mockResolvedValueOnce(exchangeWith())
+      .mockResolvedValue(exchangeWith({ exchange_participants: [organizer, joined] }));
+    await renderPage();
+    const calls = mocks.getBySlug.mock.calls.length;
+
+    await act(async () => {
+      window.dispatchEvent(new Event("focus"));
+    });
+
+    await waitFor(() => expect(mocks.getBySlug.mock.calls.length).toBeGreaterThan(calls));
+    expect(await screen.findByText("2/2 joined")).toBeTruthy();
+  });
+});
+
 describe("someone who declined", () => {
   it("can be invited again", async () => {
     const declined = { ...person(201, "Parker"), status: "declined" as const };

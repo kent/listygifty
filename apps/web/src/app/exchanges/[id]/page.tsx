@@ -195,6 +195,19 @@ export default function ExchangeDetailPage({
     }
   }, [slug]);
 
+  // Other people join while this tab sits in the background.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void refreshExchange();
+    };
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [isAuthenticated, refreshExchange]);
 
   const handleAddParticipant = async (e: React.FormEvent) => {
     e.preventDefault();
