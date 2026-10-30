@@ -43,7 +43,7 @@ function GiftCaptureDialog(props: NewGiftDialogProps) {
     <Dialog open onOpenChange={close}>
       <DialogContent className="flex w-[calc(100%_-_2rem)] max-h-[90dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-md" showCloseButton={!saving}>
         <DialogHeader className="px-6 pt-6 pb-5 text-left">
-          <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-primary">
+          <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-link">
             <GiftIcon className="size-4" />
             {step === "name" ? "1 of 2 · The gift" : "2 of 2 · The details"}
           </p>
