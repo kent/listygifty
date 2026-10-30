@@ -345,7 +345,7 @@ export default function HolidayDetailPage() {
                   ) : (
                     <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                       <Users className="h-4 w-4" />
-                      <span>No collaborators yet — share your link.</span>
+                      <span>No collaborators yet. Share your link.</span>
                     </div>
                   )}
                 </div>
