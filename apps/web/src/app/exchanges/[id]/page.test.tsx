@@ -635,3 +635,13 @@ describe("icon buttons in the roster", () => {
     expect(nameless).toEqual([]);
   });
 });
+
+describe("someone who declined", () => {
+  it("can be invited again", async () => {
+    const declined = { ...person(201, "Parker"), status: "declined" as const };
+    mocks.getBySlug.mockResolvedValue(exchangeWith({ exchange_participants: [organizer, declined] }));
+    await renderPage();
+
+    expect(await screen.findByRole("button", { name: /Resend invite to Parker/ })).toBeTruthy();
+  });
+});

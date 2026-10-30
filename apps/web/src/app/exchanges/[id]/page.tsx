@@ -2,7 +2,7 @@
 
 import { parseCalendarDate } from "@/lib/dates";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
@@ -187,13 +187,14 @@ export default function ExchangeDetailPage({
     setLoadAttempt((attempt) => attempt + 1);
   };
 
-  const refreshExchange = async () => {
+  const refreshExchange = useCallback(async () => {
     try {
       setExchange(await giftExchangesService.getBySlug(slug));
     } catch {
       // The change itself saved, so keep what's on screen until the next load.
     }
-  };
+  }, [slug]);
+
 
   const handleAddParticipant = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -771,7 +772,7 @@ export default function ExchangeDetailPage({
                             <Copy className="h-3 w-3" />
                           </Button>
                         )}
-                        {isOwner && participant.status === "invited" && (
+                        {isOwner && participant.status !== "accepted" && exchange.status !== "active" && exchange.status !== "completed" && (
                           <Button
                             size="icon-sm"
                             variant="ghost"
