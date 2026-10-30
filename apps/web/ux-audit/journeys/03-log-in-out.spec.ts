@@ -23,8 +23,8 @@ test("logging in and out: nothing private is left behind", async ({ browser }, t
 
   await journey.step("Sign in with my email", page, async () => {
     await signInThroughForm(page, email);
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 });
     await waitUntilSignedIn(page);
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 });
   }, { required: true });
 
   await journey.step("See that I am signed in", page, async () => {

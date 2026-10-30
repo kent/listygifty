@@ -1,8 +1,11 @@
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
 import { expect, type Page } from "@playwright/test";
+import fs from "node:fs";
+import path from "node:path";
 
 // Clerk's test mode: +clerk_test addresses never get mail and accept this code.
 const TEST_CODE = "424242";
+const HANG_LOG = path.resolve(__dirname, "../../../../docs/ux-audit/runs/clerk-hangs.log");
 
 /**
  * Must run before the first navigation: Clerk reads the bypass when it loads,
@@ -37,10 +40,23 @@ export async function signUpThroughForm(
   await enterCode(page);
 }
 
+/**
+ * Clerk's own form occasionally hangs on a spinner after accepting the code. The
+ * server reports success, then a concurrent refresh overwrites the form's state.
+ * A person would reload, so do that, and log it so the hang is never hidden.
+ */
 export async function waitUntilSignedIn(page: Page) {
-  await expect
-    .poll(() => page.evaluate(() => Boolean((window as unknown as { Clerk?: { user?: unknown } }).Clerk?.user)), {
-      timeout: 20_000,
-    })
-    .toBe(true);
+  const signedIn = () =>
+    page.evaluate(() => Boolean((window as unknown as { Clerk?: { user?: unknown } }).Clerk?.user));
+
+  try {
+    await expect.poll(signedIn, { timeout: 10_000 }).toBe(true);
+    return;
+  } catch {
+    fs.appendFileSync(HANG_LOG, `${new Date().toISOString()} hung at ${page.url()}\n`);
+  }
+
+  await page.reload();
+  await expect.poll(signedIn, { timeout: 15_000 }).toBe(true);
+  fs.appendFileSync(HANG_LOG, `${new Date().toISOString()} reload recovered at ${page.url()}\n`);
 }

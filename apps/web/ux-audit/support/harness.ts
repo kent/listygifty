@@ -131,6 +131,9 @@ export class Journey {
     try {
       await page.waitForLoadState("domcontentloaded", { timeout: 5_000 }).catch(() => {});
       await page.waitForTimeout(350);
+      // Next sets the title just after a client navigation. A page with none is
+      // still reported, because this only waits.
+      await page.waitForFunction(() => document.title.length > 0, undefined, { timeout: 3_000 }).catch(() => {});
       // Don't pass animations: "disabled". On an emulated phone it leaves about 1 in
       // 10 pages laid out too wide, and later taps land on the wrong element.
       await page.screenshot({ path: path.join(this.dir, file), style: SCREENSHOT_STYLE });
