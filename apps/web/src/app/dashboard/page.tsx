@@ -1,6 +1,7 @@
 "use client";
 
-import { parseDateOnly, toCalendarDate } from "@/lib/dates";
+import { parseDateOnly } from "@/lib/dates";
+import { detectUserRegion, getNextHolidayDate } from "@/lib/regional-holidays";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -439,15 +440,16 @@ export default function DashboardPage() {
   const handleStartPlanning = async (template: Holiday) => {
     setCreatingHolidayId(template.id);
     try {
-      const currentYear = new Date().getFullYear();
+      const date = getNextHolidayDate(template.name, detectUserRegion());
+      const year = date ? date.slice(0, 4) : new Date().getFullYear();
       const newHoliday = await holidaysService.create({
-        name: `${template.name} ${currentYear}`,
-        date: toCalendarDate(new Date()),
+        name: `${template.name} ${year}`,
+        date,
         icon: template.icon || undefined,
       });
       setUserHolidays((prev) => [...prev, newHoliday]);
       void refreshWorkspaces();
-      toast.success(`Started planning ${template.name} ${currentYear}!`);
+      toast.success(`Started planning ${template.name} ${year}!`);
       router.push(`/holidays/${newHoliday.id}`);
     } catch {
       toast.error("Failed to create gift list");

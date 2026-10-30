@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-import { getUpcomingHolidaysForRegion } from "./regional-holidays";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getNextHolidayDate, getUpcomingHolidaysForRegion } from "./regional-holidays";
 import { parseCalendarDate, parseDateOnly, toCalendarDate } from "./dates";
 
 describe("calendar dates", () => {
@@ -36,5 +36,40 @@ describe("calendar dates", () => {
     for (const value of [undefined, null, "", "invalid", "2026-02-29", "2026-13-01", "2026-00-00", "2026-12-25T00:00:00Z"]) {
       expect(parseDateOnly(value)).toBeNull();
     }
+  });
+});
+
+describe("getNextHolidayDate", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 9, 30, 12));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("finds the next Christmas, not today", () => {
+    expect(getNextHolidayDate("Christmas", "north_america")).toBe("2026-12-25");
+  });
+
+  it("rolls over to next year once the day has passed", () => {
+    vi.setSystemTime(new Date(2026, 11, 26, 12));
+    expect(getNextHolidayDate("Christmas", "north_america")).toBe("2027-12-25");
+  });
+
+  it("matches a template name to its regional entry", () => {
+    expect(getNextHolidayDate("Mother's Day", "north_america")).toBe("2027-05-09");
+    expect(getNextHolidayDate("Mother's Day", "europe")).toBe("2027-03-07");
+  });
+
+  it("works out moving holidays and ones from other regions", () => {
+    expect(getNextHolidayDate("Easter", "north_america")).toBe("2027-03-28");
+    expect(getNextHolidayDate("Diwali", "north_america")).toBe("2026-10-31");
+  });
+
+  it("gives no date to occasions without one", () => {
+    expect(getNextHolidayDate("Birthday", "north_america")).toBeNull();
+    expect(getNextHolidayDate("Something else", "north_america")).toBeNull();
   });
 });

@@ -281,6 +281,37 @@ export function getRegionDisplayName(region: Region): string {
   return names[region];
 }
 
+function holidayDateInYear(holiday: HolidayDefinition, year: number): Date | null {
+  if (holiday.name === "Easter") {
+    const easter = getEasterDate(year);
+    return new Date(year, easter.month - 1, easter.day);
+  }
+  const day = typeof holiday.day === "function" ? holiday.day(year) : holiday.day;
+  return day > 0 ? new Date(year, holiday.month - 1, day) : null;
+}
+
+/**
+ * The next date of a named occasion, preferring the user's region. Template
+ * names are shorter than regional ones, such as "Mother's Day (UK)". Returns
+ * null for occasions with no fixed date, such as birthdays.
+ */
+export function getNextHolidayDate(name: string, region: Region): string | null {
+  const matches = HOLIDAY_DATABASE.filter(
+    (holiday) => holiday.month !== 0 || holiday.name === "Easter"
+  ).filter((holiday) => holiday.name === name || holiday.name.startsWith(`${name} (`));
+  const candidates = [...matches.filter((holiday) => holiday.regions.includes(region)), ...matches];
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (const holiday of candidates) {
+    for (const year of [today.getFullYear(), today.getFullYear() + 1]) {
+      const date = holidayDateInYear(holiday, year);
+      if (date && date > today) return toCalendarDate(date);
+    }
+  }
+  return null;
+}
+
 /**
  * Get upcoming holidays for a specific region
  */

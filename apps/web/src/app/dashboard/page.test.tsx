@@ -132,6 +132,15 @@ describe("starting a gift list from the dashboard", () => {
     expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/^Started planning Christmas \d{4}!$/));
   });
 
+  it("dates the list on the holiday itself, not today", async () => {
+    mocks.createHoliday.mockResolvedValue({ ...holiday, id: 42 });
+    render(<DashboardPage />);
+    fireEvent.click(screen.getByRole("button", { name: /Christmas/ }));
+
+    await waitFor(() => expect(mocks.createHoliday).toHaveBeenCalled());
+    expect(mocks.createHoliday.mock.calls[0][0].date).toMatch(/^\d{4}-12-25$/);
+  });
+
   it("stays on the dashboard when the list can't be created", async () => {
     mocks.createHoliday.mockRejectedValue(new Error("Nope"));
     render(<DashboardPage />);
