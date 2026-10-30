@@ -31,6 +31,7 @@ export function WorkspaceSwitcher() {
         variant="ghost"
         className="flex items-center gap-2 px-3 py-2 h-auto"
         disabled
+        aria-label="Loading workspace"
       >
         <div className="h-4 w-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
         <span className="w-20 h-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
