@@ -7,13 +7,6 @@
     "recommendation": "Check the request logs for /w/ links, and use the gift_changes table to find gifts that lost people through that dialog. Decide on any notice to users once you know the scale."
   },
   {
-    "id": "clerk-signin-hang",
-    "severity": 2,
-    "title": "Clerk sign-in hung a few times in testing",
-    "question": "I couldn't fix this and it isn't a product decision, because it lives inside Clerk's own form. Now and then, after a code was submitted, the form sat on a spinner, and once the attempt returned a 400. A reload brought back a fresh code box, so nobody is locked out. It hung in several automated runs when the script typed a digit every 40ms, and not at all in the final strict run at a person's pace. That suggests speed helped trigger it, but it doesn't prove it. I never saw retyping the code after a reload actually run, because no hang happened once the harness did that. Production is unverified.",
-    "recommendation": "Sign in a few times on production and on a real phone. If it happens there, upgrade the Clerk packages and raise it with Clerk."
-  },
-  {
     "id": "reply-address",
     "severity": 3,
     "title": "Replies to invite emails go nowhere",
@@ -121,12 +114,5 @@
     "title": "Settings opens with developer tools",
     "question": "Settings leads with Your MCP OAuth URL, above the person's profile. That means nothing to most families. The tester also found Vendors, Partners and Investors in People, and Upgrade on every page while Billing says Soon.",
     "recommendation": "Lead Settings with profile and notifications, and move MCP to an Integrations section. Hide business categories in personal workspaces."
-  },
-  {
-    "id": "live-updates",
-    "severity": 2,
-    "title": "An exchange page left open doesn't update itself",
-    "question": "The exchange now refreshes when you come back to its tab, but a page left in view stays as it was. The final tester's organizer page kept saying 1/5 joined while four joined-emails arrived, and called that the worst moment of the test. Fixing it properly means polling or a live connection, which is a design choice.",
-    "recommendation": "Poll the exchange every 20 seconds or so while it's inviting, or use the existing ActionCable connection."
   }
 ]

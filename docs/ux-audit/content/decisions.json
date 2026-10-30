@@ -757,12 +757,13 @@
     "journey": "Exchange",
     "title": "The organizer's page went stale in the background",
     "heuristic": "Visibility of system status",
-    "problem": "An organizer's page stayed at 1/5 joined after everyone had joined, and the button to draw names appeared only after a manual reload.",
-    "repro": "Leave an exchange open while someone joins, then return to the tab.",
-    "evidence": "Found by the first-time tester. The new test failed on the old code.",
-    "change": "The page refreshes when its tab comes back into view.",
+    "problem": "An organizer's page stayed at 1/5 joined after everyone had joined, and the button to draw names appeared only after a manual reload. The first-time tester called this the worst moment of the test.",
+    "repro": "Leave an exchange open while someone joins.",
+    "evidence": "Found by first-time testers. The new tests failed on the old code, and a scripted browser check proves it updates with no reload.",
+    "change": "The page refreshes when its tab comes back into view, and every 15 seconds while people can still join.",
     "commits": [
-      "89791e4"
+      "89791e4",
+      "bfddc56"
     ],
     "frames": []
   },
@@ -778,6 +779,52 @@
     "change": "Resend now appears for declined people until names are drawn.",
     "commits": [
       "8a5362a"
+    ],
+    "frames": []
+  },
+  {
+    "id": "rename-box",
+    "severity": 2,
+    "journey": "Gift lists",
+    "title": "The rename box reopened after pressing Enter",
+    "heuristic": "Visibility of system status",
+    "problem": "Pressing Enter saved the new name, but the box stayed open, so it looked like nothing had happened.",
+    "repro": "Click a gift name, change it, and press Enter.",
+    "evidence": "Found by the first-time tester. Focus moved to the rename button during the keypress, so the same Enter pressed it. The test fails without the fix, and a scripted browser check confirms it.",
+    "change": "Enter now saves and closes.",
+    "commits": [
+      "8410468"
+    ],
+    "frames": []
+  },
+  {
+    "id": "claim-label",
+    "severity": 2,
+    "journey": "Wishlist",
+    "title": "The guest claim button was a bare icon on phones",
+    "heuristic": "Recognition rather than recall",
+    "problem": "On a phone the button showed only a gift icon, so a guest had to guess what it did.",
+    "repro": "Open a shared wishlist at 390px.",
+    "evidence": "Found by the first-time tester. Confirmed by a scripted browser check.",
+    "change": "The button now says Claim This at every width.",
+    "commits": [
+      "92c4e25"
+    ],
+    "frames": []
+  },
+  {
+    "id": "small-copy",
+    "severity": 1,
+    "journey": "Wishlist",
+    "title": "Small wording and icon slips",
+    "heuristic": "Aesthetic and minimalist design",
+    "problem": "Wishlists said 1 items, and the Recipients card showed a warning triangle beside Ready.",
+    "repro": "Open a wishlist with one item, or a gift list with every gift assigned.",
+    "evidence": "Found by the first-time tester.",
+    "change": "Fixed the plural, and the icon now matches the state.",
+    "commits": [
+      "86c4b2a",
+      "ae4d8e7"
     ],
     "frames": []
   }

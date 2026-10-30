@@ -20,6 +20,7 @@ const JOURNEYS = [
 const EXTRAS = [
   ["u1-unhappy-paths", "Unhappy paths"],
   ["k1-keyboard", "Keyboard only"],
+  ["r1-regressions", "Late fixes in a browser"],
 ];
 
 const esc = (value) =>

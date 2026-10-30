@@ -1,19 +1,20 @@
 {
   "repo": "https://github.com/kent/listygifty",
-  "found": 56,
-  "fixed": 38,
-  "open": 18,
+  "found": 57,
+  "fixed": 41,
+  "open": 16,
   "summary": "On the starting code, only 4 of 20 journey runs passed, all of them gift lists. A new relative lost their invite at sign-up, guests could not open shared links, wishlists had no menu entry, and the exchange page ran off the side of phones. On the final commit, all 20 runs pass at 1440px and 390px in both themes, with retries off. One privacy fix is live in production. Everything else is on the ux-audit branch and not deployed.",
   "verified": [
-    "Journeys: 20 of 20 runs pass on commit ceaa63d, up from 4 of 20 on the starting code. That's 1440px and 390px in Festive and Apple, with retries turned off. All 410 steps passed across journeys, unhappy paths and keyboard passes.",
+    "Journeys: 20 of 20 runs pass on commit 9c5a90a, up from 4 of 20 on the starting code. That's 1440px and 390px in Festive and Apple, with retries turned off. All 438 steps passed across journeys, unhappy paths, keyboard passes and the late-fix checks.",
     "Accessibility: axe found serious or critical problems on 15 routes before and zero violations of any impact on the final run. A separate sweep of 20 routes ran 124 audits per project on 918d766.",
     "Keyboard: the keyboard-only passes of journeys 2 and 5 pass in both themes.",
     "Unhappy paths: 16 of 16 checks pass in all four runs, including refresh mid-form, reused and made-up invites, signing in with a different email, an invitee who never joins, dropout through Redo, impossible rules, minimum group size, empty states and logged-out deep links.",
+    "Late fixes: a scripted browser check in all four combinations covers the owner's share link, the self-updating exchange page, Home's checklist, the rename box, the phone claim label and sign-in recovery after a forced failure.",
     "The draw: 1,000 random groups and exclusions, plus up to 100 redraws, checked against a brute-force oracle. Nobody drew themselves, everyone gave and received once, and every exclusion held.",
     "Secrecy: in every Journey 2 run, no API response any participant's browser received, and no post-draw email, revealed who drew them.",
     "Email: all 15 email types reached local Mailpit through real SMTP, each with text and HTML parts and correct links. Every address was @example.com, and no real email was sent.",
     "Database: Journey 2 confirms the saved draw is valid, and no background job failed.",
-    "Test suites on ceaa63d: bin/local-preview e2e passed 6 of 6, Rails passed 624 runs with 0 failures, and npm test passed 7 of 7 tasks including 304 web tests.",
+    "Test suites on 9c5a90a: bin/local-preview e2e passed 6 of 6, Rails passed 624 runs with 0 failures, and npm test passed 7 of 7 tasks including 306 web tests.",
     "Dashboard date fix: confirmed in a real browser. A Christmas list started from Home now reads Friday, December 25, 2026.",
     "Production: the privacy fix deployed as f6fb256. The API and web services report that image, the deploy smoke tests passed, and health checks return 200."
   ],
@@ -25,7 +26,6 @@
     "Clerk's human check is bypassed in test mode, so what a real relative sees at that step is unknown.",
     "Phone means Chromium at 390px with touch emulation. No real iPhone, iOS Safari or Android device was used.",
     "Time in the scoreboard is robot time on a local dev server, so it says nothing about real load speed or real people.",
-    "Clerk sign-in hang: unreproduced in 14 dedicated attempts, cause unknown, and production is unverified. See Your calls.",
     "Axe can't score text on gradients and left thousands of nodes incomplete. Gradient stops were checked by calculation. Sampled items looked like false positives, but not all of them were reviewed.",
     "Error pages were never rendered in an axe run, and /settings was audited in its default section only.",
     "Known gaps left open: two quick picks in the Match dialog can overlap and the last save wins. Manage Group can't be opened by keyboard. The MCP share_holiday tool replaces the link on every call.",
@@ -34,55 +34,55 @@
     "Disk space ran out during testing and crashed Docker once. It only interrupted the fresh agent's run, and no final results came from that session.",
     "A phone tap problem appeared in about 1 in 10 journey runs during the audit. It was the audit's own screenshot setting, not the app: 60 of 60 phone runs passed once it was removed, and it only affected the test tool.",
     "Fresh agents are not real people, and their no-code rule was an instruction, not a technical block. Run the hallway test too.",
-    "The Clerk hang recovery was never seen end to end: a reload brought back the code box, but no hang occurred after the harness learned to retype the code.",
-    "The owner share link fix was checked by tests and the final agent, not by a dedicated scripted journey."
+    "A sign-in hang appeared in some automated runs. It was the test script typing the code before Clerk had sent it: Clerk answered verification_not_sent. A person has no code until the email arrives, so this can't happen to real people through that path. A forced failure also proved that reloading and retyping recovers.",
+    "One final pass was interrupted when this machine lost its network connection, which stopped Clerk loading and Docker reaching its registry. That pass was discarded and the whole run repeated. The published results are from the clean rerun."
   ],
   "fresh": {
-    "intro": "Fresh agents acted as first-time users. Each knew nothing about this audit and could only look at pages, click, type and read its email. They were told not to read any code, though nothing technically prevented it. An early agent found the dashboard date bug, and a later one found the share link spoiler. A brand-new agent then passed all five tasks on the final app code with no help. The results below are from that final agent.",
+    "intro": "Fresh agents acted as first-time users. Each knew nothing about this audit and could only look at pages, click, type and read its email. They were told not to read any code, though nothing technically prevented it. Earlier agents found the dashboard date bug, the share link spoiler and the stale exchange page, all now fixed. A brand-new agent then passed all five tasks with no outside help on the final commit, 9c5a90a. The results below are from that final agent.",
     "tasks": [
       {
         "name": "Manage gift lists",
         "pass": true,
-        "note": "Two tries. Save & Add Another carried Maya onto Dad's gift, which it spotted and fixed. One click made a list."
+        "note": "One try, one correction. Save & Add Another carried Maya onto the next gift, which it spotted and fixed."
       },
       {
         "name": "Run an exchange",
         "pass": true,
-        "note": "One try, with one forced page re-entry. Five sessions joined from real emails, the couple's rule held, and nothing showed who drew Olivia."
+        "note": "One try. All five joined from real emails, each got one match, and the couple's rule held. Nothing revealed who drew anyone, even to the organizer."
       },
       {
         "name": "Log in and out",
         "pass": true,
-        "note": "One try. Back three times gave only the sign-in page, never private content."
+        "note": "One try. Back five times went to sign-in each time. It read the page after each press, so a split-second flash can't be ruled out."
       },
       {
         "name": "Navigate",
         "pass": true,
-        "note": "One try. Everything was in the menu, and /oops showed Page not found with a way home."
+        "note": "One try. Everything was found, and /oops showed a clear page with a way home."
       },
       {
         "name": "Wishlist",
         "pass": true,
-        "note": "One try. A guest reserved an item with no account. Olivia saw no claim on her page or her own share link, which said claims stay hidden here too."
+        "note": "One try. A guest reserved an item with no account. Olivia's page, inbox and own share link all kept the surprise."
       }
     ],
     "stumbles": [
-      "Annoying, and the worst moment: Olivia's page stayed at 1/5 joined while everyone joined, and no draw button appeared until leaving and coming back. Logged under Your calls.",
-      "Annoying: Save & Add Another kept Maya, so Dad's gift went to her until it was fixed by hand.",
-      "Annoying: the page says Draw names, but the button says Publish Exchange, which sounded like making it public.",
-      "Annoying: Settings opens with an MCP OAuth URL above the profile.",
-      "Annoying: on a phone, the guest's claim button is an unlabelled gift icon.",
-      "Minor: Purchased doesn't move Progress, and the gift stays in To Do.",
-      "Minor: the rename box stays open after Enter, the cost cell looks empty, and the Recipients card shows a warning triangle beside Ready.",
-      "Minor: Nana's sign-up doesn't fill in the invited email, and after sign-up Nana lands on Nana's Workspace with a red Upgrade button.",
-      "Minor: nothing nudges people to add wishlist items after joining, and each relative got four emails.",
-      "Minor: on a phone the menu shows only three items, with little sign of more.",
-      "Minor: Ask for more ideas sends on one click.",
-      "Minor: the menu says Options while the page says Settings, F-key labels run out of order, and People shows Favourites 1 though nobody was favourited.",
-      "Minor: exchange relatives don't appear in People, and the active exchange isn't in Upcoming Dates.",
-      "Minor: Visibility defaults to Private though sharing is the point, claim and reserve are mixed, and the page says 1 items.",
-      "Confusing overall: draft, inviting, active, Publish and Redo instead of plain draw names, Workspace for a family, what Match does on a gift list, the homepage counters that look like real data, and what the free gift limit does.",
-      "Liked: one-click Christmas list, the two-step Add Gift form, creating a person inline, the rule dialog, the invite page's one-line explanation, the emails' tone, the anonymous ask, and the spoiler protection."
+      "Annoying: Save & Add Another kept Maya selected, so the next gift went to Maya and Dad.",
+      "Annoying: marking a gift Purchased left Progress at 0%, and it wasn't clear which status counts.",
+      "Annoying: gift names look like plain text, and the row menu wasn't visible until hovering.",
+      "Annoying: the page says Draw names, but the button says Publish Exchange.",
+      "Annoying: Nana's sign-up doesn't fill in the invited email, and asks for name, email, phone and password.",
+      "Annoying: Settings opens with a large MCP OAuth URL panel above Profile.",
+      "Minor: the Recipients card says Ready with no gifts on the list, and the 10 free gifts limit appears with no warning.",
+      "Minor: the person picker stays open after choosing, invites are one dialog per person, and Add Rule appears only after a second person.",
+      "Minor: Copy join link beside Add is unclear, and invite emails don't say what Listy Gifty is.",
+      "Minor: Home doesn't show the exchange, not even under Upcoming Dates, and exchange relatives aren't in People.",
+      "Minor: on a phone the nav runs off screen, and My Wishlist sits below the fold with no prompt.",
+      "Minor: a mutual pair, where two people drew each other, felt less secret. The rules allow it.",
+      "Minor: the menu says Options, F-key hints skip around, and People shows Favourites 1 though nobody was favourited.",
+      "Minor: wishlists default to Private, a guest needs a name and email to claim, no success message appears after claiming, and claim and reserve are mixed.",
+      "Confusing overall: exchange wishlists are separate from Wishlists, Draw and Publish mean the same thing, Match on a gift list isn't explained, and Workspace and Upgrade are unclear for a family.",
+      "Liked: one-click Christmas, the prefilled Family Christmas setup, the one-line invite explanation, simple exclusion rules, keeping names out of emails, anti-spoiler holding everywhere, and the pixel theme's personality."
     ]
   }
 }
