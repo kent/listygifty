@@ -111,6 +111,7 @@ function PublicItemCard({
               <Button
                 size="sm"
                 onClick={() => onClaim(item)}
+                aria-label={`Claim this ${item.name}`}
                 className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
               >
                 <Gift className="h-4 w-4 sm:mr-2" />
@@ -333,11 +334,13 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
           </DialogHeader>
           <form onSubmit={handleClaim} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
+              <label htmlFor="claimer-name" className="text-sm font-medium flex items-center gap-2">
                 <User className="h-4 w-4 text-slate-400" />
                 Your Name *
               </label>
               <Input
+                id="claimer-name"
+                autoComplete="name"
                 value={claimerName}
                 onChange={(e) => setClaimerName(e.target.value)}
                 placeholder="Enter your name"
@@ -346,12 +349,14 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
+              <label htmlFor="claimer-email" className="text-sm font-medium flex items-center gap-2">
                 <Mail className="h-4 w-4 text-slate-400" />
                 Your Email *
               </label>
               <Input
+                id="claimer-email"
                 type="email"
+                autoComplete="email"
                 value={claimerEmail}
                 onChange={(e) => setClaimerEmail(e.target.value)}
                 placeholder="your@email.com"
@@ -363,12 +368,13 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
             </div>
 
             <div className="space-y-3 pt-2">
-              <p className="text-sm font-medium">Have you already purchased it?</p>
-              <div className="flex gap-2">
+              <p id="claim-purchased-label" className="text-sm font-medium">Have you already purchased it?</p>
+              <div role="group" aria-labelledby="claim-purchased-label" className="flex gap-2">
                 <Button
                   type="button"
                   variant={!isPurchased ? "default" : "outline"}
-                  className={!isPurchased ? "bg-violet-500 hover:bg-violet-600 flex-1" : "flex-1"}
+                  aria-pressed={!isPurchased}
+                  className="flex-1"
                   onClick={() => setIsPurchased(false)}
                 >
                   <Gift className="h-4 w-4 mr-2" />
@@ -377,7 +383,8 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
                 <Button
                   type="button"
                   variant={isPurchased ? "default" : "outline"}
-                  className={isPurchased ? "bg-green-500 hover:bg-green-600 flex-1" : "flex-1"}
+                  aria-pressed={isPurchased}
+                  className="flex-1"
                   onClick={() => setIsPurchased(true)}
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
