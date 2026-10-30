@@ -40,7 +40,7 @@ export function HolidaysNav({ activeSection, onSectionChange, activeCounts }: Ho
                 <Icon className="h-4 w-4" />
                 <span>{label}</span>
                 {count !== null && (
-                  <span className="text-xs text-slate-500 md:ml-auto">{count}</span>
+                  <span className="text-xs text-slate-600 dark:text-slate-500 md:ml-auto">{count}</span>
                 )}
               </button>
             </li>

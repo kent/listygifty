@@ -90,7 +90,7 @@ function StatusItem({
         <span className="text-slate-700 dark:text-slate-200 font-medium">{status.name}</span>
       </div>
       <div className="flex items-center gap-3">
-        <span className="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-xs font-mono text-slate-500 dark:text-slate-400">
+        <span className="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700/50 text-xs font-mono text-slate-700 dark:text-slate-400">
           #{status.position}
         </span>
         <button
@@ -99,7 +99,7 @@ function StatusItem({
           className={cn(
             "flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200",
             "opacity-0 group-hover:opacity-100",
-            "text-slate-500 hover:text-red-400 hover:bg-red-500/10",
+            "text-slate-600 dark:text-slate-500 hover:text-red-400 hover:bg-red-500/10",
             "disabled:opacity-50 disabled:cursor-not-allowed"
           )}
         >
@@ -126,7 +126,7 @@ function StatusList({
             <Tags className="h-8 w-8 text-slate-400 dark:text-slate-500" />
           </div>
           <p className="text-slate-600 dark:text-slate-400 font-medium mb-1">No gift statuses yet</p>
-          <p className="text-sm text-slate-500">Add statuses to track your gift progress</p>
+          <p className="text-sm text-slate-600 dark:text-slate-500">Add statuses to track your gift progress</p>
         </div>
       </div>
     );
@@ -171,7 +171,7 @@ export function GiftStatusSection({
 
       {/* Suggestions */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-slate-500 flex items-center gap-1.5">
+        <span className="text-xs text-slate-600 dark:text-slate-500 flex items-center gap-1.5">
           <Sparkles className="h-3 w-3" />
           Suggestions:
         </span>

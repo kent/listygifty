@@ -34,10 +34,10 @@ export function PersonCard({ person }: PersonCardProps) {
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-slate-900 dark:text-white truncate">{person.name}</h3>
               {person.is_shared && (
-                <Users className="h-3.5 w-3.5 text-slate-500" />
+                <Users className="h-3.5 w-3.5 text-slate-600 dark:text-slate-500" />
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
               {person.relationship && (
                 <span className="capitalize">{person.relationship}</span>
               )}
@@ -48,13 +48,13 @@ export function PersonCard({ person }: PersonCardProps) {
                 </span>
               )}
               {birthday && (
-                <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
                   <Calendar className="h-3 w-3" />
                   {birthday}
                 </span>
               )}
               {milestone && (
-                <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
                   <Calendar className="h-3 w-3" />
                   {person.milestone_label || "Milestone"}: {milestone}
                 </span>

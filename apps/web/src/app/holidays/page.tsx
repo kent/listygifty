@@ -94,7 +94,7 @@ function HolidayCard({
                   </Badge>
                 )}
               </div>
-              {formattedDate && <p className="text-sm text-slate-500 dark:text-slate-400">{formattedDate}</p>}
+              {formattedDate && <p className="text-sm text-slate-600 dark:text-slate-400">{formattedDate}</p>}
             </div>
             <div className="w-5" /> {/* Spacer for arrow/button */}
           </CardContent>
@@ -163,7 +163,7 @@ function TemplateCard({
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-slate-900 dark:text-white truncate">{holiday.name}</h3>
-            <p className="text-sm text-slate-500">Click to add</p>
+            <p className="text-sm text-slate-600 dark:text-slate-500">Click to add</p>
           </div>
           <Plus className="h-5 w-5 text-slate-400 dark:text-slate-600 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors" />
         </CardContent>
@@ -302,7 +302,7 @@ function QuickHolidayCard({
                   {holiday.name}
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400">{holiday.displayDate}</p>
-                <p className={`text-xs mt-1 ${isUrgent ? "text-amber-600 dark:text-amber-400 font-medium" : "text-slate-500"}`}>
+                <p className={`text-xs mt-1 ${isUrgent ? "text-amber-800 dark:text-amber-400 font-medium" : "text-slate-600 dark:text-slate-500"}`}>
                   {daysText}
                 </p>
               </div>
@@ -332,9 +332,9 @@ function QuickHolidayCard({
               {holiday.name}
             </h3>
             <div className="flex items-center gap-2">
-              <p className="text-xs text-slate-500">{holiday.displayDate}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-500">{holiday.displayDate}</p>
               {isUrgent && (
-                <span className="text-xs text-amber-600 dark:text-amber-400">({daysText})</span>
+                <span className="text-xs text-amber-800 dark:text-amber-400">({daysText})</span>
               )}
             </div>
           </div>
@@ -430,7 +430,7 @@ function EmptyHolidaysState({
       {/* Other upcoming holidays */}
       {otherHolidays.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3 flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             More upcoming occasions
           </h3>
@@ -449,7 +449,7 @@ function EmptyHolidaysState({
 
       {/* Personal occasions */}
       <div>
-        <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3 flex items-center gap-2">
           <Heart className="h-4 w-4" />
           Personal occasions
         </h3>
@@ -469,7 +469,7 @@ function EmptyHolidaysState({
       <button onClick={onShowCustomForm} className="w-full">
         <Card className="border-slate-300 dark:border-slate-800 border-dashed bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:border-violet-500/50 transition-all group cursor-pointer">
           <CardContent className="p-4 flex items-center justify-center gap-2">
-            <Plus className="h-4 w-4 text-slate-500 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors" />
+            <Plus className="h-4 w-4 text-slate-600 dark:text-slate-500 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors" />
             <span className="text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
               Create Something Else
             </span>
@@ -585,7 +585,7 @@ function ArchivedSection({
                     <h3 className="font-semibold text-slate-900 dark:text-white truncate">{holiday.name}</h3>
                   </div>
                   {holiday.date && (
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
                       {parseCalendarDate(holiday.date).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
@@ -712,7 +712,7 @@ function NewHolidaySection({
 
       {/* Personal occasions */}
       <div>
-        <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3 flex items-center gap-2">
           <Heart className="h-4 w-4" />
           Personal occasions
         </h3>
@@ -749,13 +749,13 @@ function NewHolidaySection({
           <Card className="border-slate-300 dark:border-slate-800 border-dashed bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:border-violet-500/50 transition-all group cursor-pointer">
             <CardContent className="p-5 flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-dashed border-slate-400 dark:border-slate-700 group-hover:border-violet-500/50 transition-colors">
-                <Pencil className="h-5 w-5 text-slate-500 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors" />
+                <Pencil className="h-5 w-5 text-slate-600 dark:text-slate-500 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors" />
               </div>
               <div className="flex-1 min-w-0 text-left">
                 <h3 className="font-semibold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                   Custom Holiday
                 </h3>
-                <p className="text-sm text-slate-500">Create your own</p>
+                <p className="text-sm text-slate-600 dark:text-slate-500">Create your own</p>
               </div>
               <Plus className="h-5 w-5 text-slate-400 dark:text-slate-600 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors" />
             </CardContent>

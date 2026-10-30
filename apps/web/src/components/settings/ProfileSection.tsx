@@ -140,13 +140,13 @@ export function ProfileSection({ user }: ProfileSectionProps) {
         <div className="relative p-6">
           <div className="flex items-start gap-4">
             <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-slate-50 dark:to-slate-800/50 border border-slate-200 dark:border-slate-700/50 shrink-0">
-              <UserIcon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+              <UserIcon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
             </div>
             <div className="flex-1">
               {!isEditingName ? (
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500 block mb-1">
+                    <span className="text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-500 block mb-1">
                       Name
                     </span>
                     <p className="text-lg font-medium text-slate-900 dark:text-white">
@@ -167,7 +167,7 @@ export function ProfileSection({ user }: ProfileSectionProps) {
                 </div>
               ) : (
                 <form onSubmit={handleNameSubmit} className="space-y-4">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500 block mb-4">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-500 block mb-4">
                     Edit Name
                   </span>
                   <div className="grid grid-cols-2 gap-4">
@@ -235,11 +235,11 @@ export function ProfileSection({ user }: ProfileSectionProps) {
         <div className="relative p-6">
           <div className="flex items-start gap-4">
             <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-slate-50 dark:to-slate-800/50 border border-slate-200 dark:border-slate-700/50 shrink-0">
-              <Mail className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+              <Mail className="h-5 w-5 text-slate-600 dark:text-slate-400" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                <span className="text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-500">
                   Email Address
                 </span>
                 <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
@@ -261,13 +261,13 @@ export function ProfileSection({ user }: ProfileSectionProps) {
         <div className="relative p-6">
           <div className="flex items-start gap-4">
             <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-slate-50 dark:to-slate-800/50 border border-slate-200 dark:border-slate-700/50 shrink-0">
-              <Lock className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+              <Lock className="h-5 w-5 text-slate-600 dark:text-slate-400" />
             </div>
             <div className="flex-1">
               {!isChangingPassword ? (
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500 block mb-1">
+                    <span className="text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-500 block mb-1">
                       Password
                     </span>
                     <div className="flex items-center gap-1">
@@ -288,13 +288,13 @@ export function ProfileSection({ user }: ProfileSectionProps) {
               ) : (
                 <form onSubmit={handlePasswordSubmit} className="space-y-5">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                    <span className="text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-500">
                       Change Password
                     </span>
                     <button
                       type="button"
                       onClick={() => setShowPasswords(!showPasswords)}
-                      className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                      className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                     >
                       {showPasswords ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                       {showPasswords ? "Hide" : "Show"}

@@ -217,13 +217,13 @@ export function IntegrationsSection({ onOpenApiKeys }: IntegrationsSectionProps)
         {loading ? (
           <div className="p-8 text-center">
             <RefreshCw className="w-6 h-6 animate-spin mx-auto text-slate-400" />
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Loading...</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">Loading...</p>
           </div>
         ) : connectedApps.length === 0 ? (
           <div className="p-8 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center">
             <Plug className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
             <p className="text-slate-600 dark:text-slate-400 mb-1">No connected apps yet</p>
-            <p className="text-sm text-slate-500 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               Connect an AI assistant using the MCP OAuth URL at the top of Settings
             </p>
           </div>
@@ -247,7 +247,7 @@ export function IntegrationsSection({ onOpenApiKeys }: IntegrationsSectionProps)
                       <h4 className="font-medium text-slate-900 dark:text-white">
                         {app.client_name}
                       </h4>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
                         Scopes: {app.scopes.join(", ")}
                         {connectedAt ? ` • Connected ${connectedAt}` : ""}
                         {lastUsedAt ? ` • Last used ${lastUsedAt}` : ""}

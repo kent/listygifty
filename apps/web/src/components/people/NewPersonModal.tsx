@@ -83,7 +83,7 @@ export function NewPersonModal({ open, onOpenChange, onSubmit }: NewPersonModalP
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter person's name"
-              className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-500"
+              className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-600 dark:placeholder:text-slate-500"
               autoFocus
               required
             />

@@ -76,7 +76,7 @@ function WishlistCard({ wishlist }: { wishlist: Wishlist }) {
                   <Crown className="h-4 w-4 text-amber-500 dark:text-amber-400 shrink-0" />
                 )}
               </div>
-              <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 flex-wrap">
+              <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400 flex-wrap">
                 {!wishlist.is_owner && wishlist.owner && (
                   <span className="text-slate-600 dark:text-slate-300">
                     by {wishlist.owner.name}

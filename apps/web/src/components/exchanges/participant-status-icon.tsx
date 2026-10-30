@@ -15,6 +15,6 @@ export function ParticipantStatusIcon({ status, className }: ParticipantStatusIc
     case "declined":
       return <X className={`h-4 w-4 text-red-600 dark:text-red-400 ${className || ""}`} />;
     default:
-      return <Clock className={`h-4 w-4 text-amber-600 dark:text-amber-400 ${className || ""}`} />;
+      return <Clock className={`h-4 w-4 text-amber-800 dark:text-amber-400 ${className || ""}`} />;
   }
 }

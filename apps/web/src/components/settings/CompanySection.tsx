@@ -160,7 +160,7 @@ export function CompanySection() {
 
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/30 p-8 text-center">
           <Building2 className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-500 dark:text-slate-400 mb-4">
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
             Switch to a business workspace to manage company profile settings.
           </p>
         </div>
@@ -199,10 +199,10 @@ export function CompanySection() {
                 {/* Company Name */}
                 <div className="flex items-start gap-4">
                   <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-slate-50 dark:to-slate-800/50 border border-slate-200 dark:border-slate-700/50 shrink-0">
-                    <Building2 className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                    <Building2 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                   </div>
                   <div className="flex-1">
-                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500 block mb-1">
+                    <span className="text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-500 block mb-1">
                       Company Name
                     </span>
                     <p className="text-lg font-medium text-slate-900 dark:text-white">
@@ -214,10 +214,10 @@ export function CompanySection() {
                 {/* Website */}
                 <div className="flex items-start gap-4">
                   <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-slate-50 dark:to-slate-800/50 border border-slate-200 dark:border-slate-700/50 shrink-0">
-                    <Globe className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                    <Globe className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                   </div>
                   <div className="flex-1">
-                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500 block mb-1">
+                    <span className="text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-500 block mb-1">
                       Website
                     </span>
                     {profile?.website ? (
@@ -238,10 +238,10 @@ export function CompanySection() {
                 {/* Address */}
                 <div className="flex items-start gap-4">
                   <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-slate-50 dark:to-slate-800/50 border border-slate-200 dark:border-slate-700/50 shrink-0">
-                    <MapPin className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                    <MapPin className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                   </div>
                   <div className="flex-1">
-                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500 block mb-1">
+                    <span className="text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-500 block mb-1">
                       Address
                     </span>
                     <p className="text-lg font-medium text-slate-900 dark:text-white whitespace-pre-line">
@@ -253,10 +253,10 @@ export function CompanySection() {
                 {/* Initial Workflow */}
                 <div className="flex items-start gap-4">
                   <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-slate-50 dark:to-slate-800/50 border border-slate-200 dark:border-slate-700/50 shrink-0">
-                    <Gift className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                    <Gift className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                   </div>
                   <div className="flex-1">
-                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500 block mb-1">
+                    <span className="text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-500 block mb-1">
                       Initial Workflow
                     </span>
                     <p className="text-lg font-medium text-slate-900 dark:text-white">

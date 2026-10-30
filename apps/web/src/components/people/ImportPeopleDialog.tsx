@@ -132,7 +132,7 @@ export function ImportPeopleDialog({
           <DialogTitle className="text-slate-900 dark:text-white">
             Import People
           </DialogTitle>
-          <DialogDescription className="text-slate-500 dark:text-slate-400">
+          <DialogDescription className="text-slate-600 dark:text-slate-400">
             Upload a CSV file to import people and optional business shipping addresses.
           </DialogDescription>
         </DialogHeader>
@@ -188,7 +188,7 @@ export function ImportPeopleDialog({
                       <span className="font-medium">{file.name}</span>
                     </div>
                   ) : (
-                    <div className="text-slate-500 dark:text-slate-400">
+                    <div className="text-slate-600 dark:text-slate-400">
                       <Upload className="h-8 w-8 mx-auto mb-2 opacity-50" />
                       <p>Click to select a CSV file</p>
                     </div>
@@ -215,7 +215,7 @@ export function ImportPeopleDialog({
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     Choose who will own the imported people
                   </p>
                 </div>
@@ -285,11 +285,11 @@ export function ImportPeopleDialog({
 
               {result.errors.length > 0 && (
                 <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
-                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-2">
+                  <div className="flex items-center gap-2 text-amber-800 dark:text-amber-400 mb-2">
                     <AlertCircle className="h-4 w-4" />
                     <span className="font-medium text-sm">Warnings</span>
                   </div>
-                  <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-1 max-h-32 overflow-y-auto">
+                  <ul className="text-xs text-amber-800 dark:text-amber-300 space-y-1 max-h-32 overflow-y-auto">
                     {result.errors.map((err, i) => (
                       <li key={i}>{err}</li>
                     ))}

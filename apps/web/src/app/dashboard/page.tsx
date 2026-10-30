@@ -176,12 +176,12 @@ function ActivationChecklist({
               Get started
             </h2>
             {isBusiness && (
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                 Workflow: {workflowLabel || "Not selected"}
               </p>
             )}
           </div>
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
             {completedCount}/{steps.length}
           </span>
         </div>
@@ -221,7 +221,7 @@ function ActivationChecklist({
             );
           })}
         </div>
-        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+        <div className="mt-3 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
           {isBusiness ? (
             <>
               <Users className="h-3.5 w-3.5" />
@@ -298,7 +298,7 @@ function UpcomingDatesCard({ dates }: { dates: UpcomingDate[] }) {
                 <p className="truncate font-medium text-slate-900 dark:text-white">
                   {item.title}
                 </p>
-                <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                <p className="truncate text-xs text-slate-600 dark:text-slate-400">
                   {item.subtitle}
                 </p>
               </div>
@@ -575,7 +575,7 @@ export default function DashboardPage() {
                   aria-label="Person's name"
                   value={newPersonName}
                   onChange={(e) => setNewPersonName(e.target.value)}
-                  className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-500"
+                  className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-600 dark:placeholder:text-slate-500"
                 />
                 <Button
                   type="submit"

@@ -163,7 +163,7 @@ export default function GuestClaimPage({ params }: { params: Promise<{ token: st
         {/* Wishlist info */}
         <Card className="mb-6 border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
           <CardHeader className="pb-2">
-            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
               <ListTodo className="h-4 w-4" />
               From Wishlist
             </div>
@@ -206,7 +206,7 @@ export default function GuestClaimPage({ params }: { params: Promise<{ token: st
                 )}
               </Badge>
 
-              <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <span className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 Claimed on {formattedClaimedAt}
               </span>
@@ -264,8 +264,8 @@ export default function GuestClaimPage({ params }: { params: Promise<{ token: st
         <Card className="mt-6 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
           <CardContent className="py-4">
             <div className="flex gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
-              <div className="text-sm text-amber-700 dark:text-amber-300">
+              <AlertTriangle className="h-5 w-5 text-amber-800 dark:text-amber-400 shrink-0" />
+              <div className="text-sm text-amber-800 dark:text-amber-300">
                 <p className="font-medium mb-1">Keep this link safe</p>
                 <p>
                   This is your private link to manage your claim. Do not share it with others.

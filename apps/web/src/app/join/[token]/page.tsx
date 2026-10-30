@@ -118,7 +118,7 @@ export default function JoinHolidayPage() {
                 <div>
                   <p className="text-sm font-medium text-slate-900 dark:text-white">{holiday.name}</p>
                   {holiday.date && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
                       {parseCalendarDate(holiday.date).toLocaleDateString("en-US", {
                         month: "long",
                         day: "numeric",
@@ -128,7 +128,7 @@ export default function JoinHolidayPage() {
                   )}
                 </div>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-600 dark:text-slate-500">
                 You can now add gifts and people to this gift list. The owner and other collaborators will see your contributions.
               </p>
             </div>

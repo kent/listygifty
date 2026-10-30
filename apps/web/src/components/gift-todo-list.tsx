@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Package, Truck, MapPin, Lightbulb } from "lucide-react";
 
 const STATUS_CONFIG: Record<string, { icon: React.ReactNode; color: string }> = {
-  Idea: { icon: <Lightbulb className="h-3 w-3" />, color: "bg-amber-500/20 text-amber-600 dark:text-amber-300 border-amber-500/30" },
+  Idea: { icon: <Lightbulb className="h-3 w-3" />, color: "bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/30" },
   Purchased: { icon: <Package className="h-3 w-3" />, color: "bg-blue-500/20 text-blue-600 dark:text-blue-300 border-blue-500/30" },
   "In Transit": { icon: <Truck className="h-3 w-3" />, color: "bg-purple-500/20 text-purple-600 dark:text-purple-300 border-purple-500/30" },
   Delivered: { icon: <MapPin className="h-3 w-3" />, color: "bg-green-500/20 text-green-600 dark:text-green-300 border-green-500/30" },
@@ -26,7 +26,7 @@ export function GiftTodoList() {
             <CheckCircle2 className="h-4 w-4 text-violet-500 dark:text-violet-400" />
             To Do
           </h2>
-          <p className="text-sm text-slate-500">Loading tasks...</p>
+          <p className="text-sm text-slate-600 dark:text-slate-500">Loading tasks...</p>
         </CardContent>
       </Card>
     );
@@ -40,7 +40,7 @@ export function GiftTodoList() {
             <CheckCircle2 className="h-4 w-4 text-slate-400" />
             To Do
           </h2>
-          <p className="text-sm text-slate-500">Tasks are temporarily unavailable.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-500">Tasks are temporarily unavailable.</p>
         </CardContent>
       </Card>
     );
@@ -54,7 +54,7 @@ export function GiftTodoList() {
             <CheckCircle2 className="h-4 w-4 text-green-500 dark:text-green-400" />
             To Do
           </h2>
-          <p className="text-sm text-slate-500">All caught up! 🎉</p>
+          <p className="text-sm text-slate-600 dark:text-slate-500">All caught up! 🎉</p>
         </CardContent>
       </Card>
     );
@@ -89,17 +89,17 @@ export function GiftTodoList() {
                       {gift.name}
                     </p>
                     {recipientNames && (
-                      <p className="text-xs text-slate-500 truncate">for {recipientNames}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-500 truncate">for {recipientNames}</p>
                     )}
                   </div>
-                  <span className="text-xs text-slate-500 dark:text-slate-600 shrink-0">{gift.holiday.name}</span>
+                  <span className="text-xs text-slate-600 dark:text-slate-400 shrink-0">{gift.holiday.name}</span>
                 </Link>
               </li>
             );
           })}
         </ul>
         {pendingGiftTotal > gifts.length && (
-          <p className="text-xs text-slate-500 mt-3 text-center">
+          <p className="text-xs text-slate-600 dark:text-slate-500 mt-3 text-center">
             +{pendingGiftTotal - gifts.length} more
           </p>
         )}

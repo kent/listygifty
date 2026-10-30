@@ -113,7 +113,7 @@ export default function CreateWorkspacePage() {
                   className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-violet-500 focus:ring-violet-500/20"
                   required
                 />
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   This is the name your team will see when switching workspaces
                 </p>
               </div>
@@ -130,7 +130,7 @@ export default function CreateWorkspacePage() {
                   placeholder="e.g., Acme Corporation"
                   className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-violet-500 focus:ring-violet-500/20"
                 />
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   You can add more company details later in settings
                 </p>
               </div>
@@ -159,7 +159,7 @@ export default function CreateWorkspacePage() {
         </Card>
 
         {/* Info section */}
-        <div className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
+        <div className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
           <p>
             Business workspaces allow you to collaborate with your team,
             <br />

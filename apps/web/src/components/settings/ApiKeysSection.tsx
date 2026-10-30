@@ -171,7 +171,7 @@ export function ApiKeysSection() {
                       </Button>
                     </div>
                     <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm">
-                      <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <AlertTriangle className="h-4 w-4 text-amber-800 dark:text-amber-400 shrink-0 mt-0.5" />
                       <p className="text-amber-800 dark:text-amber-200">
                         Store this key securely. It provides full access to your {BRAND_NAME} account.
                       </p>
@@ -199,7 +199,7 @@ export function ApiKeysSection() {
                         onChange={(e) => setNewKeyName(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleCreate()}
                       />
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-slate-600 dark:text-slate-500">
                         Give it a descriptive name so you remember what it&apos;s for
                       </p>
                     </div>
@@ -253,7 +253,7 @@ export function ApiKeysSection() {
             <Copy className="h-4 w-4" />
           </Button>
         </div>
-        <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
+        <p className="mt-4 text-xs text-slate-600 dark:text-slate-400">
           Runner and other OAuth-capable clients do not need an API key. Use the{" "}
           <a
             href="/integrations"
@@ -268,8 +268,8 @@ export function ApiKeysSection() {
       {/* API Keys List */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <Key className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-          <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <Key className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">
             Your API Keys
           </h3>
         </div>
@@ -295,13 +295,13 @@ export function ApiKeysSection() {
               {apiKeys.map((key) => (
                 <div key={key.id} className="p-4 flex items-center gap-4">
                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
-                    <Key className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                    <Key className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-slate-900 dark:text-white">
                       {key.name}
                     </p>
-                    <div className="flex items-center gap-3 text-xs text-slate-500">
+                    <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-500">
                       <span className="font-mono">{key.key_prefix}...</span>
                       {key.last_used_at && (
                         <span className="flex items-center gap-1">

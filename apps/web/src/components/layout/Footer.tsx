@@ -40,7 +40,7 @@ export function Footer() {
       </footer>
 
       <footer className="theme-apple-only mt-16 border-t border-black/5 bg-slate-100/60">
-        <div className="container mx-auto flex flex-col items-center gap-4 px-4 py-6 text-sm text-slate-500 md:flex-row md:justify-between">
+        <div className="container mx-auto flex flex-col items-center gap-4 px-4 py-6 text-sm text-slate-600 dark:text-slate-500 md:flex-row md:justify-between">
           <span>© {year} Listy Gifty</span>
           <nav aria-label="Footer" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
             {LINKS.map((link) => (

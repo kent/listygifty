@@ -135,7 +135,7 @@ export default function JoinExchangePage({
         <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 max-w-md w-full">
           <CardContent className="py-12 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 mx-auto mb-4">
-              <Lock className="h-8 w-8 text-slate-500 dark:text-slate-400" />
+              <Lock className="h-8 w-8 text-slate-600 dark:text-slate-400" />
             </div>
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">This exchange has closed</h2>
             <p className="text-slate-600 dark:text-slate-400 mb-2">
@@ -182,7 +182,7 @@ export default function JoinExchangePage({
         <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 max-w-md w-full">
           <CardContent className="py-12 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 mx-auto mb-4">
-              <X className="h-8 w-8 text-slate-500 dark:text-slate-400" />
+              <X className="h-8 w-8 text-slate-600 dark:text-slate-400" />
             </div>
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Invitation Declined</h2>
             <p className="text-slate-600 dark:text-slate-400 mb-6">
@@ -222,7 +222,7 @@ export default function JoinExchangePage({
           <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
             {invite.exchange.exchange_date && (
               <div className="flex items-center gap-3 text-sm">
-                <Calendar className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                 <span className="text-slate-700 dark:text-slate-300">
                   {parseCalendarDate(invite.exchange.exchange_date).toLocaleDateString("en-US", {
                     weekday: "long",
@@ -235,7 +235,7 @@ export default function JoinExchangePage({
             )}
             {(invite.exchange.budget_min || invite.exchange.budget_max) && (
               <div className="flex items-center gap-3 text-sm">
-                <DollarSign className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                <DollarSign className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                 <span className="text-slate-700 dark:text-slate-300">
                   Budget:{" "}
                   {invite.exchange.budget_min && invite.exchange.budget_max
@@ -247,7 +247,7 @@ export default function JoinExchangePage({
               </div>
             )}
             <div className="flex items-center gap-3 text-sm">
-              <User className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+              <User className="h-4 w-4 text-slate-600 dark:text-slate-400" />
               <span className="text-slate-700 dark:text-slate-300">
                 Invited as: <span className="text-slate-900 dark:text-white">{invite.participant.name}</span>
               </span>
@@ -261,7 +261,7 @@ export default function JoinExchangePage({
           ) : isAuthenticated ? (
             <div className="space-y-4">
               {emailMismatch && (
-                <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm break-words text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm break-words text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
                   This invite was sent to {invite.participant.email}. You&apos;re signed in as {user.email}.
                 </p>
               )}

@@ -42,7 +42,7 @@ export function McpOAuthUrlCard() {
           </p>
 
           <div className="mt-4 rounded-xl border border-slate-200 bg-white/90 p-3 dark:border-slate-700 dark:bg-slate-950/80">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
               Server URL
             </span>
             <div className="mt-2 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">

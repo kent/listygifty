@@ -78,7 +78,7 @@ export function SettingsNav({ activeSection, onSectionChange }: SettingsNavProps
                     )}>
                       <Icon className={cn(
                         "h-4 w-4 transition-colors",
-                        isActive ? "text-white" : disabled ? "text-slate-400 dark:text-slate-600" : "text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-white"
+                        isActive ? "text-white" : disabled ? "text-slate-400 dark:text-slate-600" : "text-slate-600 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-white"
                       )} />
                     </div>
                     <span className={cn(

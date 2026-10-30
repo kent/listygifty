@@ -275,7 +275,7 @@ export default function HolidayDetailPage() {
         <div className="mb-8">
           <Link
             href="/holidays"
-            className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-4 transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-4 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Gift Lists
@@ -296,12 +296,12 @@ export default function HolidayDetailPage() {
                     </Badge>
                   )}
                   {!holiday.is_owner && holiday.role === "collaborator" && (
-                    <Badge variant="outline" className="text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600">
+                    <Badge variant="outline" className="text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-600">
                       Shared
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm md:text-base mt-1">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm md:text-base mt-1">
                   <Calendar className="h-4 w-4 shrink-0" />
                   <span className="truncate">{formattedDate}</span>
                 </div>
@@ -344,7 +344,7 @@ export default function HolidayDetailPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                       <Users className="h-4 w-4" />
                       <span>No collaborators yet. Share your link.</span>
                     </div>

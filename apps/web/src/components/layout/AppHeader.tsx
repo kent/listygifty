@@ -144,7 +144,7 @@ function AppleHeader({ user, onSignOut, items, isPremium, showUpgrade }: HeaderV
             <WorkspaceSwitcher />
           </div>
           {isPremium ? (
-            <Link href="/billing" className="flex items-center gap-1 text-sm font-medium text-amber-600">
+            <Link href="/billing" className="flex items-center gap-1 text-sm font-medium text-amber-800 dark:text-amber-600">
               <Crown className="h-4 w-4" />
               <span className="hidden sm:inline">Premium</span>
             </Link>
@@ -156,7 +156,7 @@ function AppleHeader({ user, onSignOut, items, isPremium, showUpgrade }: HeaderV
               Upgrade
             </Link>
           ) : null}
-          {user && <span className="hidden max-w-[200px] truncate text-sm text-slate-500 xl:inline">{user.email}</span>}
+          {user && <span className="hidden max-w-[200px] truncate text-sm text-slate-600 dark:text-slate-500 xl:inline">{user.email}</span>}
           <button type="button" onClick={onSignOut} className="text-sm text-slate-600 transition-colors hover:text-slate-900">
             Sign out
           </button>

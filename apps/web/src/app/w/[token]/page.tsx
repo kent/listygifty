@@ -37,7 +37,7 @@ import { BRAND_NAME } from "@/lib/brand";
 function PriorityBadge({ priority }: { priority: number }) {
   if (priority === 2) {
     return (
-      <Badge className="bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/50">
+      <Badge className="bg-amber-500/20 text-amber-800 dark:text-amber-400 border-amber-500/50">
         <Sparkles className="h-3 w-3 mr-1" />
         Most Wanted
       </Badge>
@@ -75,7 +75,7 @@ function PublicItemCard({
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">{item.notes}</p>
             )}
 
-            <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 flex-wrap">
+            <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400 flex-wrap">
               {item.price_display && (
                 <span className="text-emerald-600 dark:text-emerald-400 font-medium">
                   {item.price_display}
@@ -268,7 +268,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
           {wishlist.description && (
             <p className="text-slate-600 dark:text-slate-400 mb-4">{wishlist.description}</p>
           )}
-          <div className="flex items-center justify-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-center gap-4 text-sm text-slate-600 dark:text-slate-400">
             <span className="flex items-center gap-1">
               <Gift className="h-4 w-4" />
               {items.length} items
@@ -362,7 +362,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
                 placeholder="your@email.com"
                 required
               />
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 We&apos;ll send you a link to manage your claim. Your email won&apos;t be shared.
               </p>
             </div>

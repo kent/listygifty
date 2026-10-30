@@ -111,7 +111,7 @@ export function GiftListSummaryBar({
       accent:
         summary.unassignedGiftCount === 0
           ? "text-emerald-600 dark:text-emerald-400"
-          : "text-amber-600 dark:text-amber-400",
+          : "text-amber-800 dark:text-amber-400",
     },
     {
       icon: CalendarClock,
@@ -134,7 +134,7 @@ export function GiftListSummaryBar({
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
+                  <p className="text-xs font-medium uppercase text-slate-600 dark:text-slate-400">
                     {item.label}
                   </p>
                   <p className="mt-1 truncate text-xl font-semibold text-slate-950 dark:text-white">

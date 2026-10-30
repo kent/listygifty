@@ -170,7 +170,7 @@ export default function JoinWorkspacePage() {
                   <p className="text-sm font-medium text-slate-900 dark:text-white">
                     {inviteDetails.workspace.name}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     You&apos;ll join as: <span className="capitalize">{inviteDetails.role}</span>
                   </p>
                 </div>
@@ -186,10 +186,10 @@ export default function JoinWorkspacePage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-900 dark:text-white">{workspace.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Business Workspace</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Business Workspace</p>
                 </div>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-600 dark:text-slate-500">
                 You can now collaborate on people, gift lists, and exchanges within this workspace.
               </p>
             </div>

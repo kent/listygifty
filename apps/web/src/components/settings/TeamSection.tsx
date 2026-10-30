@@ -40,7 +40,7 @@ const ROLE_LABELS: Record<WorkspaceRole, string> = {
 };
 
 const ROLE_COLORS: Record<WorkspaceRole, string> = {
-  owner: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
+  owner: "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400",
   admin: "bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400",
   member: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400",
 };
@@ -222,7 +222,7 @@ export function TeamSection() {
                 </Button>
               </div>
 
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Create an invite link to share. If you add an email, it helps track who the invite is for. Links expire in 7 days.
               </p>
             </div>
@@ -252,7 +252,7 @@ export function TeamSection() {
                     className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/30"
                   >
                     {/* Icon */}
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-800 dark:text-amber-400 shrink-0">
                       <Mail className="h-5 w-5" />
                     </div>
 
@@ -261,7 +261,7 @@ export function TeamSection() {
                       <p className="font-medium text-slate-900 dark:text-white truncate">
                         {invite.email || "Anyone with link"}
                       </p>
-                      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                         <Clock className="h-3 w-3" />
                         <span>Expires in {daysUntilExpiry} day{daysUntilExpiry !== 1 ? "s" : ""}</span>
                       </div>
@@ -370,7 +370,7 @@ export function TeamSection() {
                           ? `${member.first_name} ${member.last_name}`
                           : member.email}
                       </p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
+                      <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
                         {member.email}
                       </p>
                     </div>

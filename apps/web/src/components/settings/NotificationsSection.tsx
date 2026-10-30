@@ -113,7 +113,7 @@ export function NotificationsSection() {
             <div className="relative p-6">
               <div className="flex items-center gap-4">
                 <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-slate-50 dark:to-slate-800/50 border border-slate-200 dark:border-slate-700/50 shrink-0">
-                  <Icon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                  <Icon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-medium text-slate-900 dark:text-white">{title}</h3>
@@ -140,8 +140,8 @@ export function NotificationsSection() {
       {emailHistory.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Mail className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-            <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <Mail className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+            <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">
               Recent Emails
             </h3>
           </div>
@@ -166,7 +166,7 @@ export function NotificationsSection() {
                     <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                       {email.subject}
                     </p>
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
                       <Clock className="h-3 w-3" />
                       {new Date(email.sent_at).toLocaleDateString(undefined, {
                         month: "short",

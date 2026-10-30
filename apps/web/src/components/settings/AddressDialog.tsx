@@ -218,7 +218,7 @@ function AddressForm({ address, isSubmitting, onSubmit, onCancel }: AddressFormP
           placeholder="Start typing to search..."
           className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
         />
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-600 dark:text-slate-500">
           Type an address to auto-fill the fields below
         </p>
       </div>

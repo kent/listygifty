@@ -89,7 +89,7 @@ function getStatusIcon(status: string) {
     case "declined":
       return <X className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />;
     default:
-      return <Clock className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />;
+      return <Clock className="h-4 w-4 shrink-0 text-amber-800 dark:text-amber-400" />;
   }
 }
 

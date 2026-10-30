@@ -181,7 +181,7 @@ export function WorkspaceSection() {
           {isPersonal ? "Personal Workspace" : "Business Workspace"}
         </span>
         {isOwner && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400">
             Owner
           </span>
         )}
@@ -193,13 +193,13 @@ export function WorkspaceSection() {
         <div className="relative p-6">
           <div className="flex items-start gap-4">
             <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-slate-50 dark:to-slate-800/50 border border-slate-200 dark:border-slate-700/50 shrink-0">
-              <Icon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+              <Icon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
             </div>
             <div className="flex-1">
               {!isEditingName ? (
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500 block mb-1">
+                    <span className="text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-500 block mb-1">
                       Workspace Name
                     </span>
                     <p className="text-lg font-medium text-slate-900 dark:text-white">
@@ -223,7 +223,7 @@ export function WorkspaceSection() {
                 </div>
               ) : (
                 <form onSubmit={handleNameSubmit} className="space-y-4">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500 block mb-4">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-500 block mb-4">
                     Edit Workspace Name
                   </span>
                   <div className="space-y-2">
@@ -277,18 +277,18 @@ export function WorkspaceSection() {
           <div className="relative p-6">
             <div className="flex items-start gap-4">
               <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-slate-50 dark:to-slate-800/50 border border-slate-200 dark:border-slate-700/50 shrink-0">
-                <MapPin className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                <MapPin className="h-5 w-5 text-slate-600 dark:text-slate-400" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500 block mb-1">
+                    <span className="text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-500 block mb-1">
                       Gift List Settings
                     </span>
                     <p className="text-lg font-medium text-slate-900 dark:text-white">
                       Show Addresses
                     </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                       {isPersonal
                         ? "Enable shipping addresses for gift recipients (useful for mail-order gifts)"
                         : "Show shipping address selection when adding gift recipients"}
@@ -363,7 +363,7 @@ export function WorkspaceSection() {
                     placeholder="e.g., Acme Corporation"
                     className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-violet-500 focus:ring-violet-500/20"
                   />
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     You can add more company details later in settings
                   </p>
                 </div>
@@ -423,7 +423,7 @@ export function WorkspaceSection() {
                   }`}>
                     <WorkspaceIcon className={`h-5 w-5 ${
                       workspace.workspace_type === "personal"
-                        ? "text-slate-500 dark:text-slate-400"
+                        ? "text-slate-600 dark:text-slate-400"
                         : "text-violet-500 dark:text-violet-400"
                     }`} />
                   </div>
@@ -438,7 +438,7 @@ export function WorkspaceSection() {
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 capitalize">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 capitalize">
                       {workspace.workspace_type} workspace
                       {workspace.member_count && workspace.member_count > 1 && (
                         <span className="ml-1">· {workspace.member_count} members</span>

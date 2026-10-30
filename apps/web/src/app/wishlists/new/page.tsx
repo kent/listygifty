@@ -126,7 +126,7 @@ export default function NewWishlistPage() {
                   onChange={(e) => setTargetDate(e.target.value)}
                   className="bg-white dark:bg-slate-900"
                 />
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   When do you want to receive these gifts?
                 </p>
               </div>
@@ -143,7 +143,7 @@ export default function NewWishlistPage() {
                         <Lock className="h-4 w-4" />
                         <div>
                           <div className="font-medium">Private</div>
-                          <div className="text-xs text-slate-500">Only you can see this wishlist</div>
+                          <div className="text-xs text-slate-600 dark:text-slate-500">Only you can see this wishlist</div>
                         </div>
                       </div>
                     </SelectItem>
@@ -152,7 +152,7 @@ export default function NewWishlistPage() {
                         <Users className="h-4 w-4" />
                         <div>
                           <div className="font-medium">Workspace</div>
-                          <div className="text-xs text-slate-500">All workspace members can view and claim</div>
+                          <div className="text-xs text-slate-600 dark:text-slate-500">All workspace members can view and claim</div>
                         </div>
                       </div>
                     </SelectItem>
@@ -161,7 +161,7 @@ export default function NewWishlistPage() {
                         <LinkIcon className="h-4 w-4" />
                         <div>
                           <div className="font-medium">Shared Link</div>
-                          <div className="text-xs text-slate-500">Anyone with the link can view and claim</div>
+                          <div className="text-xs text-slate-600 dark:text-slate-500">Anyone with the link can view and claim</div>
                         </div>
                       </div>
                     </SelectItem>

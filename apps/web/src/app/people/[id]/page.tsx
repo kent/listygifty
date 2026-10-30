@@ -166,7 +166,7 @@ function HolidayGiftGroup({ holiday, gifts }: { holiday: Holiday; gifts: Gift[] 
             <div>
               <CardTitle className="text-lg text-slate-900 dark:text-white">{holiday.name}</CardTitle>
               {holiday.date && (
-                <div className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                <div className="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400 mt-0.5">
                   <Calendar className="h-3 w-3" />
                   {formatDate(holiday.date)}
                 </div>
@@ -174,7 +174,7 @@ function HolidayGiftGroup({ holiday, gifts }: { holiday: Holiday; gifts: Gift[] 
             </div>
           </div>
           <div className="text-right">
-            <div className="text-sm text-slate-500 dark:text-slate-400">{gifts.length} gift{gifts.length !== 1 ? "s" : ""}</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">{gifts.length} gift{gifts.length !== 1 ? "s" : ""}</div>
             {totalCost > 0 && (
               <div className="text-sm text-emerald-600 dark:text-emerald-400">${totalCost.toFixed(2)}</div>
             )}
@@ -200,7 +200,7 @@ function GiftSection({ gifts, emptyMessage }: { gifts: Gift[]; emptyMessage: str
       <Card className="border-slate-200 dark:border-slate-800 bg-white/30 dark:bg-slate-900/30">
         <CardContent className="py-8 text-center">
           <GiftIcon className="h-10 w-10 mx-auto text-slate-400 dark:text-slate-600 mb-3" />
-          <p className="text-slate-500">{emptyMessage}</p>
+          <p className="text-slate-600 dark:text-slate-500">{emptyMessage}</p>
         </CardContent>
       </Card>
     );
@@ -221,7 +221,7 @@ function HolidaysSection({ holidays }: { holidays: Holiday[] }) {
       <Card className="border-slate-200 dark:border-slate-800 bg-white/30 dark:bg-slate-900/30">
         <CardContent className="py-8 text-center">
           <Sparkles className="h-10 w-10 mx-auto text-slate-400 dark:text-slate-600 mb-3" />
-          <p className="text-slate-500">No holidays associated with this person yet</p>
+          <p className="text-slate-600 dark:text-slate-500">No holidays associated with this person yet</p>
         </CardContent>
       </Card>
     );
@@ -238,7 +238,7 @@ function HolidaysSection({ holidays }: { holidays: Holiday[] }) {
               <div>
                 <h3 className="font-medium text-slate-900 dark:text-white">{holiday.name}</h3>
                 {holiday.date && (
-                  <div className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                  <div className="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400 mt-0.5">
                     <Calendar className="h-3 w-3" />
                     {formatDate(holiday.date)}
                   </div>
@@ -281,7 +281,7 @@ function StatsSection({
               </div>
               <div>
                 <div className="text-3xl font-bold text-slate-900 dark:text-white">{value}</div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">{label}</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">{label}</div>
               </div>
             </div>
           </CardContent>
@@ -482,7 +482,7 @@ function AboutSection({
               Delete Person
             </Button>
             {hasGifts && (
-              <p className="text-xs text-slate-500 mt-2 text-center">
+              <p className="text-xs text-slate-600 dark:text-slate-500 mt-2 text-center">
                 Cannot delete: this person has {person.gift_count} gift{person.gift_count !== 1 ? "s" : ""} attached
               </p>
             )}
@@ -565,7 +565,7 @@ function VerticalNav({
               "ml-auto text-xs px-2 py-0.5 rounded-full",
               activeTab === id
                 ? "bg-violet-500/30 text-violet-700 dark:text-violet-300"
-                : "bg-slate-200 dark:bg-slate-700/50 text-slate-600 dark:text-slate-500"
+                : "bg-slate-200 dark:bg-slate-700/50 text-slate-700 dark:text-slate-500"
             )}>
               {count}
             </span>
@@ -778,7 +778,7 @@ export default function PersonDetailPage() {
         <div className="mb-8">
           <Link
             href="/people"
-            className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-4 transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-4 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to People
@@ -805,7 +805,7 @@ export default function PersonDetailPage() {
                     variant="ghost"
                     onClick={handleSaveName}
                     disabled={savingName}
-                    className="h-8 w-8 p-0 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    className="h-8 w-8 p-0 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   >
                     {savingName ? (
                       <div className="animate-spin h-4 w-4 border-2 border-violet-500 border-t-transparent rounded-full" />
@@ -818,7 +818,7 @@ export default function PersonDetailPage() {
                     variant="ghost"
                     onClick={handleCancelEditName}
                     disabled={savingName}
-                    className="h-8 w-8 p-0 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    className="h-8 w-8 p-0 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   >
                     <X className="h-4 w-4" />
                   </Button>

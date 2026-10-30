@@ -62,7 +62,7 @@ export function WorkspaceSwitcher() {
         {/* Personal Workspace */}
         {personalWorkspace && (
           <>
-            <DropdownMenuLabel className="text-xs text-slate-500 dark:text-slate-400 font-normal">
+            <DropdownMenuLabel className="text-xs text-slate-600 dark:text-slate-400 font-normal">
               Personal
             </DropdownMenuLabel>
             <DropdownMenuItem
@@ -76,7 +76,7 @@ export function WorkspaceSwitcher() {
                   "bg-violet-50 dark:bg-violet-900/20"
               )}
             >
-              <User className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+              <User className="h-4 w-4 text-slate-600 dark:text-slate-400" />
               <span className="truncate flex-1">{personalWorkspace.name}</span>
               {currentWorkspace.id === personalWorkspace.id && (
                 <Check className="h-4 w-4 text-violet-600 dark:text-violet-400" />
@@ -89,7 +89,7 @@ export function WorkspaceSwitcher() {
         {businessWorkspaces.length > 0 && (
           <>
             <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-800" />
-            <DropdownMenuLabel className="text-xs text-slate-500 dark:text-slate-400 font-normal">
+            <DropdownMenuLabel className="text-xs text-slate-600 dark:text-slate-400 font-normal">
               Business
             </DropdownMenuLabel>
             {businessWorkspaces.map((workspace) => (
@@ -105,7 +105,7 @@ export function WorkspaceSwitcher() {
                     "bg-violet-50 dark:bg-violet-900/20"
                 )}
               >
-                <Building2 className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                <Building2 className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                 <span className="truncate flex-1">{workspace.name}</span>
                 {currentWorkspace.id === workspace.id && (
                   <Check className="h-4 w-4 text-violet-600 dark:text-violet-400" />
