@@ -190,9 +190,9 @@ test("five users complete a private exchange lifecycle with real local mail", as
   ).toBeVisible();
   await giverSession.page.goto(`${page.url()}/my-match`);
   await expect(giverSession.page.getByText(itemName, { exact: true })).toBeVisible();
-  await giverSession.page.getByRole("button", { name: /Ask .* for more wishlist ideas anonymously/ }).click();
+  await giverSession.page.getByRole("button", { name: /Ask for more ideas from .* anonymously/ }).click();
   await expect(giverSession.page.getByText("Anonymous request sent")).toBeVisible();
-  await giverSession.page.getByRole("button", { name: /Ask .* for more wishlist ideas anonymously/ }).click();
+  await giverSession.page.getByRole("button", { name: /Ask for more ideas from .* anonymously/ }).click();
   await expect(giverSession.page.getByText(/already sent in the last 24 hours/)).toBeVisible();
   await giverSession.context.close();
 

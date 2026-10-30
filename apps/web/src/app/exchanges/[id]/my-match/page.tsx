@@ -178,7 +178,7 @@ export default function MyMatchPage({
             variant="outline"
             onClick={handleNudge}
             disabled={nudging}
-            aria-label={`Ask ${match.display_name} for more wishlist ideas anonymously`}
+            aria-label={nudging ? undefined : `Ask for more ideas from ${match.display_name} anonymously`}
           >
             <MessageCircle className="h-4 w-4 mr-2" />
             {nudging ? "Sending..." : "Ask for more ideas"}
