@@ -654,6 +654,27 @@ describe("coming back to the exchange page", () => {
   });
 });
 
+describe("a page left open while people join", () => {
+  it("updates by itself until names are drawn", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const joined = person(201, "Parker", { status: "accepted" });
+      mocks.getBySlug
+        .mockResolvedValueOnce(exchangeWith({ status: "inviting" }))
+        .mockResolvedValue(exchangeWith({ status: "inviting", exchange_participants: [organizer, joined] }));
+      await renderPage();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(16_000);
+      });
+
+      expect(await screen.findByText("2/2 joined")).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe("someone who declined", () => {
   it("can be invited again", async () => {
     const declined = { ...person(201, "Parker"), status: "declined" as const };

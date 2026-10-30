@@ -123,6 +123,8 @@ function getStatusColor(status: string) {
   }
 }
 
+const EXCHANGE_REFRESH_MS = 15_000;
+
 export default function ExchangeDetailPage({
   params,
 }: {
@@ -208,6 +210,16 @@ export default function ExchangeDetailPage({
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [isAuthenticated, refreshExchange]);
+
+  // Until names are drawn, a page left in view should still show who has joined.
+  const waitingForDraw = exchange?.status === "draft" || exchange?.status === "inviting";
+  useEffect(() => {
+    if (!isAuthenticated || !waitingForDraw) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refreshExchange();
+    }, EXCHANGE_REFRESH_MS);
+    return () => window.clearInterval(timer);
+  }, [isAuthenticated, waitingForDraw, refreshExchange]);
 
   const handleAddParticipant = async (e: React.FormEvent) => {
     e.preventDefault();
