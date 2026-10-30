@@ -110,6 +110,34 @@ beforeEach(() => {
   mocks.deleteItem.mockReset().mockResolvedValue(undefined);
 });
 
+describe("my wishlist for assistive tech", () => {
+  it("ties every field in the add form to its label", async () => {
+    mocks.getBySlug.mockResolvedValue(exchange());
+
+    await renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Add Item" }));
+
+    expect(screen.getByLabelText("Name *")).toBe(screen.getByPlaceholderText("What would you like?"));
+    expect(screen.getByLabelText("Description")).toBe(
+      screen.getByPlaceholderText("Size, color, or other details...")
+    );
+    expect(screen.getByLabelText("Link")).toBe(screen.getByPlaceholderText("https://..."));
+    expect(screen.getByLabelText("Approximate Price ($)")).toBe(screen.getByPlaceholderText("25.00"));
+  });
+
+  it("says which item each remove button removes", async () => {
+    mocks.getBySlug.mockResolvedValue(exchange());
+    mocks.getItems.mockResolvedValue([item()]);
+
+    await renderPage();
+    await screen.findByText("Wool socks");
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove Wool socks" }));
+
+    await waitFor(() => expect(mocks.deleteItem).toHaveBeenCalledWith(7, me.id, 40));
+  });
+});
+
 describe("my wishlist before names are drawn", () => {
   it.each(["draft", "inviting"] as const)("loads and adds items while %s", async (status) => {
     mocks.getBySlug.mockResolvedValue(exchange({ status }));

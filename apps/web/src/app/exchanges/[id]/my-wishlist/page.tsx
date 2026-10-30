@@ -167,8 +167,9 @@ export default function MyWishlistPage({
               </DialogHeader>
               <form onSubmit={handleAddItem} className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-slate-700 dark:text-slate-300">Name *</Label>
+                  <Label htmlFor="wishlist-item-name" className="text-slate-700 dark:text-slate-300">Name *</Label>
                   <Input
+                    id="wishlist-item-name"
                     value={newItem.name}
                     onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
                     placeholder="What would you like?"
@@ -177,8 +178,9 @@ export default function MyWishlistPage({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-700 dark:text-slate-300">Description</Label>
+                  <Label htmlFor="wishlist-item-description" className="text-slate-700 dark:text-slate-300">Description</Label>
                   <Textarea
+                    id="wishlist-item-description"
                     value={newItem.description}
                     onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
                     placeholder="Size, color, or other details..."
@@ -187,8 +189,9 @@ export default function MyWishlistPage({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-700 dark:text-slate-300">Link</Label>
+                  <Label htmlFor="wishlist-item-link" className="text-slate-700 dark:text-slate-300">Link</Label>
                   <Input
+                    id="wishlist-item-link"
                     type="url"
                     value={newItem.link}
                     onChange={(e) => setNewItem({ ...newItem, link: e.target.value })}
@@ -197,8 +200,9 @@ export default function MyWishlistPage({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-700 dark:text-slate-300">Approximate Price ($)</Label>
+                  <Label htmlFor="wishlist-item-price" className="text-slate-700 dark:text-slate-300">Approximate Price ($)</Label>
                   <Input
+                    id="wishlist-item-price"
                     type="number"
                     min="0"
                     step="0.01"
@@ -282,10 +286,12 @@ export default function MyWishlistPage({
                       </div>
                     </div>
                     <Button
-                      size="sm"
+                      size="icon-sm"
                       variant="ghost"
-                      className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300"
+                      className="size-11 sm:size-8 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                       onClick={() => handleDeleteItem(item)}
+                      aria-label={`Remove ${item.name}`}
+                      title="Remove"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
