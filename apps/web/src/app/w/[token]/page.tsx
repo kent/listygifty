@@ -179,7 +179,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
             item.id === claimingItem.id
               ? {
                   ...item,
-                  is_available: item.available_quantity - 1 <= 0,
+                  is_available: item.available_quantity - 1 > 0,
                   available_quantity: item.available_quantity - 1,
                   claimed_quantity: item.claimed_quantity + 1,
                 }

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { StandaloneWishlistItem, WishlistWithItems } from "@niftygifty/types";
 import PublicWishlistPage from "./page";
@@ -77,5 +77,30 @@ describe("guest wishlist claim form", () => {
     fireEvent.click(purchased);
     expect(planning.getAttribute("aria-pressed")).toBe("false");
     expect(purchased.getAttribute("aria-pressed")).toBe("true");
+  });
+});
+
+describe("after a guest claims an item", () => {
+  async function claim() {
+    await renderPage();
+    fireEvent.click(screen.getByLabelText("Claim this Lego set"));
+    fireEvent.change(screen.getByLabelText(/Your Name/), { target: { value: "Sam" } });
+    fireEvent.change(screen.getByLabelText(/Your Email/), { target: { value: "sam@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "Claim Item" }));
+    await waitFor(() => expect(mocks.publicClaimItem).toHaveBeenCalled());
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  }
+
+  it("shows the last available item as claimed", async () => {
+    await claim();
+    expect(screen.getByText("Claimed")).toBeTruthy();
+    expect(screen.queryByLabelText("Claim this Lego set")).toBeNull();
+  });
+
+  it("keeps an item claimable while more of it are available", async () => {
+    mocks.getPublicWishlist.mockResolvedValue(wishlist([{ ...item, quantity: 2, available_quantity: 2 }]));
+    await claim();
+    expect(screen.queryByText("Claimed")).toBeNull();
+    expect(screen.getByLabelText("Claim this Lego set")).toBeTruthy();
   });
 });

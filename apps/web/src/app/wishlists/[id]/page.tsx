@@ -444,7 +444,7 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
             ? {
                 ...item,
                 my_claim: claim,
-                is_available: item.available_quantity - 1 <= 0,
+                is_available: item.available_quantity - 1 > 0,
                 available_quantity: item.available_quantity - 1,
                 claimed_quantity: item.claimed_quantity + 1,
               }
