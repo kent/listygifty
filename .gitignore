@@ -46,3 +46,6 @@ gha-creds-*.json
 # Migration secrets
 .claude/plans/migration-inputs.env
 .claude/plans/secrets/
+
+# UX audit raw run output (selected frames live in docs/ux-audit/site)
+docs/ux-audit/runs/
