@@ -26,6 +26,7 @@ export default function JoinExchangePage({
   const [error, setError] = useState<string | null>(null);
   const [accepting, setAccepting] = useState(false);
   const [declining, setDeclining] = useState(false);
+  const authReturn = encodeURIComponent(`/join/exchange/${token}`);
 
   useEffect(() => {
     async function loadInvite() {
@@ -232,13 +233,13 @@ export default function JoinExchangePage({
                 Sign in or create an account to join this exchange
               </p>
               <div className="flex gap-3">
-                <Link href={`${AUTH_ROUTES.signIn}?redirect=/join/exchange/${token}`} className="flex-1">
+                <Link href={`${AUTH_ROUTES.signIn}?redirect_url=${authReturn}`} className="flex-1">
                   <Button variant="outline" className="w-full border-slate-300 dark:border-slate-700">
                     <LogIn className="h-4 w-4 mr-2" />
                     Sign In
                   </Button>
                 </Link>
-                <Link href={`${AUTH_ROUTES.signUp}?redirect=/join/exchange/${token}`} className="flex-1">
+                <Link href={`${AUTH_ROUTES.signUp}?redirect_url=${authReturn}`} className="flex-1">
                   <Button className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500">
                     Sign Up
                   </Button>
