@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useFormDraft } from "@/hooks/use-form-draft";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { wishlistsService } from "@/services";
@@ -35,6 +36,17 @@ export default function NewWishlistPage() {
   const [antiSpoilerEnabled, setAntiSpoilerEnabled] = useState(true);
   const [targetDate, setTargetDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const clearDraft = useFormDraft(
+    "new-wishlist",
+    { name, description, visibility, antiSpoilerEnabled, targetDate },
+    (draft) => {
+      setName(draft.name);
+      setDescription(draft.description);
+      setVisibility(draft.visibility);
+      setAntiSpoilerEnabled(draft.antiSpoilerEnabled);
+      setTargetDate(draft.targetDate);
+    }
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +66,7 @@ export default function NewWishlistPage() {
         target_date: targetDate || undefined,
       });
 
+      clearDraft();
       toast.success("Wishlist created!");
       router.push(`/wishlists/${wishlist.id}`);
     } catch {

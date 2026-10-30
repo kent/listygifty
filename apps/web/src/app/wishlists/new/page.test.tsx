@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import NewWishlistPage from "./page";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
@@ -15,7 +15,20 @@ beforeAll(() => {
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
 });
 
+beforeEach(() => window.sessionStorage.clear());
+
 describe("new wishlist form", () => {
+  it("keeps a half-filled form through a refresh", async () => {
+    const first = render(<NewWishlistPage />);
+    fireEvent.change(screen.getByLabelText(/^Wishlist Name/), { target: { value: "My birthday" } });
+    first.unmount();
+
+    render(<NewWishlistPage />);
+    await waitFor(() =>
+      expect((screen.getByLabelText(/^Wishlist Name/) as HTMLInputElement).value).toBe("My birthday")
+    );
+  });
+
   it("names the Visibility select from its label", () => {
     render(<NewWishlistPage />);
     expect(screen.getByRole("combobox", { name: "Visibility" })).toBeTruthy();

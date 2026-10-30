@@ -20,6 +20,7 @@ import {
 } from "@clerk/nextjs";
 import { billingService, mapClerkUser } from "@/services";
 import { apiClient } from "@/lib/api-client";
+import { clearFormDrafts } from "@/hooks/use-form-draft";
 import { useRequestGuard } from "@/hooks/use-request-guard";
 
 interface AuthContextType {
@@ -89,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     invalidate();
     setBillingSnapshot(null);
     await clerk.signOut();
+    clearFormDrafts();
     toast.success("Signed out");
     router.push("/");
   }, [clerk, router, invalidate]);

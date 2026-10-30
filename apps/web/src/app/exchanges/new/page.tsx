@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
+import { useFormDraft } from "@/hooks/use-form-draft";
 import { giftExchangesService } from "@/services";
 import { humanizeError } from "@/lib/error-message";
 import { AppHeader } from "@/components/layout";
@@ -69,6 +70,7 @@ export default function NewExchangePage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<ExchangeFormState>(() => buildFamilyExchangeForm());
+  const clearDraft = useFormDraft("new-exchange", formData, setFormData);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +85,7 @@ export default function NewExchangePage() {
         budget_max: formData.budget_max ? parseFloat(formData.budget_max) : undefined,
         include_creator: formData.include_creator,
       });
+      clearDraft();
       toast.success(`Created "${exchange.name}"`);
       router.push(`/exchanges/${exchange.slug}`);
     } catch (err: unknown) {

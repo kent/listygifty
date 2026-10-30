@@ -16,6 +16,8 @@ vi.mock("@/components/ui/checkbox", () => ({ Checkbox: () => null }));
 vi.mock("@/services", () => ({ giftExchangesService: { create: mocks.create } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
+const nameField = () => screen.getByLabelText("Exchange Name *") as HTMLInputElement;
+
 function submit() {
   render(<NewExchangePage />);
   fireEvent.submit(screen.getByLabelText("Exchange Name *").closest("form") as HTMLFormElement);
@@ -24,6 +26,30 @@ function submit() {
 beforeEach(() => {
   mocks.push.mockReset();
   mocks.create.mockReset();
+  window.sessionStorage.clear();
+});
+
+describe("a half-filled form", () => {
+  it("survives a refresh", async () => {
+    const first = render(<NewExchangePage />);
+    fireEvent.change(screen.getByLabelText("Exchange Name *"), { target: { value: "Half finished" } });
+    first.unmount();
+
+    render(<NewExchangePage />);
+    await waitFor(() => expect(nameField().value).toBe("Half finished"));
+  });
+
+  it("starts clean after the exchange is created", async () => {
+    mocks.create.mockResolvedValue({ name: "Half finished", slug: "half-finished" });
+    const first = render(<NewExchangePage />);
+    fireEvent.change(screen.getByLabelText("Exchange Name *"), { target: { value: "Half finished" } });
+    fireEvent.submit(screen.getByLabelText("Exchange Name *").closest("form") as HTMLFormElement);
+    await waitFor(() => expect(mocks.push).toHaveBeenCalled());
+    first.unmount();
+
+    render(<NewExchangePage />);
+    await waitFor(() => expect(nameField().value).toMatch(/^Family Christmas/));
+  });
 });
 
 describe("creating an exchange", () => {
