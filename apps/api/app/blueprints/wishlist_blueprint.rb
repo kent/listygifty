@@ -43,7 +43,7 @@ class WishlistBlueprint < ApplicationBlueprint
   end
 
   view :with_items do
-    association :wishlist_items, blueprint: WishlistItemBlueprint, options: ->(options) { options } do |wishlist, _options|
+    association :wishlist_items, blueprint: WishlistItemBlueprint do |wishlist, _options|
       wishlist.wishlist_items.active.by_priority
     end
   end
@@ -51,7 +51,8 @@ class WishlistBlueprint < ApplicationBlueprint
   view :public do
     excludes :share_token, :share_url
 
-    association :wishlist_items, blueprint: WishlistItemBlueprint, options: ->(options) { options.merge(public_view: true) } do |wishlist, _options|
+    # Blueprinter only merges a Hash here. A lambda is silently ignored.
+    association :wishlist_items, blueprint: WishlistItemBlueprint, options: { public_view: true } do |wishlist, _options|
       wishlist.wishlist_items.active.by_priority
     end
   end
