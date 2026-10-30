@@ -119,7 +119,7 @@ export function PeopleCell({
                 <button
                   type="button"
                   aria-label={`Remove ${person.name}`}
-                  className="pointer-events-auto ml-1 rounded-sm outline-none hover:text-destructive focus-visible:text-destructive focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset"
+                  className="pointer-events-auto -my-1 -mr-1.5 ml-0.5 inline-flex size-6 items-center justify-center rounded-sm outline-none hover:text-destructive focus-visible:text-destructive focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset"
                   onClick={() => removePerson(person.id)}
                 >
                   <X className="size-4" />
