@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { User } from "@niftygifty/types";
-import { ArrowLeftRight, Calendar, Crown, Gift, Home, Settings, Sparkles, Users } from "lucide-react";
+import { ArrowLeftRight, Calendar, Crown, Gift, Home, ListTodo, Settings, Sparkles, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { WorkspaceSwitcher } from "@/components/workspace/WorkspaceSwitcher";
@@ -15,10 +15,11 @@ interface AppHeaderProps {
   onSignOut: () => void;
 }
 
-// F5 is left alone so refresh still works.
+// F5 (refresh) and F7 (caret browsing) are left to the browser.
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Home", fkey: 1, icon: Home },
   { href: "/holidays", label: "Gift Lists", fkey: 2, icon: Calendar },
+  { href: "/wishlists", label: "Wishlists", fkey: 8, icon: ListTodo },
   { href: "/exchanges", label: "Exchanges", fkey: 3, icon: ArrowLeftRight },
   { href: "/people", label: "People", fkey: 4, icon: Users },
   { href: "/settings", label: "Options", fkey: 6, icon: Settings },
@@ -31,6 +32,8 @@ const KEY_IDLE =
   "border-t-violet-400 border-l-violet-400 border-r-black border-b-black bg-violet-700 text-white hover:bg-violet-600";
 const KEY_ACTIVE =
   "border-t-red-300 border-l-red-300 border-r-red-900 border-b-red-900 bg-red-600 text-amber-200 [text-shadow:1px_1px_0_#500305]";
+
+const EDGE_FADE = "1.75rem";
 
 type NavItem = (typeof NAV_ITEMS)[number] & { active: boolean };
 
@@ -64,6 +67,51 @@ export function AppHeader({ user, onSignOut }: AppHeaderProps) {
   );
 }
 
+/** Main menu row: keeps the current page in view and fades any edge with more items past it. */
+function ScrollingNav({ className, children }: { className: string; children: ReactNode }) {
+  const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
+  const [moreLeft, setMoreLeft] = useState(false);
+  const [moreRight, setMoreRight] = useState(false);
+
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const measure = () => {
+      setMoreLeft(nav.scrollLeft > 1);
+      setMoreRight(nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 1);
+    };
+
+    // Sets scrollLeft directly so the page itself never scrolls.
+    const current = nav.querySelector('[aria-current="page"]');
+    if (current && nav.scrollWidth > nav.clientWidth) {
+      const navBox = nav.getBoundingClientRect();
+      const itemBox = current.getBoundingClientRect();
+      nav.scrollLeft += itemBox.left + itemBox.width / 2 - (navBox.left + navBox.width / 2);
+    }
+
+    measure();
+    nav.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure);
+    return () => {
+      nav.removeEventListener("scroll", measure);
+      window.removeEventListener("resize", measure);
+    };
+  }, [pathname]);
+
+  // A mask fades the items themselves, so it suits both themes' header backgrounds.
+  const mask =
+    moreLeft || moreRight
+      ? `linear-gradient(to right, transparent, black ${moreLeft ? EDGE_FADE : "0px"}, black calc(100% - ${moreRight ? EDGE_FADE : "0px"}), transparent)`
+      : undefined;
+
+  return (
+    <nav ref={navRef} aria-label="Main menu" className={className} style={{ maskImage: mask, WebkitMaskImage: mask }}>
+      {children}
+    </nav>
+  );
+}
+
 function AppleHeader({ user, onSignOut, items, isPremium, showUpgrade }: HeaderViewProps) {
   return (
     <header className="theme-apple-only sticky top-0 z-20 border-b border-black/5 bg-white/75 backdrop-blur-xl backdrop-saturate-150">
@@ -75,7 +123,7 @@ function AppleHeader({ user, onSignOut, items, isPremium, showUpgrade }: HeaderV
           <span className="text-[15px] font-semibold tracking-tight text-slate-900">Listy Gifty</span>
         </Link>
 
-        <nav aria-label="Main menu" className="scrollbar-none hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto md:flex">
+        <ScrollingNav className="scrollbar-none hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto md:flex">
           {items.map(({ href, label, active }) => (
             <Link
               key={href}
@@ -89,7 +137,7 @@ function AppleHeader({ user, onSignOut, items, isPremium, showUpgrade }: HeaderV
               {label}
             </Link>
           ))}
-        </nav>
+        </ScrollingNav>
 
         <div className="ml-auto flex items-center gap-3">
           <div className="hidden lg:block">
@@ -116,11 +164,12 @@ function AppleHeader({ user, onSignOut, items, isPremium, showUpgrade }: HeaderV
       </div>
 
       {/* Mobile menu row */}
-      <nav aria-label="Main menu" className="scrollbar-none flex gap-1 overflow-x-auto px-4 pb-2 md:hidden">
+      <ScrollingNav className="scrollbar-none flex gap-1 overflow-x-auto px-4 pb-2 md:hidden">
         {items.map(({ href, label, active }) => (
           <Link
             key={href}
             href={href}
+            aria-current={active ? "page" : undefined}
             className={cn(
               "shrink-0 rounded-full px-3 py-1.5 text-sm",
               active ? "bg-slate-100 font-medium text-slate-900" : "text-slate-600"
@@ -129,7 +178,7 @@ function AppleHeader({ user, onSignOut, items, isPremium, showUpgrade }: HeaderV
             {label}
           </Link>
         ))}
-      </nav>
+      </ScrollingNav>
     </header>
   );
 }
@@ -180,7 +229,7 @@ function FestiveHeader({ user, onSignOut, items, isPremium, showUpgrade }: Heade
         </div>
 
         {/* Main menu: chunky keys with their F-key shortcut */}
-        <nav aria-label="Main menu" className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-2.5 pt-1">
+        <ScrollingNav className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-2.5 pt-1">
           {items.map(({ href, label, fkey, icon: Icon, active }) => (
             <Link
               key={href}
@@ -200,7 +249,7 @@ function FestiveHeader({ user, onSignOut, items, isPremium, showUpgrade }: Heade
               </span>
             </Link>
           ))}
-        </nav>
+        </ScrollingNav>
       </div>
     </header>
   );
