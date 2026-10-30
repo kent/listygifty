@@ -30,7 +30,10 @@ const HOLIDAY_ICONS: Record<string, string> = {
 };
 
 interface ActivationStep {
+  /** What the person should do, shown in the checklist. */
   label: string;
+  /** Stable name for analytics, so rewording a label doesn't split the funnel. */
+  analyticsStep: string;
   countLabel: string;
   complete: boolean;
   href: string;
@@ -44,6 +47,10 @@ interface UpcomingDate {
   kind: "birthday" | "list" | "milestone";
   subtitle: string;
   title: string;
+}
+
+function formatNextStep(label: string): string {
+  return `Next: ${label.charAt(0).toLowerCase()}${label.slice(1)}`;
 }
 
 function formatProgress(current: number, target: number): string {
@@ -165,7 +172,7 @@ function ActivationChecklist({
           <div>
             <h2 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
-              {isBusiness ? "Business Activation" : "Activation"}
+              Get started
             </h2>
             {isBusiness && (
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -190,7 +197,7 @@ function ActivationChecklist({
                     complete: step.complete,
                     is_business: isBusiness,
                     source: "checklist",
-                    step: step.label,
+                    step: step.analyticsStep,
                     workflow: workflowLabel,
                   })
                 }
@@ -222,7 +229,7 @@ function ActivationChecklist({
           ) : (
             <>
               <GiftIcon className="h-3.5 w-3.5" />
-              <span>Household goal: one list, three people, and five gifts.</span>
+              <span>Your first goal: one list, three people and five gifts.</span>
             </>
           )}
         </div>
@@ -235,13 +242,13 @@ function ActivationChecklist({
                   complete: nextStep.complete,
                   is_business: isBusiness,
                   source: "continue_setup",
-                  step: nextStep.label,
+                  step: nextStep.analyticsStep,
                   workflow: workflowLabel,
                 })
               }
               className="inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-500 dark:text-violet-300 dark:hover:text-violet-200"
             >
-              Continue setup: {nextStep.label}
+              {formatNextStep(nextStep.label)}
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -341,25 +348,29 @@ export default function DashboardPage() {
       const activation = businessUseCase.activation;
       return [
         {
-          label: "Business workspace",
+          label: "Create a business workspace",
+          analyticsStep: "Business workspace",
           countLabel: currentWorkspace ? "1/1" : "0/1",
           complete: Boolean(currentWorkspace),
           href: "/settings",
         },
         {
-          label: activation.peopleLabel,
+          label: activation.peopleAction,
+          analyticsStep: activation.peopleLabel,
           countLabel: formatProgress(people.length, activation.peopleTarget),
           complete: people.length >= activation.peopleTarget,
           href: "/people",
         },
         {
-          label: activation.giftsLabel,
+          label: activation.giftsAction,
+          analyticsStep: activation.giftsLabel,
           countLabel: formatProgress(giftTotal, activation.giftTarget),
           complete: giftTotal >= activation.giftTarget,
           href: activeHolidays[0] ? `/holidays/${activeHolidays[0].id}` : "/holidays",
         },
         {
-          label: activation.workflowLabel,
+          label: activation.workflowAction,
+          analyticsStep: activation.workflowLabel,
           countLabel: exchangeCount > 0 || activeHolidays.length > 0 ? "1/1" : "0/1",
           complete: exchangeCount > 0 || activeHolidays.length > 0,
           href: activeHolidays[0]
@@ -371,25 +382,29 @@ export default function DashboardPage() {
 
     return [
       {
-        label: "Gift list created",
+        label: "Create a gift list",
+        analyticsStep: "Gift list created",
         countLabel: formatProgress(activeHolidays.length, 1),
         complete: activeHolidays.length >= 1,
         href: "/holidays",
       },
       {
-        label: "People added",
+        label: "Add people",
+        analyticsStep: "People added",
         countLabel: formatProgress(people.length, 3),
         complete: people.length >= 3,
         href: "/people",
       },
       {
-        label: "Gifts captured",
+        label: "Capture gifts",
+        analyticsStep: "Gifts captured",
         countLabel: formatProgress(giftTotal, 5),
         complete: giftTotal >= 5,
         href: activeHolidays[0] ? `/holidays/${activeHolidays[0].id}` : "/holidays",
       },
       {
-        label: "Shared or exchange",
+        label: "Share a list or start an exchange",
+        analyticsStep: "Shared or exchange",
         countLabel: sharedListCount > 0 || exchangeCount > 0 ? "1/1" : "0/1",
         complete: sharedListCount > 0 || exchangeCount > 0,
         href: exchangeCount > 0 ? "/exchanges" : activeHolidays[0] ? `/holidays/${activeHolidays[0].id}` : "/exchanges",
