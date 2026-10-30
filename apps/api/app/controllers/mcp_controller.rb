@@ -782,6 +782,7 @@ class McpController < ApplicationController
             raise ArgumentError, "This invite has been declined" if participant.status == "declined"
             participant.accept!(@current_user)
           end
+          ExchangeNotificationService.invite_accepted!(participant)
           serialize_exchange(participant.gift_exchange.reload)
         }
       },

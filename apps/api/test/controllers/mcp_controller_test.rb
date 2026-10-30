@@ -874,6 +874,62 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     assert replacement_exclusion["id"].present?
   end
 
+  test "accepting an invite tells the organizer and confirms to the joiner" do
+    organizer = users(:two)
+    exchange = GiftExchange.create!(
+      workspace: workspaces(:two), user: organizer, name: "Family Draw",
+      status: "inviting", exchange_date: 1.month.from_now
+    )
+    invited = exchange.exchange_participants.create!(name: "Invited Person", email: "invited-mcp@example.com")
+
+    perform_enqueued_jobs do
+      tool_payload(call_tool("accept_exchange_invite", { invite_token: invited.invite_token }))
+    end
+
+    assert_equal "accepted", invited.reload.status
+    assert_equal 2, ActionMailer::Base.deliveries.size
+
+    organizer_mail = ActionMailer::Base.deliveries.find { |mail| mail.to == [ organizer.email ] }
+    joiner_mail = ActionMailer::Base.deliveries.find { |mail| mail.to == [ "invited-mcp@example.com" ] }
+
+    assert_equal "🎁 #{invited.display_name} joined Family Draw", organizer_mail&.subject
+    assert_equal "🎁 You're in: Family Draw", joiner_mail&.subject
+  end
+
+  test "an organizer accepting their own invite is not emailed about themselves" do
+    exchange = GiftExchange.create!(
+      workspace: @workspace, user: @user, name: "Own Draw",
+      status: "inviting", exchange_date: 1.month.from_now
+    )
+    own_invite = exchange.exchange_participants.create!(name: "The Organizer", email: @user.email)
+
+    perform_enqueued_jobs do
+      tool_payload(call_tool("accept_exchange_invite", { invite_token: own_invite.invite_token }))
+    end
+
+    assert_equal "accepted", own_invite.reload.status
+    assert_equal [ "🎁 You're in: Own Draw" ], ActionMailer::Base.deliveries.map(&:subject)
+  end
+
+  test "a refused invite accept sends no email" do
+    exchange = GiftExchange.create!(
+      workspace: workspaces(:two), user: users(:two), name: "Family Draw",
+      status: "inviting", exchange_date: 1.month.from_now
+    )
+    accepted = exchange.exchange_participants.create!(
+      name: "Already In", email: "already-mcp@example.com", status: "accepted"
+    )
+    declined = exchange.exchange_participants.create!(
+      name: "Said No", email: "declined-mcp@example.com", status: "declined"
+    )
+
+    assert_no_enqueued_emails do
+      [ accepted, declined ].each do |participant|
+        assert call_tool("accept_exchange_invite", { invite_token: participant.invite_token })["isError"]
+      end
+    end
+  end
+
   test "returns MCP tool errors without leaking exceptions" do
     result = call_tool("get_gift_exchange", { exchange_id: "not-a-real-exchange" })
 

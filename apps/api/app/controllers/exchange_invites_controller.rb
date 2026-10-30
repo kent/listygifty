@@ -43,8 +43,7 @@ class ExchangeInvitesController < ApplicationController
       @participant.accept!(current_user)
     end
 
-    ExchangeMailer.joined_organizer(@participant).deliver_later unless @participant.gift_exchange.owner?(current_user)
-    ExchangeMailer.join_confirmation(@participant).deliver_later
+    ExchangeNotificationService.invite_accepted!(@participant)
 
     render json: {
       message: "You have joined the gift exchange!",

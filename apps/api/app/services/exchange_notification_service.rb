@@ -3,6 +3,15 @@ class ExchangeNotificationService
 
   NUDGE_COOLDOWN = 24.hours
 
+  # Call once the exchange lock is released. An organizer accepting their own
+  # invite gets the confirmation but no notice about themselves.
+  def self.invite_accepted!(participant)
+    exchange = participant.gift_exchange
+
+    ExchangeMailer.joined_organizer(participant).deliver_later unless exchange.owner?(participant.user)
+    ExchangeMailer.join_confirmation(participant).deliver_later
+  end
+
   def self.wishlist_item_added!(item)
     exchange = item.gift_exchange
     return [] unless %w[active completed].include?(exchange.status)
