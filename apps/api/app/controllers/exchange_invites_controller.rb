@@ -41,6 +41,9 @@ class ExchangeInvitesController < ApplicationController
       @participant.accept!(current_user)
     end
 
+    ExchangeMailer.joined_organizer(@participant).deliver_later unless @participant.gift_exchange.owner?(current_user)
+    ExchangeMailer.join_confirmation(@participant).deliver_later
+
     render json: {
       message: "You have joined the gift exchange!",
       exchange: GiftExchangeBlueprint.render_as_hash(@participant.gift_exchange, current_user: current_user),

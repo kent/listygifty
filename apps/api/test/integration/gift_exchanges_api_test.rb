@@ -553,6 +553,60 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     assert_equal "accepted", pending_participant.reload.status
   end
 
+  test "accepting an emailed invite tells the organizer and confirms to the joiner" do
+    @exchange.update!(status: "inviting")
+    invited = @exchange.exchange_participants.create!(name: "Invited Person", email: "invited@example.com")
+
+    perform_enqueued_jobs do
+      post "/exchange_invite/#{invited.invite_token}/accept", headers: auth_headers_for(users(:two)), as: :json
+    end
+
+    assert_response :success
+    assert_equal 2, ActionMailer::Base.deliveries.size
+
+    organizer_mail = ActionMailer::Base.deliveries.find { |mail| mail.to == [ @user.email ] }
+    joiner_mail = ActionMailer::Base.deliveries.find { |mail| mail.to == [ "invited@example.com" ] }
+
+    assert organizer_mail
+    assert joiner_mail
+    assert_includes organizer_mail.subject, invited.reload.display_name
+    assert_includes organizer_mail.subject, @exchange.name
+    assert_includes joiner_mail.subject, @exchange.name
+    assert_not_includes organizer_mail.text_part.decoded, "share link"
+    assert_not_includes organizer_mail.html_part.decoded, "share link"
+  end
+
+  test "an organizer accepting their own invite is not emailed about themselves" do
+    @exchange.update!(status: "inviting")
+    @participant.destroy!
+    invited = @exchange.exchange_participants.create!(name: "The Organizer", email: @user.email)
+
+    perform_enqueued_jobs do
+      post "/exchange_invite/#{invited.invite_token}/accept", headers: @auth_headers, as: :json
+    end
+
+    assert_response :success
+    assert_equal [ "🎁 You're in: #{@exchange.name}" ], ActionMailer::Base.deliveries.map(&:subject)
+  end
+
+  test "a refused invite accept sends no email" do
+    @exchange.update!(status: "inviting")
+    accepted = @exchange.exchange_participants.create!(
+      name: "Already In", email: "already@example.com", status: "accepted"
+    )
+    declined = @exchange.exchange_participants.create!(
+      name: "Said No", email: "declined@example.com", status: "declined"
+    )
+
+    assert_no_enqueued_emails do
+      [ accepted, declined ].each do |participant|
+        post "/exchange_invite/#{participant.invite_token}/accept",
+          headers: auth_headers_for(users(:two)), as: :json
+        assert_response :unprocessable_entity
+      end
+    end
+  end
+
   test "exchange invite decline rejects the invitation" do
     @exchange.update!(status: "inviting")
     pending_participant = @exchange.exchange_participants.create!(
