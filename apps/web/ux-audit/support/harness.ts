@@ -115,7 +115,7 @@ export class Journey {
       await action();
     } catch (error) {
       status = "fail";
-      note = (error instanceof Error ? error.message : String(error)).split("\n").slice(0, 3).join(" ").slice(0, 300);
+      note = (error instanceof Error ? error.message : String(error)).split("\n").slice(0, 14).join(" ").slice(0, 1400);
       if (options.required) this.aborted = true;
     }
     const ms = Date.now() - started;
