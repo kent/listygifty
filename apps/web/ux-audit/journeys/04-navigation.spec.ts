@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { Journey, goToNav, openSession, shown } from "../support/harness";
+import { Journey, goToNav, navItem, openSession, shown } from "../support/harness";
 import { clearMail, resetLocalData } from "../support/local";
 
 const TASK =
@@ -20,12 +20,12 @@ test("navigating: every part of the site can be found from the menu", async ({ b
 
   await journey.step("Open my home screen", page, async () => {
     await page.goto("/dashboard");
-    await expect(shown(page, "link", /^(.*\s)?Home$/)).toBeVisible();
+    await expect(shown(page, "link", navItem("Home"))).toBeVisible();
   }, { required: true });
 
   for (const [stepName, navLabel, url, heading] of DESTINATIONS) {
     await journey.step(`Find ${stepName} in the menu`, page, async () => {
-      await goToNav(page, new RegExp(`(^|\\s)${navLabel}$`));
+      await goToNav(page, navItem(navLabel));
       await expect(page).toHaveURL(url);
       await expect(page.getByRole("heading", { name: heading }).first()).toBeVisible();
     });
@@ -37,7 +37,7 @@ test("navigating: every part of the site can be found from the menu", async ({ b
   }
 
   await journey.step("Find my settings", page, async () => {
-    await goToNav(page, /(^|\s)(Settings|Options)$/);
+    await goToNav(page, navItem("(Settings|Options)"));
     await expect(page).toHaveURL(/\/settings/);
     await expect(page.getByRole("heading", { name: /Settings|Options/ }).first()).toBeVisible();
   });

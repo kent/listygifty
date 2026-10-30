@@ -2,7 +2,7 @@ import { createClerkClient } from "@clerk/backend";
 import { expect, test, type Page } from "@playwright/test";
 import { E2E_USERS } from "../../e2e/support/test-users";
 import { allowClerkTestSession, signUpThroughForm, waitUntilSignedIn } from "../support/clerk-ui";
-import { Journey, action, goToNav, openSession, shown } from "../support/harness";
+import { Journey, action, goToNav, navItem, openSession, shown } from "../support/harness";
 import { allMail, clearMail, failedJobs, firstLink, mailBody, resetLocalData, rows, waitForMail } from "../support/local";
 
 const TASK =
@@ -54,7 +54,7 @@ test("exchange: invite everyone by email and get them all assigned", async ({ br
 
   await journey.step("Find exchanges in the menu", page, async () => {
     await page.goto("/dashboard");
-    await goToNav(page, /(^|\s)Exchanges$/);
+    await goToNav(page, navItem("Exchanges"));
     await expect(page.getByRole("heading", { name: "Gift Exchanges" })).toBeVisible();
   }, { required: true });
 

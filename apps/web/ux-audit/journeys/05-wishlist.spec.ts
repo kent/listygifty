@@ -1,11 +1,20 @@
-import { expect, test } from "@playwright/test";
-import { Journey, action, goToNav, openSession, shown } from "../support/harness";
-import { clearMail, firstLink, resetLocalData, waitForMail } from "../support/local";
+import { expect, test, type Page } from "@playwright/test";
+import { Journey, action, goToNav, navItem, openSession, shown } from "../support/harness";
+import { clearMail, firstLink, resetLocalData, rows, waitForMail } from "../support/local";
 
 const TASK =
   "Your birthday's coming and the family keeps asking what you want. Make a wishlist, add two things with a link and a price, and share it. Your cousin has no account and just wants to reserve one so nobody doubles up.";
 
 const GUEST_EMAIL = "cousin.guest@example.com";
+
+/** A sighted person can tap an icon with no name; axe reports the naming separately. */
+function iconAction(page: Page, name: RegExp, icon: string) {
+  return page
+    .getByRole("button", { name })
+    .or(page.locator(`main button:has(svg.${icon}), button:has(svg.${icon})`))
+    .locator("visible=true")
+    .first();
+}
 
 test("wishlist: make one, share it, a guest reserves a gift", async ({ browser }, testInfo) => {
   resetLocalData();
@@ -26,7 +35,7 @@ test("wishlist: make one, share it, a guest reserves a gift", async ({ browser }
 
   await journey.step("Find wishlists from my home screen", page, async () => {
     await page.goto("/dashboard");
-    await goToNav(page, /(^|\s)Wishlists$/);
+    await goToNav(page, navItem("Wishlists"));
     await expect(page).toHaveURL(/\/wishlists/);
   });
 
@@ -51,12 +60,12 @@ test("wishlist: make one, share it, a guest reserves a gift", async ({ browser }
   );
 
   await journey.step("Add a second thing", page, () =>
-    addItem(() => shown(page, "button", /^Add Item$/).click(), "Rain jacket", "120")
+    addItem(() => iconAction(page, /^Add Item$/, "lucide-plus").click(), "Rain jacket", "120")
   );
 
   let shareUrl = "";
   await journey.step("Get a link to share", page, async () => {
-    await shown(page, "button", /^Share$/).click();
+    await iconAction(page, /^Share$/, "lucide-share-2").click();
     const field = page.getByRole("dialog").getByRole("textbox").first();
     await expect(field).toHaveValue(/\/w\//);
     shareUrl = await field.inputValue();
@@ -103,10 +112,23 @@ test("wishlist: make one, share it, a guest reserves a gift", async ({ browser }
     await expect(guest.page).not.toHaveURL(/\/login/);
   });
 
+  // The spoiler check needs a claim to exist even if the guest was locked out above.
+  const claims = rows<{ count: number }>("SELECT count(*)::int AS count FROM wishlist_item_claims")[0].count;
+  if (claims === 0 && shareUrl) {
+    const token = new URL(shareUrl).pathname.split("/").pop();
+    const item = rows<{ id: number }>("SELECT id FROM wishlist_items WHERE name = 'Pasta machine'")[0];
+    await fetch(`http://localhost:3001/w/${token}/items/${item.id}/claim`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ claim: { claimer_name: "Cousin Sam", claimer_email: GUEST_EMAIL, quantity: 1 } }),
+    });
+  }
+
   await journey.step("I can still see my list and it isn't spoiled", page, async () => {
     await page.reload();
     await expect(page.getByText("Pasta machine").first()).toBeVisible();
     await expect(page.getByText("Cousin Sam")).toHaveCount(0);
+    await expect(page.getByText("Claimed", { exact: true })).toHaveCount(0);
   });
 
   await guest.context.close();

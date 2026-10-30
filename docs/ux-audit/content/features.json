@@ -1,0 +1,248 @@
+[
+  {
+    "title": "Run it again next year, and remember who drew whom",
+    "problem": "A family has to rebuild the same exchange every year, and nothing stops someone drawing the same person again.",
+    "who": "Family organizers",
+    "effort": "M",
+    "why": "This is the yearly reason to come back. Past pairings aren't stored anywhere today, and DrawNames users notice when an app forgets.",
+    "evidence": [
+      {
+        "quote": "Unfortunately if you have the same people and same amount of people and draw for future consecutive years, the odds of redrawing is 50/50. I would think it would remember, but I guess not.",
+        "source": "DrawNames, App Store US, 2024-11-30",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=6/id=932002377/sortby=mostrecent/json"
+      },
+      {
+        "quote": "My family and I used it both this and last year and we all got the same people!",
+        "source": "DrawNames, App Store US, 2025-11-30",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=3/id=932002377/sortby=mostrecent/json"
+      },
+      {
+        "quote": "An exchange can be redrawn, but only within the same exchange. There is no way to copy it or carry its history forward.",
+        "source": "Seen in this audit"
+      }
+    ]
+  },
+  {
+    "title": "Add kids and relatives who have no email",
+    "problem": "Every participant needs their own unique email, so two kids can't share a parent's address.",
+    "who": "Busy parents",
+    "effort": "M",
+    "why": "Parents are the core audience, and a family exchange with kids can't be set up honestly today.",
+    "evidence": [
+      {
+        "quote": "Adding children who don’t have email accounts is difficult.",
+        "source": "Elfster, App Store US, 2025-11-28",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=6/id=751594890/sortby=mostrecent/json"
+      },
+      {
+        "quote": "exchange_participants requires an email that is unique within the exchange.",
+        "source": "Seen in this audit"
+      }
+    ]
+  },
+  {
+    "title": "Let organizers see who is stuck",
+    "problem": "After the draw, the organizer can't tell who has opened their match or who has an empty wishlist, so they chase everyone.",
+    "who": "Organizers",
+    "effort": "M",
+    "why": "It turns the organizer from tech support into someone with a clear list of two people to text.",
+    "evidence": [
+      {
+        "quote": "Instead of the app notifying everyone that there were individual individuals who did not see their draw, only the organizer receives notifications that the draw is incomplete.",
+        "source": "Elfster, App Store US, 2025-12-24",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=2/id=751594890/sortby=mostrecent/json"
+      },
+      {
+        "quote": "And as an administrator one cannot update other people’s emails.",
+        "source": "Elfster, App Store US, 2025-12-09",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=3/id=751594890/sortby=mostrecent/json"
+      },
+      {
+        "quote": "No record of who opened their match exists. The organizer page shows nothing about this after the draw.",
+        "source": "Seen in this audit"
+      }
+    ]
+  },
+  {
+    "title": "Rename or delete a wishlist, and turn off its link",
+    "problem": "A wishlist can't be renamed or deleted, and a shared link can't be turned off, from the web app.",
+    "who": "Everyone with a wishlist",
+    "effort": "S",
+    "why": "The API and service calls already exist, so this is the cheapest gap to close. People expect to be able to undo a share.",
+    "evidence": [
+      {
+        "quote": "PATCH and DELETE on wishlists and revoke_share exist in the API, and nothing in the web app calls them.",
+        "source": "Seen in this audit"
+      }
+    ]
+  },
+  {
+    "title": "Paste a link and fill in the rest",
+    "problem": "Any store link is accepted, but people still type the name, price and image by hand.",
+    "who": "Anyone adding wishes",
+    "effort": "M",
+    "why": "Competitors lose people by leaning toward Amazon. Working with every store is a real advantage, and auto-fill makes it obvious.",
+    "evidence": [
+      {
+        "quote": "Please make it easier to add items that are sold on sites other than Amazon.",
+        "source": "Giftster, App Store US, 2026-05-18",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=1/id=478126039/sortby=mostrecent/json"
+      },
+      {
+        "quote": "If only Amazon links work, then I might as well use Amazon wishlist!",
+        "source": "Giftful, App Store US, 2026-01-31",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=8/id=1450175505/sortby=mostrecent/json"
+      },
+      {
+        "quote": "The \"auto image select\" feature pulls the wrong image more often than not",
+        "source": "Giftster Firefox add-on, 3 star, 2024-12-30",
+        "url": "https://addons.mozilla.org/api/v5/ratings/rating/?addon=add-to-giftster-wish-list&page_size=50"
+      }
+    ]
+  },
+  {
+    "title": "Save an idea from the phone in seconds",
+    "problem": "There's no share sheet target and no photo capture, so an idea seen in a shop has to wait.",
+    "who": "Busy parents",
+    "effort": "L",
+    "why": "GOALS.md sets 5-second capture as a consumer goal, and Elfster users are angry about losing exactly this.",
+    "evidence": [
+      {
+        "quote": "I am a mobile user and used to be able to add wishes to my wishlist using any websites share button and selecting the Elfster app… that no longer works!",
+        "source": "Elfster, App Store US, 2025-11-10",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=8/id=751594890/sortby=mostrecent/json"
+      },
+      {
+        "quote": "please add a feature so we can take pics and scan in store items and add to the list without having to use a browser to do so.",
+        "source": "Giftster, App Store US, 2023-10-30",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=3/id=478126039/sortby=mostrecent/json"
+      }
+    ]
+  },
+  {
+    "title": "See your match without making an account",
+    "problem": "Everyone in an exchange must create an account before they can join or see who they drew.",
+    "who": "Older relatives and reluctant joiners",
+    "effort": "L",
+    "why": "The relative in this audit faced a long form before seeing anything useful. A private link could remove that, but it needs care to keep matches secret.",
+    "evidence": [
+      {
+        "quote": "Every person in the exchange has to download the app and login.",
+        "source": "DrawNames, App Store US, 2026-10-05",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=1/id=932002377/sortby=mostrecent/json"
+      },
+      {
+        "quote": "I don’t like that it forces people to create profiles to view the list.",
+        "source": "Elfster, App Store US, 2026-01-14",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=2/id=751594890/sortby=mostrecent/json"
+      },
+      {
+        "quote": "The sign-up form asks for first name, last name, email, optional phone and password before the invite can be accepted.",
+        "source": "Seen in this audit"
+      }
+    ]
+  },
+  {
+    "title": "Bring your wishlist into an exchange",
+    "problem": "A wishlist and an exchange wishlist are separate, so people retype the same wishes.",
+    "who": "Anyone in an exchange",
+    "effort": "S",
+    "why": "Small change, and it also lets people deliberately reuse last year's ideas instead of having old ones surface by accident.",
+    "evidence": [
+      {
+        "quote": "We used these app for 3 years and worst is this year, people sent gift’s from 2 year ago’s wish list?",
+        "source": "Elfster, App Store US, 2026-01-09",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=2/id=751594890/sortby=mostrecent/json"
+      },
+      {
+        "quote": "I add items to a current wishlist but it somehow only adds it to a wishlist from two years ago.",
+        "source": "Elfster, App Store US, 2025-12-28",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=2/id=751594890/sortby=mostrecent/json"
+      },
+      {
+        "quote": "exchange_wishlist_items has no link to wishlist_items.",
+        "source": "Seen in this audit"
+      }
+    ]
+  },
+  {
+    "title": "Wishlists and claiming in the mobile app",
+    "problem": "Standalone wishlists and claims only work on the web, so phone users can't see what's been taken.",
+    "who": "Families buying from their phones",
+    "effort": "L",
+    "why": "Duplicate gifts are the classic failure of this category, and the protection stops at the browser.",
+    "evidence": [
+      {
+        "quote": "Both years, we’ve all received duplicate gifts because of these types of issues (and the gift-givers range from under 30’s to mid-80’s in age).",
+        "source": "Giftster, App Store US, 2023-12-25",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=3/id=478126039/sortby=mostrecent/json"
+      },
+      {
+        "quote": "It would show that it was purchased on the individuals and who purchased it, but when we looked at other people's same list, it did not show that it was purchased.",
+        "source": "Elfster, App Store US, 2024-12-27",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=9/id=751594890/sortby=mostrecent/json"
+      }
+    ]
+  },
+  {
+    "title": "Choose a currency",
+    "problem": "Dollar signs are hard-coded, and exchanges and items have no currency.",
+    "who": "Anyone outside the US",
+    "effort": "S",
+    "why": "Premium is priced in CAD, so this affects a market you already sell in.",
+    "evidence": [
+      {
+        "quote": "Nice app, but wishlist keeps defaulting to Amazon USA and USD even though currency /country has been set to CAD / Canada.",
+        "source": "Elfster, App Store CA, 2024-11-22",
+        "url": "https://itunes.apple.com/ca/rss/customerreviews/page=1/id=751594890/sortby=mostrecent/json"
+      },
+      {
+        "quote": "If you’re outside of those countries the app is useless",
+        "source": "Elfster, App Store AU, 2025-09-07",
+        "url": "https://itunes.apple.com/au/rss/customerreviews/page=1/id=751594890/sortby=mostrecent/json"
+      }
+    ]
+  },
+  {
+    "title": "Control exchange emails",
+    "problem": "Exchange mail ignores email preferences, and a giver gets one email per item their match adds.",
+    "who": "Everyone in an exchange",
+    "effort": "S",
+    "why": "A daily roundup and an off switch prevent the complaint before it starts.",
+    "evidence": [
+      {
+        "quote": "I want to receive notifications when the person I draw adds new items, or when someone has an upcoming birthday, NOT when it’s “Sagittarius SZN,” or Elfster wants to send me stupid ads for Fuzzy Crocs that I couldn’t care less about.",
+        "source": "Elfster, App Store US, 2024-12-10",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=10/id=751594890/sortby=mostrecent/json"
+      },
+      {
+        "quote": "There is no way to turn off just the notifications that are ads or sweepstakes, etc.",
+        "source": "Elfster, App Store US, 2025-10-02",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=8/id=751594890/sortby=mostrecent/json"
+      },
+      {
+        "quote": "notification_preferences covers three seasonal reminders only.",
+        "source": "Seen in this audit"
+      }
+    ]
+  },
+  {
+    "title": "Warn when a match has an empty list",
+    "problem": "A giver can open their match and find nothing, and only learns late.",
+    "who": "Givers",
+    "effort": "S",
+    "why": "The anonymous nudge exists. Telling the recipient early, before the giver has to ask, makes it work harder.",
+    "evidence": [
+      {
+        "quote": "I didn’t get anything for my person since I didn’t know what they had on their list until today.",
+        "source": "Elfster, App Store US, 2025-12-14",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=3/id=751594890/sortby=mostrecent/json"
+      },
+      {
+        "quote": "It says 6 items but when I click on it, it says no items.",
+        "source": "Elfster, App Store US, 2025-12-01",
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=5/id=751594890/sortby=mostrecent/json"
+      }
+    ]
+  }
+]

@@ -1,0 +1,53 @@
+{
+  "intro": "Automated checks prove the buttons work. Only watching someone proves the app makes sense. Pick 3 people who have never used Listy Gifty, ideally one older relative on their own phone. Give each person 20 minutes. Read each task out loud, then say nothing. The test passes if at least 2 of 3 people finish a task without help.",
+  "tasks": [
+    {
+      "title": "Accept an invite",
+      "say": "I just sent you an email. Do whatever you'd normally do with it.",
+      "pass": "they end up in the exchange with an account, without asking you what it is."
+    },
+    {
+      "title": "Say what you want",
+      "say": "You've joined. Tell the group what you'd like for Christmas.",
+      "pass": "they add at least one wish without being shown the wishlist."
+    },
+    {
+      "title": "Start a gift list",
+      "say": "You have two kids to buy for. Start keeping track of what you're getting them.",
+      "pass": "they create a list and add a gift for each child."
+    },
+    {
+      "title": "Find it again",
+      "say": "It's a week later and you bought one of them. Go mark that.",
+      "pass": "they return to the list and change the gift's status."
+    },
+    {
+      "title": "Run an exchange",
+      "say": "Set up a Secret Santa for four people. You and your partner shouldn't draw each other.",
+      "pass": "they invite people, add the rule, and draw names."
+    },
+    {
+      "title": "Share a wishlist",
+      "say": "Your birthday's coming. Make a list and get it to your sister, who won't make an account.",
+      "pass": "they create a wishlist and copy a link."
+    },
+    {
+      "title": "Sign out",
+      "say": "You're on someone else's computer. Make sure nobody can see this.",
+      "pass": "they sign out without hunting for it."
+    }
+  ],
+  "rules": [
+    "Ask them to think out loud. If they go quiet, say only: what are you thinking?",
+    "Don't help. If they ask a question, reply: what would you try?",
+    "Write down the exact words they use, and every place they stop for more than 10 seconds.",
+    "Stop a task after 4 minutes, mark it failed, and move on.",
+    "Use a real invite and test addresses you control. Don't test on your own account."
+  ],
+  "after": [
+    "Ask: what is this app for? Their answer shows whether the product explains itself.",
+    "Ask: what was the most confusing moment?",
+    "Ask: would you use this for your family this year? Why or why not?",
+    "Anything that stops 2 of 3 people is a severity 3 issue. Put it at the top of the next round."
+  ]
+}

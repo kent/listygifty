@@ -1,0 +1,171 @@
+<title>Listy Gifty UX Audit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Press+Start+2P&display=swap">
+<style>
+/* Layout: one long ledger, section keys up top like the app's own function-key menu.
+   Light borrows the Apple theme and dark borrows Festive, so the audit reads as the product. */
+:root {
+  --bg: #fbfbfd; --surface: #ffffff; --ink: #1d1d1f; --muted: #5f5f66; --line: #dfdfe6;
+  --accent: #0064c8; --accent-ink: #ffffff; --key: #eef0f6;
+  --pass: #15803d; --fail: #b91c1c; --s4: #b91c1c; --s3: #c2410c; --s2: #a16207; --s1: #5f5f66;
+  --display: "Press Start 2P", ui-monospace, monospace;
+  --body: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b0838; --surface: #14106a; --ink: #f2f0ff; --muted: #bdb9ee; --line: #342fa0;
+  --accent: #ffdd44; --accent-ink: #0b0838; --key: #1d1896;
+  --pass: #5fe08a; --fail: #ff8a8a; --s4: #ff8a8a; --s3: #ffb074; --s2: #ffdd44; --s1: #bdb9ee;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0b0838; --surface: #14106a; --ink: #f2f0ff; --muted: #bdb9ee; --line: #342fa0;
+  --accent: #ffdd44; --accent-ink: #0b0838; --key: #1d1896;
+  --pass: #5fe08a; --fail: #ff8a8a; --s4: #ff8a8a; --s3: #ffb074; --s2: #ffdd44; --s1: #bdb9ee;
+  color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.55 var(--body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1120px; margin-inline: auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 80px; display: grid; gap: 56px; }
+.wrap > * { min-width: 0; }
+h1 { font: 400 clamp(18px, 3.4vw, 28px)/1.5 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 400 15px/1.6 var(--display); margin: 0 0 8px; }
+h3 { font: 600 19px/1.3 var(--body); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.intro { display: grid; gap: 16px; }
+.counts { display: flex; flex-wrap: wrap; gap: 24px; font-variant-numeric: tabular-nums; }
+.counts div { display: grid; }
+.counts b { font: 600 34px/1.1 var(--mono); }
+.counts span { color: var(--muted); font-size: 14px; }
+nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; }
+nav a { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--key); color: var(--ink); text-decoration: none; font-weight: 500; font-size: 14px; border: 1px solid var(--line); }
+nav kbd { font: 600 12px var(--mono); color: var(--muted); }
+nav a:hover { border-color: var(--accent); }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+section { display: grid; gap: 20px; scroll-margin-top: 72px; }
+section > * { min-width: 0; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 900px; font-size: 14px; }
+th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+thead th { font-weight: 600; color: var(--muted); white-space: nowrap; }
+tbody th { font-weight: 500; }
+td.num, thead .num { text-align: right; font: 400 14px var(--mono); font-variant-numeric: tabular-nums; }
+.chips { white-space: nowrap; }
+.chip { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 3px; font: 600 12px var(--mono); border: 1px solid currentColor; }
+.chip.pass { color: var(--pass); } .chip.fail { color: var(--fail); } .chip.none { color: var(--muted); }
+.legend { font-size: 14px; color: var(--muted); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.filter { background: var(--surface); color: var(--ink); border: 1px solid var(--line); padding: 6px 12px; font: 500 14px var(--body); cursor: pointer; }
+.filter[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.list { display: grid; gap: 32px; }
+.decision, .open, .feature { display: grid; gap: 16px; padding-block: 8px 28px; border-bottom: 1px solid var(--line); }
+.decision header, .open header { display: grid; gap: 8px; justify-items: start; }
+.sev { font: 600 12px var(--mono); padding: 2px 8px; border: 1px solid currentColor; }
+.s4 { color: var(--s4); } .s3 { color: var(--s3); } .s2 { color: var(--s2); } .s1 { color: var(--s1); }
+dl { display: grid; gap: 10px; margin: 0; max-width: 78ch; }
+dl div { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 12px; }
+dt { color: var(--muted); font-size: 14px; }
+dd { margin: 0; }
+.hash { font: 400 14px var(--mono); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 16px; align-items: start; }
+.shot { margin: 0; display: grid; gap: 6px; min-width: 0; }
+.zoom { padding: 0; border: 1px solid var(--line); background: none; cursor: zoom-in; display: block; max-width: 100%; }
+.zoom img { display: block; width: 100%; max-height: 620px; object-fit: contain; object-position: top; background: var(--surface); }
+figcaption { font-size: 13px; color: var(--muted); }
+.concept { max-width: 560px; }
+.rec { padding-left: 14px; border-left: 3px solid var(--accent); }
+.tasks { display: grid; gap: 10px; padding-left: 22px; margin: 0; max-width: 78ch; }
+ul { margin: 0; padding-left: 20px; max-width: 78ch; }
+.feature { grid-template-columns: 48px minmax(0, 1fr); }
+.feature > div { display: grid; gap: 8px; min-width: 0; }
+.rank { font: 400 16px/1.6 var(--display); color: var(--accent); }
+.meta { display: flex; flex-wrap: wrap; gap: 14px; font-size: 14px; color: var(--muted); }
+.evidence { font-size: 14px; display: grid; gap: 4px; }
+dialog { border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 8px; max-width: min(96vw, 1200px); max-height: 94vh; }
+dialog::backdrop { background: rgb(0 0 0 / .7); }
+dialog img { display: block; max-width: 100%; max-height: 84vh; }
+dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; background: var(--accent); color: var(--accent-ink); border: 0; cursor: pointer; }
+@media (max-width: 560px) { dl div { grid-template-columns: minmax(0, 1fr); gap: 2px; } .feature { grid-template-columns: 32px minmax(0, 1fr); } }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+<div class="wrap">
+  <div class="intro">
+    <h1>Listy Gifty UX Audit</h1>
+    <p>{{summary}}</p>
+    <div class="counts">
+      <div><b>{{found}}</b><span>issues found</span></div>
+      <div><b>{{fixed}}</b><span>fixed</span></div>
+      <div><b>{{openCount}}</b><span>open for you</span></div>
+    </div>
+  </div>
+  <nav aria-label="Sections">
+    <a href="#scoreboard"><kbd>1</kbd>Scoreboard</a>
+    <a href="#decisions"><kbd>2</kbd>Decisions</a>
+    <a href="#open"><kbd>3</kbd>Your calls</a>
+    <a href="#hallway"><kbd>4</kbd>Hallway test</a>
+    <a href="#features"><kbd>5</kbd>Features</a>
+    <a href="#limits"><kbd>6</kbd>Proof and limits</a>
+  </nav>
+  <section id="scoreboard">
+    <h2>Scoreboard</h2>
+    <p>The same scripted journeys ran on the starting code and on the final commit. Each row covers four runs: 1440px and 390px, in Festive and Apple. Numbers are averages per run. Time is robot time, so read it as relative.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th scope="col">Journey</th><th scope="col">Before</th><th scope="col">After</th><th scope="col" class="num">Steps before</th><th scope="col" class="num">Steps after</th><th scope="col" class="num">Clicks before</th><th scope="col" class="num">Clicks after</th><th scope="col" class="num">Time before</th><th scope="col" class="num">Time after</th><th scope="col" class="num">Errors before</th><th scope="col" class="num">Errors after</th><th scope="col" class="num">Axe before</th><th scope="col" class="num">Axe after</th></tr></thead>
+      <tbody>{{scoreRows}}{{extraRows}}</tbody>
+    </table></div>
+    <p class="legend">Chips run left to right: desktop Festive, desktop Apple, mobile Festive, mobile Apple. Axe counts serious and critical rule hits per run.</p>
+  </section>
+  <section id="decisions">
+    <h2>Decisions</h2>
+    <p>Each change made, most severe first, with the frames that prove it. Select a frame to enlarge it.</p>
+    <div class="filters" role="group" aria-label="Filter by journey"><button type="button" class="filter" data-filter="" aria-pressed="true">All</button>{{filters}}</div>
+    <div class="list">{{decisions}}</div>
+  </section>
+  <section id="open">
+    <h2>Your calls</h2>
+    <p>These need a product decision, so nothing was built. Mockups are concepts.</p>
+    <div class="list">{{open}}</div>
+  </section>
+  <section id="hallway">
+    <h2>Hallway test</h2>
+    {{hallway}}
+  </section>
+  <section id="features">
+    <h2>Features people would want</h2>
+    <p>Ranked from friction seen in testing and from real complaints about other apps.</p>
+    <div class="list">{{features}}</div>
+  </section>
+  <section id="limits">
+    <h2>Proof and limits</h2>
+    <h3>Verified</h3>
+    <ul>{{verified}}</ul>
+    <h3>Not verified</h3>
+    <ul>{{limits}}</ul>
+  </section>
+</div>
+<dialog id="lightbox" aria-label="Enlarged screenshot"><img id="lightbox-image" alt=""><form method="dialog"><button type="submit">Close</button></form></dialog>
+<script>
+document.querySelectorAll(".zoom").forEach((button) => {
+  button.addEventListener("click", () => {
+    const image = document.getElementById("lightbox-image");
+    image.src = button.dataset.full;
+    image.alt = button.querySelector("img").alt;
+    document.getElementById("lightbox").showModal();
+  });
+});
+document.querySelectorAll(".filter").forEach((button) => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".filter").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+    const wanted = button.dataset.filter;
+    document.querySelectorAll(".decision").forEach((card) => {
+      card.hidden = Boolean(wanted) && card.dataset.journey !== wanted;
+    });
+  });
+});
+document.addEventListener("keydown", (event) => {
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  if (document.getElementById("lightbox").open) return;
+  const link = document.querySelectorAll("nav a")[Number(event.key) - 1];
+  if (link) link.click();
+});
+</script>

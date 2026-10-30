@@ -226,6 +226,11 @@ export function action(page: Page, name: string | RegExp) {
   return page.getByRole("link", { name }).or(page.getByRole("button", { name })).locator("visible=true").first();
 }
 
+/** Festive labels its menu keys, so "Exchanges" is announced as "Exchanges F3". */
+export function navItem(label: string): RegExp {
+  return new RegExp(`(^|\\s)${label}(\\s+F\\d+)?$`);
+}
+
 /** Same as a person tapping it: the nav scrolls sideways on phones. */
 export async function goToNav(page: Page, label: string | RegExp) {
   const item = shown(page, "link", label);
