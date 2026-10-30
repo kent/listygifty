@@ -85,6 +85,9 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:3001
       INTERNAL_API_URL: http://api:3001
+      # Match production so logged-out redirects land on the app's own pages.
+      NEXT_PUBLIC_CLERK_SIGN_IN_URL: /login
+      NEXT_PUBLIC_CLERK_SIGN_UP_URL: /signup
     ports:
       - "3000:3000"
     volumes:
