@@ -147,6 +147,41 @@ beforeEach(() => {
   mocks.toastError.mockReset();
 });
 
+describe("the next step line", () => {
+  it("shows the organizer what's needed, and updates after a change", async () => {
+    mocks.getBySlug
+      .mockResolvedValueOnce(exchangeWith({ status: "draft" }))
+      .mockResolvedValueOnce(
+        exchangeWith({
+          status: "inviting",
+          exchange_participants: [organizer, person(2, "Ana", { status: "accepted" }), person(3, "Bea")],
+        })
+      );
+    mocks.createParticipant.mockResolvedValue(person(3, "Bea"));
+
+    await renderPage();
+    expect(screen.getByTestId("exchange-next-step").textContent).toBe(
+      "You need at least 2 people to draw names. 1 joined so far."
+    );
+
+    await addPerson("Bea");
+
+    await waitFor(() =>
+      expect(screen.getByTestId("exchange-next-step").textContent).toBe(
+        "Ready when you are. 1 person hasn't joined yet, and anyone who hasn't joined when you draw is left out."
+      )
+    );
+  });
+
+  it("is gone once names are drawn", async () => {
+    mocks.getBySlug.mockResolvedValue(exchangeWith({ status: "active" }));
+
+    await renderPage();
+
+    expect(screen.queryByTestId("exchange-next-step")).toBeNull();
+  });
+});
+
 describe("keeping the exchange current after roster changes", () => {
   it("shows the new status and Publish after adding someone", async () => {
     const newcomer = person(3, "Bea");

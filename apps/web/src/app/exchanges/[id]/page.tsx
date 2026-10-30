@@ -14,6 +14,7 @@ import {
   AUTH_ROUTES,
 } from "@/services";
 import { AppHeader } from "@/components/layout";
+import { getExchangeNextStep } from "@/components/exchanges/exchange-next-step";
 import { MatchOverviewCard } from "@/components/exchanges/match-overview-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -347,6 +348,7 @@ export default function ExchangeDetailPage({
   const isOwner = exchange.is_owner;
   const participants = exchange.exchange_participants || [];
   const myParticipant = exchange.my_participant;
+  const nextStep = getExchangeNextStep({ ...exchange, exchange_participants: participants });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -398,6 +400,14 @@ export default function ExchangeDetailPage({
                 {exchange.accepted_count}/{exchange.participant_count} joined
               </span>
             </div>
+            {nextStep && (
+              <p
+                data-testid="exchange-next-step"
+                className="mt-3 text-sm text-slate-600 dark:text-slate-300"
+              >
+                {nextStep}
+              </p>
+            )}
           </div>
 
           {isOwner && exchange.can_start && (
