@@ -118,8 +118,8 @@ function PublicItemCard({
                 aria-label={`Claim this ${item.name} to reserve it`}
                 className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
               >
-                <Gift className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Claim This</span>
+                <Gift className="h-4 w-4 mr-2" />
+                Claim This
               </Button>
             )}
           </div>
