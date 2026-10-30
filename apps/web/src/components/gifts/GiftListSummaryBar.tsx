@@ -101,7 +101,7 @@ export function GiftListSummaryBar({
       accent: "text-violet-600 dark:text-violet-400",
     },
     {
-      icon: AlertTriangle,
+      icon: summary.unassignedGiftCount === 0 ? CheckCircle2 : AlertTriangle,
       label: "Recipients",
       value:
         summary.unassignedGiftCount === 0
