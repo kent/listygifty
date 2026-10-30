@@ -59,6 +59,8 @@ export function TextCell({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
+      // Focus returns to the rename button, which this same keypress would then press.
+      e.preventDefault();
       restoreFocusRef.current = true;
       commit();
     } else if (e.key === "Escape") {

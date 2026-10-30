@@ -27,6 +27,15 @@ describe("TextCell", () => {
     expect(screen.getByRole("button", { name: "Rename gift" })).toBeTruthy();
   });
 
+  it("doesn't let the Enter that saved also press the rename button", () => {
+    render(<TextCell value="Lego set" onChange={vi.fn()} aria-label="Rename gift: Lego set" />);
+    fireEvent.click(editButton());
+
+    const notPrevented = fireEvent.keyDown(screen.getByRole("textbox"), { key: "Enter" });
+
+    expect(notPrevented).toBe(false);
+  });
+
   it("saves on Enter and returns focus to the cell", () => {
     const onChange = vi.fn();
     render(<TextCell value="Lego set" onChange={onChange} aria-label="Rename gift" />);
