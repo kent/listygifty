@@ -60,7 +60,8 @@ export function useWorkspaceData<T>({
   // Redirect to sign in if not authenticated
   useEffect(() => {
     if (requireAuth && !authLoading && !isAuthenticated) {
-      router.push(AUTH_ROUTES.signIn);
+      const { pathname, search } = window.location;
+      router.push(`${AUTH_ROUTES.signIn}?redirect_url=${encodeURIComponent(`${pathname}${search}`)}`);
     }
   }, [authLoading, isAuthenticated, requireAuth, router]);
 

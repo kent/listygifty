@@ -19,6 +19,7 @@ beforeEach(() => {
   mocks.auth.user = { clerk_user_id: "user_a" };
   mocks.workspace.currentWorkspace = { id: 1 };
   mocks.workspace.isLoading = false;
+  window.history.replaceState({}, "", "/");
 });
 
 describe("workspace data loading", () => {
@@ -121,5 +122,24 @@ describe("workspace data loading", () => {
     await act(async () => old.resolve(["Old item"]));
     expect(result.current.data).toEqual(["Saved item"]);
     expect(result.current.isLoading).toBe(false);
+  });
+
+  it("returns to the same page when the session expires mid-use", async () => {
+    window.history.replaceState({}, "", "/wishlists/12?tab=claimed");
+    const { result, rerender } = renderHook(() => useWorkspaceData({ fetcher: async () => [] as string[], initialData: [] as string[] }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(mocks.push).not.toHaveBeenCalled();
+    mocks.auth.isAuthenticated = false;
+    mocks.auth.user = null;
+    mocks.workspace.currentWorkspace = null;
+    rerender();
+    expect(mocks.push).toHaveBeenCalledWith("/login?redirect_url=%2Fwishlists%2F12%3Ftab%3Dclaimed");
+  });
+
+  it("does not redirect a page that allows logged-out visitors", () => {
+    mocks.auth.isAuthenticated = false;
+    mocks.auth.user = null;
+    renderHook(() => useWorkspaceData({ fetcher: async () => [] as string[], initialData: [] as string[], requireAuth: false }));
+    expect(mocks.push).not.toHaveBeenCalled();
   });
 });
