@@ -13,7 +13,8 @@ ActiveRecord::Base.transaction do
   )
   workspace = user.ensure_personal_workspace!
 
-  holiday = Holiday.create!(name: "Christmas", date: Date.new(Date.current.year, 12, 25), user: user, workspace: workspace)
+  holiday = Holiday.create!(name: "Christmas", date: Date.new(Date.current.year, 12, 25), workspace: workspace)
+  holiday.holiday_users.create!(user: user, role: "owner")
   status = GiftStatus.first
   gift = Gift.create!(name: "Wool socks", holiday: holiday, gift_status: status, created_by_user_id: user.id)
   change = GiftChange.create!(gift: gift, holiday: holiday, user: user, change_type: "created")

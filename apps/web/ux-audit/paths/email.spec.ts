@@ -4,10 +4,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { allMail, clearMail, mailBody, resetLocalData } from "../support/local";
 
-// One run is enough: this exercises SMTP, not a viewport.
-test.skip(({}, testInfo) => testInfo.project.name !== "desktop-apple", "Runs once");
-
 test("every email the app can send arrives in Mailpit with working parts", async ({}, testInfo) => {
+  // One run is enough: this exercises SMTP, not a viewport.
+  test.skip(testInfo.project.name !== "desktop-apple", "Runs once");
+
   resetLocalData();
   await clearMail();
 
