@@ -18,7 +18,8 @@ export async function allowClerkTestSession(page: Page) {
 async function enterCode(page: Page) {
   const code = page.getByRole("textbox", { name: /code/i }).first();
   await code.waitFor({ timeout: 15_000 });
-  await code.pressSequentially(TEST_CODE, { delay: 40 });
+  // A person takes a moment per digit. Clerk submits on the sixth.
+  await code.pressSequentially(TEST_CODE, { delay: 150 });
 }
 
 /** The sign-in form as a person uses it, not Clerk's programmatic shortcut. */
@@ -41,9 +42,9 @@ export async function signUpThroughForm(
 }
 
 /**
- * Clerk's own form occasionally hangs on a spinner after accepting the code. The
- * server reports success, then a concurrent refresh overwrites the form's state.
- * A person would reload, so do that, and log it so the hang is never hidden.
+ * Clerk's own form occasionally hangs on a spinner after a code is submitted. A
+ * person would reload and type the code again, so do that, and log it so the
+ * hang is never hidden.
  */
 export async function waitUntilSignedIn(page: Page) {
   const signedIn = () =>
@@ -56,7 +57,9 @@ export async function waitUntilSignedIn(page: Page) {
     fs.appendFileSync(HANG_LOG, `${new Date().toISOString()} hung at ${page.url()}\n`);
   }
 
+  // After a reload Clerk shows a fresh code box, so a person types it again.
   await page.reload();
+  await enterCode(page);
   await expect.poll(signedIn, { timeout: 15_000 }).toBe(true);
-  fs.appendFileSync(HANG_LOG, `${new Date().toISOString()} reload recovered at ${page.url()}\n`);
+  fs.appendFileSync(HANG_LOG, `${new Date().toISOString()} recovered by retyping the code at ${page.url()}\n`);
 }
