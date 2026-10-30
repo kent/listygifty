@@ -1,0 +1,20 @@
+Item reserved!
+
+You've reserved an item from <%= @owner_name %>'s wishlist: <%= @wishlist.name %>
+
+Reserved item: <%= @item.name %>
+<% if @item.price_display %>
+Price: <%= @item.price_display %>
+<% end %>
+<% if @item.url.present? %>
+Item link: <%= @item.url %>
+<% end %>
+
+With this link you can:
+- Mark the item as purchased when you buy it
+- Release your reservation if you change your mind
+
+Manage your reservation: <%= @manage_url %>
+
+This confirmation was sent to <%= @claim.claimer_email %>
+Keep this email. You'll need the link above to manage your reservation.
