@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { E2E_USERS } from "../../e2e/support/test-users";
 import { signedIn } from "../support/api";
 import { Journey, openSession } from "../support/harness";
@@ -30,7 +30,6 @@ async function focused(page: Page): Promise<Focused> {
 
 /** Presses Tab until the control is reached, failing if it can't be. */
 async function tabTo(page: Page, name: RegExp) {
-  const unlabelled: string[] = [];
   for (let press = 0; press < MAX_TABS; press += 1) {
     await page.keyboard.press("Tab");
     const current = await focused(page);
@@ -38,9 +37,17 @@ async function tabTo(page: Page, name: RegExp) {
       expect(current.ring, `focus ring on ${current.label}`).toBe(true);
       return;
     }
-    if (!current.label) unlabelled.push(String(press));
   }
   throw new Error(`Tab never reached ${name}`);
+}
+
+/** The dialog may already have focused the control, so check before pressing Tab. */
+async function tabUntilFocused(page: Page, target: Locator) {
+  for (let press = 0; press < MAX_TABS; press += 1) {
+    if (await target.evaluate((element) => element === document.activeElement)) return;
+    await page.keyboard.press("Tab");
+  }
+  throw new Error("Tab never reached the control");
 }
 
 async function unlabelledStops(page: Page, stops: number) {
@@ -106,16 +113,17 @@ test("keyboard only: exchange and wishlist work without a mouse", async ({ brows
     await page.getByTestId("participant-roster").waitFor();
     await tabTo(page, /^\s*Add Rule\s*$/);
     await page.keyboard.press("Enter");
-    await page.getByRole("dialog").waitFor();
-    await tabTo(page, /Select/);
-    await page.keyboard.press("Enter");
-    await page.keyboard.press("ArrowDown");
-    await page.keyboard.press("Enter");
-    await page.keyboard.press("Tab");
-    await page.keyboard.press("Enter");
-    await page.keyboard.press("ArrowDown");
-    await page.keyboard.press("Enter");
-    await expect(page.getByRole("dialog").getByRole("button", { name: "Add Rule" })).toBeEnabled();
+    const dialog = page.getByRole("dialog");
+    await dialog.waitFor();
+    for (const index of [0, 1]) {
+      await tabUntilFocused(page, dialog.getByRole("combobox").nth(index));
+      await page.keyboard.press("Enter");
+      await page.getByRole("listbox").waitFor();
+      await page.keyboard.press("ArrowDown");
+      await page.keyboard.press("Enter");
+      await expect(page.getByRole("listbox")).toHaveCount(0);
+    }
+    await expect(dialog.getByRole("button", { name: "Add Rule" })).toBeEnabled();
     await page.keyboard.press("Escape");
   });
 

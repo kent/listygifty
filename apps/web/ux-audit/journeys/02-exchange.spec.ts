@@ -98,7 +98,7 @@ test("exchange: invite everyone by email and get them all assigned", async ({ br
   });
 
   await journey.step("The organizer can add their own wishes", page, async () => {
-    await expect(action(page, /Wishlist/)).toBeVisible();
+    await expect(action(page, /Edit Wishlist/)).toBeVisible({ timeout: 4_000 });
   });
 
   const sessions = new Map<string, Page>();
@@ -128,7 +128,7 @@ test("exchange: invite everyone by email and get them all assigned", async ({ br
   const firstPage = () => sessions.get(first.firstName)!;
 
   await journey.step(`${first.firstName} can add wishes right after joining`, firstPage(), async () => {
-    await action(firstPage(), /Wishlist/).click();
+    await action(firstPage(), /Edit Wishlist/).click({ timeout: 4_000 });
     await expect(firstPage()).toHaveURL(/my-wishlist/);
   });
 
