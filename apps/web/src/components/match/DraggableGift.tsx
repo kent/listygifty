@@ -52,15 +52,15 @@ export function DraggableGift({
         isDragging
           ? "opacity-50 bg-violet-600/50 border-violet-400"
           : isOver
-            ? "bg-violet-700/40 border-violet-400/80"
-            : "bg-slate-800/50 border-slate-700 hover:border-violet-500/50 hover:bg-slate-800"
+            ? "bg-violet-50 border-violet-600 dark:bg-violet-700/40 dark:border-violet-400/80"
+            : "bg-muted/50 border-border hover:border-violet-500/50 hover:bg-muted"
       }`}
     >
-      <GripVertical className="h-4 w-4 text-slate-500 flex-shrink-0" />
-      {isGroup && <Layers className="h-4 w-4 text-fuchsia-400 flex-shrink-0" />}
-      <span className="text-white font-medium truncate flex-1">{item.name}</span>
+      <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+      {isGroup && <Layers className="h-4 w-4 text-fuchsia-700 dark:text-fuchsia-400 flex-shrink-0" />}
+      <span className="text-foreground font-medium truncate flex-1">{item.name}</span>
       {Number.isFinite(item.cost) && (
-        <span className="text-slate-400 text-sm flex-shrink-0">
+        <span className="text-muted-foreground text-sm flex-shrink-0">
           ${Number(item.cost).toFixed(0)}
         </span>
       )}
@@ -72,7 +72,7 @@ export function DraggableGift({
               e.stopPropagation();
               onRenameGroup?.(item.groupId!);
             }}
-            className="text-slate-400 hover:text-white transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             <Pencil className="h-4 w-4" />
           </button>
@@ -82,7 +82,7 @@ export function DraggableGift({
               e.stopPropagation();
               onRemoveGroup?.(item.groupId!);
             }}
-            className="text-slate-400 hover:text-red-400 transition-colors"
+            className="text-muted-foreground hover:text-red-700 dark:hover:text-red-400 transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -94,7 +94,7 @@ export function DraggableGift({
             e.stopPropagation();
             onEdit();
           }}
-          className="opacity-0 group-hover/gift:opacity-100 text-slate-400 hover:text-violet-400 transition-all"
+          className="opacity-0 group-hover/gift:opacity-100 text-muted-foreground hover:text-violet-700 dark:hover:text-violet-400 transition-all"
         >
           <Pencil className="h-4 w-4" />
         </button>

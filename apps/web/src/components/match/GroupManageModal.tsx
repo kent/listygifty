@@ -44,35 +44,35 @@ export function GroupManageModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-slate-700">
+      <DialogContent className="bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-white flex items-center gap-2">
-            <GiftIcon className="h-5 w-5 text-fuchsia-400" />
+          <DialogTitle className="text-foreground flex items-center gap-2">
+            <GiftIcon className="h-5 w-5 text-fuchsia-700 dark:text-fuchsia-400" />
             Manage Group
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-2 mt-4">
-          <p className="text-sm text-slate-400 mb-3">
+          <p className="text-sm text-muted-foreground mb-3">
             {groupGifts.length} gifts in this group • Total: ${item.cost.toFixed(0)}
           </p>
 
           {groupGifts.map(gift => (
             <div
               key={gift.id}
-              className="flex items-center justify-between px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700"
+              className="flex items-center justify-between px-4 py-3 rounded-lg bg-muted/50 border border-border"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-white font-medium truncate">{gift.name}</p>
+                <p className="text-foreground font-medium truncate">{gift.name}</p>
                 {gift.cost && (
-                  <p className="text-sm text-slate-400">${parseFloat(gift.cost).toFixed(0)}</p>
+                  <p className="text-sm text-muted-foreground">${parseFloat(gift.cost).toFixed(0)}</p>
                 )}
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleRemove(gift.id)}
-                className="text-slate-400 hover:text-red-400 hover:bg-red-500/10 ml-2"
+                className="text-muted-foreground hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10 ml-2"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -80,7 +80,7 @@ export function GroupManageModal({
           ))}
 
           {groupGifts.length === 2 && (
-            <p className="text-xs text-slate-500 mt-3">
+            <p className="text-xs text-muted-foreground mt-3">
               Removing a gift will dissolve this group.
             </p>
           )}

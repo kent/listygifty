@@ -55,27 +55,27 @@ function DraggableSlotItem({
       onClick={handleClick}
       className={`flex items-center gap-2 px-3 py-2 rounded transition-all cursor-grab active:cursor-grabbing ${
         isDragging ? "opacity-50" : ""
-      } ${isOver ? "bg-violet-600/40 ring-2 ring-violet-400" : ""} ${
-        isGroup ? "hover:bg-slate-700/50" : ""
+      } ${isOver ? "bg-violet-50 ring-2 ring-violet-600 dark:bg-violet-600/40 dark:ring-violet-400" : ""} ${
+        isGroup ? "hover:bg-accent" : ""
       }`}
     >
-      <GripVertical className="h-4 w-4 text-slate-500 flex-shrink-0" />
-      {isGroup && <Layers className="h-4 w-4 text-fuchsia-400 flex-shrink-0" />}
-      <span className="text-white font-medium truncate flex-1 min-w-0">{item.name}</span>
+      <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+      {isGroup && <Layers className="h-4 w-4 text-fuchsia-700 dark:text-fuchsia-400 flex-shrink-0" />}
+      <span className="text-foreground font-medium truncate flex-1 min-w-0">{item.name}</span>
       {isGroup && (
-        <span className="text-xs bg-fuchsia-500/20 text-fuchsia-300 px-2 py-0.5 rounded-full flex-shrink-0">
+        <span className="text-xs bg-fuchsia-500/20 text-fuchsia-800 dark:text-fuchsia-300 px-2 py-0.5 rounded-full flex-shrink-0">
           {giftCount}
         </span>
       )}
       {Number.isFinite(item.cost) && (
-        <span className="text-slate-400 text-sm flex-shrink-0">
+        <span className="text-muted-foreground text-sm flex-shrink-0">
           ${Number(item.cost).toFixed(0)}
         </span>
       )}
       <button
         onClick={handleRemove}
         onPointerDown={(e) => e.stopPropagation()}
-        className="text-slate-500 hover:text-red-400 transition-colors flex-shrink-0 ml-1"
+        className="text-muted-foreground hover:text-red-700 dark:hover:text-red-400 transition-colors flex-shrink-0 ml-1"
       >
         <X className="h-4 w-4" />
       </button>
@@ -91,16 +91,16 @@ export function DroppableSlot({ id, item, rowIndex, onRemove, onManageGroup }: D
       ref={setNodeRef}
       className={`min-h-[44px] rounded-lg border-2 border-dashed transition-all ${
         isOver
-          ? "border-violet-500 bg-violet-500/20"
+          ? "border-violet-500 bg-violet-50 dark:bg-violet-500/20"
           : item
-          ? "border-slate-600 bg-slate-800/50"
-          : "border-slate-700/50 bg-slate-800/30"
+          ? "border-input bg-muted/50"
+          : "border-border/50 bg-muted/30"
       }`}
     >
       {item ? (
         <DraggableSlotItem item={item} onManageGroup={onManageGroup} onRemove={onRemove} />
       ) : (
-        <div className="flex items-center justify-center h-[40px] text-slate-600 text-sm">
+        <div className="flex items-center justify-center h-[40px] text-muted-foreground text-sm">
           Row {rowIndex + 1}
         </div>
       )}

@@ -762,10 +762,10 @@ export function MatchWorkspace({
     >
       <div className="space-y-6">
         {/* People Selector */}
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Users className="h-5 w-5 text-violet-400" />
+              <Users className="h-5 w-5 text-violet-700 dark:text-violet-400" />
               Select People to Compare
             </CardTitle>
           </CardHeader>
@@ -776,10 +776,10 @@ export function MatchWorkspace({
                   key={person.id}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-500/20 border border-violet-500/30"
                 >
-                  <span className="text-white font-medium">{person.name}</span>
+                  <span className="text-foreground font-medium">{person.name}</span>
                   <button
                     onClick={() => handleRemovePerson(person.id)}
-                    className="text-slate-400 hover:text-red-400 transition-colors"
+                    className="text-muted-foreground hover:text-red-700 dark:hover:text-red-400 transition-colors"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -787,7 +787,7 @@ export function MatchWorkspace({
               ))}
               {selectedPersonIds.length < MAX_PEOPLE && availablePeopleToAdd.length > 0 && (
                 <Select onValueChange={handleAddPerson}>
-                  <SelectTrigger className="w-[180px] border-dashed border-slate-600">
+                  <SelectTrigger className="w-[180px] border-dashed border-input">
                     <SelectValue placeholder="Add person..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -800,18 +800,18 @@ export function MatchWorkspace({
                 </Select>
               )}
             </div>
-            <p className="text-sm text-slate-500 mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               {selectedPersonIds.length}/{MAX_PEOPLE} people selected
             </p>
 
             {/* Quick Stats */}
             {selectedPersonIds.length >= 2 && (
-              <div className="mt-4 pt-4 border-t border-slate-800 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-x-6 gap-y-2 text-sm">
                 {selectedPeople.map(person => {
                   const count = (giftsByPerson.get(person.id) || []).length;
                   return (
-                    <span key={person.id} className="text-slate-400">
-                      <span className="text-white font-medium">{person.name}:</span>{" "}
+                    <span key={person.id} className="text-muted-foreground">
+                      <span className="text-foreground font-medium">{person.name}:</span>{" "}
                       {count} gift{count !== 1 ? "s" : ""}
                     </span>
                   );
@@ -819,7 +819,7 @@ export function MatchWorkspace({
                 {sharedGifts.length > 0 && (
                   <a
                     href="#shared-gifts"
-                    className="text-amber-400 hover:text-amber-300 transition-colors"
+                    className="text-amber-800 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
                   >
                     {sharedGifts.length} shared gift{sharedGifts.length !== 1 ? "s" : ""} ↓
                   </a>
@@ -836,12 +836,12 @@ export function MatchWorkspace({
               {selectedPeople.map(person => {
                 const personTotal = totals.get(person.id);
                 return (
-                  <Card key={person.id} className="border-slate-800 bg-slate-900/50">
+                  <Card key={person.id} className="border-border">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-lg text-white flex items-center justify-between">
+                      <CardTitle className="text-lg text-foreground flex items-center justify-between">
                         <span>{person.name}</span>
                         {personTotal && (
-                          <span className="text-sm font-normal text-slate-400">
+                          <span className="text-sm font-normal text-muted-foreground">
                             {personTotal.count} gifts • ${personTotal.value.toFixed(0)}
                           </span>
                         )}
@@ -906,7 +906,7 @@ export function MatchWorkspace({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full border border-dashed border-slate-700 text-slate-500 hover:text-white hover:border-slate-500"
+                        className="w-full border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-input"
                         onClick={handleAddRow}
                         disabled={rowCount >= MAX_ROWS}
                       >
@@ -920,10 +920,10 @@ export function MatchWorkspace({
             </div>
 
             {/* Unplaced Gifts Pool */}
-            <Card className="border-slate-800 bg-slate-900/50">
+            <Card className="border-border">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <GiftIcon className="h-5 w-5 text-fuchsia-400" />
+                  <GiftIcon className="h-5 w-5 text-fuchsia-700 dark:text-fuchsia-400" />
                   Available Gifts
                 </CardTitle>
               </CardHeader>
@@ -933,9 +933,9 @@ export function MatchWorkspace({
                     const unplaced = unplacedItemsByPerson.get(person.id) || [];
                     return (
                       <div key={person.id} className="space-y-2">
-                        <h4 className="text-sm font-medium text-slate-400 mb-2">{person.name}&apos;s Gifts</h4>
+                        <h4 className="text-sm font-medium text-muted-foreground mb-2">{person.name}&apos;s Gifts</h4>
                         {unplaced.length === 0 ? (
-                          <p className="text-sm text-slate-600 italic">All gifts placed</p>
+                          <p className="text-sm text-muted-foreground italic">All gifts placed</p>
                         ) : (
                           <div className="space-y-2">
                             {unplaced.map(item => {
@@ -955,7 +955,7 @@ export function MatchWorkspace({
                         )}
                         <button
                           onClick={() => setAddGiftForPerson(person)}
-                          className="w-full text-left px-3 py-2 text-sm text-slate-500 hover:text-violet-400 hover:bg-slate-800/50 rounded-lg transition-colors"
+                          className="w-full text-left px-3 py-2 text-sm text-muted-foreground hover:text-violet-700 dark:hover:text-violet-400 hover:bg-muted/50 rounded-lg transition-colors"
                         >
                           + Add Gift for {person.name}
                         </button>
@@ -968,12 +968,12 @@ export function MatchWorkspace({
 
             {/* Shared Gifts Section */}
             {sharedGiftsWithRecipients.length > 0 && (
-              <Card id="shared-gifts" className="border-slate-800 bg-slate-900/50 border-dashed border-amber-500/30 scroll-mt-4">
+              <Card id="shared-gifts" className="border-dashed border-amber-500/30 scroll-mt-4">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Users className="h-5 w-5 text-amber-400" />
+                    <Users className="h-5 w-5 text-amber-800 dark:text-amber-400" />
                     Shared Gifts
-                    <span className="text-sm font-normal text-slate-500">
+                    <span className="text-sm font-normal text-muted-foreground">
                       (for multiple people)
                     </span>
                   </CardTitle>
@@ -987,19 +987,19 @@ export function MatchWorkspace({
                         className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/40 transition-colors text-left"
                       >
                         <div className="flex items-center gap-2">
-                          <GiftIcon className="h-4 w-4 text-amber-400" />
-                          <span className="font-medium text-white">{gift.name}</span>
-                          <span className="text-sm text-slate-400">
+                          <GiftIcon className="h-4 w-4 text-amber-800 dark:text-amber-400" />
+                          <span className="font-medium text-foreground">{gift.name}</span>
+                          <span className="text-sm text-muted-foreground">
                             → {recipients.join(" & ")}
                           </span>
                         </div>
-                        <span className="text-amber-300">
+                        <span className="text-amber-800 dark:text-amber-300">
                           ${gift.cost ? parseFloat(gift.cost).toFixed(0) : 0}
                         </span>
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-slate-500 mt-3">
+                  <p className="text-xs text-muted-foreground mt-3">
                     Click a gift to edit recipients or givers.
                   </p>
                 </CardContent>
@@ -1023,7 +1023,7 @@ export function MatchWorkspace({
         )}
 
         {selectedPersonIds.length < 2 && (
-          <div className="text-center py-12 text-slate-500">
+          <div className="text-center py-12 text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>Select at least 2 people to start matching gifts</p>
           </div>
@@ -1032,11 +1032,11 @@ export function MatchWorkspace({
 
       <DragOverlay>
         {activeItem && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-600 border border-violet-400 shadow-lg text-white">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-600 border border-violet-400 shadow-lg text-primary-foreground">
             <GripVertical className="h-4 w-4 opacity-50" />
             <span className="font-medium">{activeItem.name}</span>
             {typeof activeItem.cost === "number" && (
-              <span className="text-violet-200">${activeItem.cost.toFixed(0)}</span>
+              <span className="text-primary-foreground">${activeItem.cost.toFixed(0)}</span>
             )}
           </div>
         )}
