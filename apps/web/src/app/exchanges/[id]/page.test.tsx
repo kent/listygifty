@@ -402,6 +402,31 @@ describe("confirming before removing someone", () => {
   });
 });
 
+describe("loading exclusion rules", () => {
+  it("fetches them for the organizer", async () => {
+    mocks.getBySlug.mockResolvedValue(exchangeWith());
+
+    await renderPage();
+
+    expect(mocks.getExclusions).toHaveBeenCalledWith(7);
+  });
+
+  it("skips them for a participant, who would only get a 404", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({
+        is_owner: false,
+        my_participant: person(2, "Ana", { user_id: 200, status: "accepted" }),
+        share_url: null,
+      })
+    );
+
+    await renderPage();
+
+    expect(mocks.getExclusions).not.toHaveBeenCalled();
+    expect(mocks.getNotifications).toHaveBeenCalledWith(7);
+  });
+});
+
 describe("the publish dialog", () => {
   const ana = person(2, "Ana", { status: "accepted" });
   const bea = person(3, "Bea");

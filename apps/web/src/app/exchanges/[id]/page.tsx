@@ -154,7 +154,9 @@ export default function ExchangeDetailPage({
     async function loadData() {
       try {
         const exchangeData = await giftExchangesService.getBySlug(slug);
-        const exclusionsData = await exchangeExclusionsService.getAll(exchangeData.id).catch(() => []);
+        const exclusionsData = exchangeData.is_owner
+          ? await exchangeExclusionsService.getAll(exchangeData.id).catch(() => [])
+          : [];
         const notificationsData = exchangeData.my_participant
           ? await exchangeNotificationsService.getAll(exchangeData.id).catch(() => [])
           : [];
