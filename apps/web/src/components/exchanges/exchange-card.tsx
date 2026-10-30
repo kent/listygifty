@@ -24,7 +24,7 @@ export function ExchangeCard({ exchange }: ExchangeCardProps) {
 
   return (
     <Link href={`/exchanges/${exchange.slug}`}>
-      <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm hover:bg-slate-800/50 hover:border-violet-500/50 transition-all cursor-pointer group">
+      <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:border-violet-500/50 transition-all cursor-pointer group">
         <CardContent className="p-5">
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 text-2xl shrink-0">
@@ -32,12 +32,12 @@ export function ExchangeCard({ exchange }: ExchangeCardProps) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-white truncate">{exchange.name}</h3>
+                <h3 className="font-semibold text-slate-900 dark:text-white truncate">{exchange.name}</h3>
                 {exchange.is_owner && (
-                  <Crown className="h-4 w-4 text-amber-400 shrink-0" />
+                  <Crown className="h-4 w-4 text-amber-500 dark:text-amber-400 shrink-0" />
                 )}
               </div>
-              <div className="flex items-center gap-3 text-sm text-slate-400">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
                 {formattedDate && (
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
@@ -52,7 +52,7 @@ export function ExchangeCard({ exchange }: ExchangeCardProps) {
             </div>
             <div className="flex items-center gap-2">
               <ExchangeStatusBadge status={exchange.status} />
-              <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-violet-400 transition-colors" />
+              <ChevronRight className="h-5 w-5 text-slate-400 dark:text-slate-600 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors" />
             </div>
           </div>
         </CardContent>

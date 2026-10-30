@@ -60,8 +60,8 @@ export function ExchangeNav({ exchangeId, isOwner }: ExchangeNavProps) {
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
               isActive
-                ? "bg-violet-500/20 text-violet-400"
-                : "text-slate-400 hover:text-white hover:bg-slate-800"
+                ? "bg-violet-500/20 text-violet-700 dark:text-violet-400"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
             )}
           >
             <Icon className="h-4 w-4" />

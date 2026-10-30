@@ -13,7 +13,7 @@ interface WishlistItemCardProps {
 
 export function WishlistItemCard({ item, onDelete, readOnly = false }: WishlistItemCardProps) {
   return (
-    <Card className="border-slate-800 bg-slate-900/50">
+    <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
           {item.photo_url ? (
@@ -24,19 +24,19 @@ export function WishlistItemCard({ item, onDelete, readOnly = false }: WishlistI
               className="w-16 h-16 rounded-lg object-cover shrink-0"
             />
           ) : (
-            <div className="w-16 h-16 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
+            <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
               {/* eslint-disable-next-line jsx-a11y/alt-text */}
-              <Image className="h-6 w-6 text-slate-600" />
+              <Image className="h-6 w-6 text-slate-400 dark:text-slate-600" />
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-white">{item.name}</h3>
+            <h3 className="break-words font-semibold text-slate-900 dark:text-white">{item.name}</h3>
             {item.description && (
-              <p className="text-sm text-slate-400 mt-1 line-clamp-2">{item.description}</p>
+              <p className="break-words text-sm text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">{item.description}</p>
             )}
-            <div className="flex items-center gap-4 mt-2 text-sm">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm">
               {item.price && (
-                <span className="flex items-center gap-1 text-slate-400">
+                <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
                   <DollarSign className="h-3 w-3" />
                   {parseFloat(item.price).toFixed(2)}
                 </span>
@@ -46,7 +46,7 @@ export function WishlistItemCard({ item, onDelete, readOnly = false }: WishlistI
                   href={item.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-violet-400 hover:text-violet-300"
+                  className="flex items-center gap-1 text-violet-700 dark:text-violet-400 hover:text-violet-600 dark:hover:text-violet-300"
                 >
                   <ExternalLink className="h-3 w-3" />
                   View Link
@@ -56,10 +56,12 @@ export function WishlistItemCard({ item, onDelete, readOnly = false }: WishlistI
           </div>
           {!readOnly && onDelete && (
             <Button
-              size="sm"
+              size="icon-sm"
               variant="ghost"
-              className="text-red-400 hover:text-red-300 shrink-0"
+              className="size-11 sm:size-8 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
               onClick={() => onDelete(item)}
+              aria-label={`Remove ${item.name}`}
+              title="Remove"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
