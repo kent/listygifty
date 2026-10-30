@@ -48,7 +48,8 @@ section > * { min-width: 0; }
 table { border-collapse: collapse; width: 100%; min-width: 900px; font-size: 14px; }
 th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
 thead th { font-weight: 600; color: var(--muted); white-space: nowrap; }
-tbody th { font-weight: 500; }
+tbody th { font-weight: 500; min-width: 190px; }
+table.plain { min-width: 560px; }
 td.num, thead .num { text-align: right; font: 400 14px var(--mono); font-variant-numeric: tabular-nums; }
 .chips { white-space: nowrap; }
 .chip { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 3px; font: 600 12px var(--mono); border: 1px solid currentColor; }
@@ -76,6 +77,7 @@ figcaption { font-size: 13px; color: var(--muted); }
 .rec { padding-left: 14px; border-left: 3px solid var(--accent); }
 .tasks { display: grid; gap: 10px; padding-left: 22px; margin: 0; max-width: 78ch; }
 ul { margin: 0; padding-left: 20px; max-width: 78ch; }
+.pass-word { color: var(--pass); font-weight: 600; } .fail-word { color: var(--fail); font-weight: 600; }
 .feature { grid-template-columns: 48px minmax(0, 1fr); }
 .feature > div { display: grid; gap: 8px; min-width: 0; }
 .rank { font: 400 16px/1.6 var(--display); color: var(--accent); }
@@ -85,7 +87,7 @@ dialog { border: 1px solid var(--line); background: var(--surface); color: var(-
 dialog::backdrop { background: rgb(0 0 0 / .7); }
 dialog img { display: block; max-width: 100%; max-height: 84vh; }
 dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; background: var(--accent); color: var(--accent-ink); border: 0; cursor: pointer; }
-@media (max-width: 560px) { dl div { grid-template-columns: minmax(0, 1fr); gap: 2px; } .feature { grid-template-columns: 32px minmax(0, 1fr); } }
+@media (max-width: 560px) { nav { position: static; } section { scroll-margin-top: 16px; } dl div { grid-template-columns: minmax(0, 1fr); gap: 2px; } .feature { grid-template-columns: 32px minmax(0, 1fr); } }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 </style>
 <div class="wrap">
@@ -104,7 +106,8 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
     <a href="#open"><kbd>3</kbd>Your calls</a>
     <a href="#hallway"><kbd>4</kbd>Hallway test</a>
     <a href="#features"><kbd>5</kbd>Features</a>
-    <a href="#limits"><kbd>6</kbd>Proof and limits</a>
+    <a href="#fresh"><kbd>6</kbd>Fresh eyes</a>
+    <a href="#limits"><kbd>7</kbd>Proof and limits</a>
   </nav>
   <section id="scoreboard">
     <h2>Scoreboard</h2>
@@ -113,7 +116,7 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
       <thead><tr><th scope="col">Journey</th><th scope="col">Before</th><th scope="col">After</th><th scope="col" class="num">Steps before</th><th scope="col" class="num">Steps after</th><th scope="col" class="num">Clicks before</th><th scope="col" class="num">Clicks after</th><th scope="col" class="num">Time before</th><th scope="col" class="num">Time after</th><th scope="col" class="num">Errors before</th><th scope="col" class="num">Errors after</th><th scope="col" class="num">Axe before</th><th scope="col" class="num">Axe after</th></tr></thead>
       <tbody>{{scoreRows}}{{extraRows}}</tbody>
     </table></div>
-    <p class="legend">Chips run left to right: desktop Festive, desktop Apple, mobile Festive, mobile Apple. Axe counts serious and critical rule hits per run.</p>
+    <p class="legend">Chips run left to right: desktop Festive, desktop Apple, mobile Festive, mobile Apple. Axe counts serious and critical rule hits per run. Low click or time numbers before can mean the journey died early, so read them alongside the steps.</p>
   </section>
   <section id="decisions">
     <h2>Decisions</h2>
@@ -134,6 +137,10 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
     <h2>Features people would want</h2>
     <p>Ranked from friction seen in testing and from real complaints about other apps.</p>
     <div class="list">{{features}}</div>
+  </section>
+  <section id="fresh">
+    <h2>Fresh eyes</h2>
+    {{fresh}}
   </section>
   <section id="limits">
     <h2>Proof and limits</h2>

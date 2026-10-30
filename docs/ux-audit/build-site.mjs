@@ -157,6 +157,16 @@ function hallway(script) {
     <h3>Afterwards</h3><ul>${script.after.map((rule) => `<li>${esc(rule)}</li>`).join("")}</ul>`;
 }
 
+function fresh(report) {
+  if (!report) return "<p>Pending.</p>";
+  const rows = report.tasks
+    .map((task) => `<tr><th scope="row">${esc(task.name)}</th><td><span class="${task.pass ? "pass-word" : "fail-word"}">${task.pass ? "Pass" : "Fail"}</span></td><td>${esc(task.note)}</td></tr>`)
+    .join("");
+  return `<p>${esc(report.intro)}</p>
+    <div class="tablewrap"><table class="plain"><thead><tr><th scope="col">Task</th><th scope="col">Result</th><th scope="col">Notes</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <h3>Stumbles</h3><ul>${report.stumbles.map((line) => `<li>${esc(line)}</li>`).join("")}</ul>`;
+}
+
 const meta = content("meta.json");
 const decisions = content("decisions.json").sort((a, b) => b.severity - a.severity);
 const open = content("open-decisions.json");
@@ -180,6 +190,7 @@ const page = template
   .replace("{{open}}", open.map(openCard).join(""))
   .replace("{{hallway}}", hallway(script))
   .replace("{{features}}", features.map(featureRow).join(""))
+  .replace("{{fresh}}", fresh(meta.fresh))
   .replace("{{limits}}", meta.limits.map((line) => `<li>${esc(line)}</li>`).join(""))
   .replace("{{verified}}", meta.verified.map((line) => `<li>${esc(line)}</li>`).join(""));
 

@@ -685,25 +685,18 @@
     "frames": []
   },
   {
-    "id": "session-expiry-phone-summary",
-    "severity": 2,
+    "id": "dashboard-date",
+    "severity": 3,
     "journey": "Gift lists",
-    "title": "Four summary cards pushed gifts a screen down on phones",
-    "heuristic": "Aesthetic and minimalist design",
-    "problem": "At 390px, stacked summary cards came before the gifts, so people scrolled past them to reach their list.",
-    "repro": "Open a gift list at 390px.",
-    "evidence": "Visible in every phone frame of Journey 1.",
-    "change": "The cards now sit in two columns on phones.",
+    "title": "Quick-start lists were dated today",
+    "heuristic": "Match between system and the real world",
+    "problem": "The Start a Gift List buttons on Home hard-coded today's date, so a Christmas list created in October said Deadline: Today, and Home agreed.",
+    "repro": "From Home, press Christmas under Start a Gift List, then read the list's date.",
+    "evidence": "Found by the independent first-time tester. The scripted journey reached the same feature through the Gift Lists page and never hit it. The new tests failed on the old code.",
+    "change": "Lists now use the holiday's next real date, including moving holidays and regional names. Occasions with no date, like birthdays, get none.",
     "commits": [
-      "d99e71a"
+      "b6543b5"
     ],
-    "frames": [
-      {
-        "project": "mobile-apple",
-        "journey": "j1-gift-lists",
-        "before": "05-add-a-gift-for-dad-with-a-price.png",
-        "after": "05-add-a-gift-for-dad-with-a-price.png"
-      }
-    ]
+    "frames": []
   }
 ]

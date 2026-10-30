@@ -1,0 +1,792 @@
+<title>Listy Gifty UX Audit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Press+Start+2P&display=swap">
+<style>
+/* Layout: one long ledger, section keys up top like the app's own function-key menu.
+   Light borrows the Apple theme and dark borrows Festive, so the audit reads as the product. */
+:root {
+  --bg: #fbfbfd; --surface: #ffffff; --ink: #1d1d1f; --muted: #5f5f66; --line: #dfdfe6;
+  --accent: #0064c8; --accent-ink: #ffffff; --key: #eef0f6;
+  --pass: #15803d; --fail: #b91c1c; --s4: #b91c1c; --s3: #c2410c; --s2: #a16207; --s1: #5f5f66;
+  --display: "Press Start 2P", ui-monospace, monospace;
+  --body: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b0838; --surface: #14106a; --ink: #f2f0ff; --muted: #bdb9ee; --line: #342fa0;
+  --accent: #ffdd44; --accent-ink: #0b0838; --key: #1d1896;
+  --pass: #5fe08a; --fail: #ff8a8a; --s4: #ff8a8a; --s3: #ffb074; --s2: #ffdd44; --s1: #bdb9ee;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0b0838; --surface: #14106a; --ink: #f2f0ff; --muted: #bdb9ee; --line: #342fa0;
+  --accent: #ffdd44; --accent-ink: #0b0838; --key: #1d1896;
+  --pass: #5fe08a; --fail: #ff8a8a; --s4: #ff8a8a; --s3: #ffb074; --s2: #ffdd44; --s1: #bdb9ee;
+  color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.55 var(--body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1120px; margin-inline: auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 80px; display: grid; gap: 56px; }
+.wrap > * { min-width: 0; }
+h1 { font: 400 clamp(18px, 3.4vw, 28px)/1.5 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 400 15px/1.6 var(--display); margin: 0 0 8px; }
+h3 { font: 600 19px/1.3 var(--body); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.intro { display: grid; gap: 16px; }
+.counts { display: flex; flex-wrap: wrap; gap: 24px; font-variant-numeric: tabular-nums; }
+.counts div { display: grid; }
+.counts b { font: 600 34px/1.1 var(--mono); }
+.counts span { color: var(--muted); font-size: 14px; }
+nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; }
+nav a { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--key); color: var(--ink); text-decoration: none; font-weight: 500; font-size: 14px; border: 1px solid var(--line); }
+nav kbd { font: 600 12px var(--mono); color: var(--muted); }
+nav a:hover { border-color: var(--accent); }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+section { display: grid; gap: 20px; scroll-margin-top: 72px; }
+section > * { min-width: 0; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 900px; font-size: 14px; }
+th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+thead th { font-weight: 600; color: var(--muted); white-space: nowrap; }
+tbody th { font-weight: 500; min-width: 190px; }
+table.plain { min-width: 560px; }
+td.num, thead .num { text-align: right; font: 400 14px var(--mono); font-variant-numeric: tabular-nums; }
+.chips { white-space: nowrap; }
+.chip { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 3px; font: 600 12px var(--mono); border: 1px solid currentColor; }
+.chip.pass { color: var(--pass); } .chip.fail { color: var(--fail); } .chip.none { color: var(--muted); }
+.legend { font-size: 14px; color: var(--muted); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.filter { background: var(--surface); color: var(--ink); border: 1px solid var(--line); padding: 6px 12px; font: 500 14px var(--body); cursor: pointer; }
+.filter[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.list { display: grid; gap: 32px; }
+.decision, .open, .feature { display: grid; gap: 16px; padding-block: 8px 28px; border-bottom: 1px solid var(--line); }
+.decision header, .open header { display: grid; gap: 8px; justify-items: start; }
+.sev { font: 600 12px var(--mono); padding: 2px 8px; border: 1px solid currentColor; }
+.s4 { color: var(--s4); } .s3 { color: var(--s3); } .s2 { color: var(--s2); } .s1 { color: var(--s1); }
+dl { display: grid; gap: 10px; margin: 0; max-width: 78ch; }
+dl div { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 12px; }
+dt { color: var(--muted); font-size: 14px; }
+dd { margin: 0; }
+.hash { font: 400 14px var(--mono); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 16px; align-items: start; }
+.shot { margin: 0; display: grid; gap: 6px; min-width: 0; }
+.zoom { padding: 0; border: 1px solid var(--line); background: none; cursor: zoom-in; display: block; max-width: 100%; }
+.zoom img { display: block; width: 100%; max-height: 620px; object-fit: contain; object-position: top; background: var(--surface); }
+figcaption { font-size: 13px; color: var(--muted); }
+.concept { max-width: 560px; }
+.rec { padding-left: 14px; border-left: 3px solid var(--accent); }
+.tasks { display: grid; gap: 10px; padding-left: 22px; margin: 0; max-width: 78ch; }
+ul { margin: 0; padding-left: 20px; max-width: 78ch; }
+.pass-word { color: var(--pass); font-weight: 600; } .fail-word { color: var(--fail); font-weight: 600; }
+.feature { grid-template-columns: 48px minmax(0, 1fr); }
+.feature > div { display: grid; gap: 8px; min-width: 0; }
+.rank { font: 400 16px/1.6 var(--display); color: var(--accent); }
+.meta { display: flex; flex-wrap: wrap; gap: 14px; font-size: 14px; color: var(--muted); }
+.evidence { font-size: 14px; display: grid; gap: 4px; }
+dialog { border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 8px; max-width: min(96vw, 1200px); max-height: 94vh; }
+dialog::backdrop { background: rgb(0 0 0 / .7); }
+dialog img { display: block; max-width: 100%; max-height: 84vh; }
+dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; background: var(--accent); color: var(--accent-ink); border: 0; cursor: pointer; }
+@media (max-width: 560px) { nav { position: static; } section { scroll-margin-top: 16px; } dl div { grid-template-columns: minmax(0, 1fr); gap: 2px; } .feature { grid-template-columns: 32px minmax(0, 1fr); } }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+<div class="wrap">
+  <div class="intro">
+    <h1>Listy Gifty UX Audit</h1>
+    <p>On the starting code, only 4 of 20 journey runs passed, all of them gift lists. A new relative lost their invite at sign-up, guests could not open shared links, wishlists had no menu entry, and the exchange page ran off the side of phones. On the final commit, all 20 runs pass at 1440px and 390px in both themes. One privacy fix is live in production. Everything else is on the ux-audit branch and not deployed.</p>
+    <div class="counts">
+      <div><b>53</b><span>issues found</span></div>
+      <div><b>33</b><span>fixed</span></div>
+      <div><b>20</b><span>open for you</span></div>
+    </div>
+  </div>
+  <nav aria-label="Sections">
+    <a href="#scoreboard"><kbd>1</kbd>Scoreboard</a>
+    <a href="#decisions"><kbd>2</kbd>Decisions</a>
+    <a href="#open"><kbd>3</kbd>Your calls</a>
+    <a href="#hallway"><kbd>4</kbd>Hallway test</a>
+    <a href="#features"><kbd>5</kbd>Features</a>
+    <a href="#fresh"><kbd>6</kbd>Fresh eyes</a>
+    <a href="#limits"><kbd>7</kbd>Proof and limits</a>
+  </nav>
+  <section id="scoreboard">
+    <h2>Scoreboard</h2>
+    <p>The same scripted journeys ran on the starting code and on the final commit. Each row covers four runs: 1440px and 390px, in Festive and Apple. Numbers are averages per run. Time is robot time, so read it as relative. Errors leave out the failures the script causes on purpose, like opening a broken link.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th scope="col">Journey</th><th scope="col">Before</th><th scope="col">After</th><th scope="col" class="num">Steps before</th><th scope="col" class="num">Steps after</th><th scope="col" class="num">Clicks before</th><th scope="col" class="num">Clicks after</th><th scope="col" class="num">Time before</th><th scope="col" class="num">Time after</th><th scope="col" class="num">Errors before</th><th scope="col" class="num">Errors after</th><th scope="col" class="num">Axe before</th><th scope="col" class="num">Axe after</th></tr></thead>
+      <tbody><tr>
+    <th scope="row">Manage your gift lists</th>
+    <td class="chips"><span class="chip pass" title="desktop festive: pass" aria-label="desktop festive: pass">✓</span><span class="chip pass" title="desktop apple: pass" aria-label="desktop apple: pass">✓</span><span class="chip pass" title="mobile festive: pass" aria-label="mobile festive: pass">✓</span><span class="chip pass" title="mobile apple: pass" aria-label="mobile apple: pass">✓</span></td>
+    <td class="chips"><span class="chip pass" title="desktop festive: pass" aria-label="desktop festive: pass">✓</span><span class="chip pass" title="desktop apple: pass" aria-label="desktop apple: pass">✓</span><span class="chip pass" title="mobile festive: pass" aria-label="mobile festive: pass">✓</span><span class="chip pass" title="mobile apple: pass" aria-label="mobile apple: pass">✓</span></td>
+    <td class="num">40/40</td><td class="num">40/40</td>
+    <td class="num">21</td><td class="num">21</td>
+    <td class="num">6s</td><td class="num">5s</td>
+    <td class="num">0</td><td class="num">0</td>
+    <td class="num">6</td><td class="num">0</td>
+  </tr><tr>
+    <th scope="row">Create an exchange and get everyone assigned</th>
+    <td class="chips"><span class="chip fail" title="desktop festive: fail" aria-label="desktop festive: fail">✕</span><span class="chip fail" title="desktop apple: fail" aria-label="desktop apple: fail">✕</span><span class="chip fail" title="mobile festive: fail" aria-label="mobile festive: fail">✕</span><span class="chip fail" title="mobile apple: fail" aria-label="mobile apple: fail">✕</span></td>
+    <td class="chips"><span class="chip pass" title="desktop festive: pass" aria-label="desktop festive: pass">✓</span><span class="chip pass" title="desktop apple: pass" aria-label="desktop apple: pass">✓</span><span class="chip pass" title="mobile festive: pass" aria-label="mobile festive: pass">✓</span><span class="chip pass" title="mobile apple: pass" aria-label="mobile apple: pass">✓</span></td>
+    <td class="num">74/156</td><td class="num">156/156</td>
+    <td class="num">13</td><td class="num">24</td>
+    <td class="num">57s</td><td class="num">22s</td>
+    <td class="num">8</td><td class="num">0</td>
+    <td class="num">5</td><td class="num">0</td>
+  </tr><tr>
+    <th scope="row">Log in and out</th>
+    <td class="chips"><span class="chip fail" title="desktop festive: fail" aria-label="desktop festive: fail">✕</span><span class="chip fail" title="desktop apple: fail" aria-label="desktop apple: fail">✕</span><span class="chip fail" title="mobile festive: fail" aria-label="mobile festive: fail">✕</span><span class="chip fail" title="mobile apple: fail" aria-label="mobile apple: fail">✕</span></td>
+    <td class="chips"><span class="chip pass" title="desktop festive: pass" aria-label="desktop festive: pass">✓</span><span class="chip pass" title="desktop apple: pass" aria-label="desktop apple: pass">✓</span><span class="chip pass" title="mobile festive: pass" aria-label="mobile festive: pass">✓</span><span class="chip pass" title="mobile apple: pass" aria-label="mobile apple: pass">✓</span></td>
+    <td class="num">20/28</td><td class="num">28/28</td>
+    <td class="num">3</td><td class="num">4</td>
+    <td class="num">23s</td><td class="num">11s</td>
+    <td class="num">0</td><td class="num">0</td>
+    <td class="num">5</td><td class="num">0</td>
+  </tr><tr>
+    <th scope="row">Navigate the site</th>
+    <td class="chips"><span class="chip fail" title="desktop festive: fail" aria-label="desktop festive: fail">✕</span><span class="chip fail" title="desktop apple: fail" aria-label="desktop apple: fail">✕</span><span class="chip fail" title="mobile festive: fail" aria-label="mobile festive: fail">✕</span><span class="chip fail" title="mobile apple: fail" aria-label="mobile apple: fail">✕</span></td>
+    <td class="chips"><span class="chip pass" title="desktop festive: pass" aria-label="desktop festive: pass">✓</span><span class="chip pass" title="desktop apple: pass" aria-label="desktop apple: pass">✓</span><span class="chip pass" title="mobile festive: pass" aria-label="mobile festive: pass">✓</span><span class="chip pass" title="mobile apple: pass" aria-label="mobile apple: pass">✓</span></td>
+    <td class="num">37/52</td><td class="num">52/52</td>
+    <td class="num">5</td><td class="num">6</td>
+    <td class="num">40s</td><td class="num">2s</td>
+    <td class="num">0</td><td class="num">0</td>
+    <td class="num">6</td><td class="num">0</td>
+  </tr><tr>
+    <th scope="row">Add things to a wishlist</th>
+    <td class="chips"><span class="chip fail" title="desktop festive: fail" aria-label="desktop festive: fail">✕</span><span class="chip fail" title="desktop apple: fail" aria-label="desktop apple: fail">✕</span><span class="chip fail" title="mobile festive: fail" aria-label="mobile festive: fail">✕</span><span class="chip fail" title="mobile apple: fail" aria-label="mobile apple: fail">✕</span></td>
+    <td class="chips"><span class="chip pass" title="desktop festive: pass" aria-label="desktop festive: pass">✓</span><span class="chip pass" title="desktop apple: pass" aria-label="desktop apple: pass">✓</span><span class="chip pass" title="mobile festive: pass" aria-label="mobile festive: pass">✓</span><span class="chip pass" title="mobile apple: pass" aria-label="mobile apple: pass">✓</span></td>
+    <td class="num">24/52</td><td class="num">52/52</td>
+    <td class="num">9</td><td class="num">13</td>
+    <td class="num">76s</td><td class="num">5s</td>
+    <td class="num">0</td><td class="num">0</td>
+    <td class="num">6</td><td class="num">0</td>
+  </tr><tr>
+    <th scope="row">Unhappy paths</th>
+    <td class="chips"><span class="chip fail" title="desktop festive: fail" aria-label="desktop festive: fail">✕</span><span class="chip fail" title="desktop apple: fail" aria-label="desktop apple: fail">✕</span><span class="chip fail" title="mobile festive: fail" aria-label="mobile festive: fail">✕</span><span class="chip fail" title="mobile apple: fail" aria-label="mobile apple: fail">✕</span></td>
+    <td class="chips"><span class="chip fail" title="desktop festive: fail" aria-label="desktop festive: fail">✕</span><span class="chip fail" title="desktop apple: fail" aria-label="desktop apple: fail">✕</span><span class="chip fail" title="mobile festive: fail" aria-label="mobile festive: fail">✕</span><span class="chip fail" title="mobile apple: fail" aria-label="mobile apple: fail">✕</span></td>
+    <td class="num">28/64</td><td class="num">60/64</td>
+    <td class="num">12</td><td class="num">12</td>
+    <td class="num">116s</td><td class="num">30s</td>
+    <td class="num">4</td><td class="num">0</td>
+    <td class="num">7</td><td class="num">0</td>
+  </tr><tr>
+    <th scope="row">Keyboard only</th>
+    <td class="chips"><span class="chip fail" title="desktop festive: fail" aria-label="desktop festive: fail">✕</span><span class="chip fail" title="desktop apple: fail" aria-label="desktop apple: fail">✕</span><span class="chip none" title="mobile festive: not run" aria-label="mobile festive: not run">–</span><span class="chip none" title="mobile apple: not run" aria-label="mobile apple: not run">–</span></td>
+    <td class="chips"><span class="chip pass" title="desktop festive: pass" aria-label="desktop festive: pass">✓</span><span class="chip pass" title="desktop apple: pass" aria-label="desktop apple: pass">✓</span><span class="chip none" title="mobile festive: not run" aria-label="mobile festive: not run">–</span><span class="chip none" title="mobile apple: not run" aria-label="mobile apple: not run">–</span></td>
+    <td class="num">12/18</td><td class="num">18/18</td>
+    <td class="num">11</td><td class="num">9</td>
+    <td class="num">17s</td><td class="num">4s</td>
+    <td class="num">0</td><td class="num">0</td>
+    <td class="num">5</td><td class="num">0</td>
+  </tr></tbody>
+    </table></div>
+    <p class="legend">Chips run left to right: desktop Festive, desktop Apple, mobile Festive, mobile Apple. Axe counts serious and critical rule hits per run. Low click or time numbers before can mean the journey died early, so read them alongside the steps.</p>
+  </section>
+  <section id="decisions">
+    <h2>Decisions</h2>
+    <p>Each change made, most severe first, with the frames that prove it. Select a frame to enlarge it.</p>
+    <div class="filters" role="group" aria-label="Filter by journey"><button type="button" class="filter" data-filter="" aria-pressed="true">All</button><button type="button" class="filter" data-filter="Wishlist" aria-pressed="false">Wishlist</button><button type="button" class="filter" data-filter="Exchange" aria-pressed="false">Exchange</button><button type="button" class="filter" data-filter="Navigation" aria-pressed="false">Navigation</button><button type="button" class="filter" data-filter="Gift lists" aria-pressed="false">Gift lists</button><button type="button" class="filter" data-filter="Email" aria-pressed="false">Email</button><button type="button" class="filter" data-filter="Log in and out" aria-pressed="false">Log in and out</button><button type="button" class="filter" data-filter="Accessibility" aria-pressed="false">Accessibility</button></div>
+    <div class="list"><article class="decision" data-journey="Wishlist" data-severity="4" id="privacy-leak">
+    <header><span class="sev s4">Severity 4</span><h3>Shared wishlist links exposed who claimed what</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>Anyone holding a shared wishlist link could read each claimer's user ID, avatar, private message and name. The name can fall back to their email address. No login was needed.</dd></div>
+      <div><dt>Repro</dt><dd>Claim an item on a shared wishlist, then request /w/:token with no sign-in.</dd></div>
+      <div><dt>Evidence</dt><dd>The new test fails on the old code and passes with the fix. The filter was written as a lambda, which the serializer library silently ignores.</dd></div>
+      <div><dt>Change and why</dt><dd>The public view now returns only claim status and quantity. This one fix shipped to production on October 30, 2026, ahead of the rest.</dd></div>
+      <div><dt>Heuristic</dt><dd>Error prevention</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/ad0c0e8">ad0c0e8</a> <a class="hash" href="https://github.com/kent/listygifty/commit/f6fb256">f6fb256</a></dd></div>
+    </dl>
+    
+  </article><article class="decision" data-journey="Exchange" data-severity="4" id="invite-lost">
+    <header><span class="sev s4">Severity 4</span><h3>New relatives lost their invite at sign-up</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>A relative who tapped the invite and created an account landed on the dashboard with no sign of the exchange. The only way back was to find the email again.</dd></div>
+      <div><dt>Repro</dt><dd>Open an invite while logged out, choose Sign Up, and finish creating the account.</dd></div>
+      <div><dt>Evidence</dt><dd>Journey 2 failed at this step in all four runs. The links used a redirect parameter that nothing reads.</dd></div>
+      <div><dt>Change and why</dt><dd>Sign In and Sign Up now carry redirect_url, so people return to the invite and can join straight away.</dd></div>
+      <div><dt>Heuristic</dt><dd>Visibility of system status</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/31ab699">31ab699</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-j2-exchange-18-nana-lands-back-on-the-invite.jpg" aria-label="Enlarge: Before: New relatives lost their invite at sign-up"><img src="img/before-desktop-apple-j2-exchange-18-nana-lands-back-on-the-invite.jpg" alt="Before: New relatives lost their invite at sign-up" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-j2-exchange-18-nana-lands-back-on-the-invite.jpg" aria-label="Enlarge: After: New relatives lost their invite at sign-up"><img src="img/after-desktop-apple-j2-exchange-18-nana-lands-back-on-the-invite.jpg" alt="After: New relatives lost their invite at sign-up" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Exchange" data-severity="4" id="phone-overflow">
+    <header><span class="sev s4">Severity 4</span><h3>The exchange page ran off the side of phones</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>At 390px the page was far wider than the screen. The Add button sat off to the right, so the script could not tap it and an organizer on a phone would have to scroll sideways to invite anyone.</dd></div>
+      <div><dt>Repro</dt><dd>Open an exchange at 390px and try to add a participant.</dd></div>
+      <div><dt>Evidence</dt><dd>Journey 2 stopped at the first invite in both phone runs. Measured overflow was 245 to 260px.</dd></div>
+      <div><dt>Change and why</dt><dd>Rows wrap and contain long names and emails, and the page no longer scrolls sideways.</dd></div>
+      <div><dt>Heuristic</dt><dd>Flexibility and efficiency of use</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/74bed0b">74bed0b</a> <a class="hash" href="https://github.com/kent/listygifty/commit/5626dee">5626dee</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-mobile-apple-j2-exchange-05-invite-parker-by-email.jpg" aria-label="Enlarge: Before: The exchange page ran off the side of phones"><img src="img/before-mobile-apple-j2-exchange-05-invite-parker-by-email.jpg" alt="Before: The exchange page ran off the side of phones" loading="lazy"></button><figcaption>Before · mobile-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-mobile-apple-j2-exchange-05-invite-parker-by-email.jpg" aria-label="Enlarge: After: The exchange page ran off the side of phones"><img src="img/after-mobile-apple-j2-exchange-05-invite-parker-by-email.jpg" alt="After: The exchange page ran off the side of phones" loading="lazy"></button><figcaption>After · mobile-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Wishlist" data-severity="4" id="guest-links">
+    <header><span class="sev s4">Severity 4</span><h3>Guest links demanded a sign-in</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>The Share dialog promises that anyone with the link can view the list and claim items, but the link forced a sign-in. The guest's confirmation email link did the same.</dd></div>
+      <div><dt>Repro</dt><dd>Open a shared /w/ link or a /claim/ link while logged out.</dd></div>
+      <div><dt>Evidence</dt><dd>Journey 5 failed here in all four runs. Neither route was on the public list.</dd></div>
+      <div><dt>Change and why</dt><dd>Both routes are public now, and the pages already worked without an account.</dd></div>
+      <div><dt>Heuristic</dt><dd>Match between system and the real world</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/27b9890">27b9890</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-j5-wishlist-09-my-cousin-opens-the-link-with-no-account.jpg" aria-label="Enlarge: Before: Guest links demanded a sign-in"><img src="img/before-desktop-apple-j5-wishlist-09-my-cousin-opens-the-link-with-no-account.jpg" alt="Before: Guest links demanded a sign-in" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-j5-wishlist-09-my-cousin-opens-the-link-with-no-account.jpg" aria-label="Enlarge: After: Guest links demanded a sign-in"><img src="img/after-desktop-apple-j5-wishlist-09-my-cousin-opens-the-link-with-no-account.jpg" alt="After: Guest links demanded a sign-in" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Wishlist" data-severity="4" id="spoiler">
+    <header><span class="sev s4">Severity 4</span><h3>Anti-spoiler still showed owners what was claimed</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>Anti-spoiler is on by default, yet an owner saw a green Claimed badge on their own wishlist, which gives away the surprise.</dd></div>
+      <div><dt>Repro</dt><dd>Have a guest claim an item on a list with anti-spoiler on, then open the list as its owner.</dd></div>
+      <div><dt>Evidence</dt><dd>Competitor research flagged the risk, then the running app confirmed it in all four runs.</dd></div>
+      <div><dt>Change and why</dt><dd>For an owner with anti-spoiler on, every claim count now uses revealed claims only. Guests still see real status, so they can avoid doubling up.</dd></div>
+      <div><dt>Heuristic</dt><dd>Consistency and standards</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/3a9b945">3a9b945</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-j5-wishlist-12-i-can-still-see-my-list-and-it-isn-t-spoiled.jpg" aria-label="Enlarge: Before: Anti-spoiler still showed owners what was claimed"><img src="img/before-desktop-apple-j5-wishlist-12-i-can-still-see-my-list-and-it-isn-t-spoiled.jpg" alt="Before: Anti-spoiler still showed owners what was claimed" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-j5-wishlist-12-i-can-still-see-my-list-and-it-isn-t-spoiled.jpg" aria-label="Enlarge: After: Anti-spoiler still showed owners what was claimed"><img src="img/after-desktop-apple-j5-wishlist-12-i-can-still-see-my-list-and-it-isn-t-spoiled.jpg" alt="After: Anti-spoiler still showed owners what was claimed" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Navigation" data-severity="4" id="wishlists-nav">
+    <header><span class="sev s4">Severity 4</span><h3>Nobody could find Wishlists</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>Nothing in the app linked to wishlists. The only way in was typing the address.</dd></div>
+      <div><dt>Repro</dt><dd>From Home, try to reach your wishlists using only what is on screen.</dd></div>
+      <div><dt>Evidence</dt><dd>A code search found no link outside the wishlist pages themselves.</dd></div>
+      <div><dt>Change and why</dt><dd>Added Wishlists to every header, and the phone menu now shows the current item and hints that it scrolls.</dd></div>
+      <div><dt>Heuristic</dt><dd>Recognition rather than recall</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/887124e">887124e</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-j4-navigation-08-find-wishlists-in-the-menu.jpg" aria-label="Enlarge: Before: Nobody could find Wishlists"><img src="img/before-desktop-apple-j4-navigation-08-find-wishlists-in-the-menu.jpg" alt="Before: Nobody could find Wishlists" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-j4-navigation-08-find-wishlists-in-the-menu.jpg" aria-label="Enlarge: After: Nobody could find Wishlists"><img src="img/after-desktop-apple-j4-navigation-08-find-wishlists-in-the-menu.jpg" alt="After: Nobody could find Wishlists" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div><div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-mobile-apple-j4-navigation-08-find-wishlists-in-the-menu.jpg" aria-label="Enlarge: Before: Nobody could find Wishlists"><img src="img/before-mobile-apple-j4-navigation-08-find-wishlists-in-the-menu.jpg" alt="Before: Nobody could find Wishlists" loading="lazy"></button><figcaption>Before · mobile-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-mobile-apple-j4-navigation-08-find-wishlists-in-the-menu.jpg" aria-label="Enlarge: After: Nobody could find Wishlists"><img src="img/after-mobile-apple-j4-navigation-08-find-wishlists-in-the-menu.jpg" alt="After: Nobody could find Wishlists" loading="lazy"></button><figcaption>After · mobile-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Exchange" data-severity="4" id="first-request-401">
+    <header><span class="sev s4">Severity 4</span><h3>Join could fail with an auth error on a first visit</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>A first page load fires several requests at once. They raced to create the same user, and the loser came back as 401 Unauthorized, even though the person was signed in.</dd></div>
+      <div><dt>Repro</dt><dd>Open an invite as someone with no local account yet, and press Join Exchange quickly.</dd></div>
+      <div><dt>Evidence</dt><dd>API logs showed &quot;Clerk user has already been taken&quot; next to the 401. One or two joiners hit it in most runs.</dd></div>
+      <div><dt>Change and why</dt><dd>The losing request now finds the winner's record and carries on, with one welcome email.</dd></div>
+      <div><dt>Heuristic</dt><dd>Help users recognize, diagnose, and recover from errors</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/f9ac193">f9ac193</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-j2-exchange-12-parker-joins-from-the-invite-email.jpg" aria-label="Enlarge: Before: Join could fail with an auth error on a first visit"><img src="img/before-desktop-apple-j2-exchange-12-parker-joins-from-the-invite-email.jpg" alt="Before: Join could fail with an auth error on a first visit" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-j2-exchange-12-parker-joins-from-the-invite-email.jpg" aria-label="Enlarge: After: Join could fail with an auth error on a first visit"><img src="img/after-desktop-apple-j2-exchange-12-parker-joins-from-the-invite-email.jpg" alt="After: Join could fail with an auth error on a first visit" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Gift lists" data-severity="4" id="match-data-loss">
+    <header><span class="sev s4">Severity 4</span><h3>Editing a shared gift could wipe its recipients and givers</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>On the Match screen, the edit dialog opened with empty pickers. Picking one person replaced the gift's whole list, so everyone else was removed from the gift.</dd></div>
+      <div><dt>Repro</dt><dd>Open a gift with two recipients on the Match screen, edit it, and pick one person.</dd></div>
+      <div><dt>Evidence</dt><dd>Eight tests that open the dialog the way the page does failed on the old code. Before the fix, choosing one person sent a one-person list for a gift with two recipients. Nobody has checked how many production gifts were affected.</dd></div>
+      <div><dt>Change and why</dt><dd>The dialog now loads the gift's real people, and a failed save rolls back to the last saved state.</dd></div>
+      <div><dt>Heuristic</dt><dd>Error prevention</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/86aff1d">86aff1d</a> <a class="hash" href="https://github.com/kent/listygifty/commit/ec12a58">ec12a58</a></dd></div>
+    </dl>
+    
+  </article><article class="decision" data-journey="Email" data-severity="3" id="join-emails">
+    <header><span class="sev s3">Severity 3</span><h3>Emailed invites never sent join emails</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>People who joined from an emailed invite triggered no email at all, so the organizer never heard and the joiner got no confirmation. Share-link joins did send them.</dd></div>
+      <div><dt>Repro</dt><dd>Invite someone by email, have them join, and check the inbox.</dd></div>
+      <div><dt>Evidence</dt><dd>Mailpit showed 0 of these emails after 5 emailed-invite joins. After the fix, both arrive in every run.</dd></div>
+      <div><dt>Change and why</dt><dd>Accepting an invite now sends both emails, including through MCP. The organizer is not emailed about themselves.</dd></div>
+      <div><dt>Heuristic</dt><dd>Visibility of system status</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/62603f2">62603f2</a> <a class="hash" href="https://github.com/kent/listygifty/commit/7d40d9e">7d40d9e</a></dd></div>
+    </dl>
+    
+  </article><article class="decision" data-journey="Exchange" data-severity="3" id="stale-draft">
+    <header><span class="sev s3">Severity 3</span><h3>The page still said draft after four invites</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>After inviting people, the badge stayed on draft and the button to draw names stayed hidden until a reload.</dd></div>
+      <div><dt>Repro</dt><dd>Create an exchange, add participants, and look at the status.</dd></div>
+      <div><dt>Evidence</dt><dd>Journey 2 failed this step in the desktop runs, where it could be reached.</dd></div>
+      <div><dt>Change and why</dt><dd>The page refreshes the exchange after every roster change.</dd></div>
+      <div><dt>Heuristic</dt><dd>Visibility of system status</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/8ec906e">8ec906e</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-j2-exchange-09-the-page-shows-the-invites-went-out.jpg" aria-label="Enlarge: Before: The page still said draft after four invites"><img src="img/before-desktop-apple-j2-exchange-09-the-page-shows-the-invites-went-out.jpg" alt="Before: The page still said draft after four invites" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-j2-exchange-09-the-page-shows-the-invites-went-out.jpg" aria-label="Enlarge: After: The page still said draft after four invites"><img src="img/after-desktop-apple-j2-exchange-09-the-page-shows-the-invites-went-out.jpg" alt="After: The page still said draft after four invites" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Exchange" data-severity="3" id="next-step">
+    <header><span class="sev s3">Severity 3</span><h3>Nothing said what to do next</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>With one person in, the draw button simply wasn't there. Invitees who joined saw no sign of what was coming.</dd></div>
+      <div><dt>Repro</dt><dd>Create an exchange and stay alone in it, or join as an invitee.</dd></div>
+      <div><dt>Evidence</dt><dd>Journey 2 and the unhappy paths failed these checks.</dd></div>
+      <div><dt>Change and why</dt><dd>A short line now says how many people are needed, who is still pending, or that you are waiting on the organizer.</dd></div>
+      <div><dt>Heuristic</dt><dd>Visibility of system status</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/fd23156">fd23156</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-j2-exchange-10-the-organizer-knows-what-happens-next.jpg" aria-label="Enlarge: Before: Nothing said what to do next"><img src="img/before-desktop-apple-j2-exchange-10-the-organizer-knows-what-happens-next.jpg" alt="Before: Nothing said what to do next" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-j2-exchange-10-the-organizer-knows-what-happens-next.jpg" aria-label="Enlarge: After: Nothing said what to do next"><img src="img/after-desktop-apple-j2-exchange-10-the-organizer-knows-what-happens-next.jpg" alt="After: Nothing said what to do next" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div><div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-u1-unhappy-paths-05-alone-in-an-exchange-i-am-told-why-i-can-t-draw-yet.jpg" aria-label="Enlarge: Before: Nothing said what to do next"><img src="img/before-desktop-apple-u1-unhappy-paths-05-alone-in-an-exchange-i-am-told-why-i-can-t-draw-yet.jpg" alt="Before: Nothing said what to do next" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-u1-unhappy-paths-05-alone-in-an-exchange-i-am-told-why-i-can-t-draw-yet.jpg" aria-label="Enlarge: After: Nothing said what to do next"><img src="img/after-desktop-apple-u1-unhappy-paths-05-alone-in-an-exchange-i-am-told-why-i-can-t-draw-yet.jpg" alt="After: Nothing said what to do next" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Exchange" data-severity="3" id="wishlist-before-draw">
+    <header><span class="sev s3">Severity 3</span><h3>The invite promised wishlists people could not reach</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>The invite email says to add wishlist ideas after joining, but the link only appeared after the draw and never for an organizer taking part.</dd></div>
+      <div><dt>Repro</dt><dd>Join an exchange and look for your wishlist before names are drawn.</dd></div>
+      <div><dt>Evidence</dt><dd>Journey 2 failed this step for both the organizer and the invitee.</dd></div>
+      <div><dt>Change and why</dt><dd>Everyone who has joined gets an Edit Wishlist link in every status.</dd></div>
+      <div><dt>Heuristic</dt><dd>Consistency and standards</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/d73ad1d">d73ad1d</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-j2-exchange-15-parker-can-add-wishes-right-after-joining.jpg" aria-label="Enlarge: Before: The invite promised wishlists people could not reach"><img src="img/before-desktop-apple-j2-exchange-15-parker-can-add-wishes-right-after-joining.jpg" alt="Before: The invite promised wishlists people could not reach" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-j2-exchange-15-parker-can-add-wishes-right-after-joining.jpg" aria-label="Enlarge: After: The invite promised wishlists people could not reach"><img src="img/after-desktop-apple-j2-exchange-15-parker-can-add-wishes-right-after-joining.jpg" alt="After: The invite promised wishlists people could not reach" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Log in and out" data-severity="3" id="logged-out-pages">
+    <header><span class="sev s3">Severity 3</span><h3>Signed-out people saw a working form and lost their place</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>A pattern meant for /e/ links also matched /exchanges, so a signed-out person saw the New Exchange form with a Sign out button. Links from emails also lost their destination at sign-in.</dd></div>
+      <div><dt>Repro</dt><dd>Sign out, then open /exchanges/new or a my-match link.</dd></div>
+      <div><dt>Evidence</dt><dd>Journey 3 failed in all four runs. The unhappy paths confirmed the lost match link.</dd></div>
+      <div><dt>Change and why</dt><dd>Exchange pages are protected now, and sign-in returns people to where they were, including after a session expires.</dd></div>
+      <div><dt>Heuristic</dt><dd>Error prevention</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/27b9890">27b9890</a> <a class="hash" href="https://github.com/kent/listygifty/commit/86e8d58">86e8d58</a> <a class="hash" href="https://github.com/kent/listygifty/commit/e94c5e5">e94c5e5</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-j3-log-in-out-06-a-saved-link-asks-me-to-sign-in.jpg" aria-label="Enlarge: Before: Signed-out people saw a working form and lost their place"><img src="img/before-desktop-apple-j3-log-in-out-06-a-saved-link-asks-me-to-sign-in.jpg" alt="Before: Signed-out people saw a working form and lost their place" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-j3-log-in-out-06-a-saved-link-asks-me-to-sign-in.jpg" aria-label="Enlarge: After: Signed-out people saw a working form and lost their place"><img src="img/after-desktop-apple-j3-log-in-out-06-a-saved-link-asks-me-to-sign-in.jpg" alt="After: Signed-out people saw a working form and lost their place" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Navigation" data-severity="3" id="not-found">
+    <header><span class="sev s3">Severity 3</span><h3>Broken links hit a dead end</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>Unknown addresses showed a bare, unstyled 404 with no way back.</dd></div>
+      <div><dt>Repro</dt><dd>Open any address that doesn't exist while signed in.</dd></div>
+      <div><dt>Evidence</dt><dd>Journey 4 failed in all four runs.</dd></div>
+      <div><dt>Change and why</dt><dd>Added a Page not found screen in both themes, with a Back to home link.</dd></div>
+      <div><dt>Heuristic</dt><dd>Help users recognize, diagnose, and recover from errors</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/18bbbbd">18bbbbd</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-j4-navigation-12-a-broken-link-explains-itself-and-offers-a-way-back.jpg" aria-label="Enlarge: Before: Broken links hit a dead end"><img src="img/before-desktop-apple-j4-navigation-12-a-broken-link-explains-itself-and-offers-a-way-back.jpg" alt="Before: Broken links hit a dead end" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-j4-navigation-12-a-broken-link-explains-itself-and-offers-a-way-back.jpg" aria-label="Enlarge: After: Broken links hit a dead end"><img src="img/after-desktop-apple-j4-navigation-12-a-broken-link-explains-itself-and-offers-a-way-back.jpg" alt="After: Broken links hit a dead end" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Exchange" data-severity="3" id="closed-not-declined">
+    <header><span class="sev s3">Severity 3</span><h3>People who never answered were told they declined</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>Drawing names closes pending invites by marking them declined, so someone arriving late read &quot;You previously declined this invitation&quot;.</dd></div>
+      <div><dt>Repro</dt><dd>Invite someone, draw names without them, then open their invite.</dd></div>
+      <div><dt>Evidence</dt><dd>The unhappy path failed in all four runs.</dd></div>
+      <div><dt>Change and why</dt><dd>The invite now reports that the exchange closed and suggests asking the organizer.</dd></div>
+      <div><dt>Heuristic</dt><dd>Match between system and the real world</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/2ce5c80">2ce5c80</a> <a class="hash" href="https://github.com/kent/listygifty/commit/334d137">334d137</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-u1-unhappy-paths-14-someone-who-never-joined-is-told-it-closed-not-that-they-dec.jpg" aria-label="Enlarge: Before: People who never answered were told they declined"><img src="img/before-desktop-apple-u1-unhappy-paths-14-someone-who-never-joined-is-told-it-closed-not-that-they-dec.jpg" alt="Before: People who never answered were told they declined" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-u1-unhappy-paths-14-someone-who-never-joined-is-told-it-closed-not-that-they-dec.jpg" aria-label="Enlarge: After: People who never answered were told they declined"><img src="img/after-desktop-apple-u1-unhappy-paths-14-someone-who-never-joined-is-told-it-closed-not-that-they-dec.jpg" alt="After: People who never answered were told they declined" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Exchange" data-severity="3" id="remove-confirm">
+    <header><span class="sev s3">Severity 3</span><h3>One click removed a person</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>The trash icon removed a participant instantly, with no confirmation and no undo.</dd></div>
+      <div><dt>Repro</dt><dd>Press the trash icon on a participant.</dd></div>
+      <div><dt>Evidence</dt><dd>The unhappy path failed in all four runs.</dd></div>
+      <div><dt>Change and why</dt><dd>Removing now asks first, with Keep them and Remove.</dd></div>
+      <div><dt>Heuristic</dt><dd>Error prevention</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/6e55a7d">6e55a7d</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-u1-unhappy-paths-10-removing-a-person-asks-first.jpg" aria-label="Enlarge: Before: One click removed a person"><img src="img/before-desktop-apple-u1-unhappy-paths-10-removing-a-person-asks-first.jpg" alt="Before: One click removed a person" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-u1-unhappy-paths-10-removing-a-person-asks-first.jpg" aria-label="Enlarge: After: One click removed a person"><img src="img/after-desktop-apple-u1-unhappy-paths-10-removing-a-person-asks-first.jpg" alt="After: One click removed a person" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Wishlist" data-severity="3" id="share-twice">
+    <header><span class="sev s3">Severity 3</span><h3>Pressing Share again broke the link you had already sent</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>Every press of Share replaced the link, so re-copying it killed the one family already had. Guests then saw Wishlist Not Found.</dd></div>
+      <div><dt>Repro</dt><dd>Press Share, copy the link, close, and press Share again. Then open the first link.</dd></div>
+      <div><dt>Evidence</dt><dd>The new tests failed on the old code.</dd></div>
+      <div><dt>Change and why</dt><dd>Share now returns the existing link. A revoked link stays dead, and sharing after a revoke issues a new one.</dd></div>
+      <div><dt>Heuristic</dt><dd>Error prevention</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/7747be1">7747be1</a></dd></div>
+    </dl>
+    
+  </article><article class="decision" data-journey="Wishlist" data-severity="3" id="claim-state">
+    <header><span class="sev s3">Severity 3</span><h3>Claimed items showed the wrong state</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>Right after a claim, the availability flag was inverted. A guest could keep claiming the last item, and items with stock left showed as Claimed.</dd></div>
+      <div><dt>Repro</dt><dd>Claim an item with a guest and check its state.</dd></div>
+      <div><dt>Evidence</dt><dd>Two new tests failed on the old code.</dd></div>
+      <div><dt>Change and why</dt><dd>The page now shows the correct state straight after a claim.</dd></div>
+      <div><dt>Heuristic</dt><dd>Visibility of system status</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/eb5e97a">eb5e97a</a></dd></div>
+    </dl>
+    
+  </article><article class="decision" data-journey="Gift lists" data-severity="3" id="mobile-cards">
+    <header><span class="sev s3">Severity 3</span><h3>Phone gift cards were unreadable in the Apple theme</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>Cards kept hard-coded dark colours in the light theme, giving muddy grey cards with text at about 1.19:1 contrast.</dd></div>
+      <div><dt>Repro</dt><dd>Add a gift and open the list at 390px in the Apple theme.</dd></div>
+      <div><dt>Evidence</dt><dd>Visible in every Apple phone frame, and flagged by axe.</dd></div>
+      <div><dt>Change and why</dt><dd>Gift cards and related screens now use theme colours.</dd></div>
+      <div><dt>Heuristic</dt><dd>Aesthetic and minimalist design</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/a775533">a775533</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-mobile-apple-j1-gift-lists-06-both-gifts-show-who-they-are-for.jpg" aria-label="Enlarge: Before: Phone gift cards were unreadable in the Apple theme"><img src="img/before-mobile-apple-j1-gift-lists-06-both-gifts-show-who-they-are-for.jpg" alt="Before: Phone gift cards were unreadable in the Apple theme" loading="lazy"></button><figcaption>Before · mobile-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-mobile-apple-j1-gift-lists-06-both-gifts-show-who-they-are-for.jpg" aria-label="Enlarge: After: Phone gift cards were unreadable in the Apple theme"><img src="img/after-mobile-apple-j1-gift-lists-06-both-gifts-show-who-they-are-for.jpg" alt="After: Phone gift cards were unreadable in the Apple theme" loading="lazy"></button><figcaption>After · mobile-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Accessibility" data-severity="3" id="keyboard-gifts">
+    <header><span class="sev s3">Severity 3</span><h3>Gift rows could not be used with a keyboard or touch</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>The row menu only appeared on mouse hover, gift names could only be edited by clicking, and several controls had no name.</dd></div>
+      <div><dt>Repro</dt><dd>Tab through a gift list, or open it on a tablet.</dd></div>
+      <div><dt>Evidence</dt><dd>Keyboard passes and axe button-name failures.</dd></div>
+      <div><dt>Change and why</dt><dd>Controls stay visible on focus and touch, gift names can be edited from the keyboard, and every control is named.</dd></div>
+      <div><dt>Heuristic</dt><dd>Flexibility and efficiency of use</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/0f27b40">0f27b40</a> <a class="hash" href="https://github.com/kent/listygifty/commit/8810e73">8810e73</a> <a class="hash" href="https://github.com/kent/listygifty/commit/a162c35">a162c35</a> <a class="hash" href="https://github.com/kent/listygifty/commit/cc7b777">cc7b777</a></dd></div>
+    </dl>
+    
+  </article><article class="decision" data-journey="Accessibility" data-severity="3" id="named-controls">
+    <header><span class="sev s3">Severity 3</span><h3>Icon buttons and form fields had no names</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>Screen reader users got nothing from many icon buttons, and wishlist labels were not tied to their fields. Phone buttons lost their names when text was hidden.</dd></div>
+      <div><dt>Repro</dt><dd>Run axe, or use a screen reader on the wishlist and exchange pages.</dd></div>
+      <div><dt>Evidence</dt><dd>Axe reported critical button-name and label failures on 8 routes.</dd></div>
+      <div><dt>Change and why</dt><dd>Every control now has a name, and labels are connected to their fields.</dd></div>
+      <div><dt>Heuristic</dt><dd>Consistency and standards</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/7c614f7">7c614f7</a> <a class="hash" href="https://github.com/kent/listygifty/commit/becd270">becd270</a> <a class="hash" href="https://github.com/kent/listygifty/commit/348fba4">348fba4</a> <a class="hash" href="https://github.com/kent/listygifty/commit/3551614">3551614</a> <a class="hash" href="https://github.com/kent/listygifty/commit/1495430">1495430</a> <a class="hash" href="https://github.com/kent/listygifty/commit/9fd06ae">9fd06ae</a> <a class="hash" href="https://github.com/kent/listygifty/commit/edd3b13">edd3b13</a></dd></div>
+    </dl>
+    
+  </article><article class="decision" data-journey="Exchange" data-severity="3" id="draw-errors">
+    <header><span class="sev s3">Severity 3</span><h3>Impossible rules gave a dead-end message</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>If the rules left someone with nobody to draw, the organizer read &quot;No valid matching exists&quot;.</dd></div>
+      <div><dt>Repro</dt><dd>Exclude one person from everyone else, then draw.</dd></div>
+      <div><dt>Evidence</dt><dd>The unhappy path failed in all four runs.</dd></div>
+      <div><dt>Change and why</dt><dd>The message now explains the cause and what to do: remove a rule or add another person.</dd></div>
+      <div><dt>Heuristic</dt><dd>Help users recognize, diagnose, and recover from errors</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/b652c9b">b652c9b</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-u1-unhappy-paths-11-impossible-rules-get-an-explanation-i-can-act-on.jpg" aria-label="Enlarge: Before: Impossible rules gave a dead-end message"><img src="img/before-desktop-apple-u1-unhappy-paths-11-impossible-rules-get-an-explanation-i-can-act-on.jpg" alt="Before: Impossible rules gave a dead-end message" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-u1-unhappy-paths-11-impossible-rules-get-an-explanation-i-can-act-on.jpg" aria-label="Enlarge: After: Impossible rules gave a dead-end message"><img src="img/after-desktop-apple-u1-unhappy-paths-11-impossible-rules-get-an-explanation-i-can-act-on.jpg" alt="After: Impossible rules gave a dead-end message" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Accessibility" data-severity="3" id="contrast">
+    <header><span class="sev s3">Severity 3</span><h3>Text failed contrast across both themes</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>Axe found contrast failures on 15 routes. Apple greys, greens, reds and violets were too light, Festive silver keys and footer text were too faint, and white text on the green and pink gradients was hard to read.</dd></div>
+      <div><dt>Repro</dt><dd>Run axe on any page in either theme. Gradients need a manual check, because axe cannot score text on them.</dd></div>
+      <div><dt>Evidence</dt><dd>Axe reported color-contrast failures on every Apple route before. It reports none now, in 124 audits per project. Gradient stops were checked by calculation.</dd></div>
+      <div><dt>Change and why</dt><dd>Fixed at the theme level where possible, so one change covers every page. Festive keeps its look.</dd></div>
+      <div><dt>Heuristic</dt><dd>Aesthetic and minimalist design</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/aad828b">aad828b</a> <a class="hash" href="https://github.com/kent/listygifty/commit/f616631">f616631</a> <a class="hash" href="https://github.com/kent/listygifty/commit/58272fc">58272fc</a> <a class="hash" href="https://github.com/kent/listygifty/commit/d69f2eb">d69f2eb</a> <a class="hash" href="https://github.com/kent/listygifty/commit/2e9c27c">2e9c27c</a> <a class="hash" href="https://github.com/kent/listygifty/commit/cc5a1d3">cc5a1d3</a> <a class="hash" href="https://github.com/kent/listygifty/commit/2665f25">2665f25</a> <a class="hash" href="https://github.com/kent/listygifty/commit/ffc2c95">ffc2c95</a> <a class="hash" href="https://github.com/kent/listygifty/commit/faded04">faded04</a> <a class="hash" href="https://github.com/kent/listygifty/commit/f3a689f">f3a689f</a> <a class="hash" href="https://github.com/kent/listygifty/commit/acff7b2">acff7b2</a> <a class="hash" href="https://github.com/kent/listygifty/commit/644605a">644605a</a> <a class="hash" href="https://github.com/kent/listygifty/commit/918d766">918d766</a> <a class="hash" href="https://github.com/kent/listygifty/commit/a2def2e">a2def2e</a> <a class="hash" href="https://github.com/kent/listygifty/commit/df9d317">df9d317</a> <a class="hash" href="https://github.com/kent/listygifty/commit/0762dd4">0762dd4</a> <a class="hash" href="https://github.com/kent/listygifty/commit/5265369">5265369</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-mobile-apple-j4-navigation-06-find-people-in-the-menu.jpg" aria-label="Enlarge: Before: Text failed contrast across both themes"><img src="img/before-mobile-apple-j4-navigation-06-find-people-in-the-menu.jpg" alt="Before: Text failed contrast across both themes" loading="lazy"></button><figcaption>Before · mobile-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-mobile-apple-j4-navigation-06-find-people-in-the-menu.jpg" aria-label="Enlarge: After: Text failed contrast across both themes"><img src="img/after-mobile-apple-j4-navigation-06-find-people-in-the-menu.jpg" alt="After: Text failed contrast across both themes" loading="lazy"></button><figcaption>After · mobile-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Gift lists" data-severity="3" id="dashboard-date">
+    <header><span class="sev s3">Severity 3</span><h3>Quick-start lists were dated today</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>The Start a Gift List buttons on Home hard-coded today's date, so a Christmas list created in October said Deadline: Today, and Home agreed.</dd></div>
+      <div><dt>Repro</dt><dd>From Home, press Christmas under Start a Gift List, then read the list's date.</dd></div>
+      <div><dt>Evidence</dt><dd>Found by the independent first-time tester. The scripted journey reached the same feature through the Gift Lists page and never hit it. The new tests failed on the old code.</dd></div>
+      <div><dt>Change and why</dt><dd>Lists now use the holiday's next real date, including moving holidays and regional names. Occasions with no date, like birthdays, get none.</dd></div>
+      <div><dt>Heuristic</dt><dd>Match between system and the real world</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/b6543b5">b6543b5</a></dd></div>
+    </dl>
+    
+  </article><article class="decision" data-journey="Gift lists" data-severity="2" id="new-list-opens">
+    <header><span class="sev s2">Severity 2</span><h3>A new list didn't open</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>After creating a list, people stayed on the index and had to click again to start adding gifts.</dd></div>
+      <div><dt>Repro</dt><dd>Create a gift list from the New page or the dashboard.</dd></div>
+      <div><dt>Evidence</dt><dd>Seen in Journey 1, which passed but needed the extra click.</dd></div>
+      <div><dt>Change and why</dt><dd>The new list opens straight away.</dd></div>
+      <div><dt>Heuristic</dt><dd>Flexibility and efficiency of use</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/f0be183">f0be183</a> <a class="hash" href="https://github.com/kent/listygifty/commit/3c141d1">3c141d1</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-j1-gift-lists-02-start-a-christmas-list.jpg" aria-label="Enlarge: Before: A new list didn't open"><img src="img/before-desktop-apple-j1-gift-lists-02-start-a-christmas-list.jpg" alt="Before: A new list didn't open" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-j1-gift-lists-02-start-a-christmas-list.jpg" aria-label="Enlarge: After: A new list didn't open"><img src="img/after-desktop-apple-j1-gift-lists-02-start-a-christmas-list.jpg" alt="After: A new list didn't open" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Gift lists" data-severity="2" id="dashboard-jargon">
+    <header><span class="sev s2">Severity 2</span><h3>The dashboard used internal growth language</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>Customers saw &quot;Activation&quot;, and the link &quot;Continue setup: Gift list created&quot; named a finished state as the next step.</dd></div>
+      <div><dt>Repro</dt><dd>Open the dashboard as a new user.</dd></div>
+      <div><dt>Evidence</dt><dd>Seen in the first frame of every run.</dd></div>
+      <div><dt>Change and why</dt><dd>It now says Get started, with plain actions such as Create a gift list.</dd></div>
+      <div><dt>Heuristic</dt><dd>Match between system and the real world</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/f01166b">f01166b</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-j1-gift-lists-01-open-my-home-screen.jpg" aria-label="Enlarge: Before: The dashboard used internal growth language"><img src="img/before-desktop-apple-j1-gift-lists-01-open-my-home-screen.jpg" alt="Before: The dashboard used internal growth language" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-j1-gift-lists-01-open-my-home-screen.jpg" aria-label="Enlarge: After: The dashboard used internal growth language"><img src="img/after-desktop-apple-j1-gift-lists-01-open-my-home-screen.jpg" alt="After: The dashboard used internal growth language" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Exchange" data-severity="2" id="publish-honesty">
+    <header><span class="sev s2">Severity 2</span><h3>The draw warning said it could not be undone</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>The dialog said the action could not be undone, but Redo exists. It also said &quot;1 exclusion rules&quot;.</dd></div>
+      <div><dt>Repro</dt><dd>Press Publish Exchange and read the dialog.</dd></div>
+      <div><dt>Evidence</dt><dd>The unhappy path failed in all four runs.</dd></div>
+      <div><dt>Change and why</dt><dd>The copy now explains that a redo gives everyone a new match and email, and the plurals are correct.</dd></div>
+      <div><dt>Heuristic</dt><dd>Consistency and standards</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/24adbdb">24adbdb</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-u1-unhappy-paths-12-the-draw-warning-matches-what-redo-can-do.jpg" aria-label="Enlarge: Before: The draw warning said it could not be undone"><img src="img/before-desktop-apple-u1-unhappy-paths-12-the-draw-warning-matches-what-redo-can-do.jpg" alt="Before: The draw warning said it could not be undone" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-u1-unhappy-paths-12-the-draw-warning-matches-what-redo-can-do.jpg" aria-label="Enlarge: After: The draw warning said it could not be undone"><img src="img/after-desktop-apple-u1-unhappy-paths-12-the-draw-warning-matches-what-redo-can-do.jpg" alt="After: The draw warning said it could not be undone" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Exchange" data-severity="2" id="invite-states">
+    <header><span class="sev s2">Severity 2</span><h3>Invite pages didn't explain themselves</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>A bad link gave no next step, an outage looked like a dead link, and signing in with a different email gave no warning. A stranger also got no explanation of the product.</dd></div>
+      <div><dt>Repro</dt><dd>Open a made-up invite, or open an invite while signed in with another email.</dd></div>
+      <div><dt>Evidence</dt><dd>The unhappy paths failed these checks in all four runs.</dd></div>
+      <div><dt>Change and why</dt><dd>Each state now says what happened and what to do. A wrong-account notice appears without blocking anyone.</dd></div>
+      <div><dt>Heuristic</dt><dd>Help users recognize, diagnose, and recover from errors</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/334d137">334d137</a> <a class="hash" href="https://github.com/kent/listygifty/commit/96d854e">96d854e</a></dd></div>
+    </dl>
+    <div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-u1-unhappy-paths-07-a-made-up-invite-link-explains-what-to-do.jpg" aria-label="Enlarge: Before: Invite pages didn't explain themselves"><img src="img/before-desktop-apple-u1-unhappy-paths-07-a-made-up-invite-link-explains-what-to-do.jpg" alt="Before: Invite pages didn't explain themselves" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-u1-unhappy-paths-07-a-made-up-invite-link-explains-what-to-do.jpg" aria-label="Enlarge: After: Invite pages didn't explain themselves"><img src="img/after-desktop-apple-u1-unhappy-paths-07-a-made-up-invite-link-explains-what-to-do.jpg" alt="After: Invite pages didn't explain themselves" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div><div class="pair"><figure class="shot"><button type="button" class="zoom" data-full="img/before-desktop-apple-u1-unhappy-paths-09-signed-in-with-a-different-email-i-am-warned-before-taking-t.jpg" aria-label="Enlarge: Before: Invite pages didn't explain themselves"><img src="img/before-desktop-apple-u1-unhappy-paths-09-signed-in-with-a-different-email-i-am-warned-before-taking-t.jpg" alt="Before: Invite pages didn't explain themselves" loading="lazy"></button><figcaption>Before · desktop-apple</figcaption></figure><figure class="shot"><button type="button" class="zoom" data-full="img/after-desktop-apple-u1-unhappy-paths-09-signed-in-with-a-different-email-i-am-warned-before-taking-t.jpg" aria-label="Enlarge: After: Invite pages didn't explain themselves"><img src="img/after-desktop-apple-u1-unhappy-paths-09-signed-in-with-a-different-email-i-am-warned-before-taking-t.jpg" alt="After: Invite pages didn't explain themselves" loading="lazy"></button><figcaption>After · desktop-apple</figcaption></figure></div>
+  </article><article class="decision" data-journey="Exchange" data-severity="2" id="error-messages">
+    <header><span class="sev s2">Severity 2</span><h3>Failures gave vague or wrong messages</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>A duplicate person showed only &quot;Failed to add participant&quot;, a bad budget showed &quot;Failed to create exchange&quot;, a network failure said &quot;Exchange not found&quot;, an empty list could mean a failed load, and a failed gift list create showed nothing.</dd></div>
+      <div><dt>Repro</dt><dd>Add the same email twice, set the maximum budget below the minimum, or lose the network on an exchange page.</dd></div>
+      <div><dt>Evidence</dt><dd>Found in code review and covered by new tests.</dd></div>
+      <div><dt>Change and why</dt><dd>Messages now come from the API or say what happened, and network failures offer Try again.</dd></div>
+      <div><dt>Heuristic</dt><dd>Help users recognize, diagnose, and recover from errors</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/a2d2edb">a2d2edb</a> <a class="hash" href="https://github.com/kent/listygifty/commit/d4dac67">d4dac67</a> <a class="hash" href="https://github.com/kent/listygifty/commit/5096932">5096932</a> <a class="hash" href="https://github.com/kent/listygifty/commit/8a20339">8a20339</a> <a class="hash" href="https://github.com/kent/listygifty/commit/895e7c7">895e7c7</a> <a class="hash" href="https://github.com/kent/listygifty/commit/75e4003">75e4003</a> <a class="hash" href="https://github.com/kent/listygifty/commit/57aa15a">57aa15a</a></dd></div>
+    </dl>
+    
+  </article><article class="decision" data-journey="Email" data-severity="2" id="email-parts">
+    <header><span class="sev s2">Severity 2</span><h3>One email had no plain text version</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>Guest claim confirmations had no text part, and email copy still had em dashes.</dd></div>
+      <div><dt>Repro</dt><dd>Render every mailer and inspect its parts.</dd></div>
+      <div><dt>Evidence</dt><dd>The render test failed on GuestClaimMailer. All 15 email types now reach Mailpit with text and HTML parts.</dd></div>
+      <div><dt>Change and why</dt><dd>Added the text version and a test covering every mailer, including that match emails never name who drew you.</dd></div>
+      <div><dt>Heuristic</dt><dd>Consistency and standards</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/6cd54a8">6cd54a8</a> <a class="hash" href="https://github.com/kent/listygifty/commit/7708d1e">7708d1e</a> <a class="hash" href="https://github.com/kent/listygifty/commit/2e26544">2e26544</a></dd></div>
+    </dl>
+    
+  </article><article class="decision" data-journey="Accessibility" data-severity="2" id="structure-a11y">
+    <header><span class="sev s2">Severity 2</span><h3>Screen readers met broken structure</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>A link sat inside the gift list tabs, the workspace switcher had no name while loading, the remove chip was too small a target, and two buttons announced a different name from their visible label.</dd></div>
+      <div><dt>Repro</dt><dd>Run axe on /holidays/:id, /settings and /dashboard.</dd></div>
+      <div><dt>Evidence</dt><dd>Axe reported aria-required-children, target-size, button-name and label-content-name-mismatch.</dd></div>
+      <div><dt>Change and why</dt><dd>Match is a real link now, the remove target is 24px, and names match what people see.</dd></div>
+      <div><dt>Heuristic</dt><dd>Consistency and standards</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/7af0dd7">7af0dd7</a> <a class="hash" href="https://github.com/kent/listygifty/commit/23bfa77">23bfa77</a> <a class="hash" href="https://github.com/kent/listygifty/commit/39364c4">39364c4</a> <a class="hash" href="https://github.com/kent/listygifty/commit/d32463d">d32463d</a> <a class="hash" href="https://github.com/kent/listygifty/commit/a1ddfb8">a1ddfb8</a></dd></div>
+    </dl>
+    
+  </article><article class="decision" data-journey="Gift lists" data-severity="2" id="match-theme">
+    <header><span class="sev s2">Severity 2</span><h3>The Match screen stayed dark in the light theme</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>The Match screen had hard-coded dark colours, and pressing Enter on Edit started a drag.</dd></div>
+      <div><dt>Repro</dt><dd>Open the Match screen in the Apple theme, or use it with a keyboard.</dd></div>
+      <div><dt>Evidence</dt><dd>Tests that scan its colours and keyboard behaviour failed before.</dd></div>
+      <div><dt>Change and why</dt><dd>It now uses theme colours, and drag rows have a real handle.</dd></div>
+      <div><dt>Heuristic</dt><dd>Consistency and standards</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/605d575">605d575</a> <a class="hash" href="https://github.com/kent/listygifty/commit/25200ad">25200ad</a></dd></div>
+    </dl>
+    
+  </article><article class="decision" data-journey="Exchange" data-severity="1" id="console-noise">
+    <header><span class="sev s1">Severity 1</span><h3>Participants triggered a failed request on every visit</h3></header>
+    <dl>
+      <div><dt>Problem</dt><dd>The page requested exclusion rules for everyone, and non-owners got a 404 in the console.</dd></div>
+      <div><dt>Repro</dt><dd>Open an exchange as a participant with the console open.</dd></div>
+      <div><dt>Evidence</dt><dd>Recorded in the Journey 2 error counts.</dd></div>
+      <div><dt>Change and why</dt><dd>Only the organizer requests the rules now.</dd></div>
+      <div><dt>Heuristic</dt><dd>Error prevention</dd></div>
+      <div><dt>Commit</dt><dd><a class="hash" href="https://github.com/kent/listygifty/commit/bb725ab">bb725ab</a></dd></div>
+    </dl>
+    
+  </article></div>
+  </section>
+  <section id="open">
+    <h2>Your calls</h2>
+    <p>These need a product decision, so nothing was built. Mockups are concepts.</p>
+    <div class="list"><article class="open" id="past-damage">
+    <header><span class="sev s3">Severity 3</span><h3>Decide whether to look for past damage</h3></header>
+    <p>Two bugs may already have affected real people. Shared wishlist links exposed claimer details until October 30, 2026, and the Match screen's edit dialog could remove recipients and givers from gifts. Fixing them doesn't tell you what already happened, and I did not look at production data.</p>
+    <p class="rec"><strong>Recommendation.</strong> Check the request logs for /w/ links, and use the gift_changes table to find gifts that lost people through that dialog. Decide on any notice to users once you know the scale.</p>
+    
+  </article><article class="open" id="reply-address">
+    <header><span class="sev s3">Severity 3</span><h3>Replies to invite emails go nowhere</h3></header>
+    <p>Mail comes from hello@listygifty.com, but a public DNS lookup finds no MX record, no SPF record on the domain and no DMARC record. A relative who replies to ask what this is gets a bounce, and a holiday spike is when inbox filters look hardest at new senders. I only checked public DNS. Postmark itself was not tested, and no real email was sent.</p>
+    <p class="rec"><strong>Recommendation.</strong> Add an MX record or a forwarding address for hello@, and a DMARC record starting at p=none. Then send yourself one real invite and check where it lands.</p>
+    
+  </article><article class="open" id="phone-tap-mismatch">
+    <header><span class="sev s2">Severity 2</span><h3>Phone runs sometimes tap the wrong spot</h3></header>
+    <p>In about 1 of 14 phone runs of the gift list journey, Chrome's phone emulation reported the page as more than twice its real width, and an automated tap landed on the wrong element. A reverted layout change made it more frequent, but the cause is still unknown. I could not reproduce it on a static page, and I don't know whether it reaches real phones.</p>
+    <p class="rec"><strong>Recommendation.</strong> Try the gift list journey on a real iPhone and Android phone during the hallway test. If taps misbehave there, treat this as a severity 3 bug.</p>
+    
+  </article><article class="open" id="phone-summary-cards">
+    <header><span class="sev s2">Severity 2</span><h3>Summary cards push gifts down on phones</h3></header>
+    <p>Four stacked summary cards sit above the gifts at 390px, so people scroll about a screen to reach their list. I tried a two column layout and reverted it, because it was optional and it coincided with the tap problem above.</p>
+    <p class="rec"><strong>Recommendation.</strong> Collapse the summary on phones, or move it below the gifts, once the tap problem is understood.</p>
+    
+  </article><article class="open" id="peak-readiness">
+    <header><span class="sev s3">Severity 3</span><h3>Be ready for the busiest week of the year</h3></header>
+    <p>Peak-day failures were the top complaint across competitor reviews, with 132 mentions across 5 sources, though a few bad days inflate that count. Production runs 1 to 10 instances and the repo has no load test.</p>
+    <p class="rec"><strong>Recommendation.</strong> Run a load test before Black Friday and freeze releases from about November 20 until Christmas.</p>
+    
+  </article><article class="open" id="draw-names">
+    <header><span class="sev s2">Severity 2</span><h3>Say Draw names instead of Publish Exchange</h3></header>
+    <p>Publish is software language. Nobody in a family says they're publishing the Secret Santa. The label stayed because existing tests and the mobile app depend on it.</p>
+    <p class="rec"><strong>Recommendation.</strong> Rename it to Draw names everywhere, including the mobile app and emails.</p>
+    <figure class="shot concept"><button type="button" class="zoom" data-full="img/concept-draw-names.jpg" aria-label="Enlarge concept for Say Draw names instead of Publish Exchange"><img src="img/concept-draw-names.jpg" alt="Concept mockup: Say Draw names instead of Publish Exchange" loading="lazy"></button><figcaption><strong>Concept, not built</strong></figcaption></figure>
+  </article><article class="open" id="signup-length">
+    <header><span class="sev s3">Severity 3</span><h3>Shorten sign-up for invited relatives</h3></header>
+    <p>A relative who taps an invite faces first name, last name, email, phone and password before they can join. The invite already knows their name and email. This is a Clerk setting and a product trade-off, so nothing changed.</p>
+    <p class="rec"><strong>Recommendation.</strong> Offer email code sign-in for invitees, with the email filled in from the invite and no password.</p>
+    <figure class="shot concept"><button type="button" class="zoom" data-full="img/concept-signup-simple.jpg" aria-label="Enlarge concept for Shorten sign-up for invited relatives"><img src="img/concept-signup-simple.jpg" alt="Concept mockup: Shorten sign-up for invited relatives" loading="lazy"></button><figcaption><strong>Concept, not built</strong></figcaption></figure>
+  </article><article class="open" id="list-names">
+    <header><span class="sev s2">Severity 2</span><h3>Gift Lists and Wishlists sound like the same thing</h3></header>
+    <p>One is what you plan to give and the other is what you want, but the names don't say so. Adding Wishlists to the menu makes the overlap more visible. Options is also an odd name for settings.</p>
+    <p class="rec"><strong>Recommendation.</strong> Use Gifts I'm Giving, My Wishlist and Settings. Check the wording in the hallway test first.</p>
+    <figure class="shot concept"><button type="button" class="zoom" data-full="img/concept-nav-names.jpg" aria-label="Enlarge concept for Gift Lists and Wishlists sound like the same thing"><img src="img/concept-nav-names.jpg" alt="Concept mockup: Gift Lists and Wishlists sound like the same thing" loading="lazy"></button><figcaption><strong>Concept, not built</strong></figcaption></figure>
+  </article><article class="open" id="phone-landing">
+    <header><span class="sev s2">Severity 2</span><h3>Function key labels make no sense on a phone</h3></header>
+    <p>The Festive front page shows Enter Start free, F1 Tour and F4 Sign in on phones that have no such keys, and its top bar clips a menu item. It's part of the retro theme, so I left it.</p>
+    <p class="rec"><strong>Recommendation.</strong> Keep the keys on desktop and hide them on touch screens.</p>
+    <figure class="shot concept"><button type="button" class="zoom" data-full="img/concept-landing-labels.jpg" aria-label="Enlarge concept for Function key labels make no sense on a phone"><img src="img/concept-landing-labels.jpg" alt="Concept mockup: Function key labels make no sense on a phone" loading="lazy"></button><figcaption><strong>Concept, not built</strong></figcaption></figure>
+  </article><article class="open" id="default-theme">
+    <header><span class="sev s2">Severity 2</span><h3>Which theme should a stranger see first?</h3></header>
+    <p>Festive is the default for everyone, all year. It has a lot of charm, but pixel lettering and busy backgrounds are a harder first impression for an older relative on a phone, and it's a Christmas look in July.</p>
+    <p class="rec"><strong>Recommendation.</strong> Default to Apple outside November and December, and test both with your hallway group.</p>
+    
+  </article><article class="open" id="dropout">
+    <header><span class="sev s2">Severity 2</span><h3>What happens when someone drops out after the draw</h3></header>
+    <p>The only path is Redo, which changes everyone's match and emails everyone. Removed people get no email. One person cancelling resets the whole family.</p>
+    <p class="rec"><strong>Recommendation.</strong> Add a replace-one-person flow that only changes the two affected people, and tell the person removed.</p>
+    
+  </article><article class="open" id="owner-share-spoiler">
+    <header><span class="sev s2">Severity 2</span><h3>Opening your own share link shows what's claimed</h3></header>
+    <p>Anti-spoiler now holds on your wishlist page, but your public link has to show real status so guests don't double up, and that page doesn't know who you are.</p>
+    <p class="rec"><strong>Recommendation.</strong> Show a notice on the share dialog saying your own link will show claims. Recognizing the signed-in owner on that page can come later.</p>
+    
+  </article><article class="open" id="form-drafts">
+    <header><span class="sev s2">Severity 2</span><h3>Refreshing a half-filled form loses it</h3></header>
+    <p>New exchange and new wishlist forms start blank after a refresh or a back and forward. The forms are short, and saving drafts is new behaviour.</p>
+    <p class="rec"><strong>Recommendation.</strong> Leave it for now. Revisit it if the hallway test shows people losing work.</p>
+    
+  </article><article class="open" id="reinvite-declined">
+    <header><span class="sev s2">Severity 2</span><h3>A declined invite can't be sent again from the page</h3></header>
+    <p>The API supports re-inviting someone who declined, but the button only shows for people who haven't answered. The organizer can also remove themselves from their own exchange.</p>
+    <p class="rec"><strong>Recommendation.</strong> Show Resend for declined people, and ask for confirmation when the organizer removes themselves.</p>
+    
+  </article><article class="open" id="affiliate-plan">
+    <header><span class="sev s2">Severity 2</span><h3>Be careful with the affiliate plan</h3></header>
+    <p>The roadmap ranks affiliate conversion first, and distrust of sponsors came up 25 times across 6 sources. Giftful users complain about rewritten links that fail. Having no ads or commission links is an advantage today.</p>
+    <p class="rec"><strong>Recommendation.</strong> If affiliate links ship, keep the original link working and say so plainly.</p>
+    
+  </article><article class="open" id="app-store-deletion">
+    <header><span class="sev s2">Severity 2</span><h3>Check account deletion before the App Store launch</h3></header>
+    <p>The research pass found no account deletion path on mobile and no API handling. As far as I know Apple requires in-app deletion for apps with accounts. This is outside the five journeys and I didn't test it.</p>
+    <p class="rec"><strong>Recommendation.</strong> Confirm the requirement and add it before the public launch.</p>
+    
+  </article><article class="open" id="gift-list-expectations">
+    <header><span class="sev s2">Severity 2</span><h3>Gift list behaviour surprised the first-time tester</h3></header>
+    <p>Marking a gift Purchased left Progress at 0% complete, and the gift stayed on To Do. Save &amp; Add Another kept the last person, so a gift for Dad also went to Maya. Keeping the person may suit someone buying several gifts for one child, so neither is clearly a bug.</p>
+    <p class="rec"><strong>Recommendation.</strong> Count Purchased as progress, or label the card to say what it measures. Keep Save &amp; Add Another's person but make the carry-over obvious.</p>
+    
+  </article><article class="open" id="exchange-on-home">
+    <header><span class="sev s2">Severity 2</span><h3>Home doesn't mention your exchange</h3></header>
+    <p>Once an exchange exists, Home says nothing about it, and its date isn't in Upcoming Dates. Someone returning from an email has no way back from Home except the menu.</p>
+    <p class="rec"><strong>Recommendation.</strong> Show active exchanges on Home with one clear next step, and add their dates to Upcoming Dates.</p>
+    
+  </article><article class="open" id="share-makes-public">
+    <header><span class="sev s2">Severity 2</span><h3>Share quietly turns a private list public</h3></header>
+    <p>A wishlist set to Only you can see this becomes Shared when you press Share, with no notice. The share dialog does say anyone with the link can view it, so this is a question of how loud to be.</p>
+    <p class="rec"><strong>Recommendation.</strong> Say it at the moment it changes: This list is now shared. Offer Turn off link in the same place.</p>
+    
+  </article><article class="open" id="settings-first-screen">
+    <header><span class="sev s2">Severity 2</span><h3>Settings opens with developer tools</h3></header>
+    <p>Settings leads with Your MCP OAuth URL, above the person's profile. That means nothing to most families. The tester also found Vendors, Partners and Investors in People, and Upgrade on every page while Billing says Soon.</p>
+    <p class="rec"><strong>Recommendation.</strong> Lead Settings with profile and notifications, and move MCP to an Integrations section. Hide business categories in personal workspaces.</p>
+    
+  </article></div>
+  </section>
+  <section id="hallway">
+    <h2>Hallway test</h2>
+    <p>Automated checks prove the buttons work. Only watching someone proves the app makes sense. Pick 3 people who have never used Listy Gifty, ideally one older relative on their own phone. Give each person 20 minutes. Read each task out loud, then say nothing. The test passes if at least 2 of 3 people finish a task without help.</p><ol class="tasks"><li><strong>Accept an invite.</strong> “I just sent you an email. Do whatever you'd normally do with it.” <span class="muted">Passes if they end up in the exchange with an account, without asking you what it is.</span></li><li><strong>Say what you want.</strong> “You've joined. Tell the group what you'd like for Christmas.” <span class="muted">Passes if they add at least one wish without being shown the wishlist.</span></li><li><strong>Start a gift list.</strong> “You have two kids to buy for. Start keeping track of what you're getting them.” <span class="muted">Passes if they create a list and add a gift for each child.</span></li><li><strong>Find it again.</strong> “It's a week later and you bought one of them. Go mark that.” <span class="muted">Passes if they return to the list and change the gift's status.</span></li><li><strong>Run an exchange.</strong> “Set up a Secret Santa for four people. You and your partner shouldn't draw each other.” <span class="muted">Passes if they invite people, add the rule, and draw names.</span></li><li><strong>Share a wishlist.</strong> “Your birthday's coming. Make a list and get it to your sister, who won't make an account.” <span class="muted">Passes if they create a wishlist and copy a link.</span></li><li><strong>Sign out.</strong> “You're on someone else's computer. Make sure nobody can see this.” <span class="muted">Passes if they sign out without hunting for it.</span></li></ol>
+    <h3>While you watch</h3><ul><li>Ask them to think out loud. If they go quiet, say only: what are you thinking?</li><li>Don't help. If they ask a question, reply: what would you try?</li><li>Write down the exact words they use, and every place they stop for more than 10 seconds.</li><li>Stop a task after 4 minutes, mark it failed, and move on.</li><li>Use a real invite and test addresses you control. Don't test on your own account.</li></ul>
+    <h3>Afterwards</h3><ul><li>Ask: what is this app for? Their answer shows whether the product explains itself.</li><li>Ask: what was the most confusing moment?</li><li>Ask: would you use this for your family this year? Why or why not?</li><li>Anything that stops 2 of 3 people is a severity 3 issue. Put it at the top of the next round.</li></ul>
+  </section>
+  <section id="features">
+    <h2>Features people would want</h2>
+    <p>Ranked from friction seen in testing and from real complaints about other apps.</p>
+    <div class="list"><article class="feature">
+    <span class="rank">1</span>
+    <div><h3>Run it again next year, and remember who drew whom</h3>
+    <p>A family has to rebuild the same exchange every year, and nothing stops someone drawing the same person again.</p>
+    <p class="meta"><span>For Family organizers</span><span>Effort M</span></p>
+    <p class="why"><strong>Why it ranks here.</strong> This is the yearly reason to come back. Past pairings aren't stored anywhere today, and DrawNames users notice when an app forgets.</p>
+    <ul class="evidence"><li>“Unfortunately if you have the same people and same amount of people and draw for future consecutive years, the odds of redrawing is 50/50. I would think it would remember, but I guess not.” <a href="https://itunes.apple.com/us/rss/customerreviews/page=6/id=932002377/sortby=mostrecent/json">DrawNames, App Store US, 2024-11-30</a></li><li>“My family and I used it both this and last year and we all got the same people!” <a href="https://itunes.apple.com/us/rss/customerreviews/page=3/id=932002377/sortby=mostrecent/json">DrawNames, App Store US, 2025-11-30</a></li><li>An exchange can be redrawn, but only within the same exchange. There is no way to copy it or carry its history forward. <span class="muted">Seen in this audit</span></li></ul></div>
+  </article><article class="feature">
+    <span class="rank">2</span>
+    <div><h3>Add kids and relatives who have no email</h3>
+    <p>Every participant needs their own unique email, so two kids can't share a parent's address.</p>
+    <p class="meta"><span>For Busy parents</span><span>Effort M</span></p>
+    <p class="why"><strong>Why it ranks here.</strong> Parents are the core audience, and a family exchange with kids can't be set up honestly today.</p>
+    <ul class="evidence"><li>“Adding children who don’t have email accounts is difficult.” <a href="https://itunes.apple.com/us/rss/customerreviews/page=6/id=751594890/sortby=mostrecent/json">Elfster, App Store US, 2025-11-28</a></li><li>exchange_participants requires an email that is unique within the exchange. <span class="muted">Seen in this audit</span></li></ul></div>
+  </article><article class="feature">
+    <span class="rank">3</span>
+    <div><h3>Let organizers see who is stuck</h3>
+    <p>After the draw, the organizer can't tell who has opened their match or who has an empty wishlist, so they chase everyone.</p>
+    <p class="meta"><span>For Organizers</span><span>Effort M</span></p>
+    <p class="why"><strong>Why it ranks here.</strong> It turns the organizer from tech support into someone with a clear list of two people to text.</p>
+    <ul class="evidence"><li>“Instead of the app notifying everyone that there were individual individuals who did not see their draw, only the organizer receives notifications that the draw is incomplete.” <a href="https://itunes.apple.com/us/rss/customerreviews/page=2/id=751594890/sortby=mostrecent/json">Elfster, App Store US, 2025-12-24</a></li><li>“And as an administrator one cannot update other people’s emails.” <a href="https://itunes.apple.com/us/rss/customerreviews/page=3/id=751594890/sortby=mostrecent/json">Elfster, App Store US, 2025-12-09</a></li><li>No record of who opened their match exists. The organizer page shows nothing about this after the draw. <span class="muted">Seen in this audit</span></li></ul></div>
+  </article><article class="feature">
+    <span class="rank">4</span>
+    <div><h3>Rename or delete a wishlist, and turn off its link</h3>
+    <p>A wishlist can't be renamed or deleted, and a shared link can't be turned off, from the web app.</p>
+    <p class="meta"><span>For Everyone with a wishlist</span><span>Effort S</span></p>
+    <p class="why"><strong>Why it ranks here.</strong> The API and service calls already exist, so this is the cheapest gap to close. People expect to be able to undo a share.</p>
+    <ul class="evidence"><li>PATCH and DELETE on wishlists and revoke_share exist in the API, and nothing in the web app calls them. <span class="muted">Seen in this audit</span></li></ul></div>
+  </article><article class="feature">
+    <span class="rank">5</span>
+    <div><h3>Paste a link and fill in the rest</h3>
+    <p>Any store link is accepted, but people still type the name, price and image by hand.</p>
+    <p class="meta"><span>For Anyone adding wishes</span><span>Effort M</span></p>
+    <p class="why"><strong>Why it ranks here.</strong> Competitors lose people by leaning toward Amazon. Working with every store is a real advantage, and auto-fill makes it obvious.</p>
+    <ul class="evidence"><li>“Please make it easier to add items that are sold on sites other than Amazon.” <a href="https://itunes.apple.com/us/rss/customerreviews/page=1/id=478126039/sortby=mostrecent/json">Giftster, App Store US, 2026-05-18</a></li><li>“If only Amazon links work, then I might as well use Amazon wishlist!” <a href="https://itunes.apple.com/us/rss/customerreviews/page=8/id=1450175505/sortby=mostrecent/json">Giftful, App Store US, 2026-01-31</a></li><li>“The &quot;auto image select&quot; feature pulls the wrong image more often than not” <a href="https://addons.mozilla.org/api/v5/ratings/rating/?addon=add-to-giftster-wish-list&amp;page_size=50">Giftster Firefox add-on, 3 star, 2024-12-30</a></li></ul></div>
+  </article><article class="feature">
+    <span class="rank">6</span>
+    <div><h3>Save an idea from the phone in seconds</h3>
+    <p>There's no share sheet target and no photo capture, so an idea seen in a shop has to wait.</p>
+    <p class="meta"><span>For Busy parents</span><span>Effort L</span></p>
+    <p class="why"><strong>Why it ranks here.</strong> GOALS.md sets 5-second capture as a consumer goal, and Elfster users are angry about losing exactly this.</p>
+    <ul class="evidence"><li>“I am a mobile user and used to be able to add wishes to my wishlist using any websites share button and selecting the Elfster app… that no longer works!” <a href="https://itunes.apple.com/us/rss/customerreviews/page=8/id=751594890/sortby=mostrecent/json">Elfster, App Store US, 2025-11-10</a></li><li>“please add a feature so we can take pics and scan in store items and add to the list without having to use a browser to do so.” <a href="https://itunes.apple.com/us/rss/customerreviews/page=3/id=478126039/sortby=mostrecent/json">Giftster, App Store US, 2023-10-30</a></li></ul></div>
+  </article><article class="feature">
+    <span class="rank">7</span>
+    <div><h3>See your match without making an account</h3>
+    <p>Everyone in an exchange must create an account before they can join or see who they drew.</p>
+    <p class="meta"><span>For Older relatives and reluctant joiners</span><span>Effort L</span></p>
+    <p class="why"><strong>Why it ranks here.</strong> The relative in this audit faced a long form before seeing anything useful. A private link could remove that, but it needs care to keep matches secret.</p>
+    <ul class="evidence"><li>“Every person in the exchange has to download the app and login.” <a href="https://itunes.apple.com/us/rss/customerreviews/page=1/id=932002377/sortby=mostrecent/json">DrawNames, App Store US, 2026-10-05</a></li><li>“I don’t like that it forces people to create profiles to view the list.” <a href="https://itunes.apple.com/us/rss/customerreviews/page=2/id=751594890/sortby=mostrecent/json">Elfster, App Store US, 2026-01-14</a></li><li>The sign-up form asks for first name, last name, email, optional phone and password before the invite can be accepted. <span class="muted">Seen in this audit</span></li></ul></div>
+  </article><article class="feature">
+    <span class="rank">8</span>
+    <div><h3>Bring your wishlist into an exchange</h3>
+    <p>A wishlist and an exchange wishlist are separate, so people retype the same wishes.</p>
+    <p class="meta"><span>For Anyone in an exchange</span><span>Effort S</span></p>
+    <p class="why"><strong>Why it ranks here.</strong> Small change, and it also lets people deliberately reuse last year's ideas instead of having old ones surface by accident.</p>
+    <ul class="evidence"><li>“We used these app for 3 years and worst is this year, people sent gift’s from 2 year ago’s wish list?” <a href="https://itunes.apple.com/us/rss/customerreviews/page=2/id=751594890/sortby=mostrecent/json">Elfster, App Store US, 2026-01-09</a></li><li>“I add items to a current wishlist but it somehow only adds it to a wishlist from two years ago.” <a href="https://itunes.apple.com/us/rss/customerreviews/page=2/id=751594890/sortby=mostrecent/json">Elfster, App Store US, 2025-12-28</a></li><li>exchange_wishlist_items has no link to wishlist_items. <span class="muted">Seen in this audit</span></li></ul></div>
+  </article><article class="feature">
+    <span class="rank">9</span>
+    <div><h3>Wishlists and claiming in the mobile app</h3>
+    <p>Standalone wishlists and claims only work on the web, so phone users can't see what's been taken.</p>
+    <p class="meta"><span>For Families buying from their phones</span><span>Effort L</span></p>
+    <p class="why"><strong>Why it ranks here.</strong> Duplicate gifts are the classic failure of this category, and the protection stops at the browser.</p>
+    <ul class="evidence"><li>“Both years, we’ve all received duplicate gifts because of these types of issues (and the gift-givers range from under 30’s to mid-80’s in age).” <a href="https://itunes.apple.com/us/rss/customerreviews/page=3/id=478126039/sortby=mostrecent/json">Giftster, App Store US, 2023-12-25</a></li><li>“It would show that it was purchased on the individuals and who purchased it, but when we looked at other people's same list, it did not show that it was purchased.” <a href="https://itunes.apple.com/us/rss/customerreviews/page=9/id=751594890/sortby=mostrecent/json">Elfster, App Store US, 2024-12-27</a></li></ul></div>
+  </article><article class="feature">
+    <span class="rank">10</span>
+    <div><h3>Choose a currency</h3>
+    <p>Dollar signs are hard-coded, and exchanges and items have no currency.</p>
+    <p class="meta"><span>For Anyone outside the US</span><span>Effort S</span></p>
+    <p class="why"><strong>Why it ranks here.</strong> Premium is priced in CAD, so this affects a market you already sell in.</p>
+    <ul class="evidence"><li>“Nice app, but wishlist keeps defaulting to Amazon USA and USD even though currency /country has been set to CAD / Canada.” <a href="https://itunes.apple.com/ca/rss/customerreviews/page=1/id=751594890/sortby=mostrecent/json">Elfster, App Store CA, 2024-11-22</a></li><li>“If you’re outside of those countries the app is useless” <a href="https://itunes.apple.com/au/rss/customerreviews/page=1/id=751594890/sortby=mostrecent/json">Elfster, App Store AU, 2025-09-07</a></li></ul></div>
+  </article><article class="feature">
+    <span class="rank">11</span>
+    <div><h3>Control exchange emails</h3>
+    <p>Exchange mail ignores email preferences, and a giver gets one email per item their match adds.</p>
+    <p class="meta"><span>For Everyone in an exchange</span><span>Effort S</span></p>
+    <p class="why"><strong>Why it ranks here.</strong> A daily roundup and an off switch prevent the complaint before it starts.</p>
+    <ul class="evidence"><li>“I want to receive notifications when the person I draw adds new items, or when someone has an upcoming birthday, NOT when it’s “Sagittarius SZN,” or Elfster wants to send me stupid ads for Fuzzy Crocs that I couldn’t care less about.” <a href="https://itunes.apple.com/us/rss/customerreviews/page=10/id=751594890/sortby=mostrecent/json">Elfster, App Store US, 2024-12-10</a></li><li>“There is no way to turn off just the notifications that are ads or sweepstakes, etc.” <a href="https://itunes.apple.com/us/rss/customerreviews/page=8/id=751594890/sortby=mostrecent/json">Elfster, App Store US, 2025-10-02</a></li><li>notification_preferences covers three seasonal reminders only. <span class="muted">Seen in this audit</span></li></ul></div>
+  </article><article class="feature">
+    <span class="rank">12</span>
+    <div><h3>Warn when a match has an empty list</h3>
+    <p>A giver can open their match and find nothing, and only learns late.</p>
+    <p class="meta"><span>For Givers</span><span>Effort S</span></p>
+    <p class="why"><strong>Why it ranks here.</strong> The anonymous nudge exists. Telling the recipient early, before the giver has to ask, makes it work harder.</p>
+    <ul class="evidence"><li>“I didn’t get anything for my person since I didn’t know what they had on their list until today.” <a href="https://itunes.apple.com/us/rss/customerreviews/page=3/id=751594890/sortby=mostrecent/json">Elfster, App Store US, 2025-12-14</a></li><li>“It says 6 items but when I click on it, it says no items.” <a href="https://itunes.apple.com/us/rss/customerreviews/page=5/id=751594890/sortby=mostrecent/json">Elfster, App Store US, 2025-12-01</a></li></ul></div>
+  </article></div>
+  </section>
+  <section id="fresh">
+    <h2>Fresh eyes</h2>
+    <p>A fresh agent acted as a first-time user. It had no knowledge of this audit and could only look at pages, click, type and read its email. It was told not to read any code, though nothing technically prevented it. It passed all five tasks on commit 149d47a, before the dashboard date fix. A full disk on the test machine interrupted it during Task 2. That wasn't a site bug, and the agent resumed where it stopped.</p>
+    <div class="tablewrap"><table class="plain"><thead><tr><th scope="col">Task</th><th scope="col">Result</th><th scope="col">Notes</th></tr></thead><tbody><tr><th scope="row">Manage gift lists</th><td><span class="pass-word">Pass</span></td><td>Finished. The first gift took 2 tries, because the test tool hit the Next.js dev badge.</td></tr><tr><th scope="row">Run an exchange</th><td><span class="pass-word">Pass</span></td><td>Five sessions joined from real emails. Nobody drew themselves, the couple's rule held, and Olivia could not find who drew her.</td></tr><tr><th scope="row">Log in and out</th><td><span class="pass-word">Pass</span></td><td>Five presses of Back all landed on sign-in, and nothing private showed.</td></tr><tr><th scope="row">Navigate</th><td><span class="pass-word">Pass</span></td><td>Found everything from the menu, and the /oops page explained itself.</td></tr><tr><th scope="row">Wishlist</th><td><span class="pass-word">Pass</span></td><td>A guest on a phone reserved an item with no account, and the owner saw no spoiler.</td></tr></tbody></table></div>
+    <h3>Stumbles</h3><ul><li>Annoying: the Christmas list said Deadline: Today. This is now fixed.</li><li>Annoying: Save &amp; Add Another kept Maya, so Dad's gift went to both of them.</li><li>Annoying: marking a gift Purchased left Progress at 0% complete.</li><li>Annoying: the page says Draw names, but the button says Publish Exchange, which sounded like making it public.</li><li>Annoying: the invite knew Nana's email, but sign-up was empty, so Nana typed everything on a phone.</li><li>Annoying: Home never mentions the exchange, and Dec 25 isn't in Upcoming Dates.</li><li>Annoying: Settings opens with an MCP OAuth URL above the profile.</li><li>Possibly the test browser: Copy link said Failed to copy link. The scripted journeys copied successfully.</li><li>Minor: nothing shows that a gift name can be clicked to edit it, and the box stayed open after pressing Enter on a rename, though it had saved.</li><li>Minor: the Who is it for? dropdown stays open and covers the Status buttons.</li><li>Minor: the Recipients card shows a warning triangle beside Ready, and the 10 free gifts limit was a surprise.</li><li>Minor: Sign In or Sign Up is a guess for an invited relative.</li><li>Minor: Exclusion Rules has no add button until a second person is added, and 1 joined so far sits above five names.</li><li>Minor: your match appears on the page right after the draw, with no reveal step, so anyone nearby can see it.</li><li>Minor: the anonymous ask for ideas sends on one tap, with no confirmation.</li><li>Minor: the phone header takes a big chunk of the screen, and exchange relatives never appear in People.</li><li>Minor: there's no signed-out message, the 404 page has no main menu, and the menu says Options while the page says Settings.</li><li>Minor: the cousin's claim button is a small gift icon with no word.</li><li>Confusing overall: the F-key labels, Workspace for one person, Set Visible Status, what Match does, and Enter Start free.</li><li>Liked: the retro look, two-step gift adding, near-effortless exchange setup, the invite email's voice, returning to the invite after sign-up, and You're in. Waiting for Olivia to draw names.</li></ul>
+  </section>
+  <section id="limits">
+    <h2>Proof and limits</h2>
+    <h3>Verified</h3>
+    <ul><li>Journeys: 20 of 20 runs pass on commit b6543b5, up from 4 of 20 on the starting code. That covers 1440px and 390px in Festive and Apple. Retries were allowed once and no journey needed one.</li><li>Accessibility: axe found serious or critical problems on 15 routes before and none after, in every journey run on the final commit. A separate sweep of 20 routes ran 124 audits per project on 918d766.</li><li>Keyboard: the keyboard-only passes of journeys 2 and 5 pass in both themes.</li><li>Unhappy paths: 15 of 16 checks pass in all four runs. The one failure is refreshing a half-filled form, which is logged under Your calls.</li><li>The draw: 1,000 random groups and exclusions, plus up to 100 redraws, checked against a brute-force oracle. Nobody drew themselves, everyone gave and received once, and every exclusion held.</li><li>Secrecy: in every Journey 2 run, no API response any participant's browser received, and no post-draw email, revealed who drew them.</li><li>Email: all 15 email types reached local Mailpit through real SMTP, each with text and HTML parts and correct links. Every address was @example.com, and no real email was sent.</li><li>Database: Journey 2 confirms the saved draw is valid, and no background job failed.</li><li>Test suites on b6543b5: bin/local-preview e2e passed 6 of 6, Rails passed 620 runs with 0 failures, and npm test passed 7 of 7 tasks including 292 web tests.</li><li>Dashboard date fix: confirmed in a real browser. A Christmas list started from Home now reads Friday, December 25, 2026, with 56 days to the deadline.</li><li>Production: the privacy fix deployed as f6fb256. The API and web services report that image, the deploy smoke tests passed, and health checks return 200.</li></ul>
+    <h3>Not verified</h3>
+    <ul><li>Everything except the privacy fix is undeployed. The Match screen data-loss fix is on this branch and not in production.</li><li>The privacy fix was not checked against a real shared wishlist in production, because that means touching production data. The proof is the test, which fails on the old code, plus the deployed version.</li><li>Real email delivery was not tested. Mail stopped at Mailpit by instruction, so Postmark, spam placement and real inboxes are unverified.</li><li>Apple, Google, Facebook and LinkedIn sign-in were not tested. Only email codes were.</li><li>Clerk's human check is bypassed in test mode, so what a real relative sees at that step is unknown.</li><li>Phone means Chromium at 390px with touch emulation. No real iPhone, iOS Safari or Android device was used.</li><li>Time in the scoreboard is robot time on a local dev server, so it says nothing about real load speed or real people.</li><li>Intermittent: about 1 in 14 phone runs had an automated tap land on the wrong element. It didn't happen in the final run and the cause is unknown.</li><li>Intermittent: Clerk's sign-in form hung in some repro runs after accepting a code. The server reported success, and Clerk's dev API was failing requests at the time. Reload recovery couldn't be tested, and I don't know whether production is affected.</li><li>Axe can't score text on gradients and left thousands of nodes incomplete. Gradient stops were checked by calculation. Sampled items looked like false positives, but not all of them were reviewed.</li><li>Error pages were never rendered in an axe run, and /settings was audited in its default section only.</li><li>Known gaps left open: two quick picks in the Match dialog can overlap and the last save wins. Manage Group can't be opened by keyboard. The MCP share_holiday tool replaces the link on every call.</li><li>The first baseline had script mistakes on Festive and phones. Those journeys were fixed and rerun on the frozen starting code, so the before numbers are fair. The baseline also includes the local Clerk redirect setting, to match production.</li><li>Competitor research: Reddit refused automated reading, Google Play coverage was thin, and mention counts show how often something came up, not how common it is. Status notes on the feature list come from reading code.</li><li>GitHub reports 28 dependency vulnerabilities on the default branch, 1 of them critical. They were outside this audit and were not reviewed.</li><li>The fresh agent ran on 149d47a, before the dashboard date fix, and its no-code rule was an instruction, not a technical block. It isn't a real person, so run the hallway test too.</li><li>Disk space ran out during testing and crashed Docker once. It only interrupted the fresh agent's run, and no final results came from that session.</li></ul>
+  </section>
+</div>
+<dialog id="lightbox" aria-label="Enlarged screenshot"><img id="lightbox-image" alt=""><form method="dialog"><button type="submit">Close</button></form></dialog>
+<script>
+document.querySelectorAll(".zoom").forEach((button) => {
+  button.addEventListener("click", () => {
+    const image = document.getElementById("lightbox-image");
+    image.src = button.dataset.full;
+    image.alt = button.querySelector("img").alt;
+    document.getElementById("lightbox").showModal();
+  });
+});
+document.querySelectorAll(".filter").forEach((button) => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".filter").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+    const wanted = button.dataset.filter;
+    document.querySelectorAll(".decision").forEach((card) => {
+      card.hidden = Boolean(wanted) && card.dataset.journey !== wanted;
+    });
+  });
+});
+document.addEventListener("keydown", (event) => {
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  if (document.getElementById("lightbox").open) return;
+  const link = document.querySelectorAll("nav a")[Number(event.key) - 1];
+  if (link) link.click();
+});
+</script>

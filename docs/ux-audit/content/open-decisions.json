@@ -14,6 +14,20 @@
     "recommendation": "Add an MX record or a forwarding address for hello@, and a DMARC record starting at p=none. Then send yourself one real invite and check where it lands."
   },
   {
+    "id": "phone-tap-mismatch",
+    "severity": 2,
+    "title": "Phone runs sometimes tap the wrong spot",
+    "question": "In about 1 of 14 phone runs of the gift list journey, Chrome's phone emulation reported the page as more than twice its real width, and an automated tap landed on the wrong element. A reverted layout change made it more frequent, but the cause is still unknown. I could not reproduce it on a static page, and I don't know whether it reaches real phones.",
+    "recommendation": "Try the gift list journey on a real iPhone and Android phone during the hallway test. If taps misbehave there, treat this as a severity 3 bug."
+  },
+  {
+    "id": "phone-summary-cards",
+    "severity": 2,
+    "title": "Summary cards push gifts down on phones",
+    "question": "Four stacked summary cards sit above the gifts at 390px, so people scroll about a screen to reach their list. I tried a two column layout and reverted it, because it was optional and it coincided with the tap problem above.",
+    "recommendation": "Collapse the summary on phones, or move it below the gifts, once the tap problem is understood."
+  },
+  {
     "id": "peak-readiness",
     "severity": 3,
     "title": "Be ready for the busiest week of the year",
@@ -100,5 +114,33 @@
     "title": "Check account deletion before the App Store launch",
     "question": "The research pass found no account deletion path on mobile and no API handling. As far as I know Apple requires in-app deletion for apps with accounts. This is outside the five journeys and I didn't test it.",
     "recommendation": "Confirm the requirement and add it before the public launch."
+  },
+  {
+    "id": "gift-list-expectations",
+    "severity": 2,
+    "title": "Gift list behaviour surprised the first-time tester",
+    "question": "Marking a gift Purchased left Progress at 0% complete, and the gift stayed on To Do. Save & Add Another kept the last person, so a gift for Dad also went to Maya. Keeping the person may suit someone buying several gifts for one child, so neither is clearly a bug.",
+    "recommendation": "Count Purchased as progress, or label the card to say what it measures. Keep Save & Add Another's person but make the carry-over obvious."
+  },
+  {
+    "id": "exchange-on-home",
+    "severity": 2,
+    "title": "Home doesn't mention your exchange",
+    "question": "Once an exchange exists, Home says nothing about it, and its date isn't in Upcoming Dates. Someone returning from an email has no way back from Home except the menu.",
+    "recommendation": "Show active exchanges on Home with one clear next step, and add their dates to Upcoming Dates."
+  },
+  {
+    "id": "share-makes-public",
+    "severity": 2,
+    "title": "Share quietly turns a private list public",
+    "question": "A wishlist set to Only you can see this becomes Shared when you press Share, with no notice. The share dialog does say anyone with the link can view it, so this is a question of how loud to be.",
+    "recommendation": "Say it at the moment it changes: This list is now shared. Offer Turn off link in the same place."
+  },
+  {
+    "id": "settings-first-screen",
+    "severity": 2,
+    "title": "Settings opens with developer tools",
+    "question": "Settings leads with Your MCP OAuth URL, above the person's profile. That means nothing to most families. The tester also found Vendors, Partners and Investors in People, and Upgrade on every page while Billing says Soon.",
+    "recommendation": "Lead Settings with profile and notifications, and move MCP to an Integrations section. Hide business categories in personal workspaces."
   }
 ]
