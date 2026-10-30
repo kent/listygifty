@@ -151,6 +151,14 @@ export default function ExchangeDetailPage({
     loadData();
   }, [isAuthenticated, slug]);
 
+  const refreshExchange = async () => {
+    try {
+      setExchange(await giftExchangesService.getBySlug(slug));
+    } catch {
+      // The change itself saved, so keep what's on screen until the next load.
+    }
+  };
+
   const handleAddParticipant = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newParticipant.name.trim() || !newParticipant.email.trim()) return;
@@ -174,6 +182,7 @@ export default function ExchangeDetailPage({
       setNewParticipant({ name: "", email: "" });
       setShowAddDialog(false);
       toast.success(`Invited ${participant.name}`);
+      await refreshExchange();
     } catch {
       toast.error("Failed to add participant");
     } finally {
@@ -186,6 +195,7 @@ export default function ExchangeDetailPage({
       if (!exchange) return;
       await exchangeParticipantsService.resendInvite(exchange.id, participant.id);
       toast.success(`Invitation resent to ${participant.email}`);
+      await refreshExchange();
     } catch {
       toast.error("Failed to resend invitation");
     }
@@ -219,7 +229,14 @@ export default function ExchangeDetailPage({
             }
           : prev
       );
+      // The API deletes a person's rules along with them.
+      setExclusions((prev) =>
+        prev.filter(
+          (e) => e.participant_a_id !== participant.id && e.participant_b_id !== participant.id
+        )
+      );
       toast.success(`Removed ${participant.name}`);
+      await refreshExchange();
     } catch {
       toast.error("Failed to remove participant");
     }
