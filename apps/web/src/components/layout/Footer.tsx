@@ -26,7 +26,7 @@ export function Footer() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="retro-hud-panel px-3 py-1 text-sm text-white hover:bg-violet-500"
+                className="retro-hud-panel px-3 py-1 text-sm text-white hover:bg-violet-600"
               >
                 {link.label}
               </Link>

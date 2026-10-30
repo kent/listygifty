@@ -581,7 +581,7 @@ export default function DashboardPage() {
                   type="submit"
                   disabled={!newPersonName.trim() || addingPerson}
                   aria-label="Add person"
-                  className="bg-violet-600 hover:bg-violet-500 shrink-0"
+                  className="bg-violet-600 hover:bg-violet-700 shrink-0"
                 >
                   {addingPerson ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                 </Button>
