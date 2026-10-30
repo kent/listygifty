@@ -605,7 +605,7 @@ export default function HomePage() {
                 key={index}
                 className="p-8 rounded-2xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 shadow-sm dark:border-2 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300"
               >
-                <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-sm font-bold text-white">
+                <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-sm font-bold text-slate-950">
                   {index + 1}
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{scenario.title}</h3>
