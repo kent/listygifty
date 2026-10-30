@@ -570,6 +570,7 @@ export default function DashboardPage() {
               <form onSubmit={handleAddPerson} className="flex gap-2 mb-3">
                 <Input
                   placeholder="Name"
+                  aria-label="Person's name"
                   value={newPersonName}
                   onChange={(e) => setNewPersonName(e.target.value)}
                   className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-500"
@@ -577,6 +578,7 @@ export default function DashboardPage() {
                 <Button
                   type="submit"
                   disabled={!newPersonName.trim() || addingPerson}
+                  aria-label="Add person"
                   className="bg-violet-600 hover:bg-violet-500 shrink-0"
                 >
                   {addingPerson ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}

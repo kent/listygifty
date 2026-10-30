@@ -113,6 +113,31 @@ describe("dashboard checklist copy", () => {
   });
 });
 
+describe("dashboard add person form", () => {
+  it("names the icon-only submit button", () => {
+    render(<DashboardPage />);
+    expect(screen.getByRole("button", { name: "Add person" }).getAttribute("type")).toBe("submit");
+  });
+
+  it("names the input with more than its placeholder", () => {
+    render(<DashboardPage />);
+    expect(screen.getByRole("textbox", { name: "Person's name" }).getAttribute("aria-label")).toBe("Person's name");
+  });
+});
+
+describe("dashboard control names", () => {
+  it("leaves no button or link without a name", () => {
+    mocks.workspace.bootstrap = bootstrap({
+      holidays: [holiday],
+      people,
+      holiday_templates: [{ id: 9, name: "Christmas", icon: null }],
+    });
+    render(<DashboardPage />);
+    expect(screen.queryAllByRole("button", { name: "" })).toEqual([]);
+    expect(screen.queryAllByRole("link", { name: "" })).toEqual([]);
+  });
+});
+
 describe("dashboard checklist copy for a business workspace", () => {
   beforeEach(() => {
     mocks.workspace.current = { id: 1, workspace_type: "business", business_initial_use_case: "holiday-box" };
