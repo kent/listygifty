@@ -233,7 +233,7 @@ export default function ExchangeDetailPage({
     if (!exchange?.share_url) return;
 
     await navigator.clipboard.writeText(exchange.share_url);
-    toast.success("Join link copied — drop it in the group chat");
+    toast.success("Join link copied. Drop it in the group chat.");
   };
 
   const handleRemoveParticipant = async (participant: ExchangeParticipant) => {
