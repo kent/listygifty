@@ -536,6 +536,47 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     assert_equal @exchange.name, json_response["exchange"]["name"]
   end
 
+  test "exchange invite show reports an open exchange" do
+    @exchange.update!(status: "inviting")
+    invited = @exchange.exchange_participants.create!(name: "Invited Person", email: "invited@example.com")
+
+    get "/exchange_invite/#{invited.invite_token}", as: :json
+
+    assert_response :success
+    assert_equal true, json_response["join_open"]
+    assert_nil json_response["closed_reason"]
+    assert json_response.key?("closed_reason")
+  end
+
+  test "exchange invite show tells someone who never responded that names were drawn" do
+    @exchange.update!(status: "inviting")
+    @exchange.exchange_participants.create!(name: "Second Person", email: "second@example.com", status: "accepted")
+    never_responded = @exchange.exchange_participants.create!(name: "Quiet Person", email: "quiet@example.com")
+    ExchangeMatchingService.new(@exchange).perform!
+
+    get "/exchange_invite/#{never_responded.invite_token}", as: :json
+
+    assert_response :success
+    assert_equal "declined", json_response.dig("participant", "status")
+    assert_equal false, json_response["join_open"]
+    assert_equal "This exchange has already drawn names and is no longer accepting new people",
+      json_response["closed_reason"]
+  end
+
+  test "exchange invite show keeps a real decline distinct from a closed exchange" do
+    @exchange.update!(status: "inviting")
+    declined = @exchange.exchange_participants.create!(
+      name: "Said No", email: "declined@example.com", status: "declined"
+    )
+
+    get "/exchange_invite/#{declined.invite_token}", as: :json
+
+    assert_response :success
+    assert_equal "declined", json_response.dig("participant", "status")
+    assert_equal true, json_response["join_open"]
+    assert_nil json_response["closed_reason"]
+  end
+
   test "exchange invite accept joins the exchange" do
     @exchange.update!(status: "inviting")
     pending_participant = @exchange.exchange_participants.create!(

@@ -15,7 +15,7 @@ class ExchangeJoinsController < ApplicationController
         accepted_count: @exchange.exchange_participants.accepted.count
       },
       join_open: @exchange.join_open?,
-      closed_reason: closed_reason
+      closed_reason: @exchange.join_closed_reason
     }
   end
 
@@ -26,7 +26,7 @@ class ExchangeJoinsController < ApplicationController
 
     @exchange.with_lock do
       @exchange.reload
-      return render_error(closed_reason) unless @exchange.join_open?
+      return render_error(@exchange.join_closed_reason) unless @exchange.join_open?
 
       participant = @exchange.exchange_participants.find_by(user: current_user) ||
                     @exchange.exchange_participants.where("LOWER(email) = ?", current_user.email.downcase).first
@@ -69,12 +69,6 @@ class ExchangeJoinsController < ApplicationController
     @exchange = GiftExchange.find_by!(share_token: params[:share_token])
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Invalid or expired join link" }, status: :not_found
-  end
-
-  def closed_reason
-    return nil if @exchange.join_open?
-
-    "This exchange has already drawn names and is no longer accepting new people"
   end
 
   def join_name

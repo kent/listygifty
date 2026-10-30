@@ -52,6 +52,10 @@ class GiftExchange < ApplicationRecord
   # publish and revives if the exchange is reopened.
   alias_method :join_open?, :editable?
 
+  def join_closed_reason
+    "This exchange has already drawn names and is no longer accepting new people" unless join_open?
+  end
+
   def share_url
     "#{ENV.fetch("FRONTEND_URL", "https://listygifty.com")}/e/#{slug}/#{share_token}"
   end

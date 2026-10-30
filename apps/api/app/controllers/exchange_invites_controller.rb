@@ -18,7 +18,9 @@ class ExchangeInvitesController < ApplicationController
         name: @participant.name,
         email: @participant.email,
         status: @participant.status
-      }
+      },
+      join_open: @participant.gift_exchange.join_open?,
+      closed_reason: @participant.gift_exchange.join_closed_reason
     }
   end
 
