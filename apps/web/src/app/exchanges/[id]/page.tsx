@@ -16,6 +16,7 @@ import {
 import { AppHeader } from "@/components/layout";
 import { getExchangeNextStep } from "@/components/exchanges/exchange-next-step";
 import { MatchOverviewCard } from "@/components/exchanges/match-overview-card";
+import { pluralize } from "@/components/exchanges/pluralize";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -910,41 +911,27 @@ export default function ExchangeDetailPage({
             </Card>
           )}
 
-          {/* Participant View - My Info */}
-          {!isOwner && myParticipant && (
+          {/* Anyone who has joined can work on their wishlist, draw or no draw */}
+          {myParticipant?.status === "accepted" && (
             <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
               <CardHeader>
                 <CardTitle className="text-slate-900 dark:text-white flex items-center gap-2">
                   <List className="h-5 w-5 text-violet-500 dark:text-violet-400" />
-                  {exchange.status === "active" || exchange.status === "completed"
-                    ? "My Wishlist"
-                    : "My Participation"}
+                  My Wishlist
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {exchange.status !== "active" && exchange.status !== "completed" && (
-                  <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Status</p>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(myParticipant.status)}
-                      <span className="text-slate-900 dark:text-white capitalize">{myParticipant.status}</span>
-                    </div>
-                  </div>
-                )}
                 <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">My Wishlist</p>
                   <p className="text-slate-900 dark:text-white">
-                    {myParticipant.wishlist_count} items
+                    {pluralize(myParticipant.wishlist_count, "item")}
                   </p>
                 </div>
-                {(exchange.status === "active" || exchange.status === "completed") && (
+                <Button asChild variant="outline" className="w-full border-slate-200 dark:border-slate-700">
                   <Link href={`/exchanges/${slug}/my-wishlist`}>
-                    <Button variant="outline" className="w-full border-slate-200 dark:border-slate-700">
-                      <List className="h-4 w-4 mr-2" />
-                      Edit Wishlist
-                    </Button>
+                    <List className="h-4 w-4 mr-2" />
+                    Edit Wishlist
                   </Link>
-                )}
+                </Button>
               </CardContent>
             </Card>
           )}

@@ -147,6 +147,66 @@ beforeEach(() => {
   mocks.toastError.mockReset();
 });
 
+describe("the wishlist card", () => {
+  const ana = person(2, "Ana", { user_id: 200, status: "accepted", has_user: true });
+
+  function wishlistLink() {
+    return screen.queryByRole("link", { name: "Edit Wishlist" });
+  }
+
+  it.each(["draft", "inviting", "active", "completed"] as const)(
+    "links a joined participant to their wishlist while %s",
+    async (status) => {
+      mocks.getBySlug.mockResolvedValue(
+        exchangeWith({ status, is_owner: false, my_participant: ana, share_url: null })
+      );
+
+      await renderPage();
+
+      expect(wishlistLink()?.getAttribute("href")).toBe("/exchanges/family-christmas/my-wishlist");
+    }
+  );
+
+  it.each(["draft", "inviting", "active", "completed"] as const)(
+    "links an organizer who joined to their wishlist while %s",
+    async (status) => {
+      mocks.getBySlug.mockResolvedValue(exchangeWith({ status }));
+
+      await renderPage();
+
+      expect(wishlistLink()?.getAttribute("href")).toBe("/exchanges/family-christmas/my-wishlist");
+    }
+  );
+
+  it("is hidden from an organizer who isn't taking part", async () => {
+    mocks.getBySlug.mockResolvedValue(exchangeWith({ my_participant: null }));
+
+    await renderPage();
+
+    expect(wishlistLink()).toBeNull();
+  });
+
+  it("is hidden from someone who hasn't joined", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({ is_owner: false, my_participant: person(2, "Ana", { status: "invited" }) })
+    );
+
+    await renderPage();
+
+    expect(wishlistLink()).toBeNull();
+  });
+
+  it("counts a single item in the singular", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({ my_participant: { ...organizer, wishlist_count: 1 } })
+    );
+
+    await renderPage();
+
+    expect(screen.getByText("1 item")).toBeTruthy();
+  });
+});
+
 describe("the next step line", () => {
   it("shows the organizer what's needed, and updates after a change", async () => {
     mocks.getBySlug
