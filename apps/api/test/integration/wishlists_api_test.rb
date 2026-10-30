@@ -315,6 +315,20 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "the public wishlist shows that an item was claimed but never by whom" do
+    @wishlist.update!(visibility: "shared", share_token: "no_claimer_details")
+    item = @wishlist.wishlist_items.create!(name: "Surprise")
+    item.claims.create!(user: users(:two), message: "Hope you love it")
+
+    get "/w/no_claimer_details", as: :json
+
+    assert_response :success
+    seen = json_response["wishlist_items"].find { |candidate| candidate["id"] == item.id }
+    assert_equal [ { "status" => "reserved", "quantity" => 1 } ], seen["claims"]
+    assert_not_includes response.body, users(:two).email
+    assert_not_includes response.body, "Hope you love it"
+  end
+
   # ============================================================================
   # Authentication Tests
   # ============================================================================
