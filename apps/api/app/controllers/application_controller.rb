@@ -52,12 +52,7 @@ class ApplicationController < ActionController::API
     # Auto-create local user record if they don't exist yet
     is_new_user = false
     User.transaction do
-      @current_user = User.find_or_create_by!(clerk_user_id: clerk_user_id) do |u|
-        clerk_user = fetch_clerk_user(clerk_user_id)
-        apply_clerk_data(u, clerk_user, clerk_user_id, token_email: email_from_token)
-        u.subscription_plan = "free"
-        u.clerk_profile_synced_at = Time.current
-      end
+      @current_user = find_or_create_clerk_user!(clerk_user_id, token_email: email_from_token)
       # The creation block can run on a losing insert during concurrent sign-in.
       is_new_user = @current_user.previously_new_record?
 
@@ -75,6 +70,21 @@ class ApplicationController < ActionController::API
   rescue ActiveRecord::RecordInvalid => e
     Rails.logger.error "Failed to create user: #{e.message}"
     render_unauthorized
+  end
+
+  # A new user's first page fires several requests at once, and they can all miss
+  # the row. Rails turns a losing insert into a find, but a loser that validates
+  # after the winner commits fails uniqueness instead, so it finds the row here.
+  # With no row for this Clerk user, the record really is invalid.
+  def find_or_create_clerk_user!(clerk_user_id, token_email:)
+    User.find_or_create_by!(clerk_user_id: clerk_user_id) do |u|
+      clerk_user = fetch_clerk_user(clerk_user_id)
+      apply_clerk_data(u, clerk_user, clerk_user_id, token_email: token_email)
+      u.subscription_plan = "free"
+      u.clerk_profile_synced_at = Time.current
+    end
+  rescue ActiveRecord::RecordInvalid => e
+    User.find_by(clerk_user_id: clerk_user_id) || raise(e)
   end
 
   def extract_bearer_token
