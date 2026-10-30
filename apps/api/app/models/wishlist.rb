@@ -44,10 +44,17 @@ class Wishlist < ApplicationRecord
     wishlist_items.active.count
   end
 
-  def claimed_count
-    WishlistItemClaim.joins(:wishlist_item)
+  # An owner with anti-spoiler on must not be able to tell what was claimed until
+  # they reveal it. Everyone else needs the real numbers to avoid doubling up.
+  def hides_claims_from?(viewer)
+    anti_spoiler_enabled && owner?(viewer)
+  end
+
+  def claimed_count(viewer: nil)
+    claims = WishlistItemClaim.joins(:wishlist_item)
       .where(wishlist_items: { wishlist_id: id, archived_at: nil })
-      .sum(:quantity)
+    claims = claims.revealed if hides_claims_from?(viewer)
+    claims.sum(:quantity)
   end
 
   def total_claimed_items

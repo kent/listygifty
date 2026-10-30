@@ -316,11 +316,102 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
   end
 
   # ============================================================================
+  # Anti-Spoiler Tests
+  # ============================================================================
+
+  test "an unrevealed claim looks like no claim to an owner with anti-spoiler on" do
+    item = claimed_item(anti_spoiler: true)
+
+    assert_claims_seen item, headers: @auth_headers, quantity: 0, count: 0
+  end
+
+  test "revealing claims shows them to the owner" do
+    item = claimed_item(anti_spoiler: true)
+
+    post reveal_claims_wishlist_path(@wishlist), headers: @auth_headers, as: :json
+    assert_response :success
+    assert_equal 1, json_response["revealed_count"]
+
+    assert_claims_seen item, headers: @auth_headers, quantity: 2, count: 1
+  end
+
+  test "a claim made after a reveal stays hidden from the owner" do
+    item = claimed_item(anti_spoiler: true, quantity: 3)
+    post reveal_claims_wishlist_path(@wishlist), headers: @auth_headers, as: :json
+    assert_response :success
+
+    item.claims.create!(claimer_name: "Late Guest", claimer_email: "late@example.com")
+
+    assert_claims_seen item, headers: @auth_headers, quantity: 2, count: 1
+  end
+
+  test "a non-owner still sees unrevealed claims so they do not double up" do
+    item = claimed_item(anti_spoiler: true)
+    workspaces(:one).workspace_memberships.create!(user: users(:two), role: "member")
+
+    assert_claims_seen item, headers: auth_headers_for(users(:two), workspace: workspaces(:one)), quantity: 2, count: 1
+  end
+
+  test "an owner with anti-spoiler off sees every claim" do
+    item = claimed_item(anti_spoiler: false)
+
+    assert_claims_seen item, headers: @auth_headers, quantity: 2, count: 1
+  end
+
+  test "guests still see unrevealed claims so they do not double up" do
+    item = claimed_item(anti_spoiler: true)
+    @wishlist.update!(visibility: "shared", share_token: "spoiler_public_token")
+
+    get "/w/spoiler_public_token", as: :json
+
+    assert_response :success
+    assert_equal 2, json_response["claimed_count"]
+    assert_item_claims json_response["wishlist_items"].find { |seen| seen["id"] == item.id }, item, quantity: 2, count: 1
+  end
+
+  # ============================================================================
   # Authentication Tests
   # ============================================================================
 
   test "requires authentication" do
     get wishlists_path, as: :json
     assert_response :unauthorized
+  end
+
+  private
+
+  def claimed_item(anti_spoiler:, quantity: 2)
+    @wishlist.update!(anti_spoiler_enabled: anti_spoiler, visibility: "workspace")
+    item = @wishlist.wishlist_items.create!(name: "Surprise", quantity: quantity)
+    item.claims.create!(claimer_name: "Early Guest", claimer_email: "early@example.com", quantity: 2)
+    item
+  end
+
+  # Every place one viewer can read these numbers, so that none can give it away.
+  def assert_claims_seen(item, headers:, quantity:, count:)
+    get wishlists_path, headers: headers, as: :json
+    assert_response :success
+    assert_equal quantity, json_response.find { |seen| seen["id"] == @wishlist.id }["claimed_count"]
+
+    get wishlist_path(@wishlist), headers: headers, as: :json
+    assert_response :success
+    assert_equal quantity, json_response["claimed_count"]
+    assert_item_claims json_response["wishlist_items"].find { |seen| seen["id"] == item.id }, item, quantity: quantity, count: count
+
+    get wishlist_wishlist_items_path(@wishlist), headers: headers, as: :json
+    assert_response :success
+    assert_item_claims json_response.find { |seen| seen["id"] == item.id }, item, quantity: quantity, count: count
+
+    get wishlist_wishlist_item_path(@wishlist, item), headers: headers, as: :json
+    assert_response :success
+    assert_item_claims json_response, item, quantity: quantity, count: count
+  end
+
+  def assert_item_claims(seen, item, quantity:, count:)
+    assert_equal quantity, seen["claimed_quantity"]
+    assert_equal item.quantity - quantity, seen["available_quantity"]
+    assert_equal quantity < item.quantity, seen["is_available"]
+    assert_equal count, seen["claim_count"]
+    assert_equal count, seen["claims"].size
   end
 end

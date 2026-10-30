@@ -1,20 +1,31 @@
 class WishlistItemBlueprint < ApplicationBlueprint
+  # An unrevealed claim must look like no claim to an owner with anti-spoiler on,
+  # so every field that describes claims starts from this. Public views have no
+  # current_user, so guests always get the real numbers.
+  def self.visible_claims(item, options)
+    item.wishlist.hides_claims_from?(options[:current_user]) ? item.claims.revealed : item.claims
+  end
+
+  def self.visible_claimed_quantity(item, options)
+    visible_claims(item, options).sum(:quantity)
+  end
+
   fields :name, :notes, :url, :price_min, :price_max, :priority, :quantity, :position, :image_url, :created_at, :updated_at
 
   field :wishlist_id do |item|
     item.wishlist_id
   end
 
-  field :is_available do |item|
-    !item.fully_claimed?
+  field :is_available do |item, options|
+    visible_claimed_quantity(item, options) < item.quantity
   end
 
-  field :available_quantity do |item|
-    item.available_quantity
+  field :available_quantity do |item, options|
+    [ item.quantity - visible_claimed_quantity(item, options), 0 ].max
   end
 
-  field :claimed_quantity do |item|
-    item.claimed_quantity
+  field :claimed_quantity do |item, options|
+    visible_claimed_quantity(item, options)
   end
 
   field :price_display do |item|
@@ -25,9 +36,9 @@ class WishlistItemBlueprint < ApplicationBlueprint
     item.archived_at
   end
 
-  field :claim_count do |item|
-    # Use size to work with preloaded associations, count for queries
-    item.claims.loaded? ? item.claims.size : item.claims.count
+  field :claim_count do |item, options|
+    # size works with preloaded associations and counts for queries
+    visible_claims(item, options).size
   end
 
   # Current user's claim on this item (if any)
@@ -42,22 +53,13 @@ class WishlistItemBlueprint < ApplicationBlueprint
   # - Non-owner or anti_spoiler off: all claims
   # - Public view: no claimer details, just counts
   field :claims do |item, options|
-    wishlist = item.wishlist
-    current_user = options[:current_user]
-    is_owner = current_user && wishlist.owner?(current_user)
-
     if options[:public_view]
       # Public view: just show claim status, no details
       item.claims.map do |claim|
         { status: claim.status, quantity: claim.quantity }
       end
-    elsif is_owner && wishlist.anti_spoiler_enabled
-      # Owner with anti-spoiler: only show revealed claims
-      revealed_claims = item.claims.revealed
-      WishlistItemClaimBlueprint.render_as_hash(revealed_claims)
     else
-      # Non-owner or anti-spoiler off: show all claims
-      WishlistItemClaimBlueprint.render_as_hash(item.claims)
+      WishlistItemClaimBlueprint.render_as_hash(visible_claims(item, options))
     end
   end
 end

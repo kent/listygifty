@@ -30,8 +30,8 @@ class WishlistBlueprint < ApplicationBlueprint
     wishlist.item_count
   end
 
-  field :claimed_count do |wishlist|
-    wishlist.claimed_count
+  field :claimed_count do |wishlist, options|
+    wishlist.claimed_count(viewer: options[:current_user])
   end
 
   field :owner do |wishlist|

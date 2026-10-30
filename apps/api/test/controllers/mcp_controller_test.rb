@@ -50,6 +50,24 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     JSON.parse(result.fetch("content").first.fetch("text"))
   end
 
+  test "wishlist tools hide unrevealed claims from an owner with anti-spoiler on" do
+    wishlist = Wishlist.create!(user: @user, workspace: @workspace, name: "Surprises", anti_spoiler_enabled: true)
+    item = wishlist.wishlist_items.create!(name: "Socks")
+    item.claims.create!(claimer_name: "Guest", claimer_email: "guest@example.com")
+
+    fetched = tool_payload(call_tool("get_wishlist", { wishlist_id: wishlist.id }))
+    listed = tool_payload(call_tool("list_wishlist_items", { wishlist_id: wishlist.id }))
+
+    assert_equal 0, fetched["claimed_count"]
+    [ fetched["wishlist_items"].first, listed.first ].each do |seen|
+      assert_equal true, seen["is_available"]
+      assert_equal 1, seen["available_quantity"]
+      assert_equal 0, seen["claimed_quantity"]
+      assert_equal 0, seen["claim_count"]
+      assert_empty seen["claims"]
+    end
+  end
+
   # Authentication tests
   test "returns 401 without authentication" do
     post "/mcp", params: {
