@@ -182,6 +182,7 @@ Rails.application.routes.draw do
 
   # Profile
   post "profile/sync" => "profile#sync"
+  delete "profile" => "profile#destroy"
 
   # Notification preferences (authenticated)
   resource :notification_preferences, only: %i[show update] do

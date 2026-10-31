@@ -1,4 +1,6 @@
 class ProfileController < ApplicationController
+  DELETION_CONFIRMATION = "DELETE".freeze
+
   skip_before_action :authenticate!
   before_action :authenticate_clerk_session!
 
@@ -25,5 +27,19 @@ class ProfileController < ApplicationController
     updates[:clerk_profile_synced_at] = Time.current
     current_user.update!(updates) if updates.any?
     render json: UserBlueprint.render_as_hash(current_user)
+  end
+
+  # DELETE /profile?confirmation=DELETE - Permanently delete your own account
+  def destroy
+    unless params[:confirmation] == DELETION_CONFIRMATION
+      return render_error("Confirm this deletion by sending confirmation=#{DELETION_CONFIRMATION}")
+    end
+
+    AccountDeletionService.delete!(current_user)
+    head :no_content
+  rescue AccountDeletionService::Refused => e
+    render_error(e.message)
+  rescue AccountDeletionService::ClerkFailed
+    render_error("We could not delete your account, so nothing has changed. Please try again.", status: :bad_gateway)
   end
 end
