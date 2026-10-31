@@ -71,9 +71,11 @@ export function GiftListSummaryBar({
   const visibleSummary = summarizeGifts(filteredGifts, statuses);
   const deadline = getDeadlineCopy(holidayDate);
   const unassignedDetail =
-    summary.unassignedGiftCount === 0
-      ? "All gifts assigned"
-      : `${summary.unassignedGiftCount} need recipients`;
+    summary.totalGifts === 0
+      ? "Add a gift to start"
+      : summary.unassignedGiftCount === 0
+        ? "All gifts assigned"
+        : `${summary.unassignedGiftCount} need recipients`;
   const pricingDetail =
     summary.unpricedGiftCount === 0
       ? "All priced"
@@ -104,9 +106,11 @@ export function GiftListSummaryBar({
       icon: summary.unassignedGiftCount === 0 ? CheckCircle2 : AlertTriangle,
       label: "Recipients",
       value:
-        summary.unassignedGiftCount === 0
-          ? "Ready"
-          : `${summary.unassignedGiftCount} open`,
+        summary.totalGifts === 0
+          ? "Nobody yet"
+          : summary.unassignedGiftCount === 0
+            ? "Ready"
+            : `${summary.unassignedGiftCount} open`,
       detail: unassignedDetail,
       accent:
         summary.unassignedGiftCount === 0
