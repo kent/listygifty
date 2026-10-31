@@ -22,3 +22,4 @@ export { createExchangeJoinsService, type ExchangeJoinsService } from "./exchang
 // Standalone Wishlists
 export { createWishlistsService, type WishlistsService } from "./wishlists.service";
 export { createAnalyticsService, type AnalyticsService } from "./analytics.service";
+export { createAccountService, type AccountService } from "./account.service";

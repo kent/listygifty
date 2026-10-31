@@ -4,6 +4,7 @@ import { ApiClient, ApiError } from "@niftygifty/api-client";
 import { createWishlistItemsService } from "../dist/wishlist-items.service.js";
 import { createGiftsService } from "../dist/gifts.service.js";
 import { createExchangeJoinsService } from "../dist/exchange-joins.service.js";
+import { createAccountService } from "../dist/account.service.js";
 
 function client() {
   const api = new ApiClient({ baseUrl: "https://api.example.test" });
@@ -15,6 +16,17 @@ function client() {
 function json(value, status = 200) {
   return new Response(JSON.stringify(value), { status });
 }
+
+test("account deletion confirms explicitly and is never retried", async (t) => {
+  const fetch = t.mock.method(globalThis, "fetch", async () => new Response(null, { status: 502 }));
+  await assert.rejects(createAccountService(client()).delete(),
+    (error) => error instanceof ApiError && error.status === 502);
+  assert.equal(fetch.mock.callCount(), 1);
+  const [url, options] = fetch.mock.calls[0].arguments;
+  assert.equal(url, "https://api.example.test/profile?confirmation=DELETE");
+  assert.equal(options.method, "DELETE");
+  assert.equal(options.headers.Authorization, "Bearer test-token");
+});
 
 test("photo uploads retain structured validation errors", async (t) => {
   t.mock.method(globalThis, "fetch", async () => json({ errors: ["Photo is too large"] }, 422));

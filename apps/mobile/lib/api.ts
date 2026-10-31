@@ -12,6 +12,7 @@ import {
   createExchangeInvitesService,
   createExchangeJoinsService,
   createAnalyticsService,
+  createAccountService,
 } from "@niftygifty/services";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { isDemoMode } from "@/lib/demo-mode";
@@ -41,6 +42,7 @@ export const apiClient = new ApiClient({
   debug: __DEV__,
 });
 export const analyticsService = createAnalyticsService(apiClient);
+export const accountService = createAccountService(apiClient);
 
 const baseHolidaysService = createHolidaysService(apiClient);
 const baseGiftsService = createGiftsService(apiClient);
