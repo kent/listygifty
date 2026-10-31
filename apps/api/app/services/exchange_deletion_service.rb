@@ -19,13 +19,17 @@ class ExchangeDeletionService
 
     @exchange.destroy!
 
-    recipients.each do |recipient|
-      ExchangeMailer.cancellation(
-        email: recipient[:email],
-        participant_name: recipient[:name],
-        exchange_name: exchange_name,
-        owner_name: owner_name
-      ).deliver_later
+    # An account deletion runs this inside a transaction that can still roll
+    # back, and nobody should hear about a cancellation that never happened.
+    ActiveRecord.after_all_transactions_commit do
+      recipients.each do |recipient|
+        ExchangeMailer.cancellation(
+          email: recipient[:email],
+          participant_name: recipient[:name],
+          exchange_name: exchange_name,
+          owner_name: owner_name
+        ).deliver_later
+      end
     end
   end
 
