@@ -452,6 +452,12 @@
     border-color: #ffb0b0 #500305 #500305 #ffb0b0;
     text-shadow: 1px 1px 0 #500305;
   }
+  /* Touch screens have no Enter or F keys to press */
+  @media (hover: none) {
+    .retro-key-hint {
+      display: none;
+    }
+  }
   /* The deep blue HUD bar with bevelled panels */
   .retro-hud {
     background: var(--hud);

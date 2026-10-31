@@ -65,13 +65,13 @@ export function RetroLandingHero() {
                   analyticsProperties={{ location: "hero", destination: "signup" }}
                   className="retro-key"
                 >
-                  Enter <span className="text-white">Start free</span>
+                  <span className="retro-key-hint">Enter </span><span className="text-white">Start free</span>
                 </TrackedLink>
                 <a href="#features" className="retro-key">
-                  F1 <span className="text-white">Tour</span>
+                  <span className="retro-key-hint">F1 </span><span className="text-white">Tour</span>
                 </a>
                 <Link href={AUTH_ROUTES.signIn} className="retro-key">
-                  F4 <span className="text-white">Sign in</span>
+                  <span className="retro-key-hint">F4 </span><span className="text-white">Sign in</span>
                 </Link>
               </>
             }
