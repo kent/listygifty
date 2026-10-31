@@ -685,8 +685,8 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
     <p>All open items are logged here as product decisions, each with a recommendation. Nothing was built for them. Mockups are concepts.</p>
     <div class="list"><article class="open" id="past-damage">
     <header><span class="sev s3">Severity 3 · Product decision</span><h3>Decide whether to look for past damage</h3></header>
-    <p>Two bugs may already have affected real people. Shared wishlist links exposed claimer details until October 30, 2026, and the Match screen's edit dialog could remove recipients and givers from gifts. Fixing them doesn't tell you what already happened, and I did not look at production data.</p>
-    <p class="rec"><strong>Recommendation.</strong> Check the request logs for /w/ links, and use the gift_changes table to find gifts that lost people through that dialog. Decide on any notice to users once you know the scale.</p>
+    <p>Two bugs may already have affected real people. Shared wishlist links exposed claimer details until October 30, 2026, and the Match screen's edit dialog could remove recipients and givers from gifts. Fixing them doesn't tell you what already happened. This entry first suggested using the gift_changes table, but that table doesn't record recipient or giver changes, so it can't show what the Match dialog removed. Request logs only go back 30 days.</p>
+    <p class="rec"><strong>Recommendation.</strong> Count claims on shared lists to size the first bug. For the second, the best available signal is gifts with no people that were edited after they were created, and that can't prove the cause.</p>
     
   </article><article class="open" id="reply-address">
     <header><span class="sev s3">Severity 3 · Product decision</span><h3>Replies to invite emails go nowhere</h3></header>
@@ -710,8 +710,8 @@ dialog button { margin-top: 8px; font: 500 14px var(--body); padding: 6px 12px; 
     <figure class="shot concept"><button type="button" class="zoom" data-full="img/concept-draw-names.jpg" aria-label="Enlarge concept for Say Draw names instead of Publish Exchange"><img src="img/concept-draw-names.jpg" alt="Concept mockup: Say Draw names instead of Publish Exchange" loading="lazy"></button><figcaption><strong>Concept, not built</strong></figcaption></figure>
   </article><article class="open" id="signup-length">
     <header><span class="sev s3">Severity 3 · Product decision</span><h3>Shorten sign-up for invited relatives</h3></header>
-    <p>A relative who taps an invite faces first name, last name, email, phone and password before they can join. The invite already knows their name and email. This is a Clerk setting and a product trade-off, so nothing changed.</p>
-    <p class="rec"><strong>Recommendation.</strong> Offer email code sign-in for invitees, with the email filled in from the invite and no password.</p>
+    <p>A relative who taps an invite has to fill in first name, last name and email. The invite already knows their name and email. This audit first said the form also asks for a phone number and password, but that was the local test Clerk instance. Production already uses email codes with no password or phone.</p>
+    <p class="rec"><strong>Recommendation.</strong> Fill the form in from the invite, which is now built, and make last name optional in Clerk.</p>
     <figure class="shot concept"><button type="button" class="zoom" data-full="img/concept-signup-simple.jpg" aria-label="Enlarge concept for Shorten sign-up for invited relatives"><img src="img/concept-signup-simple.jpg" alt="Concept mockup: Shorten sign-up for invited relatives" loading="lazy"></button><figcaption><strong>Concept, not built</strong></figcaption></figure>
   </article><article class="open" id="list-names">
     <header><span class="sev s2">Severity 2 · Product decision</span><h3>Gift Lists and Wishlists sound like the same thing</h3></header>

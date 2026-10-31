@@ -3,8 +3,8 @@
     "id": "past-damage",
     "severity": 3,
     "title": "Decide whether to look for past damage",
-    "question": "Two bugs may already have affected real people. Shared wishlist links exposed claimer details until October 30, 2026, and the Match screen's edit dialog could remove recipients and givers from gifts. Fixing them doesn't tell you what already happened, and I did not look at production data.",
-    "recommendation": "Check the request logs for /w/ links, and use the gift_changes table to find gifts that lost people through that dialog. Decide on any notice to users once you know the scale."
+    "question": "Two bugs may already have affected real people. Shared wishlist links exposed claimer details until October 30, 2026, and the Match screen's edit dialog could remove recipients and givers from gifts. Fixing them doesn't tell you what already happened. This entry first suggested using the gift_changes table, but that table doesn't record recipient or giver changes, so it can't show what the Match dialog removed. Request logs only go back 30 days.",
+    "recommendation": "Count claims on shared lists to size the first bug. For the second, the best available signal is gifts with no people that were edited after they were created, and that can't prove the cause."
   },
   {
     "id": "reply-address",
@@ -39,8 +39,8 @@
     "id": "signup-length",
     "severity": 3,
     "title": "Shorten sign-up for invited relatives",
-    "question": "A relative who taps an invite faces first name, last name, email, phone and password before they can join. The invite already knows their name and email. This is a Clerk setting and a product trade-off, so nothing changed.",
-    "recommendation": "Offer email code sign-in for invitees, with the email filled in from the invite and no password.",
+    "question": "A relative who taps an invite has to fill in first name, last name and email. The invite already knows their name and email. This audit first said the form also asks for a phone number and password, but that was the local test Clerk instance. Production already uses email codes with no password or phone.",
+    "recommendation": "Fill the form in from the invite, which is now built, and make last name optional in Clerk.",
     "concept": "img/concept-signup-simple.jpg"
   },
   {
