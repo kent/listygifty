@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
-import type { Holiday, Person } from "@niftygifty/types";
+import type { GiftExchange, Holiday, Person } from "@niftygifty/types";
 import DashboardPage from "./page";
 import { captureWebEvent } from "@/lib/analytics";
 
@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   workspace: { current: null as unknown, bootstrap: null as unknown },
   push: vi.fn(),
   createHoliday: vi.fn(),
+  getExchanges: vi.fn(),
   refreshWorkspaces: vi.fn(),
 }));
 
@@ -31,6 +32,7 @@ vi.mock("@/contexts/workspace-context", () => ({
 }));
 vi.mock("@/services", () => ({
   holidaysService: { create: mocks.createHoliday },
+  giftExchangesService: { getAll: mocks.getExchanges },
   peopleService: { create: vi.fn() },
   AUTH_ROUTES: { signIn: "/login" },
 }));
@@ -49,6 +51,7 @@ function bootstrap(overrides: Record<string, unknown> = {}) {
 const checklist = () => screen.getByRole("heading", { name: "Get started" }).closest('[data-slot="card"]') as HTMLElement;
 
 beforeEach(() => {
+  mocks.getExchanges.mockReset().mockResolvedValue([]);
   mocks.workspace.current = { id: 1, workspace_type: "household" };
   mocks.workspace.bootstrap = bootstrap();
 });
@@ -211,5 +214,34 @@ describe("dashboard checklist copy for a business workspace", () => {
     expect(captureWebEvent).toHaveBeenCalledWith("dashboard_activation_step_opened", expect.objectContaining({
       step: analyticsStep,
     }));
+  });
+});
+
+describe("exchanges on the dashboard", () => {
+  const exchange = {
+    id: 3, name: "Family Christmas", slug: "family-christmas", status: "active", exchange_date: "2099-12-25",
+    is_owner: true, accepted_count: 4, participant_count: 5,
+    capabilities: { view_match: true, publish: false },
+  } as GiftExchange;
+
+  it("shows an exchange and the next step, and links straight to the match", async () => {
+    mocks.getExchanges.mockResolvedValue([exchange]);
+    render(<DashboardPage />);
+    const step = await screen.findByText("Names are drawn. See who you're buying for.");
+    expect(step.closest("a")?.getAttribute("href")).toBe("/exchanges/family-christmas/my-match");
+    expect(screen.getByRole("heading", { name: "Your Exchange" })).toBeTruthy();
+  });
+
+  it("adds the exchange date to Upcoming Dates", async () => {
+    mocks.getExchanges.mockResolvedValue([exchange]);
+    render(<DashboardPage />);
+    expect(await screen.findByText("Gift exchange")).toBeTruthy();
+  });
+
+  it("leaves the card out when there are no exchanges, or they fail to load", async () => {
+    mocks.getExchanges.mockRejectedValue(new Error("offline"));
+    render(<DashboardPage />);
+    await waitFor(() => expect(mocks.getExchanges).toHaveBeenCalled());
+    expect(screen.queryByRole("heading", { name: "Your Exchange" })).toBeNull();
   });
 });

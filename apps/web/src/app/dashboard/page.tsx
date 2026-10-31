@@ -7,18 +7,19 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { useWorkspace } from "@/contexts/workspace-context";
-import { holidaysService, peopleService } from "@/services";
+import { giftExchangesService, holidaysService, peopleService } from "@/services";
+import { exchangeNextStep, upcomingExchanges } from "@/lib/exchange-next-step";
 import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { AppHeader } from "@/components/layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { ArrowRight, Calendar, CheckCircle2, Circle, Gift as GiftIcon, Loader2, Plus, Users } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, Calendar, CheckCircle2, Circle, Gift as GiftIcon, Loader2, Plus, Users } from "lucide-react";
 import { GiftTodoList } from "@/components/gift-todo-list";
 import { getBusinessUseCase } from "@/lib/business-use-cases";
 import { captureWebEvent } from "@/lib/analytics";
-import type { Holiday, Person } from "@niftygifty/types";
+import type { GiftExchange, Holiday, Person } from "@niftygifty/types";
 
 const HOLIDAY_ICONS: Record<string, string> = {
   Christmas: "🎄",
@@ -46,7 +47,7 @@ interface UpcomingDate {
   daysUntil: number;
   href: string;
   id: string;
-  kind: "birthday" | "list" | "milestone";
+  kind: "birthday" | "exchange" | "list" | "milestone";
   subtitle: string;
   title: string;
 }
@@ -101,9 +102,26 @@ function formatDaysUntil(daysUntil: number): string {
   return `${daysUntil} days`;
 }
 
-function buildUpcomingDates(holidays: Holiday[], people: Person[]): UpcomingDate[] {
+function buildUpcomingDates(holidays: Holiday[], people: Person[], exchanges: GiftExchange[]): UpcomingDate[] {
   const today = startOfToday();
   const dates: UpcomingDate[] = [];
+
+  upcomingExchanges(exchanges, today).forEach((exchange) => {
+    const date = parseDateOnly(exchange.exchange_date);
+    if (!date) {
+      return;
+    }
+
+    dates.push({
+      date,
+      daysUntil: getDaysUntil(date, today),
+      href: `/exchanges/${exchange.slug}`,
+      id: `exchange-${exchange.id}`,
+      kind: "exchange",
+      subtitle: "Gift exchange",
+      title: exchange.name,
+    });
+  });
 
   holidays.forEach((holiday) => {
     const date = parseDateOnly(holiday.date);
@@ -260,6 +278,39 @@ function ActivationChecklist({
   );
 }
 
+function ExchangesCard({ exchanges }: { exchanges: GiftExchange[] }) {
+  return (
+    <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+      <CardContent className="p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <ArrowLeftRight className="h-4 w-4 text-violet-500 dark:text-violet-300" />
+          <h2 className="font-semibold text-slate-900 dark:text-white">
+            {exchanges.length === 1 ? "Your Exchange" : "Your Exchanges"}
+          </h2>
+        </div>
+        <div className="space-y-2">
+          {exchanges.map((exchange) => {
+            const nextStep = exchangeNextStep(exchange);
+            return (
+              <Link
+                key={exchange.id}
+                href={nextStep.href}
+                className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-slate-700 dark:hover:bg-slate-900"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-slate-900 dark:text-white">{exchange.name}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">{nextStep.text}</p>
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+              </Link>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function UpcomingDatesCard({ dates }: { dates: UpcomingDate[] }) {
   if (dates.length === 0) {
     return null;
@@ -267,6 +318,7 @@ function UpcomingDatesCard({ dates }: { dates: UpcomingDate[] }) {
 
   const kindClasses: Record<UpcomingDate["kind"], string> = {
     birthday: "bg-pink-100 text-pink-700 dark:bg-pink-950/40 dark:text-pink-300",
+    exchange: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
     list: "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300",
     milestone: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
   };
@@ -333,6 +385,7 @@ export default function DashboardPage() {
   const [templates, setTemplates] = useState<Holiday[]>([]);
   const [userHolidays, setUserHolidays] = useState<Holiday[]>([]);
   const [people, setPeople] = useState<Person[]>([]);
+  const [exchanges, setExchanges] = useState<GiftExchange[]>([]);
   const [creatingHolidayId, setCreatingHolidayId] = useState<number | null>(null);
   const [newPersonName, setNewPersonName] = useState("");
   const [addingPerson, setAddingPerson] = useState(false);
@@ -351,9 +404,10 @@ export default function DashboardPage() {
     ? businessUseCase.title
     : null;
   const upcomingDates = useMemo(
-    () => buildUpcomingDates(activeHolidays, people),
-    [activeHolidays, people]
+    () => buildUpcomingDates(activeHolidays, people, exchanges),
+    [activeHolidays, people, exchanges]
   );
+  const openExchanges = useMemo(() => upcomingExchanges(exchanges, startOfToday()), [exchanges]);
   const activationSteps = useMemo<ActivationStep[]>(() => {
     if (isBusinessWorkspace) {
       const activation = businessUseCase.activation;
@@ -437,6 +491,12 @@ export default function DashboardPage() {
       router.push(signInUrlForCurrentPage());
     }
   }, [isLoading, isAuthenticated, router]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !currentWorkspace) return;
+    // Home still works without this, so a failed load just leaves the card out.
+    giftExchangesService.getAll().then(setExchanges).catch(() => {});
+  }, [isAuthenticated, currentWorkspace]);
 
   useEffect(() => {
     if (bootstrapData) {
@@ -529,6 +589,12 @@ export default function DashboardPage() {
                 </Link>
               ))}
             </div>
+          </section>
+        )}
+
+        {openExchanges.length > 0 && (
+          <section className="mb-8">
+            <ExchangesCard exchanges={openExchanges} />
           </section>
         )}
 
