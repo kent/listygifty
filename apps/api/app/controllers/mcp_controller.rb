@@ -1311,7 +1311,7 @@ class McpController < ApplicationController
   end
 
   def ensure_exchange_editable!(exchange)
-    raise ArgumentError, "Published exchanges cannot be changed" unless exchange.editable?
+    raise ArgumentError, "An exchange can't be changed after names are drawn" unless exchange.editable?
 
     exchange
   end
