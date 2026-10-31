@@ -187,6 +187,19 @@ class AccountDeletionServiceTest < ActiveSupport::TestCase
     assert_not ExchangeNotification.exists?(notification.id)
   end
 
+  test "a photo on one of their ideas is queued for purging" do
+    organizer = person("organizer")
+    leaver = person("leaver")
+    _, (_organizer_row, leaver_row, _third_row) = drawn_exchange(organizer, leaver, person("third"))
+    idea = leaver_row.exchange_wishlist_items.create!(name: "Tea")
+    idea.photo.attach(io: StringIO.new("image"), filename: "tea.png", content_type: "image/png")
+    clear_enqueued_jobs
+
+    AccountDeletionService.delete!(leaver)
+
+    assert_enqueued_jobs 1, only: ActiveStorage::PurgeJob
+  end
+
   test "an exchange that has not drawn drops them instead of drawing a ghost" do
     organizer = person("organizer")
     leaver = person("leaver")
