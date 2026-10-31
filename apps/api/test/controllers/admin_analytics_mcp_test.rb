@@ -2,6 +2,9 @@ require "test_helper"
 
 class AdminAnalyticsMcpTest < ActionDispatch::IntegrationTest
   def setup
+    # The sample events are dated an hour or two back, so a run just after
+    # midnight UTC would find none of them "today". Hold the clock at midday.
+    travel_to Time.utc(2026, 6, 15, 12)
     @admin = User.create!(email: Admin::Authorization::DEFAULT_ADMIN_EMAIL, clerk_user_id: "analytics_admin", subscription_plan: "free")
     @key = ApiKey.generate_for(@admin, name: "Analytics Admin", scopes: [ "admin" ])
     @visitor = AnalyticsVisitor.create!(
