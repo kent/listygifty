@@ -10,6 +10,7 @@ const asInvitee = (user: (typeof E2E_USERS)[number]) => ({ name: user.firstName,
 const NANA = { name: "Nana Fenn", email: "listygifty.e2e+clerk_test_nanadecisions@example.com" };
 
 test("the decisions Kent picked work in a real browser", async ({ browser }, testInfo) => {
+  test.skip(Boolean(testInfo.project.use.isMobile), "Opens its own phone session.");
   test.setTimeout(420_000);
   resetLocalData();
   await clearMail();

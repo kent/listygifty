@@ -4,6 +4,7 @@ const MCP_OAUTH_URL = `${(process.env.NEXT_PUBLIC_API_URL || "https://api.listyg
 
 async function expectMcpOAuthCard(page: Page) {
   await page.goto("/settings");
+  await page.getByRole("button", { name: "Integrations" }).locator("visible=true").first().click();
 
   const card = page.getByTestId("mcp-oauth-url-card");
   await expect(card).toBeVisible();
@@ -25,7 +26,7 @@ async function expectMcpOAuthCard(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 }
 
-test("shows the MCP OAuth URL prominently in desktop settings", async ({ page }) => {
+test("shows the MCP OAuth URL in Integrations on desktop", async ({ page }) => {
   await expectMcpOAuthCard(page);
 });
 
