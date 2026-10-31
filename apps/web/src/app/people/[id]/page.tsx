@@ -53,7 +53,8 @@ import { captureWebEvent } from "@/lib/analytics";
 import { downloadIcsEvent } from "@/lib/calendar-download";
 import { toast } from "sonner";
 import type { PersonWithGifts, Gift, Holiday, RelationshipCategory, GiftSuggestion } from "@niftygifty/types";
-import { RELATIONSHIP_CATEGORIES } from "@niftygifty/types";
+import { useWorkspace } from "@/contexts/workspace-context";
+import { relationshipCategoriesFor } from "@/lib/relationship-categories";
 import { cn } from "@/lib/utils";
 
 type NavTab = "received" | "giving" | "holidays" | "suggestions" | "stats" | "about";
@@ -577,6 +578,7 @@ function VerticalNav({
 }
 
 export default function PersonDetailPage() {
+  const { currentWorkspace } = useWorkspace();
   const { isAuthenticated, isLoading: authLoading, user, signOut } = useAuth();
   const router = useRouter();
   const params = useParams();
@@ -847,7 +849,7 @@ export default function PersonDetailPage() {
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                {RELATIONSHIP_CATEGORIES.map((category) => (
+                {relationshipCategoriesFor(currentWorkspace?.workspace_type, person.relationship).map((category) => (
                   <SelectItem key={category} value={category} className="capitalize text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700">
                     {category}
                   </SelectItem>

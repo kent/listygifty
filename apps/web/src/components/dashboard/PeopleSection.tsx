@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Person } from "@niftygifty/types";
-import { RELATIONSHIP_CATEGORIES } from "@niftygifty/types";
+import { useWorkspace } from "@/contexts/workspace-context";
+import { relationshipCategoriesFor } from "@/lib/relationship-categories";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ function QuickAddForm({
 }: {
   onAdd: (name: string, relationship?: string) => Promise<void>;
 }) {
+  const { currentWorkspace } = useWorkspace();
   const [name, setName] = useState("");
   const [relationship, setRelationship] = useState("");
   const [isAdding, setIsAdding] = useState(false);
@@ -73,7 +75,7 @@ function QuickAddForm({
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent className="bg-slate-900 border-slate-700">
-                {RELATIONSHIP_CATEGORIES.map((cat) => (
+                {relationshipCategoriesFor(currentWorkspace?.workspace_type).map((cat) => (
                   <SelectItem
                     key={cat}
                     value={cat}

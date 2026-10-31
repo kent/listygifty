@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { RELATIONSHIP_CATEGORIES } from "@niftygifty/types";
+import { useWorkspace } from "@/contexts/workspace-context";
+import { relationshipCategoriesFor } from "@/lib/relationship-categories";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ interface NewPersonModalProps {
 }
 
 export function NewPersonModal({ open, onOpenChange, onSubmit }: NewPersonModalProps) {
+  const { currentWorkspace } = useWorkspace();
   const [name, setName] = useState("");
   const [relationship, setRelationship] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,7 +100,7 @@ export function NewPersonModal({ open, onOpenChange, onSubmit }: NewPersonModalP
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
-                {RELATIONSHIP_CATEGORIES.map((cat) => (
+                {relationshipCategoriesFor(currentWorkspace?.workspace_type, relationship).map((cat) => (
                   <SelectItem
                     key={cat}
                     value={cat}

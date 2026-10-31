@@ -1,6 +1,8 @@
 "use client";
 
 import { RELATIONSHIP_CATEGORIES } from "@niftygifty/types";
+import { useWorkspace } from "@/contexts/workspace-context";
+import { relationshipCategoriesFor } from "@/lib/relationship-categories";
 import { cn } from "@/lib/utils";
 
 export type RelationshipFilterValue = typeof RELATIONSHIP_CATEGORIES[number] | "all" | "other";
@@ -10,19 +12,20 @@ interface RelationshipFilterProps {
   onChange: (value: RelationshipFilterValue) => void;
 }
 
-const FILTER_OPTIONS: { value: RelationshipFilterValue; label: string }[] = [
-  { value: "all", label: "All" },
-  ...RELATIONSHIP_CATEGORIES.map((cat) => ({
-    value: cat,
-    label: cat.charAt(0).toUpperCase() + cat.slice(1),
-  })),
-  { value: "other", label: "Other" },
-];
-
 export function RelationshipFilter({ value, onChange }: RelationshipFilterProps) {
+  const { currentWorkspace } = useWorkspace();
+  const options: { value: RelationshipFilterValue; label: string }[] = [
+    { value: "all", label: "All" },
+    ...relationshipCategoriesFor(currentWorkspace?.workspace_type, value).map((cat) => ({
+      value: cat,
+      label: cat.charAt(0).toUpperCase() + cat.slice(1),
+    })),
+    { value: "other", label: "Other" },
+  ];
+
   return (
     <div className="flex flex-wrap gap-2 mb-4">
-      {FILTER_OPTIONS.map((option) => (
+      {options.map((option) => (
         <button
           key={option.value}
           onClick={() => onChange(option.value)}
