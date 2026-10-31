@@ -19,7 +19,7 @@
     "Production: all fixes deployed as 3e9f5f9 on Kent's go-ahead, after a clean production build, with no database migrations. Both services report that image, the deploy succeeded, health checks return 200, guest /w/ links open with no sign-in, logged-out visitors reach /login with their destination kept, and unknown pages show the new not-found page."
   ],
   "limits": [
-    "Production was checked from the outside only. No real account, wishlist or exchange was used, so the live checks prove routing and health, not each journey. The journeys themselves were proven on the identical code locally.",
+    "Production was checked from the outside only. The live login page loads and works on desktop and phone with no console errors or overflow, and guest links stay public, but nobody signed in, because that would email a real address. So production sign-in end to end, and each live journey, are untested. The journeys were proven on the identical code locally.",
     "The privacy fix was not checked against a real shared wishlist in production, because that means touching production data. The proof is the test, which fails on the old code, plus the deployed version.",
     "Real email delivery was not tested. Mail stopped at Mailpit by instruction, so Postmark, spam placement and real inboxes are unverified.",
     "Apple, Google, Facebook and LinkedIn sign-in were not tested. Only email codes were.",
@@ -34,7 +34,7 @@
     "Disk space ran out during testing and crashed Docker once. It only interrupted the fresh agent's run, and no final results came from that session.",
     "A phone tap problem appeared in about 1 in 10 journey runs during the audit. It was the audit's own screenshot setting, not the app: 60 of 60 phone runs passed once it was removed, and it only affected the test tool.",
     "Fresh agents are not real people, and their no-code rule was an instruction, not a technical block. Run the hallway test too.",
-    "A sign-in hang appeared in some automated runs. Clerk answered verification_not_sent, because the script typed the code before Clerk had sent it. A person has no code until the email arrives. At the same fast typing speed, but waiting for the code to be sent, 16 of 16 sign-ins that stayed online were clean, with no such errors. I planned 30, but this machine's internet kept dropping: two more runs hung as it went offline and weren't counted. A forced failure also proved that reloading and retyping recovers. Production sign-in itself is untested.",
+    "A sign-in hang appeared in some automated runs. Clerk answered verification_not_sent, because the script typed the code before Clerk had sent it, and a person has no code until the email arrives. At the same fast typing speed, but waiting for the code to be sent, 30 of 30 sign-ins were clean with zero errors. A forced failure also proved that reloading and retyping recovers.",
     "One final pass was interrupted when this machine lost its network connection, which stopped Clerk loading and Docker reaching its registry. That pass was discarded and the whole run repeated. The published results are from the clean rerun."
   ],
   "fresh": {
