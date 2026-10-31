@@ -1,12 +1,14 @@
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/theme";
+import { DeleteAccountSheet } from "@/components/DeleteAccountSheet";
 import { McpOAuthUrlCard } from "@/components/McpOAuthUrlCard";
-import { useProfileController } from "@/lib/controllers";
+import { useDeleteAccountController, useProfileController } from "@/lib/controllers";
 
 export default function ProfileScreen() {
   const { colors, colorScheme, setColorScheme, isDark } = useTheme();
   const controller = useProfileController();
+  const deletion = useDeleteAccountController();
 
   const themeOptions: Array<{ value: "system" | "light" | "dark"; label: string; icon: keyof typeof Ionicons.glyphMap }> = [
     { value: "system", label: "System", icon: "phone-portrait-outline" },
@@ -124,6 +126,41 @@ export default function ProfileScreen() {
         </View>
         <Ionicons name="chevron-forward" size={18} color={isDark ? "#fca5a5" : "#dc2626"} />
       </TouchableOpacity>
+
+      {controller.demo ? null : (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Delete Account"
+          onPress={deletion.open}
+          style={{
+            backgroundColor: colors.card,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+            paddingVertical: 16,
+            paddingHorizontal: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Ionicons name="trash-outline" size={18} color={isDark ? "#fca5a5" : "#dc2626"} />
+            <Text style={{ color: isDark ? "#fca5a5" : "#dc2626", fontSize: 16, fontWeight: "600" }}>
+              Delete Account
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={isDark ? "#fca5a5" : "#dc2626"} />
+        </TouchableOpacity>
+      )}
+
+      <DeleteAccountSheet
+        visible={deletion.visible}
+        deleting={deletion.deleting}
+        error={deletion.error}
+        onClose={deletion.close}
+        onConfirm={deletion.confirm}
+      />
     </ScrollView>
   );
 }
