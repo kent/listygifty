@@ -32,7 +32,14 @@ export const APP_THEMES = [
 
 export type AppThemeId = (typeof APP_THEMES)[number]["id"];
 
-export const DEFAULT_THEME: AppThemeId = "festive";
+const FESTIVE_MONTHS = [10, 11]; // November and December
+
+/** What someone sees until they choose a theme themselves. */
+export function defaultThemeFor(date: Date): AppThemeId {
+  return FESTIVE_MONTHS.includes(date.getMonth()) ? "festive" : "apple";
+}
+
+export const DEFAULT_THEME: AppThemeId = defaultThemeFor(new Date());
 export const THEME_IDS = APP_THEMES.map((theme) => theme.id) as AppThemeId[];
 
 export function isAppThemeId(value: unknown): value is AppThemeId {
