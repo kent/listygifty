@@ -1,4 +1,5 @@
 require "test_helper"
+require "minitest/mock"
 require "support/account_deletion_test_helpers"
 
 class AccountDeletionServiceTest < ActiveSupport::TestCase
@@ -273,6 +274,23 @@ class AccountDeletionServiceTest < ActiveSupport::TestCase
     AccountDeletionService.delete!(leaver)
 
     assert_not GiftExchange.exists?(exchange.id)
+  end
+
+  test "an exchange they ran in a shared workspace is cancelled, not silently dropped" do
+    leaver = person("leaver")
+    heir = person("heir")
+    workspace = Workspace.create!(name: "Family", workspace_type: "business", created_by_user: leaver)
+    workspace.workspace_memberships.create!(user: leaver, role: "owner")
+    share_workspace(workspace, heir)
+    exchange = GiftExchange.create!(name: "Shared draw", user: leaver, workspace: workspace, status: "inviting")
+    join_exchange(exchange, heir)
+
+    perform_enqueued_jobs { AccountDeletionService.delete!(leaver) }
+
+    assert Workspace.exists?(workspace.id)
+    assert_not GiftExchange.exists?(exchange.id)
+    told = ActionMailer::Base.deliveries.select { |mail| mail.subject.include?("Cancelled") }.flat_map(&:to)
+    assert_equal [ heir.email ], told
   end
 
   test "an exchange left behind in a workspace that goes is still cancelled properly" do
@@ -551,6 +569,18 @@ class AccountDeletionServiceTest < ActiveSupport::TestCase
     assert_no_enqueued_emails do
       assert_raises(AccountDeletionService::ClerkFailed) { AccountDeletionService.delete!(leaver) }
     end
+  end
+
+  test "Clerk is left alone when the local delete fails" do
+    leaver = person("leaver")
+    failure = ActiveRecord::RecordNotDestroyed.new("blocked", leaver)
+
+    leaver.stub(:destroy!, -> { raise failure }) do
+      assert_raises(ActiveRecord::RecordNotDestroyed) { AccountDeletionService.delete!(leaver) }
+    end
+
+    assert_empty @clerk_users.deletions
+    assert User.exists?(leaver.id)
   end
 
   test "Clerk already having no such user still finishes the deletion" do
