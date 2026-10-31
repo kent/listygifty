@@ -22,6 +22,8 @@ At $25 CAD/year, you need **40,000 paying users** to hit $1M. That's extremely h
 
 Every gift link = potential affiliate revenue
 
+**Rule:** If affiliate links ship, the original link keeps working and the app says plainly that it earns a commission. Having no ads or commission links is an advantage today. Distrust of sponsors came up 25 times across 6 review sources, and Giftful users complain about rewritten links that fail. See `docs/ux-audit/`.
+
 **Features:**
 - **Universal Link Enrichment** - Paste any product URL, auto-extract price/image/details and convert to affiliate link
 - **Amazon Product API** - Deep integration with search, one-click add to list
