@@ -827,5 +827,50 @@
       "ae4d8e7"
     ],
     "frames": []
+  },
+  {
+    "id": "empty-ready",
+    "severity": 2,
+    "journey": "Gift lists",
+    "title": "An empty list said Ready",
+    "heuristic": "Visibility of system status",
+    "problem": "The Recipients card said Ready and All gifts assigned on a list with no gifts.",
+    "repro": "Create a gift list and look at the summary before adding anything.",
+    "evidence": "Found by the first-time tester. The new test failed on the old code.",
+    "change": "An empty list now says Nobody yet and Add a gift to start.",
+    "commits": [
+      "c7c2b5e"
+    ],
+    "frames": []
+  },
+  {
+    "id": "people-tab",
+    "severity": 2,
+    "journey": "Navigation",
+    "title": "A people tab was named for something else",
+    "heuristic": "Match between system and the real world",
+    "problem": "The Favourites tab showed a count with nobody favourited, because it really lists people who have gifts.",
+    "repro": "Add a gift for someone, then open People.",
+    "evidence": "Found by first-time testers and traced in the code.",
+    "change": "The tab is now called Has Gifts, beside Needs Gifts.",
+    "commits": [
+      "5d13dd4"
+    ],
+    "frames": []
+  },
+  {
+    "id": "invite-explains",
+    "severity": 2,
+    "journey": "Email",
+    "title": "Invite emails never said what Listy Gifty is",
+    "heuristic": "Help and documentation",
+    "problem": "A relative who had never heard of the product got an invite that assumed they knew what it was.",
+    "repro": "Read an invite email.",
+    "evidence": "Found by the first-time tester. The email proof confirms it still sends with both parts.",
+    "change": "Added one line saying it is a free way to draw names.",
+    "commits": [
+      "ef1ec3b"
+    ],
+    "frames": []
   }
 ]
