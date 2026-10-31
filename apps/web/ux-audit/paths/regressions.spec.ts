@@ -61,7 +61,7 @@ test("fixes found late: each one proven in a real browser", async ({ browser }, 
     await expect(page.getByText("1/2 joined")).toBeVisible({ timeout: 15_000 });
     await acceptInvite(relative.page, parker.email);
     await expect(page.getByText("2/2 joined")).toBeVisible({ timeout: 25_000 });
-    await expect(action(page, /Publish Exchange/)).toBeVisible();
+    await expect(action(page, /Draw names/)).toBeVisible();
   });
 
   await journey.step("Home's checklist shows what was just added", page, async () => {
