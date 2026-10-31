@@ -28,7 +28,7 @@ interface PeopleNavProps {
 const NAV_ITEMS: { id: PeopleSection; label: string; icon: typeof Users }[] = [
   { id: "all", label: "All", icon: Users },
   { id: "needs-gifts", label: "Needs Gifts", icon: Gift },
-  { id: "favourites", label: "Favourites", icon: Star },
+  { id: "favourites", label: "Has Gifts", icon: Star },
   { id: "recent", label: "Recent", icon: Clock },
   { id: "family", label: "Family", icon: Heart },
   { id: "shared", label: "Shared", icon: Share2 },

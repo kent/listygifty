@@ -40,7 +40,7 @@ export function FavouritesSection({ people }: FavouritesSectionProps) {
       <RelationshipFilter value={filter} onChange={setFilter} />
       <PeopleList
         people={filteredPeople}
-        emptyTitle="No Favourites Yet"
+        emptyTitle="Nobody Has Gifts Yet"
         emptyDescription={
           filter === "all"
             ? "People with the most gifts will appear here"
