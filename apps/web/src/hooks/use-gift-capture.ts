@@ -31,6 +31,7 @@ export function useGiftCapture({
   const [cost, setCost] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [savingMode, setSavingMode] = useState<"done" | "another" | null>(null);
+  const [addingAnother, setAddingAnother] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const submittingRef = useRef(false);
   const saving = savingMode !== null;
@@ -75,6 +76,7 @@ export function useGiftCapture({
       setLink("");
       setCost("");
       setAdvancedOpen(false);
+      setAddingAnother(true);
       setStep("name");
       submittingRef.current = false;
       setSavingMode(null);
@@ -86,7 +88,7 @@ export function useGiftCapture({
   return {
     step, setStep, name, setName, recipientIds, setRecipientIds, giverIds, setGiverIds,
     resolvedStatusId, setStatusId, description, setDescription, link, setLink, cost, setCost,
-    advancedOpen, setAdvancedOpen, savingMode, saving, error, canSave, save,
+    advancedOpen, setAdvancedOpen, savingMode, addingAnother, saving, error, canSave, save,
     close: (open: boolean) => { if (!submittingRef.current) onOpenChange(open); },
   };
 }

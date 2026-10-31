@@ -28,8 +28,9 @@ function GiftCaptureDialog(props: NewGiftDialogProps) {
   const {
     step, setStep, name, setName, recipientIds, setRecipientIds, giverIds, setGiverIds,
     resolvedStatusId, setStatusId, description, setDescription, link, setLink, cost, setCost,
-    advancedOpen, setAdvancedOpen, savingMode, saving, error, canSave, save, close,
+    advancedOpen, setAdvancedOpen, savingMode, addingAnother, saving, error, canSave, save, close,
   } = useGiftCapture(props);
+  const carriedNames = addingAnother ? people.filter((person) => recipientIds.includes(person.id)).map((person) => person.name) : [];
   const detailsTitleRef = useRef<HTMLHeadingElement>(null);
 
   function next() {
@@ -67,6 +68,11 @@ function GiftCaptureDialog(props: NewGiftDialogProps) {
                 <Input id="new-gift-name" value={name} onChange={(event) => setName(event.target.value)}
                   placeholder="e.g., Nintendo Switch" autoFocus autoComplete="off" enterKeyHint="next"
                   className="h-14 text-base md:text-lg" />
+                {carriedNames.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    This next gift is still for {carriedNames.join(", ")}. You can change that on the next step.
+                  </p>
+                )}
               </div>
             ) : (
               <fieldset disabled={saving} className="space-y-5">

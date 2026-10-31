@@ -85,6 +85,14 @@ describe("quick gift capture", () => {
     expect(screen.getByRole("button", { name: /Advanced/ }).getAttribute("aria-expanded")).toBe("false");
   });
 
+  it("says who the next gift is for after Save & Add Another", async () => {
+    render(<NewGiftDialog {...props} initialRecipientIds={[7]} />);
+    expect(screen.queryByText(/still for Alex/)).toBeNull();
+    enterDetails();
+    fireEvent.click(screen.getByRole("button", { name: "Save & Add Another" }));
+    expect(await screen.findByText("This next gift is still for Alex. You can change that on the next step.")).toBeTruthy();
+  });
+
   it("prevents duplicate saves while a request is pending", async () => {
     let resolve!: (gift: Gift) => void;
     vi.mocked(giftsService.create).mockReturnValue(new Promise((res) => { resolve = res; }));

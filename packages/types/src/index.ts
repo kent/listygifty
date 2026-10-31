@@ -423,7 +423,10 @@ export interface GiftListSummary {
   statusCounts: GiftStatusSummary[];
 }
 
+const BOUGHT_STATUS_TERMS = ["purchased", "bought"] as const;
+
 const COMPLETE_STATUS_TERMS = [
+  ...BOUGHT_STATUS_TERMS,
   "complete",
   "completed",
   "delivered",
@@ -458,11 +461,15 @@ function getCompletionStatusIds(statuses: GiftStatus[]): Set<number> {
     return new Set();
   }
 
+  // Buying the gift is the work a person tracks, so everything from that step on counts.
   const sortedStatuses = sortStatusesByPosition(statuses);
-  const lastPosition = sortedStatuses[sortedStatuses.length - 1]?.position;
+  const bought = sortedStatuses.find((status) =>
+    BOUGHT_STATUS_TERMS.some((term) => status.name.toLowerCase().includes(term))
+  );
+  const firstCompletePosition = bought?.position ?? sortedStatuses[sortedStatuses.length - 1]?.position;
   return new Set(
     sortedStatuses
-      .filter((status) => status.position === lastPosition)
+      .filter((status) => status.position >= firstCompletePosition)
       .map((status) => status.id)
   );
 }
