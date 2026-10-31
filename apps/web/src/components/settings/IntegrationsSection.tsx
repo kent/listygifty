@@ -8,6 +8,7 @@ import { Plug, ExternalLink, Trash2, RefreshCw, KeyRound } from "lucide-react";
 import type { OAuthConnection } from "@niftygifty/types";
 import { oauthConnectionsService } from "@/services";
 import { RUNNER_MCP_CONFIG } from "@/lib/mcp";
+import { McpOAuthUrlCard } from "./McpOAuthUrlCard";
 
 function formatConnectionDate(value: string | null): string | null {
   if (!value) {
@@ -65,6 +66,8 @@ export function IntegrationsSection({ onOpenApiKeys }: IntegrationsSectionProps)
           Connect MCP-compatible assistants to help update lists, review budgets, and keep gift work moving.
         </p>
       </div>
+
+      <McpOAuthUrlCard />
 
       {/* Authentication */}
       <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">

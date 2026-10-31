@@ -15,7 +15,6 @@ import {
   CompanySection,
   ApiKeysSection,
   IntegrationsSection,
-  McpOAuthUrlCard,
   SettingsNav,
   type SettingsSection,
 } from "@/components/settings";
@@ -67,10 +66,6 @@ export default function SettingsPage() {
               </p>
             </div>
           </div>
-        </div>
-
-        <div className="mb-8 max-w-5xl">
-          <McpOAuthUrlCard />
         </div>
 
         {/* Main Content */}
