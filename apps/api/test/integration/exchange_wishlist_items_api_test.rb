@@ -125,6 +125,19 @@ class ExchangeWishlistItemsApiTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "destroy removes a wishlist item a giver was notified about" do
+    notification = @exchange.exchange_notifications.create!(
+      recipient_participant: @participant, exchange_wishlist_item: @wishlist_item, kind: "wishlist_item_added"
+    )
+
+    delete gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+      headers: @auth_headers,
+      as: :json
+
+    assert_response :success
+    assert_not ExchangeNotification.exists?(notification.id)
+  end
+
   test "direct upload and disk write endpoints are disabled" do
     assert_no_difference("ActiveStorage::Blob.count") do
       post "/rails/active_storage/direct_uploads",

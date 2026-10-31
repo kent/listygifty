@@ -10,6 +10,7 @@ class Holiday < ApplicationRecord
   has_many :gift_changes, dependent: :destroy
   has_many :gift_suggestions, dependent: :nullify
   has_many :match_arrangements, dependent: :destroy
+  has_many :email_deliveries, dependent: :nullify
 
   validates :name, presence: true, length: { maximum: 200 }
   validates :icon, length: { maximum: 50 }, allow_blank: true

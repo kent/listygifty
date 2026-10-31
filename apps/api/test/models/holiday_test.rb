@@ -24,4 +24,15 @@ class HolidayTest < ActiveSupport::TestCase
     holiday.destroy
     assert_nil Gift.find_by(id: gift_id)
   end
+
+  test "destroying a holiday keeps the record of reminders sent about it" do
+    holiday = holidays(:christmas)
+    delivery = EmailDelivery.log_sent!(
+      user: users(:one), kind: "pending_gifts", subject: "Reminder", dedupe_key: "holiday-test", holiday: holiday
+    )
+
+    holiday.destroy!
+
+    assert_nil delivery.reload.holiday_id
+  end
 end

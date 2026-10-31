@@ -3,6 +3,7 @@ class ExchangeWishlistItem < ApplicationRecord
   MAX_PHOTO_STORAGE_PER_USER_BYTES = 50 * 1024 * 1024
   ALLOWED_PHOTO_TYPES = %w[image/jpeg image/png image/webp image/gif].freeze
   belongs_to :exchange_participant
+  has_many :exchange_notifications, dependent: :destroy
   has_one_attached :photo
 
   validates :name, presence: true, length: { maximum: 500 }
