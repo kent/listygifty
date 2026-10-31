@@ -16,7 +16,7 @@
     "Database: Journey 2 confirms the saved draw is valid, and no background job failed.",
     "Test suites: on ef1ec3b, bin/local-preview e2e passed 6 of 6 and npm test passed 7 of 7 tasks including 307 web tests. Rails passed 624 runs with 0 failures on d2c2bcc, which changed only one test.",
     "Dashboard date fix: confirmed in a real browser. A Christmas list started from Home now reads Friday, December 25, 2026.",
-    "Production: all fixes deployed as 3e9f5f9 on Kent's go-ahead, after a clean production build, with no database migrations. Both services report that image, the deploy succeeded, health checks return 200, guest /w/ links open with no sign-in, logged-out visitors reach /login with their destination kept, and unknown pages show the new not-found page."
+    "Production: all 44 fixes are live on 05cae17 with no database migrations, deployed on Kent's go-ahead. Both services report that image, the deploy's smoke tests passed, and the site and API answer. The last three fixes were checked locally. Their text sits behind sign-in or inside a real email, so it was not read on the live site."
   ],
   "limits": [
     "Production was checked from the outside only. The live login page loads and works on desktop and phone with no console errors or overflow, and guest links stay public, but nobody signed in, because that would email a real address. So production sign-in end to end, and each live journey, are untested. The journeys were proven on the identical code locally.",
