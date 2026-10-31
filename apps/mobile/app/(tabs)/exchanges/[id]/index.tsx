@@ -370,7 +370,7 @@ export default function ExchangeDetailScreen() {
             <Ionicons name="shuffle-outline" size={24} color={colors.success} />
             <View>
               <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600" }}>
-                Draw Matches
+                Draw names
               </Text>
               <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
                 Assign participants and send match emails

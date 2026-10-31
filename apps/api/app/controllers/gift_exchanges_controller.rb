@@ -53,7 +53,7 @@ class GiftExchangesController < ApplicationController
   end
 
   def publish
-    return render_error("Exchange is not ready to publish", status: :unprocessable_entity) unless @gift_exchange.can_publish?
+    return render_error("This exchange isn't ready to draw names", status: :unprocessable_entity) unless @gift_exchange.can_publish?
 
     ExchangeDrawingService.new(@gift_exchange).publish!
 
@@ -108,7 +108,7 @@ class GiftExchangesController < ApplicationController
   def require_editable
     return if @gift_exchange.editable?
 
-    render_error("Published exchanges cannot be changed", status: :unprocessable_entity)
+    render_error("An exchange can't be changed after names are drawn", status: :unprocessable_entity)
   end
 
   def gift_exchange_params

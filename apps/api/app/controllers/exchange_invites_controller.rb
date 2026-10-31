@@ -28,7 +28,7 @@ class ExchangeInvitesController < ApplicationController
   def accept
     @participant.gift_exchange.with_lock do
       @participant.reload
-      return render_error("This exchange has already been published") unless @participant.gift_exchange.status == "inviting"
+      return render_error("Names have already been drawn for this exchange") unless @participant.gift_exchange.status == "inviting"
       return render_error("This invite has already been accepted") if @participant.status == "accepted"
       return render_error("This invite has been declined") if @participant.status == "declined"
 
@@ -56,7 +56,7 @@ class ExchangeInvitesController < ApplicationController
   def decline
     @participant.gift_exchange.with_lock do
       @participant.reload
-      return render_error("This exchange has already been published") unless @participant.gift_exchange.status == "inviting"
+      return render_error("Names have already been drawn for this exchange") unless @participant.gift_exchange.status == "inviting"
       return render_error("This invite has already been responded to") if @participant.status != "invited"
 
       @participant.decline!

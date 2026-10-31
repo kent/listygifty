@@ -51,7 +51,7 @@ class ExchangeParticipantsController < ApplicationController
 
   def resend_invite
     @gift_exchange.with_lock do
-      return render_error("Published exchanges cannot be changed") unless @gift_exchange.editable?
+      return render_error("An exchange can't be changed after names are drawn") unless @gift_exchange.editable?
       @participant.reload
       return render_error("Participant has already accepted") if @participant.status == "accepted"
 
@@ -87,7 +87,7 @@ class ExchangeParticipantsController < ApplicationController
   def require_editable
     return if @gift_exchange.editable?
 
-    render_error("Published exchanges cannot be changed", status: :unprocessable_entity)
+    render_error("An exchange can't be changed after names are drawn", status: :unprocessable_entity)
   end
 
   def participant_response_view

@@ -125,10 +125,10 @@ test("five users complete a private exchange lifecycle with real local mail", as
   await addExclusion(page, E2E_USERS[0], E2E_USERS[1]);
   await addExclusion(page, E2E_USERS[2], E2E_USERS[3]);
 
-  await page.getByRole("button", { name: "Publish Exchange" }).click();
+  await page.getByRole("button", { name: "Draw names" }).click();
   const publishDialog = page.getByRole("dialog");
   await expect(publishDialog.getByText("2 exclusion rules")).toBeVisible();
-  await publishDialog.getByRole("button", { name: "Publish Exchange" }).click();
+  await publishDialog.getByRole("button", { name: "Draw names" }).click();
   await expect(page.getByText("active", { exact: true })).toBeVisible();
 
   await expect
@@ -243,8 +243,8 @@ test("five users complete a private exchange lifecycle with real local mail", as
   await expect(page.getByRole("button", { name: "Add", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Add Rule" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Publish Exchange" }).click();
-  await page.getByRole("dialog").getByRole("button", { name: "Publish Exchange" }).click();
+  await page.getByRole("button", { name: "Draw names" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Draw names" }).click();
   await expect(page.getByText("active", { exact: true })).toBeVisible();
   await expect
     .poll(async () => (await mailpitMessages(request)).messages.filter((message) =>
@@ -294,9 +294,9 @@ test("two joined users can publish and are matched to each other", async ({
 
   await page.reload();
   await expect(page.getByText("2/2 joined")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Publish Exchange" })).toBeVisible();
-  await page.getByRole("button", { name: "Publish Exchange" }).click();
-  await page.getByRole("dialog").getByRole("button", { name: "Publish Exchange" }).click();
+  await expect(page.getByRole("button", { name: "Draw names" })).toBeVisible();
+  await page.getByRole("button", { name: "Draw names" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Draw names" }).click();
   await expect(page.getByText("active", { exact: true })).toBeVisible();
 
   await expect

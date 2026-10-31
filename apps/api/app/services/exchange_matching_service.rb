@@ -116,6 +116,6 @@ class ExchangeMatchingService
   end
 
   def invalid_status_message
-    @redraw ? "Only a published exchange can be redrawn" : "Exchange is not in inviting status"
+    @redraw ? "Names have to be drawn before they can be redrawn" : "Exchange is not in inviting status"
   end
 end

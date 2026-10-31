@@ -341,9 +341,9 @@ export default function ExchangeDetailPage({
       const updated = await giftExchangesService.publish(exchange.id);
       setExchange(updated);
       setShowStartDialog(false);
-      toast.success("Exchange published! Participants have been emailed to reveal their matches.");
+      toast.success("Names drawn! Everyone has been emailed to see who they got.");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to publish exchange";
+      const message = err instanceof Error ? err.message : "Failed to draw names";
       toast.error(message);
     } finally {
       setStarting(false);
@@ -360,7 +360,7 @@ export default function ExchangeDetailPage({
       setShowRedoDialog(false);
       toast.success(
         mode === "reopen"
-          ? "Exchange reopened. Make your changes, then publish when you’re ready."
+          ? "Exchange reopened. Make your changes, then draw names when you’re ready."
           : "Names redrawn. Everyone has a new match and a fresh email."
       );
     } catch (err: unknown) {
@@ -495,12 +495,12 @@ export default function ExchangeDetailPage({
               <DialogTrigger asChild>
                 <Button className={PUBLISH_BUTTON}>
                   <Play className="h-4 w-4 mr-2" />
-                  Publish Exchange
+                  Draw names
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                 <DialogHeader>
-                  <DialogTitle className="text-slate-900 dark:text-white">Publish Gift Exchange?</DialogTitle>
+                  <DialogTitle className="text-slate-900 dark:text-white">Draw names?</DialogTitle>
                 </DialogHeader>
                 <div className="py-4">
                   <DialogDescription className="text-slate-600 dark:text-slate-400">
@@ -509,7 +509,7 @@ export default function ExchangeDetailPage({
                     draw later, but everyone will get a new match and a new email.
                   </DialogDescription>
                   <div className="mt-4 p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                    <p className="text-sm text-slate-900 dark:text-white font-medium mb-2">Ready to publish:</p>
+                    <p className="text-sm text-slate-900 dark:text-white font-medium mb-2">Ready to draw:</p>
                     <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
                       <li>• {pluralize(exchange.accepted_count, "joined participant")}</li>
                       <li>• {pluralize(pendingCount, "pending invitation")} will close</li>
@@ -526,7 +526,7 @@ export default function ExchangeDetailPage({
                     disabled={starting}
                     className={PUBLISH_BUTTON}
                   >
-                    {starting ? "Publishing..." : "Publish Exchange"}
+                    {starting ? "Drawing..." : "Draw names"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -565,7 +565,7 @@ export default function ExchangeDetailPage({
                     </span>
                     <span className="mt-1 block text-sm text-slate-600 dark:text-slate-400">
                       Keep joined people accepted, reopen unused invites, and clear the old matches.
-                      You can add people or change the exclusion rules before publishing again.
+                      You can add people or change the exclusion rules before drawing names again.
                     </span>
                   </button>
                   <button

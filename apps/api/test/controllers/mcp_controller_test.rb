@@ -761,14 +761,14 @@ class McpControllerTest < ActionDispatch::IntegrationTest
       email: "too-late-mcp@example.com"
     })
     assert late_invite["isError"]
-    assert_equal "Published exchanges cannot be changed", tool_payload(late_invite)["error"]
+    assert_equal "An exchange can't be changed after names are drawn", tool_payload(late_invite)["error"]
 
     late_update = call_tool("update_gift_exchange", {
       exchange_id: exchange.id,
       name: "Changed After Publish"
     })
     assert late_update["isError"]
-    assert_equal "Published exchanges cannot be changed", tool_payload(late_update)["error"]
+    assert_equal "An exchange can't be changed after names are drawn", tool_payload(late_update)["error"]
 
     participant_roster = tool_payload(call_tool(
       "list_exchange_participants",

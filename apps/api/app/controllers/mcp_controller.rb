@@ -777,7 +777,7 @@ class McpController < ApplicationController
           participant = ExchangeParticipant.find_by!(invite_token: args["invite_token"])
           participant.gift_exchange.with_lock do
             participant.reload
-            raise ArgumentError, "This exchange has already been published" unless participant.gift_exchange.status == "inviting"
+            raise ArgumentError, "Names have already been drawn for this exchange" unless participant.gift_exchange.status == "inviting"
             raise ArgumentError, "This invite has already been accepted" if participant.status == "accepted"
             raise ArgumentError, "This invite has been declined" if participant.status == "declined"
             participant.accept!(@current_user)
@@ -794,7 +794,7 @@ class McpController < ApplicationController
           participant = ExchangeParticipant.find_by!(invite_token: args["invite_token"])
           participant.gift_exchange.with_lock do
             participant.reload
-            raise ArgumentError, "This exchange has already been published" unless participant.gift_exchange.status == "inviting"
+            raise ArgumentError, "Names have already been drawn for this exchange" unless participant.gift_exchange.status == "inviting"
             raise ArgumentError, "This invite has already been responded to" unless participant.status == "invited"
             participant.decline!
           end

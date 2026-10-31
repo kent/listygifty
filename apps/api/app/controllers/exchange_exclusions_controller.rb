@@ -46,7 +46,7 @@ class ExchangeExclusionsController < ApplicationController
   def require_editable
     return if @gift_exchange.editable?
 
-    render_error("Published exchanges cannot be changed", status: :unprocessable_entity)
+    render_error("An exchange can't be changed after names are drawn", status: :unprocessable_entity)
   end
 
   def exclusion_params

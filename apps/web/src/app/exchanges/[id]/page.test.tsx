@@ -347,7 +347,7 @@ describe("the next step line", () => {
 });
 
 describe("keeping the exchange current after roster changes", () => {
-  it("shows the new status and Publish after adding someone", async () => {
+  it("shows the new status and Draw names after adding someone", async () => {
     const newcomer = person(3, "Bea");
     mocks.getBySlug
       .mockResolvedValueOnce(exchangeWith({ status: "draft" }))
@@ -362,13 +362,13 @@ describe("keeping the exchange current after roster changes", () => {
 
     await renderPage();
     expect(screen.getByText("draft")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Publish Exchange" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Draw names" })).toBeNull();
 
     await addPerson("Bea");
 
     expect(await screen.findByText("inviting")).toBeTruthy();
     expect(screen.queryByText("draft")).toBeNull();
-    expect(screen.getByRole("button", { name: "Publish Exchange" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Draw names" })).toBeTruthy();
     expect(screen.getByText("2/3 joined")).toBeTruthy();
   });
 
@@ -397,12 +397,12 @@ describe("keeping the exchange current after roster changes", () => {
       .mockResolvedValueOnce(exchangeWith({ status: "inviting", exchange_participants: [organizer] }));
 
     await renderPage();
-    expect(screen.getByRole("button", { name: "Publish Exchange" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Draw names" })).toBeTruthy();
 
     await removePerson("Ana");
 
     await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Publish Exchange" })).toBeNull()
+      expect(screen.queryByRole("button", { name: "Draw names" })).toBeNull()
     );
     expect(screen.getByText("1/1 joined")).toBeTruthy();
   });
@@ -531,7 +531,7 @@ describe("the publish dialog", () => {
 
   async function openPublishDialog() {
     await renderPage();
-    fireEvent.click(screen.getByRole("button", { name: "Publish Exchange" }));
+    fireEvent.click(screen.getByRole("button", { name: "Draw names" }));
     return screen.findByRole("dialog");
   }
 

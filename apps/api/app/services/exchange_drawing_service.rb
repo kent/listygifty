@@ -45,7 +45,7 @@ class ExchangeDrawingService
   def require_published!
     return if %w[active completed].include?(@exchange.status)
 
-    raise RedoError, "Only a published exchange can be redone"
+    raise RedoError, "Names have to be drawn before an exchange can be redone"
   end
 
   def deliver_assignments
