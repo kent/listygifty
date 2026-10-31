@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { exchangeInvitesService, AUTH_ROUTES } from "@/services";
+import { rememberInvitee } from "@/lib/invite-signup";
 import { ApiError } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -305,7 +306,11 @@ export default function JoinExchangePage({
                     Sign In
                   </Button>
                 </Link>
-                <Link href={`${AUTH_ROUTES.signUp}?redirect_url=${authReturn}`} className="flex-1">
+                <Link
+                  href={`${AUTH_ROUTES.signUp}?redirect_url=${authReturn}`}
+                  onClick={() => rememberInvitee(invite.participant)}
+                  className="flex-1"
+                >
                   <Button className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500">
                     Sign Up
                   </Button>

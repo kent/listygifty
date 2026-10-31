@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { AUTH_ROUTES } from "@/services";
+import { inviteeSignUpValues } from "@/lib/invite-signup";
 
 // Dynamically import SignUp to avoid SSR issues with Clerk
 const SignUp = dynamic(
@@ -24,6 +25,7 @@ export default function SignupPage() {
         path={AUTH_ROUTES.signUp}
         signInUrl={AUTH_ROUTES.signIn}
         fallbackRedirectUrl={AUTH_ROUTES.afterSignUp}
+        initialValues={inviteeSignUpValues()}
       />
     </div>
   );

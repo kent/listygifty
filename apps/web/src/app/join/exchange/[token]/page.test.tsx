@@ -1,3 +1,4 @@
+import { inviteeSignUpValues } from "@/lib/invite-signup";
 import { Suspense } from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -58,6 +59,12 @@ describe("exchange invite page", () => {
     const signUp = screen.getByRole("link", { name: "Sign Up" });
     expect(signIn.getAttribute("href")).toBe("/login?redirect_url=%2Fjoin%2Fexchange%2Finvite-token");
     expect(signUp.getAttribute("href")).toBe("/signup?redirect_url=%2Fjoin%2Fexchange%2Finvite-token");
+  });
+
+  it("remembers who was invited so sign-up can fill them in", async () => {
+    await renderPage();
+    fireEvent.click(screen.getByRole("link", { name: "Sign Up" }));
+    expect(inviteeSignUpValues()).toEqual({ emailAddress: "alex@example.com", firstName: "Alex" });
   });
 
   it("explains the app to a logged-out stranger above the sign-in sentence", async () => {
