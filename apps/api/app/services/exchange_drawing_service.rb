@@ -17,6 +17,9 @@ class ExchangeDrawingService
 
       participants = @exchange.exchange_participants
       participants.update_all(matched_participant_id: nil, updated_at: Time.current)
+      # Only a draw kept these rows. Left in place they would read as invited,
+      # and the organizer could resend an invite to an address that can't exist.
+      participants.anonymized.destroy_all
       participants.where.not(user_id: nil).update_all(status: "accepted", updated_at: Time.current)
       participants.where(user_id: nil).update_all(status: "invited", updated_at: Time.current)
       @exchange.exchange_notifications.delete_all

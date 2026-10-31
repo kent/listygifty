@@ -1,5 +1,9 @@
 class ExchangeParticipantBlueprint < ApplicationBlueprint
-  fields :name, :email, :status, :created_at, :updated_at
+  fields :name, :status, :created_at, :updated_at
+
+  field :email do |participant|
+    participant.anonymized? ? "" : participant.email
+  end
 
   def self.render_roster_as_hash(participants)
     render_as_hash(participants).map { |participant| participant.except(:email, "email") }

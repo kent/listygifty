@@ -80,11 +80,12 @@ class GiftExchange < ApplicationRecord
 
   def capabilities_for(check_user)
     participant = participant_for(check_user)
+    matched = participant&.matched_participant_id.present? && %w[active completed].include?(status)
     {
       organize: owner?(check_user),
       participate: participant.present?,
-      view_match: participant&.matched_participant_id.present? && %w[active completed].include?(status),
-      nudge_match: participant&.matched_participant_id.present? && %w[active completed].include?(status),
+      view_match: matched,
+      nudge_match: matched && !participant.matched_participant.anonymized?,
       publish: owner?(check_user) && can_publish?,
       redo: owner?(check_user) && %w[active completed].include?(status),
       delete: owner?(check_user)

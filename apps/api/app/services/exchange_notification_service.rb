@@ -35,6 +35,7 @@ class ExchangeNotificationService
     exchange = giver.gift_exchange
     raise NudgeError, "Matching has not been published" unless %w[active completed].include?(exchange.status)
     raise NudgeError, "You do not have an assigned match" unless giver.matched_participant
+    raise NudgeError, "Your match no longer has an account" if giver.matched_participant.anonymized?
 
     recipient = giver.matched_participant
     recipient.with_lock do

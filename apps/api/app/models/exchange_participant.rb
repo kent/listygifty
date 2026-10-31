@@ -1,5 +1,8 @@
 class ExchangeParticipant < ApplicationRecord
   STATUSES = %w[invited accepted declined].freeze
+  ANONYMIZED_NAME = "Former member".freeze
+  # .invalid is reserved (RFC 2606), so this can never reach a real mailbox.
+  ANONYMIZED_EMAIL_DOMAIN = "deleted.invalid".freeze
 
   belongs_to :gift_exchange
   belongs_to :user, optional: true
@@ -31,6 +34,32 @@ class ExchangeParticipant < ApplicationRecord
   scope :invited, -> { where(status: "invited") }
   scope :accepted, -> { where(status: "accepted") }
   scope :declined, -> { where(status: "declined") }
+  scope :anonymized, -> { where("email LIKE ?", "%@#{ANONYMIZED_EMAIL_DOMAIN}") }
+
+  def anonymized?
+    email.to_s.end_with?("@#{ANONYMIZED_EMAIL_DOMAIN}")
+  end
+
+  # True once a draw depends on this row, either way round.
+  def in_draw?
+    matched_participant_id.present? || matched_by_participants.exists?
+  end
+
+  # For someone who deleted their account while a draw depends on their row.
+  # The row stays so the draw holds, and everything that identifies them goes.
+  # Declined keeps them out of redraws and out of every email, and the new
+  # token kills any invite link still sitting in an inbox.
+  def anonymize!
+    exchange_wishlist_items.destroy_all
+    exchange_notifications.destroy_all
+    update!(
+      user: nil,
+      name: anonymized_name,
+      email: "deleted-#{id}@#{ANONYMIZED_EMAIL_DOMAIN}",
+      status: "declined",
+      invite_token: SecureRandom.urlsafe_base64(32)
+    )
+  end
 
   def accept!(accepting_user)
     update!(user: accepting_user, status: "accepted")
@@ -56,6 +85,14 @@ class ExchangeParticipant < ApplicationRecord
   end
 
   private
+
+  # The giver still has to recognize who they drew, so a first name stays. It
+  # comes from the row, never the account, and join links can store an email
+  # address as the name, which must not survive.
+  def anonymized_name
+    first_word = name.to_s.split.first
+    first_word.nil? || first_word.include?("@") ? ANONYMIZED_NAME : first_word
+  end
 
   def generate_invite_token
     self.invite_token ||= SecureRandom.urlsafe_base64(32)
