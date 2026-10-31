@@ -2,6 +2,7 @@ import { apiClient } from "@/lib/api-client";
 import {
   WISHLIST_API_ENDPOINTS,
   type Wishlist,
+  type WishlistVisibility,
   type WishlistWithItems,
   type CreateWishlistRequest,
   type UpdateWishlistRequest,
@@ -43,8 +44,8 @@ class WishlistsService {
     return apiClient.post<ShareWishlistResponse>(WISHLIST_API_ENDPOINTS.shareWishlist(id));
   }
 
-  async revokeShare(id: number): Promise<{ message: string; visibility: string }> {
-    return apiClient.delete<{ message: string; visibility: string }>(WISHLIST_API_ENDPOINTS.revokeShare(id));
+  async revokeShare(id: number): Promise<{ message: string; visibility: WishlistVisibility }> {
+    return apiClient.delete<{ message: string; visibility: WishlistVisibility }>(WISHLIST_API_ENDPOINTS.revokeShare(id));
   }
 
   async revealClaims(id: number): Promise<RevealClaimsResponse> {

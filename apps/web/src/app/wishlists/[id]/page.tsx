@@ -271,6 +271,8 @@ function ItemCard({
 export default function WishlistDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [madeShared, setMadeShared] = useState(false);
+  const [turningOffLink, setTurningOffLink] = useState(false);
   const [showAddItemDialog, setShowAddItemDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<StandaloneWishlistItem | null>(null);
   const [copied, setCopied] = useState(false);
@@ -305,7 +307,9 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
     if (!wishlist) return;
 
     try {
+      const wasPrivate = wishlist.visibility === "private";
       const result = await wishlistsService.share(wishlist.id);
+      setMadeShared(wasPrivate);
       setWishlist({
         ...wishlist,
         share_token: result.share_token,
@@ -315,6 +319,22 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
       setShowShareDialog(true);
     } catch {
       toast.error("Failed to create share link");
+    }
+  };
+
+  const turnOffLink = async () => {
+    if (!wishlist) return;
+
+    setTurningOffLink(true);
+    try {
+      const result = await wishlistsService.revokeShare(wishlist.id);
+      setWishlist({ ...wishlist, share_token: null, share_url: null, visibility: result.visibility });
+      setShowShareDialog(false);
+      toast.success("Link turned off. This list is private again.");
+    } catch {
+      toast.error("Failed to turn off the link");
+    } finally {
+      setTurningOffLink(false);
     }
   };
 
@@ -688,6 +708,11 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
               Anyone with this link can view your wishlist and claim items.
             </DialogDescription>
           </DialogHeader>
+          {madeShared && (
+            <p role="status" className="rounded-md border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+              This list was private. It is now shared.
+            </p>
+          )}
           <div className="flex gap-2">
             <Input
               value={wishlist.share_url || ""}
@@ -700,6 +725,9 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
             </Button>
           </div>
           <DialogFooter>
+            <Button variant="outline" disabled={turningOffLink} onClick={turnOffLink}>
+              Turn off link
+            </Button>
             <Button variant="outline" onClick={() => setShowShareDialog(false)}>
               Done
             </Button>

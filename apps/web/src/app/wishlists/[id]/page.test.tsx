@@ -7,10 +7,11 @@ import WishlistDetailPage from "./page";
 const mocks = vi.hoisted(() => ({
   wishlist: null as unknown,
   share: vi.fn(),
+  revokeShare: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
-vi.mock("@/services", () => ({ wishlistsService: { share: mocks.share } }));
+vi.mock("@/services", () => ({ wishlistsService: { share: mocks.share, revokeShare: mocks.revokeShare } }));
 vi.mock("@/hooks", () => ({
   useWorkspaceData: () => ({
     data: mocks.wishlist,
@@ -63,6 +64,33 @@ beforeEach(() => {
     share_token: "abc",
     share_url: "https://listygifty.test/w/abc",
     visibility: "shared",
+  });
+});
+
+describe("sharing a wishlist", () => {
+  const openShare = () => act(async () => { fireEvent.click(screen.getByLabelText("Share")); });
+
+  it("says so when Share makes a private list shared", async () => {
+    mocks.wishlist = wishlist({ visibility: "private" });
+    await renderPage();
+    await openShare();
+    expect(screen.getByText("This list was private. It is now shared.")).toBeTruthy();
+  });
+
+  it("doesn't say so for a list that was already shared", async () => {
+    mocks.wishlist = wishlist({ visibility: "shared" });
+    await renderPage();
+    await openShare();
+    expect(screen.queryByText("This list was private. It is now shared.")).toBeNull();
+  });
+
+  it("turns the link off from the share dialog", async () => {
+    mocks.revokeShare.mockReset().mockResolvedValue({ message: "Share link revoked", visibility: "private" });
+    await renderPage();
+    await openShare();
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Turn off link" })); });
+    expect(mocks.revokeShare).toHaveBeenCalledWith(7);
+    expect(screen.queryByRole("textbox", { name: "Share link" })).toBeNull();
   });
 });
 
