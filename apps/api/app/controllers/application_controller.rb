@@ -1,6 +1,8 @@
 class ApplicationController < ActionController::API
   include ApiKeyAuthenticatable
 
+  class ClerkUserMissing < StandardError; end
+
   CLERK_PROFILE_SYNC_INTERVAL = 24.hours
 
   before_action :authenticate!
@@ -70,6 +72,8 @@ class ApplicationController < ActionController::API
   rescue ActiveRecord::RecordInvalid => e
     Rails.logger.error "Failed to create user: #{e.message}"
     render_unauthorized
+  rescue ClerkUserMissing
+    render_unauthorized
   end
 
   # A new user's first page fires several requests at once, and they can all miss
@@ -78,7 +82,7 @@ class ApplicationController < ActionController::API
   # With no row for this Clerk user, the record really is invalid.
   def find_or_create_clerk_user!(clerk_user_id, token_email:)
     User.find_or_create_by!(clerk_user_id: clerk_user_id) do |u|
-      clerk_user = fetch_clerk_user(clerk_user_id)
+      clerk_user = fetch_clerk_user(clerk_user_id, required: true)
       apply_clerk_data(u, clerk_user, clerk_user_id, token_email: token_email)
       u.subscription_plan = "free"
       u.clerk_profile_synced_at = Time.current
@@ -106,10 +110,16 @@ class ApplicationController < ActionController::API
     nil
   end
 
-  def fetch_clerk_user(clerk_user_id)
+  # A session token outlives its user by up to a minute, so a request still in
+  # flight after an account deletion arrives with a valid token and no row.
+  # required: stops that recreating the account and sending a welcome email.
+  # Any other Clerk failure stays soft, so an outage can't block new sign-ups.
+  def fetch_clerk_user(clerk_user_id, required: false)
     return nil unless ENV["CLERK_SECRET_KEY"].present?
     Clerk::SDK.new.users.get(user_id: clerk_user_id).user
   rescue StandardError => e
+    raise ClerkUserMissing if required && AccountDeletionService.clerk_user_missing?(e)
+
     Rails.logger.warn "Failed to fetch Clerk user: #{e.message}"
     nil
   end
