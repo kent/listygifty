@@ -3,7 +3,7 @@
   "found": 57,
   "fixed": 41,
   "open": 16,
-  "summary": "On the starting code, only 4 of 20 journey runs passed, all of them gift lists. A new relative lost their invite at sign-up, guests could not open shared links, wishlists had no menu entry, and the exchange page ran off the side of phones. On the final commit, all 20 runs pass at 1440px and 390px in both themes, with retries off. One privacy fix is live in production. Everything else is on the ux-audit branch and not deployed.",
+  "summary": "On the starting code, only 4 of 20 journey runs passed, all of them gift lists. A new relative lost their invite at sign-up, guests could not open shared links, wishlists had no menu entry, and the exchange page ran off the side of phones. On the final commit, all 20 runs pass at 1440px and 390px in both themes, with retries off. All 41 fixes are live in production as of October 30, 2026.",
   "verified": [
     "Journeys: 20 of 20 runs pass on commit 9c5a90a, up from 4 of 20 on the starting code. That's 1440px and 390px in Festive and Apple, with retries turned off. All 438 steps passed across journeys, unhappy paths, keyboard passes and the late-fix checks.",
     "Accessibility: axe found serious or critical problems on 15 routes before and zero violations of any impact on the final run. A separate sweep of 20 routes ran 124 audits per project on 918d766.",
@@ -16,10 +16,10 @@
     "Database: Journey 2 confirms the saved draw is valid, and no background job failed.",
     "Test suites on 9c5a90a: bin/local-preview e2e passed 6 of 6, Rails passed 624 runs with 0 failures, and npm test passed 7 of 7 tasks including 306 web tests.",
     "Dashboard date fix: confirmed in a real browser. A Christmas list started from Home now reads Friday, December 25, 2026.",
-    "Production: the privacy fix deployed as f6fb256. The API and web services report that image, the deploy smoke tests passed, and health checks return 200."
+    "Production: all fixes deployed as 3e9f5f9 on Kent's go-ahead, after a clean production build, with no database migrations. Both services report that image, the deploy succeeded, health checks return 200, guest /w/ links open with no sign-in, logged-out visitors reach /login with their destination kept, and unknown pages show the new not-found page."
   ],
   "limits": [
-    "Everything except the privacy fix is undeployed. The Match screen data-loss fix is on this branch and not in production.",
+    "Production was checked from the outside only. No real account, wishlist or exchange was used, so the live checks prove routing and health, not each journey. The journeys themselves were proven on the identical code locally.",
     "The privacy fix was not checked against a real shared wishlist in production, because that means touching production data. The proof is the test, which fails on the old code, plus the deployed version.",
     "Real email delivery was not tested. Mail stopped at Mailpit by instruction, so Postmark, spam placement and real inboxes are unverified.",
     "Apple, Google, Facebook and LinkedIn sign-in were not tested. Only email codes were.",
