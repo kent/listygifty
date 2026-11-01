@@ -27,7 +27,7 @@
     "test": "npm run build && node --test dist/*.test.js dist/tools/*.test.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0"
+    "@modelcontextprotocol/sdk": "^1.32.2"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
