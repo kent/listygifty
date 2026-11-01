@@ -18,9 +18,9 @@ interface AppHeaderProps {
 // F5 (refresh) and F7 (caret browsing) are left to the browser.
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Home", fkey: 1, icon: Home },
-  { href: "/holidays", label: "Gift Lists", fkey: 2, icon: Calendar },
+  { href: "/exchanges", label: "Exchanges", fkey: 2, icon: ArrowLeftRight },
+  { href: "/holidays", label: "Gift Lists", fkey: 3, icon: Calendar },
   { href: "/wishlists", label: "Wishlists", fkey: 8, icon: ListTodo },
-  { href: "/exchanges", label: "Exchanges", fkey: 3, icon: ArrowLeftRight },
   { href: "/people", label: "People", fkey: 4, icon: Users },
   { href: "/settings", label: "Options", fkey: 6, icon: Settings },
 ] as const;

@@ -29,14 +29,20 @@ beforeEach(() => {
 });
 
 describe("app header menu", () => {
-  it("puts Wishlists right after Gift Lists in every header variant", () => {
+  it("puts Exchanges right after Home and Wishlists right after Gift Lists in every header variant", () => {
     renderHeader();
     expect(menus()).toHaveLength(3);
     for (const menu of menus()) {
       const labels = within(menu).getAllByRole("link").map((link) => link.textContent?.replace(/F\d+$/, ""));
-      expect(labels).toEqual(["Home", "Gift Lists", "Wishlists", "Exchanges", "People", "Options"]);
+      expect(labels).toEqual(["Home", "Exchanges", "Gift Lists", "Wishlists", "People", "Options"]);
       expect(within(menu).getByRole("link", { name: /Wishlists/ }).getAttribute("href")).toBe("/wishlists");
     }
+  });
+
+  it("binds F2 to Exchanges, the key next to Home", () => {
+    renderHeader();
+    fireEvent.keyDown(window, { key: "F2" });
+    expect(mocks.push).toHaveBeenCalledWith("/exchanges");
   });
 
   it.each(["/wishlists", "/wishlists/12"])("marks Wishlists as the current page on %s in every variant", (pathname) => {
