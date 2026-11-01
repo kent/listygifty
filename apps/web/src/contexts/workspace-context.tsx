@@ -93,7 +93,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       if (!isCurrent()) return;
       console.error("Failed to load workspace bootstrap:", error);
-      setError("Could not load your workspace. Please try again.");
+      setError("Could not load your groups. Please try again.");
     } finally {
       if (isCurrent()) setIsLoading(false);
     }

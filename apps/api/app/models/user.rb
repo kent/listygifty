@@ -119,7 +119,7 @@ class User < ApplicationRecord
     with_lock do
       personal_workspace || begin
         workspace = Workspace.create!(
-          name: "#{safe_name}'s Workspace".truncate(200),
+          name: "#{safe_name}'s Gifts".truncate(200),
           workspace_type: "personal",
           created_by_user: self
         )

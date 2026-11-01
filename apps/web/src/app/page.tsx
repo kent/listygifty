@@ -100,7 +100,7 @@ const faqItems = [
   {
     question: "What is the best way to organize gifts for Christmas 2026?",
     answer:
-      "Use one shared gift planning workspace for recipients, gift ideas, budgets, links, and buying status instead of spreading the plan across notes, messages, and spreadsheets.",
+      "Use one shared gift plan for recipients, gift ideas, budgets, links, and buying status instead of spreading the plan across notes, messages, and spreadsheets.",
   },
   {
     question: "Can Listy Gifty run a Secret Santa or gift exchange?",
@@ -110,7 +110,7 @@ const faqItems = [
   {
     question: "Does Listy Gifty work for business gifting?",
     answer:
-      "Yes. Teams can create business workspaces for employee holiday boxes, new-hire kits, work anniversaries, milestone gifts, recipient imports, and fulfillment-ready exports.",
+      "Yes. Teams can create business groups for employee holiday boxes, new-hire kits, work anniversaries, milestone gifts, recipient imports, and fulfillment-ready exports.",
   },
   {
     question: "Can AI assistants help manage my gift lists?",
@@ -547,7 +547,7 @@ export default function HomePage() {
                 </h3>
                 <div className="grid md:grid-cols-2 gap-6">
                   {[
-                    { icon: "📋", title: "View Your Lists", desc: "Browse holidays, people, and gifts across all your workspaces" },
+                    { icon: "📋", title: "View Your Lists", desc: "Browse holidays, people, and gifts across all your groups" },
                     { icon: "🧩", title: "Spot Gaps", desc: "Find missing links, budgets, recipients, and purchase statuses before deadlines" },
                     { icon: "➕", title: "Add Items", desc: "Create new gifts, people, or holidays through conversation" },
                     { icon: "📊", title: "Track Spending", desc: "Check budgets and balance spending across recipients" },
@@ -595,7 +595,7 @@ export default function HomePage() {
               </span>
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              The same workspace supports quick family gift ideas, structured exchanges, and team gifting workflows.
+              The same app supports quick family gift ideas, structured exchanges, and team gifting workflows.
             </p>
           </div>
 

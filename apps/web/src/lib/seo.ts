@@ -4,7 +4,7 @@ import { BRAND_NAME, BRAND_TEAM_NAME } from "@/lib/brand";
 export const DEFAULT_SITE_URL = "https://listygifty.com";
 export const SEO_LAST_MODIFIED = "2026-05-31";
 export const DEFAULT_SEO_DESCRIPTION =
-  "Capture gift ideas year-round, organize every recipient and occasion, run gift exchanges, and coordinate family or team gifting from one shared workspace.";
+  "Capture gift ideas year-round, organize every recipient and occasion, run gift exchanges, and coordinate family or team gifting in one shared place.";
 export const DEFAULT_OG_IMAGE = "/og-image.png";
 
 export const BASE_KEYWORDS = [
@@ -34,7 +34,7 @@ export const PUBLIC_MARKETING_PAGES = [
     path: "/business/signup",
     title: "Business Gift Planning for Teams",
     description:
-      "Create a business gifting workspace for employee holiday boxes, new-hire kits, milestone gifts, and fulfillment-ready CSV workflows.",
+      "Create a business gifting group for employee holiday boxes, new-hire kits, milestone gifts, and fulfillment-ready CSV workflows.",
     changeFrequency: "monthly",
     priority: 0.8,
   },
@@ -162,7 +162,7 @@ export function createPageMetadata({
           url: DEFAULT_OG_IMAGE,
           width: 1200,
           height: 630,
-          alt: `${BRAND_NAME} gift planning workspace preview`,
+          alt: `${BRAND_NAME} gift planning preview`,
         },
       ],
     },

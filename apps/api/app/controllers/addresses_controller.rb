@@ -48,7 +48,7 @@ class AddressesController < ApplicationController
   def set_workspace
     @workspace = current_user.workspaces.find(params[:workspace_id])
   rescue ActiveRecord::RecordNotFound
-    render json: { error: "Workspace not found" }, status: :not_found
+    render json: { error: "Group not found" }, status: :not_found
   end
 
   def require_admin
@@ -59,7 +59,7 @@ class AddressesController < ApplicationController
   def require_business_workspace
     return if @workspace.nil? # Already handled by set_workspace
     unless @workspace.business?
-      render json: { error: "Only business workspaces have addresses" }, status: :unprocessable_entity
+      render json: { error: "Only business groups have addresses" }, status: :unprocessable_entity
     end
   end
 

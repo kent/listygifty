@@ -155,10 +155,10 @@ function BusinessSignupContent() {
         workspace_id: workspace.id,
       });
 
-      toast.success(`Welcome! Your workspace "${workspace.name}" is ready.`);
+      toast.success(`Welcome! Your group "${workspace.name}" is ready.`);
       router.push("/dashboard");
     } catch {
-      toast.error("Failed to create workspace");
+      toast.error("Failed to create group");
     } finally {
       setIsCreating(false);
     }
@@ -212,15 +212,15 @@ function BusinessSignupContent() {
               </CardTitle>
               <CardDescription className="text-slate-600 dark:text-slate-400">
                 {fromSignup
-                  ? "Now let's set up your business workspace"
-                  : "Create a business workspace for the workflow you selected"}
+                  ? "Now let's set up your business group"
+                  : "Create a business group for the workflow you selected"}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
               <form onSubmit={handleCreateWorkspace} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="workspace-name" className="text-slate-700 dark:text-slate-300">
-                    Workspace Name <span className="text-red-500">*</span>
+                    Group Name <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="workspace-name"
@@ -268,7 +268,7 @@ function BusinessSignupContent() {
                   ) : (
                     <>
                       <Building2 className="h-5 w-5 mr-2" />
-                      Create Workspace & Get Started
+                      Create Group & Get Started
                     </>
                   )}
                 </Button>
@@ -409,7 +409,7 @@ function BusinessSignupContent() {
                 <Link href={AUTH_ROUTES.signIn} className="text-violet-600 dark:text-violet-400 hover:underline">
                   Sign in
                 </Link>{" "}
-                and create a workspace from settings.
+                and create a group from settings.
               </p>
             </div>
           </CardContent>

@@ -368,7 +368,7 @@ class AccountDeletionServiceTest < ActiveSupport::TestCase
     AccountDeletionService.delete!(leaver)
 
     workspace.reload
-    assert_equal "Marie's Workspace", workspace.name
+    assert_equal "Marie's Group", workspace.name
     assert_equal "business", workspace.workspace_type
     assert_equal heir.personal_workspace, heir.reload.personal_workspace
   end

@@ -152,7 +152,7 @@ export function CompanySection() {
             <div>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Company</h2>
               <p className="text-slate-600 dark:text-slate-400 text-sm">
-                Company profiles are only available for business workspaces
+                Company profiles are only available for business groups
               </p>
             </div>
           </div>
@@ -161,7 +161,7 @@ export function CompanySection() {
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/30 p-8 text-center">
           <Building2 className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
           <p className="text-slate-600 dark:text-slate-400 mb-4">
-            Switch to a business workspace to manage company profile settings.
+            Switch to a business group to manage company profile settings.
           </p>
         </div>
       </section>

@@ -98,7 +98,7 @@ class AccountDeletionService
     attributes = { created_by_user_id: heir.user_id }
     # A personal workspace is named after its creator, and people only get one.
     if workspace.personal?
-      attributes[:name] = "#{heir.user.safe_name}'s Workspace".truncate(200)
+      attributes[:name] = "#{heir.user.safe_name}'s Group".truncate(200)
       attributes[:workspace_type] = "business"
     end
     workspace.update!(attributes)

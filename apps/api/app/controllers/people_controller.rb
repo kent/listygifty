@@ -56,7 +56,7 @@ class PeopleController < ApplicationController
       return render json: { error: "Externally shared people are read-only" }, status: :forbidden
     end
     if attributes.key?(:default_shipping_address_id) && !@person.shipping_address_editable_by?(current_user)
-      return render json: { error: "Only workspace admins can manage shipping addresses" }, status: :forbidden
+      return render json: { error: "Only group admins can manage shipping addresses" }, status: :forbidden
     end
 
     if @person.update(attributes)

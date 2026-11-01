@@ -30,7 +30,7 @@ class GiftRecipientsController < ApplicationController
   def authorize_address_management!
     return if @gift.holiday.workspace.admin?(current_user)
 
-    render json: { error: "Only workspace admins can manage shipping addresses" }, status: :forbidden
+    render json: { error: "Only group admins can manage shipping addresses" }, status: :forbidden
   end
 
   def gift_recipient_params

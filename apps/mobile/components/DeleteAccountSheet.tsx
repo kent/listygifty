@@ -13,8 +13,8 @@ const DELETED = [
 const OTHER_PEOPLE = [
   "Exchanges you organize are cancelled, and everyone in them gets an email.",
   "In someone else's exchange, if names have been drawn, your first name stays so the draw still works. Your email and wishlist ideas are removed.",
-  "Lists you shared from your own workspace are deleted for them too.",
-  "Shared workspaces pass to another member, along with the people you added to them.",
+  "Lists you shared from your personal group are deleted for them too.",
+  "Shared groups pass to another member, along with the people you added to them.",
   "Gifts you added to someone else's list stay there, and gifts you claimed stay claimed. Neither shows your name.",
 ];
 

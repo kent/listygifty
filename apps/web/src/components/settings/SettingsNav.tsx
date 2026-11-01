@@ -23,7 +23,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { id: "profile", label: "Profile", icon: User, color: "violet" },
   { id: "integrations", label: "Integrations", icon: Plug, color: "cyan" },
-  { id: "workspace", label: "Workspace", icon: Building2, color: "violet" },
+  { id: "workspace", label: "Group", icon: Building2, color: "violet" },
   { id: "team", label: "Team", icon: Users, color: "violet" },
   { id: "company", label: "Company", icon: Building2, color: "violet", businessOnly: true },
   { id: "notifications", label: "Notifications", icon: Bell, color: "violet" },

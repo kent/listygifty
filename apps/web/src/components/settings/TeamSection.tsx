@@ -142,7 +142,7 @@ export function TeamSection() {
 
     try {
       await workspacesService.removeMember(currentWorkspace.id, membershipId);
-      toast.success(`Removed ${memberName} from workspace`);
+      toast.success(`Removed ${memberName} from group`);
       loadTeamData();
       refreshWorkspaces();
     } catch {
@@ -172,7 +172,7 @@ export function TeamSection() {
           <div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Team</h2>
             <p className="text-slate-600 dark:text-slate-400 text-sm">
-              Manage workspace members and invitations
+              Manage group members and invitations
             </p>
           </div>
         </div>
@@ -416,7 +416,7 @@ export function TeamSection() {
                               <span className="font-semibold text-slate-900 dark:text-white">
                                 {member.first_name || member.email}
                               </span>{" "}
-                              from this workspace? They will lose access to all workspace data.
+                              from this group? They will lose access to all group data.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>

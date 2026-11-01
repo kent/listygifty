@@ -103,7 +103,7 @@ module ActionDispatch
       )
       # Create personal workspace for test user
       workspace = Workspace.create!(
-        name: "#{user.email}'s Workspace",
+        name: "#{user.email}'s Gifts",
         workspace_type: "personal",
         created_by_user: user
       )

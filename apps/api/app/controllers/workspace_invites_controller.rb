@@ -69,7 +69,7 @@ class WorkspaceInvitesController < ApplicationController
     return render json: { error: "Invalid or expired invite" }, status: :not_found unless @invite&.valid_invite?
 
     if @invite.workspace.member?(current_user)
-      return render json: { error: "You are already a member of this workspace" }, status: :unprocessable_entity
+      return render json: { error: "You are already a member of this group" }, status: :unprocessable_entity
     end
 
     if @invite.accept!(current_user)
@@ -90,7 +90,7 @@ class WorkspaceInvitesController < ApplicationController
   def set_workspace
     @workspace = current_user.workspaces.find(params[:workspace_id])
   rescue ActiveRecord::RecordNotFound
-    render json: { error: "Workspace not found" }, status: :not_found
+    render json: { error: "Group not found" }, status: :not_found
   end
 
   def require_admin

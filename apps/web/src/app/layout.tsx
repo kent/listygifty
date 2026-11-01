@@ -82,7 +82,7 @@ export const metadata: Metadata = {
         url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: `${BRAND_NAME} gift planning workspace preview`,
+        alt: `${BRAND_NAME} gift planning preview`,
       },
     ],
   },

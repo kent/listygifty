@@ -65,7 +65,7 @@ export default function JoinWorkspacePage() {
       await refreshWorkspaces();
       switchWorkspace(result.id);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to join workspace";
+      const errorMessage = err instanceof Error ? err.message : "Failed to join group";
       if (errorMessage.includes("already a member")) {
         setStatus("already_member");
       } else {
@@ -112,7 +112,7 @@ export default function JoinWorkspacePage() {
               <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-violet-500/20 flex items-center justify-center">
                 <Building2 className="h-8 w-8 text-violet-500 dark:text-violet-400" />
               </div>
-              <CardTitle className="text-slate-900 dark:text-white">Join Workspace</CardTitle>
+              <CardTitle className="text-slate-900 dark:text-white">Join Group</CardTitle>
               <CardDescription>
                 You&apos;ve been invited to join{" "}
                 <span className="text-slate-900 dark:text-white font-medium">
@@ -125,8 +125,8 @@ export default function JoinWorkspacePage() {
               <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-violet-500/20 flex items-center justify-center">
                 <Loader2 className="h-8 w-8 text-violet-500 dark:text-violet-400 animate-spin" />
               </div>
-              <CardTitle className="text-slate-900 dark:text-white">Joining Workspace...</CardTitle>
-              <CardDescription>Please wait while we add you to the workspace.</CardDescription>
+              <CardTitle className="text-slate-900 dark:text-white">Joining Group...</CardTitle>
+              <CardDescription>Please wait while we add you to the group.</CardDescription>
             </>
           ) : status === "success" ? (
             <>
@@ -145,7 +145,7 @@ export default function JoinWorkspacePage() {
                 <Users className="h-8 w-8 text-blue-500 dark:text-blue-400" />
               </div>
               <CardTitle className="text-slate-900 dark:text-white">Already a Member</CardTitle>
-              <CardDescription>You&apos;re already part of this workspace.</CardDescription>
+              <CardDescription>You&apos;re already part of this group.</CardDescription>
             </>
           ) : (
             <>
@@ -186,7 +186,7 @@ export default function JoinWorkspacePage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-900 dark:text-white">{workspace.name}</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">Business Workspace</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Business Group</p>
                 </div>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-500">
@@ -201,7 +201,7 @@ export default function JoinWorkspacePage() {
                 onClick={handleJoin}
                 className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500"
               >
-                Join Workspace
+                Join Group
               </Button>
             )}
             {(status === "success" || status === "already_member") && (
