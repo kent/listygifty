@@ -18,12 +18,12 @@ export const metadata: Metadata = createPageMetadata({
 const mcpTools = [
   {
     name: "list_workspaces",
-    description: "View all your workspaces (personal, family, business)",
+    description: "View all your groups (personal, family, business)",
     scope: "read",
   },
   {
     name: "list_holidays",
-    description: "See all holidays and occasions in a workspace",
+    description: "See all holidays and occasions in a group",
     scope: "read",
   },
   {

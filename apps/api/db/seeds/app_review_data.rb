@@ -358,7 +358,7 @@ module AppReviewSeedData
 
     unless workspace
       workspace = Workspace.create!(
-        name: "#{REVIEWER_FIRST_NAME}'s Workspace",
+        name: "#{REVIEWER_FIRST_NAME}'s Gifts",
         workspace_type: "personal",
         created_by_user: user
       )

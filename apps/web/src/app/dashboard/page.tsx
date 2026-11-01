@@ -413,7 +413,7 @@ export default function DashboardPage() {
       const activation = businessUseCase.activation;
       return [
         {
-          label: "Create a business workspace",
+          label: "Create a business group",
           analyticsStep: "Business workspace",
           countLabel: currentWorkspace ? "1/1" : "0/1",
           complete: Boolean(currentWorkspace),

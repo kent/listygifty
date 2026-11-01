@@ -50,7 +50,7 @@ class WorkspacesController < ApplicationController
 
   def destroy
     if @workspace.personal?
-      return render json: { error: "Cannot delete personal workspace" }, status: :unprocessable_entity
+      return render json: { error: "Cannot delete personal group" }, status: :unprocessable_entity
     end
 
     @workspace.destroy!
@@ -62,7 +62,7 @@ class WorkspacesController < ApplicationController
   def set_workspace
     @workspace = current_user.workspaces.find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    render json: { error: "Workspace not found" }, status: :not_found
+    render json: { error: "Group not found" }, status: :not_found
   end
 
   def require_admin

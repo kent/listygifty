@@ -553,7 +553,7 @@ function TeamsPlanCard() {
       <div className="mb-6 space-y-3">
         <div className="flex items-center gap-3 text-sm">
           <Building2 className="h-4 w-4 text-cyan-400" />
-          <span>Business workspaces and company profile</span>
+          <span>Business groups and company profile</span>
         </div>
         <div className="flex items-center gap-3 text-sm">
           <Users className="h-4 w-4 text-cyan-400" />

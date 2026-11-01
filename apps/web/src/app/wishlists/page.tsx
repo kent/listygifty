@@ -43,7 +43,7 @@ function getVisibilityLabel(visibility: string) {
     case "private":
       return "Private";
     case "workspace":
-      return "Team";
+      return "Group";
     case "shared":
       return "Shared";
     default:

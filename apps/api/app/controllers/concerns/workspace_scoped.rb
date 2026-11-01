@@ -41,7 +41,7 @@ module WorkspaceScoped
   end
 
   def render_workspace_required
-    render json: { error: "Workspace selection required" }, status: :bad_request
+    render json: { error: "Group selection required" }, status: :bad_request
   end
 
   def render_forbidden

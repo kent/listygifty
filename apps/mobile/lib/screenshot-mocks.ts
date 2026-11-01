@@ -996,6 +996,14 @@ function getExchangeParticipantsWithMatches(exchangeId: number): ExchangePartici
   return participants.map((participant) => withMatchedParticipant(participant, participants));
 }
 
+function joinState(exchange: GiftExchange) {
+  const joinOpen = exchange.status === "draft" || exchange.status === "inviting";
+  return {
+    join_open: joinOpen,
+    closed_reason: joinOpen ? null : "This exchange is no longer accepting participants.",
+  };
+}
+
 function buildExchangeSummary(exchange: GiftExchange): GiftExchange {
   const participants = getExchangeParticipantsWithMatches(exchange.id);
   const myParticipant = participants.find((participant) => participant.user_id === 1) ?? null;
@@ -1558,11 +1566,7 @@ export const screenshotServices = {
           owner_name: exchange.is_owner ? "Marie Reviewer" : "Gift Exchange Host",
           accepted_count: exchange.accepted_count,
         },
-        join_open: exchange.status === "draft" || exchange.status === "inviting",
-        closed_reason:
-          exchange.status === "draft" || exchange.status === "inviting"
-            ? null
-            : "This exchange is no longer accepting participants.",
+        ...joinState(exchange),
       });
     },
     async join(shareToken: string, name?: string): Promise<ExchangeJoinResponse> {
@@ -1625,6 +1629,7 @@ export const screenshotServices = {
               email: participant.email || "",
               status: participant.status,
             },
+            ...joinState(exchange),
           });
         }
       }

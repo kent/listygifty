@@ -53,7 +53,7 @@ export default function CreateWorkspacePage() {
       toast.success(`Created ${workspace.name}!`);
       router.push("/dashboard");
     } catch {
-      toast.error("Failed to create workspace");
+      toast.error("Failed to create group");
     } finally {
       setIsCreating(false);
     }
@@ -92,17 +92,17 @@ export default function CreateWorkspacePage() {
               <Building2 className="h-8 w-8 text-violet-500" />
             </div>
             <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white">
-              Create Business Workspace
+              Create Business Group
             </CardTitle>
             <CardDescription className="text-slate-600 dark:text-slate-400">
-              Set up a new workspace for your team or organization
+              Set up a new group for your team or organization
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="workspace-name" className="text-slate-700 dark:text-slate-300">
-                  Workspace Name <span className="text-red-500">*</span>
+                  Group Name <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="workspace-name"
@@ -114,7 +114,7 @@ export default function CreateWorkspacePage() {
                   required
                 />
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  This is the name your team will see when switching workspaces
+                  This is the name your team will see when switching groups
                 </p>
               </div>
 
@@ -149,7 +149,7 @@ export default function CreateWorkspacePage() {
                   ) : (
                     <>
                       <Building2 className="h-5 w-5 mr-2" />
-                      Create Workspace
+                      Create Group
                     </>
                   )}
                 </Button>
@@ -161,7 +161,7 @@ export default function CreateWorkspacePage() {
         {/* Info section */}
         <div className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
           <p>
-            Business workspaces allow you to collaborate with your team,
+            Business groups allow you to collaborate with your team,
             <br />
             manage company gifting, and invite colleagues.
           </p>

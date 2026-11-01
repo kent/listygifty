@@ -259,9 +259,9 @@ describe("gift model helpers", () => {
       unpricedGiftCount: 1,
       assignedGiftCount: 2,
       unassignedGiftCount: 1,
-      completedGiftCount: 1,
-      remainingGiftCount: 2,
-      completionPercent: 33,
+      completedGiftCount: 2,
+      remainingGiftCount: 1,
+      completionPercent: 67,
     });
   });
 

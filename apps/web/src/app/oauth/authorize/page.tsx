@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { oauthAuthorizationService, type OAuthConsent } from "@/services";
 
 const SCOPE_DESCRIPTIONS: Record<string, string> = {
-  read: "View your Listy Gifty workspaces, occasions, people, gifts, wishlists, and exchanges.",
+  read: "View your Listy Gifty groups, occasions, people, gifts, wishlists, and exchanges.",
   write: "Create and update Listy Gifty data on your behalf.",
   admin: "Access global product administration, analytics, support, email, and guarded deletion tools.",
 };

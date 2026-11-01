@@ -164,8 +164,8 @@ export default function NewWishlistPage() {
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
                         <div>
-                          <div className="font-medium">Workspace</div>
-                          <div className="text-xs text-slate-600 dark:text-slate-500">All workspace members can view and claim</div>
+                          <div className="font-medium">Group</div>
+                          <div className="text-xs text-slate-600 dark:text-slate-500">Everyone in this group can view and claim</div>
                         </div>
                       </div>
                     </SelectItem>

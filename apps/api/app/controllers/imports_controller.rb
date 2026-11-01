@@ -16,7 +16,7 @@ class ImportsController < ApplicationController
     owner = nil
     if params[:owner_id].present?
       owner = current_workspace.users.find_by(id: params[:owner_id])
-      return render json: { error: "Owner not found in workspace" }, status: :bad_request unless owner
+      return render json: { error: "Owner not found in group" }, status: :bad_request unless owner
     end
 
     result = CsvImportService.import_people(

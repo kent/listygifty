@@ -46,7 +46,7 @@ class WorkspaceMembershipsController < ApplicationController
   def set_workspace
     @workspace = current_user.workspaces.find(params[:workspace_id])
   rescue ActiveRecord::RecordNotFound
-    render json: { error: "Workspace not found" }, status: :not_found
+    render json: { error: "Group not found" }, status: :not_found
   end
 
   def require_admin
@@ -69,6 +69,6 @@ class WorkspaceMembershipsController < ApplicationController
     return unless changing_ownership
     return if @workspace.owner?(current_user)
 
-    render json: { error: "Only workspace owners can manage ownership" }, status: :forbidden
+    render json: { error: "Only group owners can manage ownership" }, status: :forbidden
   end
 end

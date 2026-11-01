@@ -31,7 +31,7 @@ export function WorkspaceSwitcher() {
         variant="ghost"
         className="flex items-center gap-2 px-3 py-2 h-auto"
         disabled
-        aria-label="Loading workspace"
+        aria-label="Loading group"
       >
         <div className="h-4 w-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
         <span className="w-20 h-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
@@ -125,7 +125,7 @@ export function WorkspaceSwitcher() {
             onClick={() => setOpen(false)}
           >
             <Settings className="h-4 w-4" />
-            Manage Workspaces
+            Manage Groups
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -135,7 +135,7 @@ export function WorkspaceSwitcher() {
             onClick={() => setOpen(false)}
           >
             <Plus className="h-4 w-4" />
-            Create Business Workspace
+            Create Business Group
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
