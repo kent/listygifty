@@ -69,7 +69,8 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     end
     assert tools.fetch("publish_gift_exchange").dig("annotations", "openWorldHint")
     assert tools.fetch("share_wishlist").dig("annotations", "openWorldHint")
-    assert_not tools.fetch("create_wishlist_item").dig("annotations", "openWorldHint")
+    assert tools.fetch("create_wishlist_item").dig("annotations", "openWorldHint"), "shows on public wishlist links"
+    assert_not tools.fetch("create_gift").dig("annotations", "openWorldHint")
     (McpController::DESTRUCTIVE_TOOLS + McpController::OPEN_WORLD_TOOLS).each do |name|
       assert tools.key?(name), "#{name} is labelled but is not a tool"
     end

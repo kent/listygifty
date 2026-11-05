@@ -18,10 +18,12 @@ class McpController < ApplicationController
   ].freeze
   DESTRUCTIVE_PREFIXES = %w[delete_ remove_ update_].freeze
   # Tools that reach people outside the user's account: emails to arbitrary
-  # addresses or public links anyone can open.
+  # addresses, public links anyone can open, or wishlist content that shows
+  # on those public links.
   OPEN_WORLD_TOOLS = %w[
-    add_exchange_participant create_gift_exchange delete_gift_exchange nudge_exchange_match
+    add_exchange_participant create_gift_exchange create_wishlist_item delete_gift_exchange nudge_exchange_match
     publish_gift_exchange redo_gift_exchange resend_exchange_invite share_wishlist start_gift_exchange
+    update_wishlist update_wishlist_item
   ].freeze
 
   skip_before_action :authenticate!
