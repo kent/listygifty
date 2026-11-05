@@ -20,6 +20,7 @@ import {
   PeopleGroupFilter,
   RELATIONSHIP_OPTIONS,
   sortPeopleByName,
+  sortPeopleByUsage,
   type Person,
   type PersonFormValues,
 } from "@/lib/models";
@@ -346,7 +347,7 @@ export function usePersonPickerController({
       try {
         const data = await peopleService.getAll();
         if (!cancelled) {
-          setPeople(sortPeopleByName(data));
+          setPeople(sortPeopleByUsage(data));
         }
       } catch (loadError) {
         console.error("Failed to load people", loadError);
@@ -399,7 +400,7 @@ export function usePersonPickerController({
 
     try {
       const person = await peopleService.create({ name: newPersonName.trim() });
-      setPeople((current) => sortPeopleByName([...current, person]));
+      setPeople((current) => [person, ...current]);
       onSelectionChange([...selectedIds, person.id]);
       setNewPersonName("");
       track("mobile_person_created", {

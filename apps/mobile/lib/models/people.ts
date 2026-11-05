@@ -231,6 +231,13 @@ export function sortPeopleByName(people: Person[]): Person[] {
   return [...people].sort((left, right) => left.name.localeCompare(right.name));
 }
 
+export function sortPeopleByUsage(people: Person[]): Person[] {
+  return [...people].sort(
+    (left, right) =>
+      (right.gift_count ?? 0) - (left.gift_count ?? 0) || left.name.localeCompare(right.name)
+  );
+}
+
 export function getBirthdayReminder(
   person: Pick<Person, "birthday">,
   now: Date = new Date()
