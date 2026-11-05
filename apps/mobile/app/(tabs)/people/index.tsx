@@ -684,100 +684,100 @@ export default function PeopleScreen() {
             ) : null}
           </ScrollView>
         </KeyboardAvoidingView>
-      </Modal>
 
-      <Modal
-        visible={controller.relationshipPickerOpen}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => controller.setRelationshipPickerOpen(false)}
-      >
-        <View style={{ flex: 1, backgroundColor: colors.background }}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: 16,
-              borderBottomWidth: 1,
-              borderBottomColor: colors.border,
-            }}
-          >
-            <TouchableOpacity onPress={() => controller.setRelationshipPickerOpen(false)}>
-              <Text style={{ color: colors.textTertiary, fontSize: 16 }}>Cancel</Text>
-            </TouchableOpacity>
-            <Text style={{ color: colors.text, fontSize: 17, fontWeight: "600" }}>
-              Select Relationship
-            </Text>
-            <TouchableOpacity onPress={() => controller.setRelationshipPickerOpen(false)}>
-              <Text style={{ color: colors.primary, fontSize: 16, fontWeight: "600" }}>Done</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
-            <TouchableOpacity
-              onPress={() => controller.triggerRelationshipSelect("")}
+        <Modal
+          visible={controller.relationshipPickerOpen}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => controller.setRelationshipPickerOpen(false)}
+        >
+          <View style={{ flex: 1, backgroundColor: colors.background }}>
+            <View
               style={{
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "space-between",
-                backgroundColor: colors.card,
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: !controller.form.relationship ? colors.primary : colors.border,
-                padding: 14,
+                padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: colors.border,
               }}
             >
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                <Ionicons name="remove-circle-outline" size={18} color={colors.muted} />
-                <Text style={{ color: colors.text, fontSize: 15 }}>None</Text>
-              </View>
-              {!controller.form.relationship ? (
-                <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
-              ) : null}
-            </TouchableOpacity>
+              <TouchableOpacity onPress={() => controller.setRelationshipPickerOpen(false)}>
+                <Text style={{ color: colors.textTertiary, fontSize: 16 }}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={{ color: colors.text, fontSize: 17, fontWeight: "600" }}>
+                Select Relationship
+              </Text>
+              <TouchableOpacity onPress={() => controller.setRelationshipPickerOpen(false)}>
+                <Text style={{ color: colors.primary, fontSize: 16, fontWeight: "600" }}>Done</Text>
+              </TouchableOpacity>
+            </View>
 
-            {controller.relationships.map((option) => {
-              const isSelected = normalizeRelationship(controller.form.relationship) === option.value;
-              return (
-                <TouchableOpacity
-                  key={option.value}
-                  onPress={() => controller.triggerRelationshipSelect(option.value)}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    backgroundColor: colors.card,
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: isSelected ? colors.primary : colors.border,
-                    padding: 14,
-                  }}
-                >
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                    <Ionicons
-                      name={option.icon}
-                      size={18}
-                      color={isSelected ? colors.primary : colors.textTertiary}
-                    />
-                    <View>
-                      <Text style={{ color: colors.text, fontSize: 15, fontWeight: "600" }}>
-                        {option.label}
-                      </Text>
-                      <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
-                        {PEOPLE_GROUP_FILTERS.find((groupOption) => groupOption.key === option.group)
-                          ?.label || "Other"}
-                      </Text>
+            <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
+              <TouchableOpacity
+                onPress={() => controller.triggerRelationshipSelect("")}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  backgroundColor: colors.card,
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: !controller.form.relationship ? colors.primary : colors.border,
+                  padding: 14,
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                  <Ionicons name="remove-circle-outline" size={18} color={colors.muted} />
+                  <Text style={{ color: colors.text, fontSize: 15 }}>None</Text>
+                </View>
+                {!controller.form.relationship ? (
+                  <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+                ) : null}
+              </TouchableOpacity>
+
+              {controller.relationships.map((option) => {
+                const isSelected = normalizeRelationship(controller.form.relationship) === option.value;
+                return (
+                  <TouchableOpacity
+                    key={option.value}
+                    onPress={() => controller.triggerRelationshipSelect(option.value)}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      backgroundColor: colors.card,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: isSelected ? colors.primary : colors.border,
+                      padding: 14,
+                    }}
+                  >
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                      <Ionicons
+                        name={option.icon}
+                        size={18}
+                        color={isSelected ? colors.primary : colors.textTertiary}
+                      />
+                      <View>
+                        <Text style={{ color: colors.text, fontSize: 15, fontWeight: "600" }}>
+                          {option.label}
+                        </Text>
+                        <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
+                          {PEOPLE_GROUP_FILTERS.find((groupOption) => groupOption.key === option.group)
+                            ?.label || "Other"}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                  {isSelected ? (
-                    <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
-                  ) : null}
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
+                    {isSelected ? (
+                      <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </Modal>
       </Modal>
     </View>
   );
