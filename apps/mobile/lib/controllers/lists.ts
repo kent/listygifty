@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { summarizeGifts } from "@niftygifty/types";
+import type { GiftListSettingsPage } from "@/components/GiftListSettingsSheet";
 import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
 import { scheduleGiftListReminder } from "@/lib/notifications";
@@ -134,7 +135,7 @@ export function useGiftListDetailController() {
   const [search, setSearch] = useState("");
   const [selectedStatusIds, setSelectedStatusIds] = useState<number[]>([]);
   const [showFilters, setShowFilters] = useState(false);
-  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [settingsPage, setSettingsPage] = useState<GiftListSettingsPage | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [collaborators, setCollaborators] = useState<HolidayCollaborator[]>([]);
   const [shareLoading, setShareLoading] = useState(false);
@@ -180,11 +181,6 @@ export function useGiftListDetailController() {
     () => summarizeGifts(resource.data.gifts, resource.data.statuses),
     [resource.data.gifts, resource.data.statuses]
   );
-  const filteredGiftSummary = useMemo(
-    () => summarizeGifts(filteredGifts, resource.data.statuses),
-    [filteredGifts, resource.data.statuses]
-  );
-
   const hasActiveFilters = selectedStatusIds.length > 0 || search.trim().length > 0;
   const error = !isValidHolidayId ? "Invalid list ID" : resource.error;
 
@@ -310,14 +306,22 @@ export function useGiftListDetailController() {
     [track]
   );
 
-  const openShareModal = useCallback(() => {
-    setShareModalVisible(true);
+  const openSettings = useCallback(() => {
+    setSettingsPage("menu");
+  }, []);
+
+  const openStats = useCallback(() => {
+    setSettingsPage("stats");
+  }, []);
+
+  const closeSettings = useCallback(() => {
+    setSettingsPage(null);
+  }, []);
+
+  const openSharing = useCallback(() => {
+    setSettingsPage("sharing");
     void loadShareData();
   }, [loadShareData]);
-
-  const closeShareModal = useCallback(() => {
-    setShareModalVisible(false);
-  }, []);
 
   const handleNativeShare = useCallback(async () => {
     if (!shareUrl || !holiday) {
@@ -435,10 +439,9 @@ export function useGiftListDetailController() {
 
   return {
     clearFilters,
-    closeShareModal,
+    closeSettings,
     collaborators,
     error,
-    filteredGiftSummary,
     filteredGifts,
     getNextStatusForGift,
     giftSummary,
@@ -452,7 +455,9 @@ export function useGiftListDetailController() {
     holiday,
     holidayId,
     loading: isValidHolidayId && resource.loading,
-    openShareModal,
+    openSettings,
+    openSharing,
+    openStats,
     refreshShareData: () => {
       void loadShareData();
     },
@@ -465,9 +470,9 @@ export function useGiftListDetailController() {
     schedulingReminder,
     setSearch,
     setShowFilters,
+    settingsPage,
     shareError,
     shareLoading,
-    shareModalVisible,
     shareUrl,
     showFilters,
     statuses: resource.data.statuses,
