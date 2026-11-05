@@ -1,0 +1,16 @@
+<% one = @pending.size == 1 -%>
+<%= one ? "Someone still needs" : "Some people still need" %> to join.
+
+You invited <%= one ? "this person" : "these people" %> to <%= @exchange.name %>, but they haven't joined yet:
+
+<% @pending.each do |participant| -%>
+- <%= participant.display_name %>
+<% end -%>
+<% if @joined_count.positive? -%>
+
+<%= @joined_count == 1 ? "1 person is" : "#{@joined_count} people are" %> in so far.
+<% end -%>
+
+A quick nudge from you goes a long way. You can resend their invite from the exchange page. Once everyone's in, draw names so each person gets their match.
+
+View the exchange: <%= @exchange_url %>

@@ -1,0 +1,32 @@
+<% one = @pending.size == 1 %>
+<% content_for :preview_text do %><%= one ? "1 person you invited" : "#{@pending.size} people you invited" %> to <%= @exchange.name %> <%= one ? "hasn't" : "haven't" %> joined yet.<% end %>
+
+<h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #18181b;">
+  <%= one ? "Someone still needs" : "Some people still need" %> to join.
+</h1>
+<p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
+  You invited <%= one ? "this person" : "these people" %> to
+  <strong><%= @exchange.name %></strong>, but they haven&apos;t joined yet.
+</p>
+<div style="margin: 0 0 24px 0; padding: 16px 20px; border-radius: 10px; background-color: #faf5ff; color: #581c87;">
+  <% @pending.each do |participant| %>
+    <p style="margin: 4px 0; font-size: 15px; font-weight: 600;"><%= participant.display_name %></p>
+  <% end %>
+</div>
+<% if @joined_count.positive? %>
+  <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
+    <%= @joined_count == 1 ? "1 person is" : "#{@joined_count} people are" %> in so far.
+  </p>
+<% end %>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td align="center">
+      <a href="<%= @exchange_url %>" class="button" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px;">
+        View Exchange
+      </a>
+    </td>
+  </tr>
+</table>
+<p style="margin: 32px 0 0 0; font-size: 14px; color: #71717a; text-align: center;">
+  A quick nudge from you goes a long way. You can resend their invite from the exchange page. Once everyone&apos;s in, draw names so each person gets their match.
+</p>

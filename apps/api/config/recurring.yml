@@ -30,8 +30,8 @@ production:
     class: SendDigestJob
     schedule: at 8am every day
 
-  send_organizer_wishlist_reminders:
-    class: SendOrganizerWishlistRemindersJob
+  send_organizer_exchange_reminders:
+    class: SendOrganizerExchangeRemindersJob
     schedule: every day at 10am America/Toronto
 
 development:
@@ -43,6 +43,6 @@ development:
     class: SendDigestJob
     schedule: at 8am every day
 
-  send_organizer_wishlist_reminders:
-    class: SendOrganizerWishlistRemindersJob
+  send_organizer_exchange_reminders:
+    class: SendOrganizerExchangeRemindersJob
     schedule: every day at 10am America/Toronto

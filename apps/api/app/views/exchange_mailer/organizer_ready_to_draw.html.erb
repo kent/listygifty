@@ -1,28 +1,29 @@
-<% content_for :preview_text do %><%= @waiting.size == 1 ? "1 person" : "#{@waiting.size} people" %> in <%= @exchange.name %> <%= @waiting.size == 1 ? "still needs" : "still need" %> to add gift ideas.<% end %>
+<% content_for :preview_text do %>Everyone you invited to <%= @exchange.name %> has joined. Draw names so each person gets their match.<% end %>
 
 <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #18181b;">
-  <%= @waiting.size == 1 ? "Someone still needs" : "Some people still need" %> to add gift ideas.
+  Everyone&apos;s in. Time to draw names.
 </h1>
 <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
-  <%= @waiting.size == 1 ? "This person has" : "These people have" %> joined
-  <strong><%= @exchange.name %></strong> but
-  <%= @waiting.size == 1 ? "hasn&apos;t".html_safe : "haven&apos;t".html_safe %>
-  added anything to their wishlist yet.
+  Everyone you invited to <strong><%= @exchange.name %></strong> has joined.
+  These <%= @joined.size %> people are in:
 </p>
 <div style="margin: 0 0 24px 0; padding: 16px 20px; border-radius: 10px; background-color: #faf5ff; color: #581c87;">
-  <% @waiting.each do |participant| %>
+  <% @joined.each do |participant| %>
     <p style="margin: 4px 0; font-size: 15px; font-weight: 600;"><%= participant.display_name %></p>
   <% end %>
 </div>
+<p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
+  Draw names and each person gets their match by email.<% if @exchange.exchange_date %> The exchange is on <%= @exchange.exchange_date.strftime("%A, %B %-d") %>.<% end %>
+</p>
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
   <tr>
     <td align="center">
       <a href="<%= @exchange_url %>" class="button" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px;">
-        View Exchange
+        Draw Names
       </a>
     </td>
   </tr>
 </table>
 <p style="margin: 32px 0 0 0; font-size: 14px; color: #71717a; text-align: center;">
-  A quick nudge from you goes a long way. Whoever draws them will have something to shop for.
+  Still waiting on someone? Share the invite link first.
 </p>
