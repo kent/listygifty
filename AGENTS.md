@@ -82,6 +82,28 @@ Rules:
 - Prefer the production iOS EAS submit path for TestFlight unless the user explicitly asks for a different profile.
 - Ensure production submits target the `Internal Testers` group unless the user explicitly asks for a different tester group.
 
+### Shipping From Cursor
+
+- A request to ship, deploy, merge, or "get it live" means the change must
+  reach production. An open pull request is not done.
+- Open the pull request against `main`, then turn on auto-merge straight away:
+  `gh pr merge <number> --squash --auto`. GitHub merges it the moment the
+  required checks (`test`, `system-test`, `lint`, `scan_ruby`, `scan_js`) pass
+  and every review thread is resolved.
+- `main` does not require a branch to be up to date before merging, so other
+  pull requests landing first will not strand yours. Only a real merge
+  conflict blocks it: merge `origin/main` into the branch, resolve, and push.
+  Auto-merge stays on.
+- A merge to `main` that touches `apps/`, `packages/`, `infra/`, `scripts/`, or
+  the root package files starts the production `Deploy` workflow on its own.
+  The work is done only when that run succeeds for the merge commit:
+  `gh run list --workflow deploy.yml --commit <sha>`, then
+  `gh run watch <run-id> --exit-status`. Report the run link.
+- If a required check fails, fix it on the branch. Never bypass branch
+  protection or push to `main` directly.
+- The iOS build stays opt-in. Follow Cursor Mobile Releases below only when
+  TestFlight is asked for.
+
 ### Cursor Mobile Releases
 
 - Treat natural-language requests such as `deploy to TestFlight`, `ship to
