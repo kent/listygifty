@@ -6,8 +6,23 @@ class ApplicationController < ActionController::API
   CLERK_PROFILE_SYNC_INTERVAL = 24.hours
 
   before_action :authenticate!
+  before_action :keep_demo_account_read_only!
 
   private
+
+  # Anyone can sign in to the demo account, so on the website it can look but
+  # not change anything. That keeps it from emailing invites to strangers.
+  def keep_demo_account_read_only!
+    return if request.get? || request.head? || request.options?
+    return unless DemoAccount.user?(@current_user)
+    return if demo_account_writes_allowed?
+
+    render json: { error: "The demo account can't make changes here. Try it from ChatGPT instead." }, status: :forbidden
+  end
+
+  def demo_account_writes_allowed?
+    false
+  end
 
   # Main authentication method - tries API key first, then falls back to Clerk JWT
   def authenticate!

@@ -13,6 +13,7 @@ Last updated: 2026-05-31
 - [AI assistant integrations](https://listygifty.com/integrations/index.html.md): MCP and OAuth integration overview for Claude, ChatGPT, and compatible assistants.
 - [Support](https://listygifty.com/support/index.html.md): Support contact, status information, and helpful account links.
 - [Privacy Policy](https://listygifty.com/privacy-policy/index.html.md): Public summary of Listy Gifty data collection, sharing, retention, and contact practices.
+- [Terms of Service](https://listygifty.com/terms/index.html.md): Public summary of the terms for accounts, sharing, gift exchanges, connected assistants, and acceptable use.
 - [System Status](https://listygifty.com/status/index.html.md): Current public service status page.
 
 ## Product Facts

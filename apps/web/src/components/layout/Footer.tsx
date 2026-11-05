@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/integrations", label: "Integrations" },
   { href: "/support", label: "Support" },
   { href: "/privacy-policy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
 ];
 
 export function Footer() {

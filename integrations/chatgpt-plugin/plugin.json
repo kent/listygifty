@@ -1,0 +1,90 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "listygifty",
+  "version": "1.0.0",
+  "description": "Add to your wishlists, plan gifts for the people in your life, and keep your Secret Santa wishlist up to date in Listy Gifty.",
+  "author": {
+    "name": "Listy Gifty",
+    "email": "support@listygifty.com",
+    "url": "https://listygifty.com"
+  },
+  "homepage": "https://listygifty.com",
+  "keywords": ["wishlist", "gifts", "gift ideas", "secret santa", "gift exchange", "holidays"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Listy Gifty",
+        "shortDescription": "Wishlists and gift planning",
+        "longDescription": "Listy Gifty keeps your wishlists, gift ideas, and gift exchanges in one place. Connect it to ChatGPT and you can add something to your wishlist the moment you think of it, see what you've planned for everyone on your list, and keep your Secret Santa wishlist current so whoever drew your name knows what you'd like.\n\nAsk ChatGPT to:\n- Add an item to one of your wishlists, with a link, price range, and priority.\n- Show what's on a wishlist, or get a share link to send to family.\n- Add a gift idea to a Gift List, like Christmas or Mom's birthday, for a specific person.\n- See who you're giving to in a gift exchange and what they asked for.\n- Add ideas to your own gift exchange wishlist.\n\nListy Gifty only changes what you ask it to. It can't send invitations, draw names, or delete a gift exchange from ChatGPT. Do those in the Listy Gifty app.",
+        "developerName": "Listy Gifty",
+        "category": "Lifestyle",
+        "capabilities": [],
+        "websiteURL": "https://listygifty.com",
+        "supportURL": "https://listygifty.com/support",
+        "privacyPolicyURL": "https://listygifty.com/privacy-policy",
+        "termsOfServiceURL": "https://listygifty.com/terms",
+        "defaultPrompt": [
+          "Add noise-cancelling headphones to my birthday wishlist",
+          "What gift ideas do I have for Christmas so far?",
+          "Who am I buying for in my Secret Santa?"
+        ],
+        "logo": "./assets/icon.png",
+        "composerIcon": "./assets/icon.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Adds an item to the user's own wishlist.",
+              "prompt": "Add a pair of noise-cancelling headphones to my birthday wishlist.",
+              "tools_triggered": ["list_workspaces", "list_wishlists", "create_wishlist_item"],
+              "expected_behavior": "Finds \"My Birthday Wishlist\", adds \"Noise-cancelling headphones\" to it, and confirms the item was added."
+            },
+            {
+              "description": "Reads the items on a wishlist.",
+              "prompt": "What's on my birthday wishlist?",
+              "tools_triggered": ["list_workspaces", "list_wishlists", "get_wishlist"],
+              "expected_behavior": "Lists the items on \"My Birthday Wishlist\": Pour-over coffee kettle, Hardcover sketchbook, and Wool beanie, charcoal, with their price ranges."
+            },
+            {
+              "description": "Adds a gift idea for a person to a Gift List.",
+              "prompt": "Add a cozy cardigan as a Christmas gift idea for my mom.",
+              "tools_triggered": ["list_workspaces", "list_holidays", "list_people", "create_gift"],
+              "expected_behavior": "Adds \"Cozy cardigan\" to the \"Christmas 2026\" Gift List with Nina Rivera (Mom) as the recipient, and confirms it."
+            },
+            {
+              "description": "Shows the user's gift exchange match and their wishlist.",
+              "prompt": "Who am I buying for in my Family Secret Santa, and what do they want?",
+              "tools_triggered": ["list_gift_exchanges", "get_my_exchange_match"],
+              "expected_behavior": "Says the user is giving to Alex Parker and that Alex's wishlist has a desk plant."
+            },
+            {
+              "description": "Adds an idea to the user's own gift exchange wishlist.",
+              "prompt": "Add a coffee grinder to my Secret Santa wishlist.",
+              "tools_triggered": ["list_gift_exchanges", "create_exchange_wishlist_item"],
+              "expected_behavior": "Adds \"Coffee grinder\" to the user's own wishlist in \"Family Secret Santa\" and confirms it."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Deleting a gift exchange isn't offered. ChatGPT should say it can't do that from here and suggest the Listy Gifty app, without calling a Listy Gifty tool that changes data.",
+              "prompt": "Delete my Family Secret Santa exchange."
+            },
+            {
+              "description": "Sending invitations isn't offered. ChatGPT should say it can't send invites from here and suggest the Listy Gifty app, without emailing anyone.",
+              "prompt": "Invite jordan@example.com to my Secret Santa."
+            },
+            {
+              "description": "Unrelated request. ChatGPT should answer without using Listy Gifty.",
+              "prompt": "What's the weather in Toronto this weekend?"
+            }
+          ]
+        },
+        "commerce": false
+      },
+      "publication": {
+        "release_notes": "First release. Add to and read your wishlists, plan gift ideas in your Gift Lists, and keep your gift exchange wishlist up to date from ChatGPT."
+      }
+    }
+  }
+}

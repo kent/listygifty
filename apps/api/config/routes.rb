@@ -10,7 +10,9 @@ Rails.application.routes.draw do
   # Well-known discovery endpoints (RFC 9728, RFC 8414)
   get ".well-known/oauth-protected-resource" => "well_known#oauth_protected_resource", format: false
   get ".well-known/oauth-protected-resource/mcp" => "well_known#oauth_user_mcp_protected_resource", format: false
+  get ".well-known/oauth-protected-resource/apps/mcp" => "well_known#oauth_apps_mcp_protected_resource", format: false
   get ".well-known/oauth-protected-resource/admin/mcp" => "well_known#oauth_admin_mcp_protected_resource", format: false
+  get ".well-known/openai-apps-challenge" => "well_known#openai_apps_challenge", format: false
   get ".well-known/oauth-authorization-server" => "well_known#oauth_authorization_server", format: false
 
   # OAuth authorization and token endpoints
@@ -34,6 +36,13 @@ Rails.application.routes.draw do
 
   # No long-lived SSE transport: this stateless server has no server-initiated messages.
   get "mcp", to: "mcp#connect", format: false
+
+  # App directory reviewers sign in to the shared demo account by email alone.
+  post "demo_session", to: "demo_sessions#create", format: false
+
+  # Smaller tool set for assistant app directories such as ChatGPT's.
+  post "apps/mcp", to: "apps_mcp#handle", format: false
+  get "apps/mcp", to: "apps_mcp#connect", format: false
 
   # Separate global administration control plane. This endpoint accepts
   # admin-scoped OAuth credentials and dedicated API keys for break-glass use.

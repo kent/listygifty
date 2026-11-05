@@ -50,6 +50,31 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     JSON.parse(result.fetch("content").first.fetch("text"))
   end
 
+  test "every tool says whether it reads, changes, or destroys data and whether it reaches outside the account" do
+    post "/mcp", params: { jsonrpc: "2.0", method: "tools/list", id: 1 }.to_json,
+      headers: auth_headers.merge("Content-Type" => "application/json")
+    tools = JSON.parse(response.body).dig("result", "tools").index_by { |tool| tool["name"] }
+
+    tools.each_value do |tool|
+      hints = tool.fetch("annotations")
+      %w[readOnlyHint destructiveHint openWorldHint].each do |hint|
+        assert_includes [ true, false ], hints[hint], "#{tool["name"]} #{hint}"
+      end
+      assert_not hints["destructiveHint"], "#{tool["name"]} cannot be read-only and destructive" if hints["readOnlyHint"]
+    end
+    assert tools.fetch("list_wishlists").dig("annotations", "readOnlyHint")
+    assert_not tools.fetch("create_wishlist_item").dig("annotations", "destructiveHint")
+    tools.each_key.grep(/\A(delete|remove|update)_/).each do |name|
+      assert tools.fetch(name).dig("annotations", "destructiveHint"), name
+    end
+    assert tools.fetch("publish_gift_exchange").dig("annotations", "openWorldHint")
+    assert tools.fetch("share_wishlist").dig("annotations", "openWorldHint")
+    assert_not tools.fetch("create_wishlist_item").dig("annotations", "openWorldHint")
+    (McpController::DESTRUCTIVE_TOOLS + McpController::OPEN_WORLD_TOOLS).each do |name|
+      assert tools.key?(name), "#{name} is labelled but is not a tool"
+    end
+  end
+
   test "wishlist tools hide unrevealed claims from an owner with anti-spoiler on" do
     wishlist = Wishlist.create!(user: @user, workspace: @workspace, name: "Surprises", anti_spoiler_enabled: true)
     item = wishlist.wishlist_items.create!(name: "Socks")

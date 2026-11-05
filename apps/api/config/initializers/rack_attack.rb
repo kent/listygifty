@@ -8,7 +8,9 @@ class Rack::Attack
 
   # Throttle all requests by IP (60 requests per minute)
   throttle("req/ip", limit: 60, period: 1.minute) do |req|
-    dedicated_limit = RequestBodyLimiter::ANALYTICS_PATH.match?(req.path) || RequestBodyLimiter::ADMIN_PATH.match?(req.path)
+    dedicated_limit = RequestBodyLimiter::ANALYTICS_PATH.match?(req.path) ||
+      RequestBodyLimiter::ADMIN_PATH.match?(req.path) ||
+      RequestBodyLimiter::MCP_PATH.match?(req.path)
     req.ip unless req.path.start_with?("/assets") || dedicated_limit
   end
 
@@ -41,6 +43,25 @@ class Rack::Attack
   # changes; keep this above the ordinary product-request baseline.
   throttle("analytics/ip", limit: 120, period: 1.minute) do |req|
     req.ip if req.post? && RequestBodyLimiter::ANALYTICS_PATH.match?(req.path)
+  end
+
+  # Each demo sign-in can reset the demo account and calls Clerk.
+  throttle("demo_session/ip", limit: 10, period: 1.minute) do |req|
+    req.ip if req.post? && req.path == "/demo_session"
+  end
+
+  # Assistants such as ChatGPT and Claude call MCP from shared server IPs, so
+  # a per-IP limit would let one busy assistant throttle every user on it.
+  # Limit each credential instead, with a generous IP ceiling for abuse.
+  throttle("mcp/ip", limit: 600, period: 1.minute) do |req|
+    req.ip if RequestBodyLimiter::MCP_PATH.match?(req.path)
+  end
+
+  throttle("mcp/credential", limit: 120, period: 1.minute) do |req|
+    next unless RequestBodyLimiter::MCP_PATH.match?(req.path)
+
+    raw_token = BearerTokenExtractor.extract(req.get_header("HTTP_AUTHORIZATION"))
+    Digest::SHA256.hexdigest(raw_token) if raw_token
   end
 
   throttle("admin_mcp/ip", limit: 30, period: 1.minute) do |req|

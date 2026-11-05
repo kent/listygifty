@@ -302,6 +302,7 @@ const apiEnv: pulumi.Input<pulumi.Input<gcp.types.input.cloudrunv2.ServiceTempla
   plainEnv("API_BASE_URL", `https://${apiDomain}`),
   plainEnv("MCP_SERVER_URI", `https://${apiDomain}/mcp`),
   plainEnv("ADMIN_MCP_SERVER_URI", `https://${apiDomain}/admin/mcp`),
+  plainEnv("APPS_MCP_SERVER_URI", `https://${apiDomain}/apps/mcp`),
   plainEnv("ACTIVE_STORAGE_SERVICE", "google"),
   plainEnv("ACTIVE_STORAGE_BUCKET", activeStorageBucket.name),
   plainEnv("ADMIN_EMAILS", "kent.fenwick@gmail.com"),

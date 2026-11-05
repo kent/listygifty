@@ -23,3 +23,4 @@ export { exportsService } from "./exports.service";
 export { wishlistsService } from "./wishlists.service";
 
 export { oauthAuthorizationService, type OAuthConsent } from "./oauth-authorization.service";
+export { demoSessionService } from "./demo-session.service";

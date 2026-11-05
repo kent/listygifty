@@ -19,6 +19,17 @@ module Oauth
       )
     end
 
+    # Assistant app directories (ChatGPT) connect here for a smaller tool set.
+    def apps_mcp
+      Resource.new(
+        uri: ENV.fetch("APPS_MCP_SERVER_URI") { "#{@base_url}/apps/mcp" },
+        name: "Listy Gifty",
+        scopes: USER_SCOPES,
+        admin: false,
+        metadata_path: "/.well-known/oauth-protected-resource/apps/mcp"
+      )
+    end
+
     def admin_mcp
       Resource.new(
         uri: ENV.fetch("ADMIN_MCP_SERVER_URI") { "#{@base_url}/admin/mcp" },
@@ -41,7 +52,7 @@ module Oauth
     end
 
     def resources
-      [ user_mcp, admin_mcp ]
+      [ user_mcp, apps_mcp, admin_mcp ]
     end
   end
 end

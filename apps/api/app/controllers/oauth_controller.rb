@@ -238,6 +238,11 @@ class OauthController < ApplicationController
     authenticate_clerk_session!
   end
 
+  # Reviewers sign in to the demo account here to connect ChatGPT.
+  def demo_account_writes_allowed?
+    true
+  end
+
   def prepare_initial_authorization_request
     client_id = params[:client_id]
     unless client_id.is_a?(String) && client_id.bytesize <= 500
