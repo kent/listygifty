@@ -1,8 +1,19 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
   "mcpServers": {
     "listygifty": {
       "type": "streamable-http",
-      "url": "https://api.listygifty.com/apps/mcp"
+      "url": "https://api.listygifty.com/apps/mcp",
+      "extensions": {
+        "com.openai": {
+          "auth": {
+            "type": "oauth",
+            "client": {
+              "mode": "dcr"
+            }
+          }
+        }
+      }
     }
   }
 }

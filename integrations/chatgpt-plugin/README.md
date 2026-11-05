@@ -23,9 +23,16 @@ the ZIP. Enter them under **Metadata & Skills → Review information**:
 
 ## Domain verification
 
-The portal issues a token. Set it as `OPENAI_APPS_CHALLENGE` in
-`infra/pulumi/src/stack.ts`, deploy, and check
-`https://api.listygifty.com/.well-known/openai-apps-challenge` returns it.
+The portal issues a token, set as `OPENAI_APPS_CHALLENGE` in
+`infra/pulumi/src/stack.ts`. Check
+`https://api.listygifty.com/.well-known/openai-apps-challenge` returns it before
+selecting **Verify Domain**.
+
+## Package format notes
+
+- `tools_triggered` in test cases is a comma-separated string, not a list.
+- `mcp.json` needs its `$schema` line, or the portal finds no MCP server.
+- `category` must be a plugin directory category. "Lifestyle" is rejected.
 
 ## Tool changes
 
