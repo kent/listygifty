@@ -20,7 +20,7 @@ import {
 } from "@/lib/models";
 import { useTheme } from "@/lib/theme";
 
-export type GiftListSettingsPage = "menu" | "sharing";
+export type GiftListSettingsPage = "menu" | "stats" | "sharing";
 
 interface GiftListSettingsSheetProps {
   page: GiftListSettingsPage | null;
@@ -34,6 +34,7 @@ interface GiftListSettingsSheetProps {
   regenerating: boolean;
   onClose: () => void;
   onBack: () => void;
+  onOpenStats: () => void;
   onOpenSharing: () => void;
   onScheduleReminder: () => void;
   onRefreshShare: () => void;
@@ -136,6 +137,22 @@ function SheetHeader({
   );
 }
 
+function BackButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Back to list settings"
+      style={{ flexDirection: "row", alignItems: "center" }}
+    >
+      <Ionicons name="chevron-back" size={18} color={colors.primary} />
+      <Text style={{ color: colors.primary, fontSize: 16 }}>Settings</Text>
+    </TouchableOpacity>
+  );
+}
+
 export function GiftListSettingsSheet(props: GiftListSettingsSheetProps) {
   const { colors } = useTheme();
   const { page, holiday, onClose } = props;
@@ -145,11 +162,18 @@ export function GiftListSettingsSheet(props: GiftListSettingsSheetProps) {
       visible={page !== null}
       animationType="slide"
       presentationStyle="pageSheet"
-      onRequestClose={page === "sharing" ? props.onBack : onClose}
+      onRequestClose={page === "menu" ? onClose : props.onBack}
     >
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         {page === "sharing" ? (
           <SharingPage {...props} />
+        ) : page === "stats" ? (
+          <>
+            <SheetHeader title="Stats" left={<BackButton onPress={props.onBack} />} />
+            <ScrollView contentContainerStyle={{ padding: 16 }}>
+              <GiftListStats summary={props.summary} />
+            </ScrollView>
+          </>
         ) : (
           <>
             <SheetHeader
@@ -162,7 +186,12 @@ export function GiftListSettingsSheet(props: GiftListSettingsSheetProps) {
             />
             <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
               <SectionTitle>Stats</SectionTitle>
-              <GiftListStats summary={props.summary} />
+              <SettingsRow
+                icon="stats-chart-outline"
+                title="Stats"
+                detail="Progress, spend, and recipients"
+                onPress={props.onOpenStats}
+              />
 
               <View style={{ height: 8 }} />
               <SectionTitle>Notifications</SectionTitle>
@@ -216,17 +245,7 @@ function SharingPage({
     <>
       <SheetHeader
         title="Share List"
-        left={
-          <TouchableOpacity
-            onPress={onBack}
-            accessibilityRole="button"
-            accessibilityLabel="Back to list settings"
-            style={{ flexDirection: "row", alignItems: "center" }}
-          >
-            <Ionicons name="chevron-back" size={18} color={colors.primary} />
-            <Text style={{ color: colors.primary, fontSize: 16 }}>Settings</Text>
-          </TouchableOpacity>
-        }
+        left={<BackButton onPress={onBack} />}
         right={
           <TouchableOpacity onPress={onRefreshShare} disabled={shareLoading}>
             {shareLoading ? (

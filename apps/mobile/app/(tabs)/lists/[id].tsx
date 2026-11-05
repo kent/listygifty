@@ -27,11 +27,6 @@ export default function GiftsScreen() {
     return <ScreenLoader />;
   }
 
-  const { giftSummary, filteredGiftSummary } = controller;
-  const statsLabel = controller.hasActiveFilters
-    ? `Showing ${filteredGiftSummary.totalGifts} of ${giftSummary.totalGifts}`
-    : `${giftSummary.totalGifts} gift${giftSummary.totalGifts === 1 ? "" : "s"} · ${giftSummary.completionPercent}% done`;
-
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
       <Stack.Screen
@@ -52,35 +47,6 @@ export default function GiftsScreen() {
       />
 
       <View style={{ padding: 16, paddingBottom: 8, gap: 12 }}>
-        {controller.holiday ? (
-          <TouchableOpacity
-            onPress={controller.openSettings}
-            accessibilityRole="button"
-            accessibilityLabel="View list stats"
-            style={{
-              backgroundColor: colors.card,
-              borderRadius: 10,
-              borderWidth: 1,
-              borderColor: colors.border,
-              padding: 12,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Ionicons name="stats-chart-outline" size={18} color={colors.primary} />
-              <Text style={{ color: colors.text, fontSize: 14, fontWeight: "600" }}>
-                {statsLabel}
-              </Text>
-            </View>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Text style={{ color: colors.textTertiary, fontSize: 13 }}>Stats</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.muted} />
-            </View>
-          </TouchableOpacity>
-        ) : null}
-
         <View style={{ flexDirection: "row", gap: 8 }}>
           <TextInput
             placeholder="Search gifts..."
@@ -281,7 +247,7 @@ export default function GiftsScreen() {
         <GiftListSettingsSheet
           page={controller.settingsPage}
           holiday={controller.holiday}
-          summary={giftSummary}
+          summary={controller.giftSummary}
           schedulingReminder={controller.schedulingReminder}
           shareUrl={controller.shareUrl}
           collaborators={controller.collaborators}
@@ -290,6 +256,7 @@ export default function GiftsScreen() {
           regenerating={controller.regenerating}
           onClose={controller.closeSettings}
           onBack={controller.openSettings}
+          onOpenStats={controller.openStats}
           onOpenSharing={controller.openSharing}
           onScheduleReminder={controller.triggerScheduleReminder}
           onRefreshShare={controller.refreshShareData}

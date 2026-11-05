@@ -46,6 +46,7 @@ function renderSheet(overrides: Partial<Props> = {}) {
     regenerating: false,
     onClose: jest.fn(),
     onBack: jest.fn(),
+    onOpenStats: jest.fn(),
     onOpenSharing: jest.fn(),
     onScheduleReminder: jest.fn(),
     onRefreshShare: jest.fn(),
@@ -68,9 +69,20 @@ describe("GiftListSettingsSheet", () => {
     expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
 
-  it("shows progress, spend, and recipients in stats", () => {
-    renderSheet();
+  it("opens stats as its own page instead of showing them in the menu", () => {
+    const { onOpenStats } = renderSheet();
 
+    expect(screen.queryByText("Progress")).toBeNull();
+    fireEvent.press(screen.getByRole("button", { name: "Stats" }));
+
+    expect(onOpenStats).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows progress, spend, and recipients on the stats page", () => {
+    const { onBack } = renderSheet({ page: "stats" });
+
+    expect(screen.getByRole("header", { name: "Stats" })).toBeTruthy();
+    expect(screen.queryByText("Deadline reminder")).toBeNull();
     expect(screen.getByText("Progress")).toBeTruthy();
     expect(screen.getByText("0/8 done")).toBeTruthy();
     expect(screen.getByText("Spend")).toBeTruthy();
@@ -78,6 +90,9 @@ describe("GiftListSettingsSheet", () => {
     expect(screen.getByText("8 missing a price")).toBeTruthy();
     expect(screen.getByText("Recipients")).toBeTruthy();
     expect(screen.getByText("4 open")).toBeTruthy();
+    fireEvent.press(screen.getByRole("button", { name: "Back to list settings" }));
+
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it("schedules a reminder from notifications", () => {

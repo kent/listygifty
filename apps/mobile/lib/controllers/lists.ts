@@ -181,11 +181,6 @@ export function useGiftListDetailController() {
     () => summarizeGifts(resource.data.gifts, resource.data.statuses),
     [resource.data.gifts, resource.data.statuses]
   );
-  const filteredGiftSummary = useMemo(
-    () => summarizeGifts(filteredGifts, resource.data.statuses),
-    [filteredGifts, resource.data.statuses]
-  );
-
   const hasActiveFilters = selectedStatusIds.length > 0 || search.trim().length > 0;
   const error = !isValidHolidayId ? "Invalid list ID" : resource.error;
 
@@ -313,6 +308,10 @@ export function useGiftListDetailController() {
 
   const openSettings = useCallback(() => {
     setSettingsPage("menu");
+  }, []);
+
+  const openStats = useCallback(() => {
+    setSettingsPage("stats");
   }, []);
 
   const closeSettings = useCallback(() => {
@@ -443,7 +442,6 @@ export function useGiftListDetailController() {
     closeSettings,
     collaborators,
     error,
-    filteredGiftSummary,
     filteredGifts,
     getNextStatusForGift,
     giftSummary,
@@ -459,6 +457,7 @@ export function useGiftListDetailController() {
     loading: isValidHolidayId && resource.loading,
     openSettings,
     openSharing,
+    openStats,
     refreshShareData: () => {
       void loadShareData();
     },
