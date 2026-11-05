@@ -303,6 +303,8 @@ const apiEnv: pulumi.Input<pulumi.Input<gcp.types.input.cloudrunv2.ServiceTempla
   plainEnv("MCP_SERVER_URI", `https://${apiDomain}/mcp`),
   plainEnv("ADMIN_MCP_SERVER_URI", `https://${apiDomain}/admin/mcp`),
   plainEnv("APPS_MCP_SERVER_URI", `https://${apiDomain}/apps/mcp`),
+  // Public token OpenAI's plugin portal checks at /.well-known/openai-apps-challenge.
+  plainEnv("OPENAI_APPS_CHALLENGE", "KQZlf2eBmBZdewppmAw7WbOXLlBq0azjvy--yaXkkVk"),
   plainEnv("ACTIVE_STORAGE_SERVICE", "google"),
   plainEnv("ACTIVE_STORAGE_BUCKET", activeStorageBucket.name),
   plainEnv("ADMIN_EMAILS", "kent.fenwick@gmail.com"),
