@@ -17,6 +17,7 @@ class AllMailersRenderTest < ActionMailer::TestCase
       invitation: -> { ExchangeMailer.invitation(@annabel) },
       joined_organizer: -> { ExchangeMailer.joined_organizer(@annabel) },
       join_confirmation: -> { ExchangeMailer.join_confirmation(@annabel) },
+      organizer_wishlist_reminder: -> { ExchangeMailer.organizer_wishlist_reminder(@exchange, [ @annabel, @bartholomew ]) },
       match_assignment: -> { ExchangeMailer.match_assignment(@annabel) },
       wishlist_updated: -> { ExchangeMailer.wishlist_updated(wishlist_added_notification(@annabel)) },
       wishlist_nudge: -> { ExchangeMailer.wishlist_nudge(nudge_notification(@annabel)) },
