@@ -17,6 +17,7 @@ class AllMailersRenderTest < ActionMailer::TestCase
       invitation: -> { ExchangeMailer.invitation(@annabel) },
       joined_organizer: -> { ExchangeMailer.joined_organizer(@annabel) },
       join_confirmation: -> { ExchangeMailer.join_confirmation(@annabel) },
+      wishlist_reminder: -> { ExchangeMailer.wishlist_reminder(@annabel) },
       organizer_pending_joins: -> { ExchangeMailer.organizer_pending_joins(@exchange, [ @annabel, @bartholomew ]) },
       organizer_ready_to_draw: -> { ExchangeMailer.organizer_ready_to_draw(@exchange, [ @annabel, @bartholomew, @cordelia ]) },
       match_assignment: -> { ExchangeMailer.match_assignment(@annabel) },

@@ -45,6 +45,20 @@ class ExchangeMailer < ApplicationMailer
     mail(to: exchange.user.email, subject: "🎁 Everyone's in. Time to draw names: #{exchange.name}")
   end
 
+  # For someone who joined but hasn't added a single idea. Sent by
+  # SendWishlistRemindersJob, at most twice per exchange.
+  def wishlist_reminder(participant)
+    @participant = participant
+    @exchange = participant.gift_exchange
+    @drawn = @exchange.status == "active"
+    @wishlist_url = "#{ENV.fetch("FRONTEND_URL", "https://listygifty.com")}/exchanges/#{@exchange.slug}/my-wishlist"
+
+    mail(
+      to: participant.delivery_email,
+      subject: "💡 What would you like? Add gift ideas for #{@exchange.name}"
+    )
+  end
+
   def join_confirmation(participant)
     @participant = participant
     @exchange = participant.gift_exchange
