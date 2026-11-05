@@ -1,17 +1,14 @@
 "use client";
 
 import { AlertTriangle, CalendarClock, CheckCircle2, CircleDollarSign } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { parseCalendarDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { summarizeGifts, type Gift, type GiftStatus } from "@niftygifty/types";
 
 interface GiftListSummaryBarProps {
   gifts: Gift[];
-  filteredGifts: Gift[];
   statuses: GiftStatus[];
   holidayDate: string | null;
-  hasActiveFilters: boolean;
   className?: string;
 }
 
@@ -61,14 +58,11 @@ function getDeadlineCopy(holidayDate: string | null): { value: string; detail: s
 
 export function GiftListSummaryBar({
   gifts,
-  filteredGifts,
   statuses,
   holidayDate,
-  hasActiveFilters,
   className,
 }: GiftListSummaryBarProps) {
   const summary = summarizeGifts(gifts, statuses);
-  const visibleSummary = summarizeGifts(filteredGifts, statuses);
   const deadline = getDeadlineCopy(holidayDate);
   const unassignedDetail =
     summary.totalGifts === 0
@@ -127,46 +121,31 @@ export function GiftListSummaryBar({
   ];
 
   return (
-    <section className={cn("space-y-3", className)} aria-label="Gift list summary">
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        {items.map((item) => {
-          const Icon = item.icon;
-          return (
-            <div
-              key={item.label}
-              className="rounded-lg border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-xs font-medium uppercase text-slate-600 dark:text-slate-400">
-                    {item.label}
-                  </p>
-                  <p className="mt-1 truncate text-xl font-semibold text-slate-950 dark:text-white">
-                    {item.value}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    {item.detail}
-                  </p>
-                </div>
-                <Icon className={cn("h-5 w-5 shrink-0", item.accent)} />
+    <section className={cn("grid grid-cols-2 gap-3 xl:grid-cols-4", className)} aria-label="Gift list summary">
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <div
+            key={item.label}
+            className="rounded-lg border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase text-slate-600 dark:text-slate-400">
+                  {item.label}
+                </p>
+                <p className="mt-1 truncate text-xl font-semibold text-slate-950 dark:text-white">
+                  {item.value}
+                </p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  {item.detail}
+                </p>
               </div>
+              <Icon className={cn("h-5 w-5 shrink-0", item.accent)} />
             </div>
-          );
-        })}
-      </div>
-
-      {hasActiveFilters && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-950 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-100">
-          <span>Filtered view</span>
-          <Badge variant="secondary">{visibleSummary.totalGifts} gifts</Badge>
-          <Badge variant="secondary">{formatCurrency(visibleSummary.totalCost)}</Badge>
-          {visibleSummary.unassignedGiftCount > 0 && (
-            <Badge variant="outline">
-              {visibleSummary.unassignedGiftCount} unassigned
-            </Badge>
-          )}
-        </div>
-      )}
+          </div>
+        );
+      })}
     </section>
   );
 }

@@ -53,12 +53,14 @@ test("the decisions Kent picked work in a real browser", async ({ browser }, tes
     await page.getByRole("option", { name: "Purchased" }).click();
     await page.waitForTimeout(500);
     await page.reload();
+    await page.getByRole("tab", { name: "Stats" }).click();
     await expect(page.getByText("1/2").first()).toBeVisible();
     await expect(page.getByText("50% complete").first()).toBeVisible();
   });
 
   await journey.step("Phones get the summary in two columns", phone.page, async () => {
     await phone.page.goto(listPath);
+    await phone.page.getByRole("tab", { name: "Stats" }).click();
     await expect(phone.page.getByText("Planned Spend").first()).toBeVisible({ timeout: 15_000 });
     const columns = await phone.page.getByText("Planned Spend").first().evaluate((node) => {
       let element = node as HTMLElement | null;
