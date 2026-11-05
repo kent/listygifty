@@ -1,0 +1,28 @@
+<% content_for :preview_text do %>Your wishlist for <%= @exchange.name %> is empty. Whoever draws you wants to know what you&apos;d like.<% end %>
+
+<h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #18181b;">
+  People want to know what you&apos;d like.
+</h1>
+<p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
+  Your wishlist for <strong><%= @exchange.name %></strong> is still empty.
+  <% if @drawn %>
+    Your Secret Santa has your name and is trying to work out what to get you.
+  <% else %>
+    Whoever draws your name will want to know what to get you.
+  <% end %>
+</p>
+<p style="margin: 0 0 24px 0; font-size: 14px; color: #52525b;">
+  Add a few ideas, even small ones.<% if @exchange.exchange_date %> The exchange is on <%= @exchange.exchange_date.strftime("%A, %B %-d") %>.<% end %>
+</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td align="center">
+      <a href="<%= @wishlist_url %>" class="button" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px;">
+        Add Gift Ideas
+      </a>
+    </td>
+  </tr>
+</table>
+<p style="margin: 32px 0 0 0; font-size: 14px; color: #71717a; text-align: center;">
+  A size, a colour, or a link takes 30 seconds and saves a lot of guessing.
+</p>

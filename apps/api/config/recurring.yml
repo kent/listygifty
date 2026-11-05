@@ -34,6 +34,10 @@ production:
     class: SendOrganizerExchangeRemindersJob
     schedule: every day at 10am America/Toronto
 
+  send_wishlist_reminders:
+    class: SendWishlistRemindersJob
+    schedule: every day at 11am America/Toronto
+
 development:
   send_seasonal_reminders:
     class: SendSeasonalRemindersJob
@@ -46,3 +50,7 @@ development:
   send_organizer_exchange_reminders:
     class: SendOrganizerExchangeRemindersJob
     schedule: every day at 10am America/Toronto
+
+  send_wishlist_reminders:
+    class: SendWishlistRemindersJob
+    schedule: every day at 11am America/Toronto

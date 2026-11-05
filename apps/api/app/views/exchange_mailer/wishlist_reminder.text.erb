@@ -1,0 +1,9 @@
+People want to know what you'd like.
+
+Your wishlist for <%= @exchange.name %> is still empty. <%= @drawn ? "Your Secret Santa has your name and is trying to work out what to get you." : "Whoever draws your name will want to know what to get you." %>
+
+Add a few ideas, even small ones.<% if @exchange.exchange_date %> The exchange is on <%= @exchange.exchange_date.strftime("%A, %B %-d") %>.<% end %>
+
+Add gift ideas: <%= @wishlist_url %>
+
+A size, a colour, or a link takes 30 seconds and saves a lot of guessing.
