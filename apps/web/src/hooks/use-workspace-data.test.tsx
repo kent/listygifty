@@ -136,6 +136,91 @@ describe("workspace data loading", () => {
     expect(mocks.push).toHaveBeenCalledWith("/login?redirect_url=%2Fwishlists%2F12%3Ftab%3Dclaimed");
   });
 
+  it("shows placeholder data while the first request is in flight", async () => {
+    const request = deferred<string[]>();
+    const { result } = renderHook(() =>
+      useWorkspaceData({ fetcher: () => request.promise, initialData: [] as string[], placeholderData: ["From bootstrap"] })
+    );
+    expect(result.current.data).toEqual(["From bootstrap"]);
+    expect(result.current.hasData).toBe(true);
+    await act(async () => request.resolve(["Fresh"]));
+    expect(result.current.data).toEqual(["Fresh"]);
+  });
+
+  it("has no data to show while a page without a placeholder loads", () => {
+    const { result } = renderHook(() => useWorkspaceData({ fetcher: () => new Promise<string[]>(() => {}), initialData: [] as string[] }));
+    expect(result.current.data).toEqual([]);
+    expect(result.current.hasData).toBe(false);
+  });
+
+  it("shows the last response straight away when the page is opened again", async () => {
+    const bootstrap = ["Older bootstrap"];
+    const first = renderHook(() => useWorkspaceData({ fetcher: async () => ["Saved lists"], initialData: [] as string[], placeholderData: bootstrap, cacheKey: "revisit" }));
+    await waitFor(() => expect(first.result.current.data).toEqual(["Saved lists"]));
+    first.unmount();
+
+    const refresh = deferred<string[]>();
+    const { result } = renderHook(() =>
+      useWorkspaceData({ fetcher: () => refresh.promise, initialData: [] as string[], placeholderData: bootstrap, cacheKey: "revisit" })
+    );
+    expect(result.current.data).toEqual(["Saved lists"]);
+    expect(result.current.hasData).toBe(true);
+    await act(async () => refresh.resolve(["Saved lists", "New list"]));
+    expect(result.current.data).toEqual(["Saved lists", "New list"]);
+  });
+
+  it("prefers newer placeholder data over what it remembered", async () => {
+    const olderBootstrap = ["Christmas"];
+    const first = renderHook(() =>
+      useWorkspaceData({ fetcher: async () => ["Christmas"], initialData: [] as string[], placeholderData: olderBootstrap, cacheKey: "newer-placeholder" })
+    );
+    await waitFor(() => expect(first.result.current.isLoading).toBe(false));
+    first.unmount();
+
+    const refreshedBootstrap = ["Christmas", "Made on the dashboard"];
+    const { result } = renderHook(() =>
+      useWorkspaceData({ fetcher: () => new Promise<string[]>(() => {}), initialData: [] as string[], placeholderData: refreshedBootstrap, cacheKey: "newer-placeholder" })
+    );
+    expect(result.current.data).toEqual(["Christmas", "Made on the dashboard"]);
+  });
+
+  it("remembers a local update for the next visit", async () => {
+    const first = renderHook(() => useWorkspaceData({ fetcher: async () => ["A"], initialData: [] as string[], cacheKey: "local-update" }));
+    await waitFor(() => expect(first.result.current.data).toEqual(["A"]));
+    act(() => first.result.current.setData((previous) => [...previous, "B"]));
+    first.unmount();
+
+    const { result } = renderHook(() => useWorkspaceData({ fetcher: () => new Promise<string[]>(() => {}), initialData: [] as string[], cacheKey: "local-update" }));
+    expect(result.current.data).toEqual(["A", "B"]);
+  });
+
+  it("never shows one workspace's cached data in another", async () => {
+    const first = renderHook(() => useWorkspaceData({ fetcher: async () => ["Workspace 1 lists"], initialData: [] as string[], cacheKey: "per-workspace" }));
+    await waitFor(() => expect(first.result.current.data).toEqual(["Workspace 1 lists"]));
+    first.unmount();
+
+    mocks.workspace.currentWorkspace = { id: 2 };
+    const { result } = renderHook(() => useWorkspaceData({ fetcher: () => new Promise<string[]>(() => {}), initialData: [] as string[], cacheKey: "per-workspace" }));
+    expect(result.current.data).toEqual([]);
+    expect(result.current.hasData).toBe(false);
+  });
+
+  it("forgets cached data on sign-out", async () => {
+    const first = renderHook(() => useWorkspaceData({ fetcher: async () => ["Private lists"], initialData: [] as string[], cacheKey: "sign-out" }));
+    await waitFor(() => expect(first.result.current.data).toEqual(["Private lists"]));
+    mocks.auth.isAuthenticated = false;
+    mocks.auth.user = null;
+    mocks.workspace.currentWorkspace = null;
+    first.rerender();
+    first.unmount();
+
+    mocks.auth.isAuthenticated = true;
+    mocks.auth.user = { clerk_user_id: "user_a" };
+    mocks.workspace.currentWorkspace = { id: 1 };
+    const { result } = renderHook(() => useWorkspaceData({ fetcher: () => new Promise<string[]>(() => {}), initialData: [] as string[], cacheKey: "sign-out" }));
+    expect(result.current.data).toEqual([]);
+  });
+
   it("does not redirect a page that allows logged-out visitors", () => {
     mocks.auth.isAuthenticated = false;
     mocks.auth.user = null;

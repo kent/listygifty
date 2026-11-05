@@ -3,11 +3,12 @@
 import { parseCalendarDate } from "@/lib/dates";
 import { humanizeError } from "@/lib/error-message";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { holidaysService } from "@/services";
 import { useWorkspaceData } from "@/hooks";
+import { useWorkspace } from "@/contexts/workspace-context";
 import { AppHeader } from "@/components/layout";
 import { HolidaysNav, type HolidaysSection } from "@/components/holidays";
 import { Button } from "@/components/ui/button";
@@ -774,10 +775,20 @@ interface HolidaysData {
 export default function HolidaysPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { bootstrapData } = useWorkspace();
+  // The app already loaded this workspace's lists at sign-in, so show those
+  // while the page refreshes them instead of an empty screen. Kept stable so
+  // the hook can tell when bootstrap was refreshed.
+  const bootstrapLists = useMemo<HolidaysData | undefined>(
+    () => (bootstrapData ? { holidays: bootstrapData.holidays, templates: bootstrapData.holiday_templates } : undefined),
+    [bootstrapData]
+  );
 
   const {
     data,
     setData,
+    isLoading,
+    hasData,
     error,
     user,
     signOut,
@@ -790,9 +801,13 @@ export default function HolidaysPage() {
       return { holidays, templates };
     },
     initialData: { holidays: [], templates: [] },
+    placeholderData: bootstrapLists,
+    cacheKey: "gift-lists",
   });
 
   const { holidays, templates } = data;
+  // Until there is real data, an empty list would show the getting-started screen by mistake.
+  const ready = hasData || !isLoading;
 
   // Initialize section from URL param if present
   const initialSection = (searchParams.get("section") as HolidaysSection) || "active";
@@ -895,10 +910,10 @@ export default function HolidaysPage() {
           <HolidaysNav
             activeSection={activeSection}
             onSectionChange={setActiveSection}
-            activeCounts={{ active: activeHolidays.length, past: pastHolidays.length, archived: archivedHolidays.length }}
+            activeCounts={ready ? { active: activeHolidays.length, past: pastHolidays.length, archived: archivedHolidays.length } : undefined}
           />
 
-          <div className="flex-1 min-w-0">
+          {ready && <div className="flex-1 min-w-0">
             {activeSection === "active" && (
               <ActiveSection
                 holidays={activeHolidays}
@@ -927,7 +942,7 @@ export default function HolidaysPage() {
                 onCreateHoliday={handleCreateHoliday}
               />
             )}
-          </div>
+          </div>}
         </div>
       </main>
     </div>

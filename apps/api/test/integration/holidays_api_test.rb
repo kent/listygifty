@@ -12,6 +12,20 @@ class HolidaysApiTest < ActionDispatch::IntegrationTest
     assert_not_nil json_response
   end
 
+  test "index lists holidays in the same order as bootstrap, so the web list doesn't reorder when it refreshes" do
+    workspace = @user.workspaces.first
+    [ "2027-03-01", "2026-12-01", "2027-01-15" ].each_with_index do |date, i|
+      holiday = workspace.holidays.create!(name: "Order check #{i}", date: date)
+      holiday.holiday_users.create!(user: @user, role: "owner")
+    end
+
+    get "/bootstrap", headers: @auth_headers, as: :json
+    bootstrap_ids = json_response.dig("data", "holidays").map { |h| h["id"] }
+    get holidays_path, headers: @auth_headers, as: :json
+
+    assert_equal bootstrap_ids, json_response.map { |h| h["id"] }
+  end
+
   test "show returns a holiday" do
     holiday = holidays(:christmas)
     get holiday_path(holiday), headers: @auth_headers, as: :json

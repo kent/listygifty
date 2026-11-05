@@ -8,7 +8,7 @@ class HolidaysController < ApplicationController
   before_action :require_owner, only: %i[destroy remove_collaborator]
 
   def index
-    holidays = current_user.holidays_in_workspace(current_workspace).user_holidays.includes(:holiday_users)
+    holidays = current_user.holidays_in_workspace(current_workspace).user_holidays.includes(:holiday_users).order(:date, :created_at)
     render json: HolidayBlueprint.render(holidays, current_user: current_user)
   end
 
