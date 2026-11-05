@@ -289,11 +289,14 @@ class OauthController < ApplicationController
         (!params[:scope].is_a?(String) || params[:scope].empty? || params[:scope].bytesize > 500)
       return redirect_authorization_error("invalid_scope")
     end
-    @requested_scopes = (params.key?(:scope) ? params[:scope] : @oauth_resource.scopes.join(" ")).split.uniq
-    invalid_scopes = @requested_scopes - OauthClient::VALID_SCOPES
-    invalid_scopes |= @requested_scopes - @oauth_resource.scopes
-    invalid_scopes |= @requested_scopes.reject { |scope| @client.can_request_scope?(scope) }
-    return redirect_authorization_error("invalid_scope") if @requested_scopes.empty? || invalid_scopes.any?
+    requested = (params.key?(:scope) ? params[:scope] : @oauth_resource.scopes.join(" ")).split.uniq
+    return redirect_authorization_error("invalid_scope") if requested.empty? || (requested - OauthClient::VALID_SCOPES).any?
+
+    # Some clients, including ChatGPT, ask for every scope the authorization
+    # server lists. Grant the ones this resource and client allow (RFC 6749
+    # section 3.3) and refuse only when none are left.
+    @requested_scopes = requested.select { |scope| @oauth_resource.scopes.include?(scope) && @client.can_request_scope?(scope) }
+    return redirect_authorization_error("invalid_scope") if @requested_scopes.empty?
 
     unless params[:code_challenge_method] == "S256" && params[:code_challenge].to_s.match?(OauthAuthorizationCode::PKCE_CHALLENGE)
       return redirect_authorization_error("invalid_request", "S256 PKCE code_challenge is required")

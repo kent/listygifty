@@ -141,6 +141,20 @@ class OauthControllerTest < ActionDispatch::IntegrationTest
     get "/oauth/authorize", params: authorization_params(scope: "")
     assert_response :redirect
     assert_equal "invalid_scope", callback_params(response.location)["error"]
+
+    get "/oauth/authorize", params: authorization_params(scope: "read superuser")
+    assert_response :redirect
+    assert_equal "invalid_scope", callback_params(response.location)["error"]
+  end
+
+  test "grants the scopes a resource offers when a client asks for every listed scope" do
+    client = dynamic_client
+    request_token, = start_authorization(client: client, resource: APPS_RESOURCE, scope: "read write admin")
+
+    post "/oauth/authorize/consent", params: { request_token: request_token }, headers: auth_headers_for(@user), as: :json
+    assert_response :success
+    assert_equal %w[read write], json_response["requested_scopes"]
+    assert_not json_response.dig("resource", "admin")
   end
 
   test "API keys and OAuth tokens cannot replace the Clerk browser session for consent" do
