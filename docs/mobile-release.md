@@ -77,8 +77,11 @@ eas build --profile production --platform ios --auto-submit --non-interactive --
 ```
 
 Before polling App Store Connect, the workflow waits for the EAS build and its
-upload (`scripts/ci/wait-for-eas-submission.mjs`) and fails with EAS's own
-error if either one fails. The common one is
+upload (`scripts/ci/wait-for-eas-submission.mjs`). It fails with EAS's own
+error if the build fails or Apple rejects the upload (`EAS_UPLOAD_TO_ASC_*`).
+Other submission errors only warn, because EAS can report `UNKNOWN_ERROR` after
+the binary has landed, so the App Store Connect check decides. The common
+rejection is
 `EAS_UPLOAD_TO_ASC_CLOSED_VERSION_TRAIN`: the version is already live on the
 App Store, so Apple takes no new builds for it. Bump `expo.version` in
 `apps/mobile/app.json`, plus `version` in `apps/mobile/package.json` and its

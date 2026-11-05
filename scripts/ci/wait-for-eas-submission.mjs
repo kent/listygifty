@@ -1,8 +1,12 @@
 #!/usr/bin/env node
-// Waits for an EAS build and its auto-submit upload to App Store Connect, and
-// fails with EAS's own error the moment either one fails. Without this the
-// release only polls App Store Connect, so an upload Apple rejected looks like
-// slow processing for an hour before it fails with no reason.
+// Waits for an EAS build and its auto-submit upload to App Store Connect.
+// A failed build, or an upload Apple rejected (EAS_UPLOAD_TO_ASC_*), fails
+// right away with EAS's own error. Without this the release only polls App
+// Store Connect, so a rejected upload looks like slow processing for an hour.
+//
+// Any other submission error only warns. EAS can report UNKNOWN_ERROR after
+// the binary has already landed (1.0.3 build 41 did), so the App Store Connect
+// step that follows decides whether the build arrived.
 
 const BUILD_ID = process.env.EAS_BUILD_ID;
 const TOKEN = process.env.EXPO_TOKEN;
@@ -44,6 +48,10 @@ async function fetchBuild() {
   return body.data.builds.byId;
 }
 
+function isUploadRejection(error) {
+  return Boolean(error?.errorCode?.startsWith("EAS_UPLOAD_TO_ASC_"));
+}
+
 function fail(what, error) {
   const code = error?.errorCode ? ` [${error.errorCode}]` : "";
   console.error(`EAS ${what} failed${code}: ${error?.message || "no reason given"}`);
@@ -58,7 +66,15 @@ for (let attempt = 1; attempt <= WAIT_ATTEMPTS; attempt += 1) {
   if (FAILED.has(build.status)) fail("build", build.error);
 
   const submission = build.submissions?.[0];
-  if (submission && FAILED.has(submission.status)) fail("App Store Connect upload", submission.error);
+  if (submission && FAILED.has(submission.status)) {
+    if (isUploadRejection(submission.error)) fail("App Store Connect upload", submission.error);
+    console.warn(
+      `EAS submission ${submission.id} ended ${submission.status} ` +
+        `[${submission.error?.errorCode || "no code"}]: ${submission.error?.message || "no reason given"}. ` +
+        "Checking App Store Connect for the build anyway."
+    );
+    process.exit(0);
+  }
   if (submission?.status === "FINISHED") {
     console.log(`EAS build ${BUILD_ID} uploaded to App Store Connect (submission ${submission.id}).`);
     process.exit(0);
