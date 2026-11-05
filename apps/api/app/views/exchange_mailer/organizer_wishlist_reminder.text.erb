@@ -1,0 +1,11 @@
+<%= @waiting.size == 1 ? "Someone still needs" : "Some people still need" %> to add gift ideas.
+
+<%= @waiting.size == 1 ? "This person has" : "These people have" %> joined <%= @exchange.name %> but <%= @waiting.size == 1 ? "hasn't" : "haven't" %> added anything to their wishlist yet:
+
+<% @waiting.each do |participant| -%>
+- <%= participant.display_name %>
+<% end -%>
+
+A quick nudge from you goes a long way. Whoever draws them will have something to shop for.
+
+View the exchange: <%= @exchange_url %>

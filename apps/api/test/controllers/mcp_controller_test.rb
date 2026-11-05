@@ -676,12 +676,17 @@ class McpControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal "MCP Secret Santa", exchange["name"]
 
-    participant = tool_payload(call_tool("add_exchange_participant", {
-      exchange_id: exchange.fetch("id"),
-      name: "Taylor",
-      email: "taylor-mcp@example.com"
-    }))
+    ActionMailer::Base.deliveries.clear
+    participant = perform_enqueued_jobs do
+      tool_payload(call_tool("add_exchange_participant", {
+        exchange_id: exchange.fetch("id"),
+        name: "Taylor",
+        email: "taylor-mcp@example.com"
+      }))
+    end
     assert_equal "Taylor", participant["name"]
+    assert_equal [ [ "taylor-mcp@example.com" ] ], ActionMailer::Base.deliveries.map(&:to)
+    assert_includes ActionMailer::Base.deliveries.sole.subject, "MCP Secret Santa"
 
     updated = tool_payload(call_tool("update_exchange_participant", {
       exchange_id: exchange.fetch("id"),

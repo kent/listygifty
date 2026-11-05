@@ -272,14 +272,22 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     assert_equal @participant.email, json_response["email"]
   end
 
-  test "participants create adds a participant" do
+  test "participants create adds a participant and emails them an invitation" do
     assert_difference("ExchangeParticipant.count") do
-      post gift_exchange_exchange_participants_path(@exchange),
-        headers: @auth_headers,
-        params: { exchange_participant: { name: "New Person", email: "new@example.com" } },
-        as: :json
+      perform_enqueued_jobs do
+        post gift_exchange_exchange_participants_path(@exchange),
+          headers: @auth_headers,
+          params: { exchange_participant: { name: "New Person", email: "new@example.com" } },
+          as: :json
+      end
     end
     assert_response :created
+
+    invited = @exchange.exchange_participants.find_by!(email: "new@example.com")
+    invitation = ActionMailer::Base.deliveries.sole
+    assert_equal [ "new@example.com" ], invitation.to
+    assert_includes invitation.subject, @exchange.name
+    assert_includes invitation.text_part.decoded, "/join/exchange/#{invited.invite_token}"
   end
 
   test "participants update modifies a participant" do
@@ -483,11 +491,14 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
       status: "invited"
     )
 
-    post resend_invite_gift_exchange_exchange_participant_path(@exchange, invited_participant),
-      headers: @auth_headers,
-      as: :json
+    perform_enqueued_jobs do
+      post resend_invite_gift_exchange_exchange_participant_path(@exchange, invited_participant),
+        headers: @auth_headers,
+        as: :json
+    end
     assert_response :success
     assert json_response["message"].present?
+    assert_equal [ [ "invited@example.com" ] ], ActionMailer::Base.deliveries.map(&:to)
   end
 
   test "resend_invite fails for accepted participant" do
