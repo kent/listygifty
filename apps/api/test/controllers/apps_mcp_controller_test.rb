@@ -61,6 +61,22 @@ class AppsMcpControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.headers["WWW-Authenticate"], "/.well-known/oauth-protected-resource/apps/mcp"
   end
 
+  test "an unauthenticated probe gets a 401 pointing at OAuth, whatever its content type" do
+    post "/apps/mcp", params: "", headers: { "Content-Type" => "text/plain" }
+
+    assert_response :unauthorized
+    assert_includes response.headers["WWW-Authenticate"], "/.well-known/oauth-protected-resource/apps/mcp"
+  end
+
+  test "answers a newer protocol version with a plain 400 so the client falls back to initialize" do
+    post "/apps/mcp",
+      params: { jsonrpc: "2.0", id: "discover", method: "server/discover", params: {} }.to_json,
+      headers: auth_headers.merge("MCP-Protocol-Version" => "2026-07-28")
+
+    assert_response :bad_request
+    assert_not_equal(-32022, JSON.parse(response.body).dig("error", "code"))
+  end
+
   test "accepts the 2025-11-25 protocol version" do
     post "/apps/mcp",
       params: { jsonrpc: "2.0", method: "initialize", id: 1, params: { protocolVersion: "2025-11-25", capabilities: {} } }.to_json,

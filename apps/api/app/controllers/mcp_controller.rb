@@ -26,10 +26,12 @@ class McpController < ApplicationController
 
   skip_before_action :authenticate!
   before_action :set_security_headers
-  before_action :validate_content_type!, only: :handle
   before_action :validate_origin!
-  before_action :validate_mcp_protocol_version!
+  # Authenticate first: clients probe with a bare POST and expect a 401 whose
+  # WWW-Authenticate header points them at OAuth discovery.
   before_action :authenticate_oauth_or_api_key!
+  before_action :validate_content_type!, only: :handle
+  before_action :validate_mcp_protocol_version!
   after_action :set_security_headers
 
   # Streamable HTTP GET is optional. This stateless server has no server-
