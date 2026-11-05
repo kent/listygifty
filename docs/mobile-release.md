@@ -76,6 +76,14 @@ attached to the tester group:
 eas build --profile production --platform ios --auto-submit --non-interactive --no-wait
 ```
 
+Before polling App Store Connect, the workflow waits for the EAS build and its
+upload (`scripts/ci/wait-for-eas-submission.mjs`) and fails with EAS's own
+error if either one fails. The common one is
+`EAS_UPLOAD_TO_ASC_CLOSED_VERSION_TRAIN`: the version is already live on the
+App Store, so Apple takes no new builds for it. Bump `expo.version` in
+`apps/mobile/app.json`, plus `version` in `apps/mobile/package.json` and its
+lockfile, to the next patch, merge, and release again.
+
 The production submit profile adds the uploaded build to the App Store Connect
 `Internal Testers` group, which contains `kent.fenwick@gmail.com`. This keeps
 TestFlight on the same app identifier and release configuration that users will
