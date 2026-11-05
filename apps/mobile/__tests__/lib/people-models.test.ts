@@ -8,6 +8,7 @@ import {
   getMilestoneReminder,
   getMilestoneReminderSchedule,
   getPeopleGroupCounts,
+  sortPeopleByUsage,
   type PeopleGroupFilter,
 } from "@/lib/models";
 
@@ -50,6 +51,17 @@ describe("people model helpers", () => {
       coworkers: 1,
       other: 0,
     });
+  });
+
+  it("sorts people by gift count, then name", () => {
+    const sorted = sortPeopleByUsage([
+      buildPerson({ id: 1, name: "Zoe", gift_count: 2 }),
+      buildPerson({ id: 2, name: "Ava", gift_count: 0 }),
+      buildPerson({ id: 3, name: "Ben", gift_count: 5 }),
+      buildPerson({ id: 4, name: "Amy", gift_count: 2 }),
+    ]);
+
+    expect(sorted.map((person) => person.id)).toEqual([3, 4, 1, 2]);
   });
 
   it.each([

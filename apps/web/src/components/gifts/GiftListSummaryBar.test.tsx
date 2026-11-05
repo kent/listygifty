@@ -5,7 +5,7 @@ import { GiftListSummaryBar } from "./GiftListSummaryBar";
 
 describe("the recipients card", () => {
   it("doesn't say Ready on an empty list", () => {
-    render(<GiftListSummaryBar gifts={[]} filteredGifts={[]} statuses={[]} holidayDate={null} hasActiveFilters={false} />);
+    render(<GiftListSummaryBar gifts={[]} statuses={[]} holidayDate={null} />);
 
     expect(screen.queryByText("Ready")).toBeNull();
     expect(screen.queryByText("All gifts assigned")).toBeNull();
@@ -23,7 +23,7 @@ describe("the progress card", () => {
   const gift = (id: number, statusId: number) =>
     ({ id, gift_status_id: statusId, recipients: [], cost: null }) as unknown as Gift;
   const renderWith = (gifts: Gift[], withStatuses = statuses) =>
-    render(<GiftListSummaryBar gifts={gifts} filteredGifts={gifts} statuses={withStatuses} holidayDate={null} hasActiveFilters={false} />);
+    render(<GiftListSummaryBar gifts={gifts} statuses={withStatuses} holidayDate={null} />);
 
   it("counts a purchased gift as progress", () => {
     renderWith([gift(1, 2), gift(2, 1)]);

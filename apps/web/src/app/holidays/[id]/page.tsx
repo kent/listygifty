@@ -20,7 +20,7 @@ import { CursorOverlay } from "@/components/cursors";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, Gift as GiftIcon, BarChart3, Users, Scale, Archive, RotateCcw, Share2, Download, Upload } from "lucide-react";
+import { ArrowLeft, Calendar, Gift as GiftIcon, BarChart3, Gauge, Users, Scale, Archive, RotateCcw, Share2, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import type { Holiday, Gift, Person, GiftStatus, HolidayCollaborator, Address, ImportGiftsResult } from "@niftygifty/types";
 
@@ -435,6 +435,10 @@ export default function HolidayDetailPage() {
                   <GiftIcon className="h-4 w-4" />
                   <span>Gifts</span>
                 </TabsTrigger>
+                <TabsTrigger value="stats" className="gap-1.5 md:gap-2 flex-1 md:flex-none">
+                  <Gauge className="h-4 w-4" />
+                  <span>Stats</span>
+                </TabsTrigger>
                 <TabsTrigger value="reports" className="gap-1.5 md:gap-2 flex-1 md:flex-none hidden md:inline-flex">
                   <BarChart3 className="h-4 w-4" />
                   <span>Reports</span>
@@ -449,13 +453,6 @@ export default function HolidayDetailPage() {
               </Button>
             </div>
             <TabsContent value="gifts" className="space-y-4">
-              <GiftListSummaryBar
-                gifts={gifts}
-                filteredGifts={filteredGifts}
-                statuses={statuses}
-                holidayDate={holiday.date}
-                hasActiveFilters={hasActiveFilters}
-              />
               <GiftFilters
                 filters={filters}
                 statuses={statuses}
@@ -486,6 +483,9 @@ export default function HolidayDetailPage() {
                 hasActiveFilters={hasActiveFilters}
                 onClearFilters={clearFilters}
               />
+            </TabsContent>
+            <TabsContent value="stats">
+              <GiftListSummaryBar gifts={gifts} statuses={statuses} holidayDate={holiday.date} />
             </TabsContent>
             <TabsContent value="reports">
               <HolidayReports
