@@ -120,12 +120,17 @@ Rules:
   shared packages, infrastructure, or deploy scripts, wait for the production
   `Deploy` run for that exact commit to succeed before starting TestFlight.
 - Queue TestFlight by commenting exactly `/testflight` on the merged pull
-  request. If the current `main` commit has no suitable merged pull request,
+  request. Comments from `cursor[bot]` are accepted. If the current `main` commit has no suitable merged pull request,
   dispatch `Mobile Release` manually from `main` with `release_action` set to
   `testflight` and `eas_profile` set to `production`.
 - Monitor the `Mobile Release` workflow through EAS build, Apple processing,
   and tester-group verification. Report the build number and workflow/build
   links; merely queueing the workflow is not completion.
+- If the upload fails with `EAS_UPLOAD_TO_ASC_CLOSED_VERSION_TRAIN`, that
+  version is already live on the App Store. Bump `expo.version` in
+  `apps/mobile/app.json`, plus `version` in `apps/mobile/package.json` and its
+  lockfile, to the next patch in a new pull request, merge it, and release
+  from that merge.
 - Cursor Cloud agents do not need Apple or Expo release credentials. Keep
   `EXPO_TOKEN` and `APP_STORE_CONNECT_API_KEY_P8` only in GitHub Actions.
 - Production backend/web deployment starts automatically for relevant `main`

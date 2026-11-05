@@ -57,11 +57,14 @@ env:
 jobs:
   authorize:
     name: Authorize Merged Commit
+    # Cursor Cloud agents comment as cursor[bot], whose association is NONE.
+    # The target must still be a PR already merged into main (checked below).
     if: >-
       github.event_name != 'issue_comment' ||
       (github.event.issue.pull_request &&
        github.event.comment.body == '/testflight' &&
-       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
+       (contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) ||
+        github.event.comment.user.login == 'cursor[bot]'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -383,6 +386,12 @@ jobs:
             echo "build_number=${build_number}"
           } >> "${GITHUB_OUTPUT}"
           echo "Queued EAS build ${build_id} (build ${build_number})."
+
+      - name: Wait for the App Store Connect upload
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_BUILD_ID: ${{ steps.queue-build.outputs.build_id }}
+        run: node scripts/ci/wait-for-eas-submission.mjs
 
       - name: Verify TestFlight group attachment
         env:
