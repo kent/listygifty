@@ -17,6 +17,11 @@ class HolidayBlueprint < ApplicationBlueprint
     HolidayBlueprint.membership_for(holiday, current_user)&.role
   end
 
+  # The current user's own setting for emails about gifts others add.
+  field :gift_notifications do |holiday, options|
+    HolidayBlueprint.membership_for(holiday, options[:current_user])&.gift_notifications
+  end
+
   field :collaborator_count do |holiday|
     holiday.holiday_users.size
   end

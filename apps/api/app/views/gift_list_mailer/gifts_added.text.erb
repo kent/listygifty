@@ -1,0 +1,15 @@
+<% count = @changes.size + @more -%>
+<%= count == 1 ? "New gift added to" : "#{count} new gifts added to" %> <%= @holiday.name %>.
+
+<%= @adder_name ? "#{@adder_name} added #{count == 1 ? "it" : "them"} to your shared list." : "People you share this list with added #{count == 1 ? "it" : "them"}." %>
+
+<% @changes.each do |change| -%>
+- <%= GiftListMailer.gift_line(change) %><%= ", added by #{GiftListMailer.person_name(change.user)}" unless @adder_name %>
+<% end -%>
+<% if @more.positive? -%>
+- and <%= @more %> more
+<% end -%>
+
+View the list: <%= @list_url %>
+
+You can change how you hear about this list in its settings.

@@ -254,10 +254,13 @@ export default function GiftsScreen() {
           shareLoading={controller.shareLoading}
           shareError={controller.shareError}
           regenerating={controller.regenerating}
+          savingGiftEmails={controller.savingGiftEmails}
           onClose={controller.closeSettings}
           onBack={controller.openSettings}
           onOpenStats={controller.openStats}
           onOpenSharing={controller.openSharing}
+          onOpenGiftEmails={controller.openGiftEmails}
+          onChangeGiftEmails={controller.changeGiftEmails}
           onScheduleReminder={controller.triggerScheduleReminder}
           onRefreshShare={controller.refreshShareData}
           onNativeShare={controller.handleNativeShare}

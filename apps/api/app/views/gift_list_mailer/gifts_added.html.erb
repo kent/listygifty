@@ -1,0 +1,36 @@
+<% count = @changes.size + @more %>
+<% content_for :preview_text do %><%= @adder_name ? "#{@adder_name} added" : "Your group added" %> <%= count == 1 ? "a gift" : "#{count} gifts" %> to <%= @holiday.name %>.<% end %>
+
+<h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #18181b;">
+  <%= count == 1 ? "New gift added to" : "#{count} new gifts added to" %> <%= @holiday.name %>.
+</h1>
+<p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
+  <% if @adder_name %>
+    <strong><%= @adder_name %></strong> added <%= count == 1 ? "it" : "them" %> to your shared list.
+  <% else %>
+    People you share this list with added <%= count == 1 ? "it" : "them" %>.
+  <% end %>
+</p>
+<div style="margin: 0 0 24px 0; padding: 16px 20px; border-radius: 10px; background-color: #faf5ff; color: #581c87;">
+  <% @changes.each do |change| %>
+    <p style="margin: 4px 0; font-size: 15px; font-weight: 600;">
+      <%= GiftListMailer.gift_line(change) %>
+      <% unless @adder_name %><span style="font-weight: 400; color: #7e22ce;">, added by <%= GiftListMailer.person_name(change.user) %></span><% end %>
+    </p>
+  <% end %>
+  <% if @more.positive? %>
+    <p style="margin: 8px 0 0 0; font-size: 14px;">and <%= @more %> more</p>
+  <% end %>
+</div>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td align="center">
+      <a href="<%= @list_url %>" class="button" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px;">
+        View Gift List
+      </a>
+    </td>
+  </tr>
+</table>
+<p style="margin: 32px 0 0 0; font-size: 14px; color: #71717a; text-align: center;">
+  You can change how you hear about this list in its settings.
+</p>

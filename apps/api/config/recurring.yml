@@ -38,6 +38,10 @@ production:
     class: SendWishlistRemindersJob
     schedule: every day at 11am America/Toronto
 
+  send_gift_added_emails:
+    class: SendGiftAddedEmailsJob
+    schedule: every 5 minutes
+
 development:
   send_seasonal_reminders:
     class: SendSeasonalRemindersJob
@@ -54,3 +58,7 @@ development:
   send_wishlist_reminders:
     class: SendWishlistRemindersJob
     schedule: every day at 11am America/Toronto
+
+  send_gift_added_emails:
+    class: SendGiftAddedEmailsJob
+    schedule: every 5 minutes

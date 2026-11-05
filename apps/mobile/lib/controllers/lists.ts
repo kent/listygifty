@@ -3,7 +3,7 @@ import { Alert, Share } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { summarizeGifts } from "@niftygifty/types";
+import { summarizeGifts, type GiftNotificationSetting } from "@niftygifty/types";
 import type { GiftListSettingsPage } from "@/components/GiftListSettingsSheet";
 import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
@@ -141,6 +141,7 @@ export function useGiftListDetailController() {
   const [shareLoading, setShareLoading] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [schedulingReminder, setSchedulingReminder] = useState(false);
+  const [savingGiftEmails, setSavingGiftEmails] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
   const deferredSearch = useDeferredValue(search);
 
@@ -323,6 +324,34 @@ export function useGiftListDetailController() {
     void loadShareData();
   }, [loadShareData]);
 
+  const openGiftEmails = useCallback(() => {
+    setSettingsPage("gift-emails");
+  }, []);
+
+  const { setData: setDetailData } = resource;
+  const changeGiftEmails = useCallback(
+    async (setting: GiftNotificationSetting) => {
+      if (!holiday || savingGiftEmails || setting === (holiday.gift_notifications ?? "instant")) {
+        return;
+      }
+
+      setSavingGiftEmails(true);
+      try {
+        const updated = await holidays.updateNotifications(holiday.id, setting);
+        setDetailData((current) => ({ ...current, holiday: updated }));
+        await haptics.success();
+        setSettingsPage("menu");
+      } catch (saveError) {
+        console.error("Failed to update gift emails", saveError);
+        await haptics.error();
+        Alert.alert("Couldn't Save", "Could not update new gift emails for this list.");
+      } finally {
+        setSavingGiftEmails(false);
+      }
+    },
+    [holiday, holidays, savingGiftEmails, setDetailData]
+  );
+
   const handleNativeShare = useCallback(async () => {
     if (!shareUrl || !holiday) {
       return;
@@ -455,6 +484,10 @@ export function useGiftListDetailController() {
     holiday,
     holidayId,
     loading: isValidHolidayId && resource.loading,
+    changeGiftEmails: (setting: GiftNotificationSetting) => {
+      void changeGiftEmails(setting);
+    },
+    openGiftEmails,
     openSettings,
     openSharing,
     openStats,
@@ -464,6 +497,7 @@ export function useGiftListDetailController() {
     refreshing: resource.refreshing,
     regenerating,
     removeCollaborator,
+    savingGiftEmails,
     retryLoad: resource.reload,
     search,
     selectedStatusIds,

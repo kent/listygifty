@@ -1,5 +1,5 @@
 class EmailDelivery < ApplicationRecord
-  KINDS = %w[pending_gifts no_gifts_before_christmas no_gift_lists_december digest organizer_wishlist_reminder organizer_pending_joins organizer_ready_to_draw exchange_wishlist_reminder].freeze
+  KINDS = %w[pending_gifts no_gifts_before_christmas no_gift_lists_december digest organizer_wishlist_reminder organizer_pending_joins organizer_ready_to_draw exchange_wishlist_reminder gift_added].freeze
   STATUSES = %w[sent failed].freeze
 
   belongs_to :user

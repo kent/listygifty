@@ -124,6 +124,9 @@ export interface UpdateGiftStatusRequest {
 
 export type HolidayRole = "owner" | "collaborator";
 
+/** How you hear about gifts other people add to a shared list. */
+export type GiftNotificationSetting = "instant" | "daily" | "off";
+
 export interface Holiday extends BaseEntity {
   name: string;
   date: string | null; // ISO date string (YYYY-MM-DD), null for templates
@@ -135,6 +138,8 @@ export interface Holiday extends BaseEntity {
   is_owner: boolean;
   role: HolidayRole | null;
   collaborator_count: number;
+  /** Your own setting for this list; null for templates. */
+  gift_notifications?: GiftNotificationSetting | null;
 }
 
 export interface HolidayCollaborator {
