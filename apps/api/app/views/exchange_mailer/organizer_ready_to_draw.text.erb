@@ -1,0 +1,13 @@
+Everyone's in. Time to draw names.
+
+Everyone you invited to <%= @exchange.name %> has joined. These <%= @joined.size %> people are in:
+
+<% @joined.each do |participant| -%>
+- <%= participant.display_name %>
+<% end -%>
+
+Draw names and each person gets their match by email.<% if @exchange.exchange_date %> The exchange is on <%= @exchange.exchange_date.strftime("%A, %B %-d") %>.<% end %>
+
+Draw names: <%= @exchange_url %>
+
+Still waiting on someone? Share the invite link first.

@@ -24,21 +24,25 @@ class ExchangeMailer < ApplicationMailer
     )
   end
 
-  # The organizer's list of people who joined but have not added a single
-  # wishlist idea, so they know who to chase before (or after) names are drawn.
-  def organizer_wishlist_reminder(exchange, waiting_participants)
+  # Who the organizer invited that hasn't accepted yet, so they can chase them
+  # before drawing names.
+  def organizer_pending_joins(exchange, pending_participants)
     @exchange = exchange
-    @owner = exchange.user
-    @waiting = waiting_participants
+    @pending = pending_participants
+    @joined_count = exchange.exchange_participants.accepted.count
     @exchange_url = exchange_url(exchange)
-    @subject = self.class.organizer_wishlist_reminder_subject(exchange, waiting_participants.size)
+    people = @pending.size == 1 ? "1 person still needs" : "#{@pending.size} people still need"
 
-    mail(to: @owner.email, subject: @subject)
+    mail(to: exchange.user.email, subject: "🎁 #{people} to join: #{exchange.name}")
   end
 
-  def self.organizer_wishlist_reminder_subject(exchange, count)
-    people = count == 1 ? "1 person still needs" : "#{count} people still need"
-    "🎁 #{people} to add gift ideas: #{exchange.name}"
+  # Nobody the organizer invited is left to accept, so it's time to draw names.
+  def organizer_ready_to_draw(exchange, joined_participants)
+    @exchange = exchange
+    @joined = joined_participants
+    @exchange_url = exchange_url(exchange)
+
+    mail(to: exchange.user.email, subject: "🎁 Everyone's in. Time to draw names: #{exchange.name}")
   end
 
   def join_confirmation(participant)
