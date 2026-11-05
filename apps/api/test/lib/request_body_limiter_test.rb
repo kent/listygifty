@@ -20,6 +20,7 @@ class RequestBodyLimiterTest < ActiveSupport::TestCase
       "/analytics/events.json",
       "/admin/mcp.xml",
       "/mcp",
+      "/apps/mcp",
       "/oauth/register",
       "/oauth/authorize/consent.xml"
     ].each do |path|

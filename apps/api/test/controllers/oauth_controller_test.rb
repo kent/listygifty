@@ -3,6 +3,7 @@ require "test_helper"
 class OauthControllerTest < ActionDispatch::IntegrationTest
   USER_RESOURCE = "http://www.example.com/mcp"
   ADMIN_RESOURCE = "http://www.example.com/admin/mcp"
+  APPS_RESOURCE = "http://www.example.com/apps/mcp"
   REDIRECT_URI = "https://example.com/callback"
 
   def setup
@@ -261,6 +262,51 @@ class OauthControllerTest < ActionDispatch::IntegrationTest
     assert_equal REDIRECT_URI, json_response.dig("client", "redirect_uri")
     assert json_response.dig("client", "dynamically_registered")
     assert_not json_response.dig("client", "verified")
+  end
+
+  test "a dynamically registered assistant can connect to the apps MCP and nowhere else" do
+    client = OauthClient.dynamic_register(
+      client_name: "ChatGPT",
+      redirect_uris: [ "https://chatgpt.com/connector_platform_oauth_redirect" ],
+      scopes: %w[read write]
+    )
+    verifier = SecureRandom.urlsafe_base64(32)
+    get "/oauth/authorize", params: authorization_params(
+      client: client,
+      redirect_uri: "https://chatgpt.com/connector_platform_oauth_redirect",
+      resource: APPS_RESOURCE,
+      code_challenge: Base64.urlsafe_encode64(Digest::SHA256.digest(verifier), padding: false)
+    )
+    assert_response :redirect
+    request_token = Rack::Utils.parse_query(URI.parse(response.location).query).fetch("request_token")
+    headers = auth_headers_for(@user)
+
+    post "/oauth/authorize/consent", params: { request_token: request_token }, headers: headers, as: :json
+    assert_response :success
+    assert_equal "Listy Gifty", json_response.dig("resource", "name")
+    assert_not json_response.dig("resource", "admin")
+
+    post "/oauth/authorize", params: { request_token: request_token, decision: "approve" }, headers: headers, as: :json
+    code = callback_params(json_response.fetch("redirect_uri")).fetch("code")
+    post "/oauth/token", params: {
+      grant_type: "authorization_code",
+      code: code,
+      client_id: client.client_id,
+      redirect_uri: "https://chatgpt.com/connector_platform_oauth_redirect",
+      code_verifier: verifier,
+      resource: APPS_RESOURCE
+    }, as: :json
+    assert_response :success
+    mcp_headers = { "Authorization" => "Bearer #{json_response.fetch("access_token")}", "Content-Type" => "application/json" }
+    list_tools = { jsonrpc: "2.0", method: "tools/list", id: 1 }.to_json
+
+    post "/apps/mcp", params: list_tools, headers: mcp_headers
+    assert_response :success
+    assert_includes JSON.parse(response.body).dig("result", "tools").pluck("name"), "create_wishlist_item"
+
+    post "/mcp", params: list_tools, headers: mcp_headers
+    assert_response :unauthorized
+    assert_includes response.headers["WWW-Authenticate"], "/.well-known/oauth-protected-resource/mcp"
   end
 
   test "full admin browser flow issues an audience-bound token accepted by admin MCP" do

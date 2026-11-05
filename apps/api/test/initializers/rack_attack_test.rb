@@ -41,6 +41,24 @@ class RackAttackTest < ActiveSupport::TestCase
     end
   end
 
+  test "MCP is limited per credential, not by the assistant's shared IP" do
+    general = Rack::Attack.throttles.fetch("req/ip")
+    credential = Rack::Attack.throttles.fetch("mcp/credential")
+    ip = Rack::Attack.throttles.fetch("mcp/ip")
+
+    %w[/mcp /apps/mcp].each do |path|
+      request = rack_attack_request(path)
+      request.set_header("HTTP_AUTHORIZATION", "Bearer token-abcdefghijklmnopqrstu")
+
+      assert_nil general.instance_variable_get(:@block).call(request)
+      assert_equal Digest::SHA256.hexdigest("token-abcdefghijklmnopqrstu"), credential.instance_variable_get(:@block).call(request)
+      assert_equal "192.0.2.1", ip.instance_variable_get(:@block).call(request)
+    end
+    assert_equal 120, credential.limit
+    assert_equal 600, ip.limit
+    assert_nil credential.instance_variable_get(:@block).call(rack_attack_request("/gifts"))
+  end
+
   private
 
   def rack_attack_request(path, method: "POST", content_type: nil)

@@ -4,7 +4,7 @@ require_relative "csv_import_limits"
 
 class RequestBodyLimiter
   ADMIN_PATH = %r{\A/admin/mcp(?:\.[^/]+)?/?\z}
-  MCP_PATH = %r{\A/mcp(?:\.[^/]+)?/?\z}
+  MCP_PATH = %r{\A/(?:apps/)?mcp(?:\.[^/]+)?/?\z}
   ANALYTICS_PATH = %r{\A/analytics/events(?:\.[^/]+)?/?\z}
   IMPORT_PATH = %r{\A/imports/(?:people|gifts)(?:\.[^/]+)?/?\z}
   OAUTH_REGISTRATION_PATH = %r{\A/oauth/register(?:\.[^/]+)?/?\z}

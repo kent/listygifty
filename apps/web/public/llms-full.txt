@@ -58,6 +58,13 @@ Markdown: https://listygifty.com/privacy-policy/index.html.md
 
 The privacy policy describes account data, app content, usage data, sharing behavior, integration access, data retention, security, children's privacy, and contact information. User lists are private by default unless explicitly shared.
 
+### Terms of Service
+
+URL: https://listygifty.com/terms
+Markdown: https://listygifty.com/terms/index.html.md
+
+The terms cover accounts, user content, sharing and gift exchanges, connected assistants such as ChatGPT and Claude, paid plans, acceptable use, account deletion, and contact information.
+
 ### System Status
 
 URL: https://listygifty.com/status

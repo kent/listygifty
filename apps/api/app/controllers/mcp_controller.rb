@@ -9,6 +9,21 @@ class McpController < ApplicationController
   MAX_JSON_DEPTH = 32
   MAX_METHOD_LENGTH = 100
 
+  # Tool annotations tell clients such as ChatGPT which calls need the user's
+  # confirmation. Read-scoped tools are read-only. Write tools that overwrite,
+  # remove, or irreversibly change data are destructive.
+  DESTRUCTIVE_TOOLS = %w[
+    decline_exchange_invite publish_gift_exchange redo_gift_exchange reveal_wishlist_claims
+    revoke_wishlist_share start_gift_exchange unclaim_wishlist_item
+  ].freeze
+  DESTRUCTIVE_PREFIXES = %w[delete_ remove_ update_].freeze
+  # Tools that reach people outside the user's account: emails to arbitrary
+  # addresses or public links anyone can open.
+  OPEN_WORLD_TOOLS = %w[
+    add_exchange_participant create_gift_exchange delete_gift_exchange nudge_exchange_match
+    publish_gift_exchange redo_gift_exchange resend_exchange_invite share_wishlist start_gift_exchange
+  ].freeze
+
   skip_before_action :authenticate!
   before_action :set_security_headers
   before_action :validate_content_type!, only: :handle
@@ -65,14 +80,11 @@ class McpController < ApplicationController
   end
 
   def authenticate_oauth_or_api_key!
-    # Try OAuth token first
-    if authenticate_with_oauth_token
-      return true
-    end
+    if authenticate_with_oauth_token || authenticate_with_api_key
+      return true unless DemoAccount.user?(@current_user) && !demo_account_allowed?
 
-    # Fall back to API key
-    if authenticate_with_api_key
-      return true
+      render json: { error: "forbidden", error_description: "The demo account can only use the Listy Gifty app in ChatGPT" }, status: :forbidden
+      return false
     end
 
     # Return 401 with WWW-Authenticate header per RFC 9728
@@ -289,6 +301,11 @@ class McpController < ApplicationController
     render json: jsonrpc_error(id, code, message)
   end
 
+  # The demo account is shared, so it only gets the apps tool set.
+  def demo_account_allowed?
+    false
+  end
+
   def resource_metadata_url
     "#{request.base_url}#{oauth_resource.metadata_path}"
   end
@@ -303,9 +320,19 @@ class McpController < ApplicationController
       {
         name: name,
         description: config[:description],
-        inputSchema: config[:schema]
+        inputSchema: config[:schema],
+        annotations: tool_annotations(name, config)
       }
     end
+  end
+
+  def tool_annotations(name, config)
+    read_only = (config[:scope] || "read") == "read"
+    {
+      readOnlyHint: read_only,
+      destructiveHint: !read_only && (DESTRUCTIVE_TOOLS.include?(name) || name.start_with?(*DESTRUCTIVE_PREFIXES)),
+      openWorldHint: OPEN_WORLD_TOOLS.include?(name)
+    }
   end
 
   def mcp_resources
@@ -335,7 +362,7 @@ class McpController < ApplicationController
     handlers = {
       # Workspace tools
       "list_workspaces" => {
-        description: "List all workspaces the user has access to",
+        description: "List the Listy Gifty workspaces the user belongs to. Call this first to get the workspace_id that the wishlist, Gift List, and people tools need. Most people have one personal workspace.",
         scope: "read",
         schema: { type: "object", properties: {} },
         handler: ->(_args) { WorkspaceMembership.where(user: @current_user).includes(:workspace).map { |m| workspace_to_json(m.workspace, m.role) } }
@@ -349,7 +376,7 @@ class McpController < ApplicationController
 
       # Holiday tools
       "list_holidays" => {
-        description: "List all holidays in a workspace",
+        description: "List the user's Gift Lists in a workspace. A Gift List is an occasion, such as Christmas or Mom's birthday, that holds the gifts the user plans to give.",
         scope: "read",
         schema: { type: "object", properties: { workspace_id: { type: "integer" } }, required: [ "workspace_id" ] },
         handler: ->(args) {
@@ -358,7 +385,7 @@ class McpController < ApplicationController
         }
       },
       "create_holiday" => {
-        description: "Create a new holiday",
+        description: "Create a Gift List for an occasion, such as \"Christmas 2026\" or \"Dad's 60th\", with an optional date. The user becomes its owner.",
         scope: "write",
         schema: {
           type: "object",
@@ -382,7 +409,7 @@ class McpController < ApplicationController
         }
       },
       "get_holiday" => {
-        description: "Get a holiday or occasion",
+        description: "Get one Gift List, including its date and who it is shared with.",
         scope: "read",
         schema: tool_schema({ holiday_id: integer_property("Holiday ID") }, [ "holiday_id" ]),
         handler: ->(args) { HolidayBlueprint.render_as_hash(find_holiday(args["holiday_id"]), current_user: @current_user) }
@@ -418,7 +445,7 @@ class McpController < ApplicationController
 
       # Gift tools
       "list_gifts" => {
-        description: "List all gifts for a holiday",
+        description: "List the gift ideas and planned gifts in a Gift List, with their recipients, givers, cost, and status.",
         scope: "read",
         schema: { type: "object", properties: { holiday_id: { type: "integer" } }, required: [ "holiday_id" ] },
         handler: ->(args) {
@@ -427,7 +454,7 @@ class McpController < ApplicationController
         }
       },
       "create_gift" => {
-        description: "Create a new gift",
+        description: "Add a gift idea to a Gift List. Use recipient_ids from list_people to say who the gift is for. If the Gift List is shared, its other members may get an email about the new gift.",
         scope: "write",
         schema: {
           type: "object",
@@ -449,19 +476,19 @@ class McpController < ApplicationController
         }
       },
       "get_gift" => {
-        description: "Get a gift and its recipients, givers, and status",
+        description: "Get one gift from a Gift List, with its recipients, givers, cost, link, and status.",
         scope: "read",
         schema: tool_schema({ gift_id: integer_property("Gift ID") }, [ "gift_id" ]),
         handler: ->(args) { GiftBlueprint.render_as_hash(find_gift(args["gift_id"]), current_user: @current_user) }
       },
       "update_gift" => {
-        description: "Update an accessible gift, including recipients and givers",
+        description: "Change a gift in a Gift List, such as its name, cost, link, status, recipients, or givers. Only the fields provided are changed.",
         scope: "write",
         schema: gift_update_schema,
         handler: ->(args) { update_gift_from_mcp(args) }
       },
       "delete_gift" => {
-        description: "Delete an accessible gift",
+        description: "Remove a gift from a Gift List the user can access. This cannot be undone.",
         scope: "write",
         schema: tool_schema({ gift_id: integer_property("Gift ID") }, [ "gift_id" ]),
         handler: ->(args) {
@@ -472,13 +499,13 @@ class McpController < ApplicationController
 
       # People tools
       "list_people" => {
-        description: "List all people in a workspace",
+        description: "List the people in a workspace that the user buys gifts for. Use their IDs as recipient_ids or giver_ids on gifts.",
         scope: "read",
         schema: { type: "object", properties: { workspace_id: { type: "integer" } }, required: [ "workspace_id" ] },
         handler: ->(args) { find_workspace(args["workspace_id"]).people.map { |p| person_to_json(p) } }
       },
       "create_person" => {
-        description: "Create a new person/contact",
+        description: "Add a person the user buys gifts for, such as a family member or friend. Only the name is required.",
         scope: "write",
         schema: {
           type: "object",
@@ -538,7 +565,7 @@ class McpController < ApplicationController
 
       # Wishlist tools
       "list_wishlists" => {
-        description: "List all wishlists in a workspace",
+        description: "List the wishlists the user can see in a workspace, including their own and ones shared with them. Use this to find a wishlist_id before reading a wishlist or adding to it.",
         scope: "read",
         schema: { type: "object", properties: { workspace_id: { type: "integer" } }, required: [ "workspace_id" ] },
         handler: ->(args) {
@@ -554,13 +581,13 @@ class McpController < ApplicationController
   def wishlist_tool_handlers
     {
       "get_wishlist" => {
-        description: "Get an accessible wishlist and all active items",
+        description: "Get one wishlist with all of its active items. Claims the owner has not revealed stay hidden, so the owner's surprises are not spoiled.",
         scope: "read",
         schema: tool_schema({ wishlist_id: integer_property("Wishlist ID") }, [ "wishlist_id" ]),
         handler: ->(args) { serialize_wishlist(find_wishlist(args["wishlist_id"]), with_items: true) }
       },
       "create_wishlist" => {
-        description: "Create a wishlist in a workspace",
+        description: "Create a new wishlist owned by the user, such as a birthday or holiday wishlist. Use share_wishlist afterwards if the user wants a link to send to people.",
         scope: "write",
         schema: tool_schema({
           workspace_id: integer_property("Workspace ID"),
@@ -580,7 +607,7 @@ class McpController < ApplicationController
         }
       },
       "update_wishlist" => {
-        description: "Update a wishlist owned by the current user",
+        description: "Change a wishlist the user owns: its name, description, visibility, target date, or anti-spoiler setting. Only the fields provided are changed.",
         scope: "write",
         schema: tool_schema({
           wishlist_id: integer_property("Wishlist ID"),
@@ -606,7 +633,7 @@ class McpController < ApplicationController
         }
       },
       "share_wishlist" => {
-        description: "Get the public share link for an owned wishlist, creating one if it is not shared yet. A link that is already live is returned unchanged, so links already sent keep working.",
+        description: "Get the public share link for a wishlist the user owns, creating one if it is not shared yet. Anyone with the link can see the wishlist and claim items. A link that is already live is returned unchanged, so links already sent keep working.",
         scope: "write",
         schema: tool_schema({ wishlist_id: integer_property("Wishlist ID") }, [ "wishlist_id" ]),
         handler: ->(args) {
@@ -635,13 +662,13 @@ class McpController < ApplicationController
         }
       },
       "list_wishlist_items" => {
-        description: "List active items on an accessible wishlist",
+        description: "List the active items on a wishlist the user can see, highest priority first.",
         scope: "read",
         schema: tool_schema({ wishlist_id: integer_property("Wishlist ID") }, [ "wishlist_id" ]),
         handler: ->(args) { serialize_wishlist_items(find_wishlist(args["wishlist_id"]).wishlist_items.active.by_priority) }
       },
       "create_wishlist_item" => {
-        description: "Add an item to an owned wishlist",
+        description: "Add an item to a wishlist the user owns, for example when they say \"add noise-cancelling headphones to my birthday wishlist\". Include a product URL, price range, priority, or quantity when the user gives one. Anyone the wishlist is shared with will see the new item.",
         scope: "write",
         schema: wishlist_item_schema(required: %w[wishlist_id name]),
         handler: ->(args) {
@@ -651,7 +678,7 @@ class McpController < ApplicationController
         }
       },
       "update_wishlist_item" => {
-        description: "Update an item on an owned wishlist",
+        description: "Change an item on a wishlist the user owns, such as its name, notes, link, price range, priority, or quantity. Only the fields provided are changed.",
         scope: "write",
         schema: wishlist_item_schema(required: %w[wishlist_id item_id], include_item_id: true),
         handler: ->(args) {
@@ -661,7 +688,7 @@ class McpController < ApplicationController
         }
       },
       "delete_wishlist_item" => {
-        description: "Delete an item from an owned wishlist",
+        description: "Remove an item from a wishlist the user owns, along with any claims on it. This cannot be undone.",
         scope: "write",
         schema: tool_schema({
           wishlist_id: integer_property("Wishlist ID"),
@@ -716,7 +743,7 @@ class McpController < ApplicationController
   def exchange_tool_handlers
     {
       "list_gift_exchanges" => {
-        description: "List gift exchanges the user owns or participates in, optionally filtered by workspace",
+        description: "List the gift exchanges, such as a Secret Santa, that the user organizes or has joined. Each one includes my_participant, whose id is the participant_id the exchange wishlist tools need.",
         scope: "read",
         schema: tool_schema({ workspace_id: integer_property("Optional workspace ID") }),
         handler: ->(args) {
@@ -922,7 +949,7 @@ class McpController < ApplicationController
         handler: ->(args) { redo_exchange(args["exchange_id"], args["mode"]) }
       },
       "get_my_exchange_match" => {
-        description: "Get the current user's assigned recipient and their exchange wishlist",
+        description: "Get the person the user is giving to in a gift exchange, after names are drawn, along with that person's exchange wishlist.",
         scope: "read",
         schema: tool_schema({ exchange_id: id_property("Gift exchange ID or slug") }, [ "exchange_id" ]),
         handler: ->(args) {
@@ -934,7 +961,7 @@ class McpController < ApplicationController
         }
       },
       "list_exchange_wishlist_items" => {
-        description: "List an exchange participant's wishlist when the current user is that participant or their assigned giver",
+        description: "List a participant's wishlist for a gift exchange. The user can read their own, and after names are drawn, the wishlist of the person they are giving to.",
         scope: "read",
         schema: participant_reference_schema,
         handler: ->(args) {
@@ -943,7 +970,7 @@ class McpController < ApplicationController
         }
       },
       "create_exchange_wishlist_item" => {
-        description: "Add an item to the current user's own exchange wishlist",
+        description: "Add a gift idea to the user's own wishlist for a gift exchange, so whoever draws their name knows what they would like. Needs the exchange_id and the user's own participant_id from list_gift_exchanges. Once names are drawn, their giver sees a notification about the new idea.",
         scope: "write",
         schema: exchange_wishlist_item_schema(required: %w[exchange_id participant_id name]),
         handler: ->(args) {
@@ -954,7 +981,7 @@ class McpController < ApplicationController
         }
       },
       "update_exchange_wishlist_item" => {
-        description: "Update an item on the current user's own exchange wishlist",
+        description: "Change an item on the user's own gift exchange wishlist. Only the fields provided are changed.",
         scope: "write",
         schema: exchange_wishlist_item_schema(required: %w[exchange_id participant_id item_id], include_item_id: true),
         handler: ->(args) {
@@ -965,7 +992,7 @@ class McpController < ApplicationController
         }
       },
       "delete_exchange_wishlist_item" => {
-        description: "Delete an item from the current user's own exchange wishlist",
+        description: "Remove an item from the user's own gift exchange wishlist. This cannot be undone.",
         scope: "write",
         schema: tool_schema({
           exchange_id: id_property("Gift exchange ID or slug"),

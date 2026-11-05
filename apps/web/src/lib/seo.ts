@@ -61,6 +61,13 @@ export const PUBLIC_MARKETING_PAGES = [
     priority: 0.4,
   },
   {
+    path: "/terms",
+    title: "Terms of Service",
+    description: "The terms for using Listy Gifty, including accounts, shared lists, gift exchanges, and connected assistants.",
+    changeFrequency: "yearly",
+    priority: 0.4,
+  },
+  {
     path: "/status",
     title: "System Status",
     description: "Current service status for Listy Gifty web, API, authentication, and mobile backend services.",
@@ -83,6 +90,7 @@ export const PUBLIC_STATIC_TEXT_ROUTES = [
   "/integrations/index.html.md",
   "/support/index.html.md",
   "/privacy-policy/index.html.md",
+  "/terms/index.html.md",
   "/status/index.html.md",
 ] as const;
 

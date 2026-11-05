@@ -12,12 +12,25 @@ class WellKnownController < ApplicationController
     render_resource_metadata(resource_registry.user_mcp)
   end
 
+  def oauth_apps_mcp_protected_resource
+    render_resource_metadata(resource_registry.apps_mcp)
+  end
+
   def oauth_admin_mcp_protected_resource
     render_resource_metadata(resource_registry.admin_mcp)
   end
 
   def oauth_authorization_server
     render json: authorization_server_metadata
+  end
+
+  # OpenAI proves we own this domain by fetching the token its plugin portal
+  # issued. It must be the bare token, served as plain text.
+  def openai_apps_challenge
+    token = ENV["OPENAI_APPS_CHALLENGE"].to_s.strip
+    return head :not_found if token.empty?
+
+    render plain: token
   end
 
   private
@@ -52,7 +65,7 @@ class WellKnownController < ApplicationController
       code_challenge_methods_supported: [ "S256" ],
       service_documentation: "https://docs.listygifty.com/oauth",
       ui_locales_supported: [ "en" ],
-      op_policy_uri: "https://listygifty.com/privacy",
+      op_policy_uri: "https://listygifty.com/privacy-policy",
       op_tos_uri: "https://listygifty.com/terms"
     }
   end
