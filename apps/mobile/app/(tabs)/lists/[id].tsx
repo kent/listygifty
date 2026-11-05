@@ -6,8 +6,6 @@ import {
   RefreshControl,
   TextInput,
   ScrollView,
-  Modal,
-  ActivityIndicator,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Stack } from "expo-router";
@@ -16,12 +14,8 @@ import { GiftItem } from "@/components/GiftItem";
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { InlineError } from "@/components/InlineError";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
-import { GiftListSummaryStrip } from "@/components/GiftListSummaryStrip";
+import { GiftListSettingsSheet } from "@/components/GiftListSettingsSheet";
 import { getGiftStatusColors } from "@/lib/gift-status-colors";
-import {
-  getHolidayCollaboratorInitials,
-  getHolidayCollaboratorName,
-} from "@/lib/models";
 import { useTheme } from "@/lib/theme";
 import { useGiftListDetailController } from "@/lib/controllers";
 
@@ -33,41 +27,36 @@ export default function GiftsScreen() {
     return <ScreenLoader />;
   }
 
+  const { giftSummary, filteredGiftSummary } = controller;
+  const statsLabel = controller.hasActiveFilters
+    ? `Showing ${filteredGiftSummary.totalGifts} of ${giftSummary.totalGifts}`
+    : `${giftSummary.totalGifts} gift${giftSummary.totalGifts === 1 ? "" : "s"} · ${giftSummary.completionPercent}% done`;
+
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           title: controller.holiday?.name || "Gifts",
-          headerRight: () => (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginRight: 4 }}>
-              {controller.holiday?.date ? (
-                <TouchableOpacity
-                  onPress={controller.triggerScheduleReminder}
-                  disabled={controller.schedulingReminder}
-                  style={{ padding: 6, opacity: controller.schedulingReminder ? 0.5 : 1 }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Schedule gift list reminder"
-                >
-                  <Ionicons name="notifications-outline" size={22} color={colors.primary} />
-                </TouchableOpacity>
-              ) : null}
+          headerRight: () =>
+            controller.holiday ? (
               <TouchableOpacity
-                onPress={controller.openShareModal}
-                style={{ padding: 6 }}
+                onPress={controller.openSettings}
+                style={{ padding: 6, marginRight: 4 }}
                 accessibilityRole="button"
-                accessibilityLabel="Share gift list"
+                accessibilityLabel="List settings"
               >
-                <Ionicons name="share-social-outline" size={22} color={colors.primary} />
+                <Ionicons name="settings-outline" size={22} color={colors.primary} />
               </TouchableOpacity>
-            </View>
-          ),
+            ) : null,
         }}
       />
 
       <View style={{ padding: 16, paddingBottom: 8, gap: 12 }}>
         {controller.holiday ? (
           <TouchableOpacity
-            onPress={controller.openShareModal}
+            onPress={controller.openSettings}
+            accessibilityRole="button"
+            accessibilityLabel="View list stats"
             style={{
               backgroundColor: colors.card,
               borderRadius: 10,
@@ -80,16 +69,13 @@ export default function GiftsScreen() {
             }}
           >
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Ionicons name="people-outline" size={18} color={colors.primary} />
+              <Ionicons name="stats-chart-outline" size={18} color={colors.primary} />
               <Text style={{ color: colors.text, fontSize: 14, fontWeight: "600" }}>
-                {controller.holiday.collaborator_count} collaborator
-                {controller.holiday.collaborator_count === 1 ? "" : "s"}
+                {statsLabel}
               </Text>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Text style={{ color: colors.textTertiary, fontSize: 13 }}>
-                {controller.holiday.is_owner ? "Manage sharing" : "Shared list"}
-              </Text>
+              <Text style={{ color: colors.textTertiary, fontSize: 13 }}>Stats</Text>
               <Ionicons name="chevron-forward" size={16} color={colors.muted} />
             </View>
           </TouchableOpacity>
@@ -206,12 +192,6 @@ export default function GiftsScreen() {
             </ScrollView>
           </View>
         ) : null}
-
-        <GiftListSummaryStrip
-          summary={controller.giftSummary}
-          filteredSummary={controller.filteredGiftSummary}
-          hasActiveFilters={controller.hasActiveFilters}
-        />
       </View>
 
       {controller.error ? (
@@ -297,215 +277,27 @@ export default function GiftsScreen() {
         <FloatingActionButton onPress={controller.triggerAddGift} accessibilityLabel="Add Gift" />
       ) : null}
 
-      <Modal
-        visible={controller.shareModalVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={controller.closeShareModal}
-      >
-        <View style={{ flex: 1, backgroundColor: colors.background }}>
-          <View
-            style={{
-              padding: 16,
-              borderBottomWidth: 1,
-              borderBottomColor: colors.border,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <TouchableOpacity onPress={controller.closeShareModal}>
-              <Text style={{ color: colors.textTertiary, fontSize: 16 }}>Close</Text>
-            </TouchableOpacity>
-            <Text style={{ color: colors.text, fontSize: 17, fontWeight: "600" }}>Share List</Text>
-            <TouchableOpacity
-              onPress={controller.refreshShareData}
-              disabled={controller.shareLoading}
-              style={{ minWidth: 52, alignItems: "flex-end" }}
-            >
-              {controller.shareLoading ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <Text style={{ color: colors.primary, fontSize: 15, fontWeight: "600" }}>
-                  Refresh
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {controller.shareLoading ? (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-              <ActivityIndicator size="large" color={colors.primary} />
-            </View>
-          ) : (
-            <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }}>
-              {controller.shareError ? (
-                <InlineError message={controller.shareError} margin={0} />
-              ) : null}
-
-              <View
-                style={{
-                  backgroundColor: colors.card,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  padding: 14,
-                  gap: 12,
-                }}
-              >
-                <Text style={{ color: colors.text, fontSize: 15, fontWeight: "600" }}>
-                  Invite Link
-                </Text>
-                <Text
-                  selectable
-                  style={{
-                    color: colors.textTertiary,
-                    fontSize: 13,
-                    backgroundColor: colors.input,
-                    borderWidth: 1,
-                    borderColor: colors.inputBorder,
-                    borderRadius: 8,
-                    padding: 12,
-                  }}
-                >
-                  {controller.shareUrl || "No link available"}
-                </Text>
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <TouchableOpacity
-                    onPress={controller.handleNativeShare}
-                    disabled={!controller.shareUrl}
-                    style={{
-                      flex: 1,
-                      backgroundColor: controller.shareUrl
-                        ? colors.primary
-                        : colors.surfaceSecondary,
-                      borderRadius: 8,
-                      paddingVertical: 12,
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: controller.shareUrl ? "#fff" : colors.muted,
-                        fontWeight: "600",
-                      }}
-                    >
-                      Share Link
-                    </Text>
-                  </TouchableOpacity>
-                  {controller.holiday?.is_owner ? (
-                    <TouchableOpacity
-                      onPress={controller.triggerRegenerateLink}
-                      disabled={controller.regenerating}
-                      style={{
-                        backgroundColor: colors.surfaceSecondary,
-                        borderRadius: 8,
-                        paddingHorizontal: 14,
-                        paddingVertical: 12,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                      }}
-                    >
-                      {controller.regenerating ? (
-                        <ActivityIndicator size="small" color={colors.primary} />
-                      ) : (
-                        <Ionicons name="refresh" size={18} color={colors.primary} />
-                      )}
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
-              </View>
-
-              <View
-                style={{
-                  backgroundColor: colors.card,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  padding: 14,
-                  gap: 10,
-                }}
-              >
-                <Text style={{ color: colors.text, fontSize: 15, fontWeight: "600" }}>
-                  Collaborators ({controller.collaborators.length})
-                </Text>
-
-                {controller.collaborators.length === 0 ? (
-                  <Text style={{ color: colors.textTertiary, fontSize: 14 }}>
-                    No collaborators yet. Share your link to invite people.
-                  </Text>
-                ) : (
-                  controller.collaborators.map((collaborator) => (
-                    <View
-                      key={collaborator.user_id}
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        paddingVertical: 8,
-                        borderBottomWidth: 1,
-                        borderBottomColor: colors.border,
-                      }}
-                    >
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          gap: 10,
-                          flex: 1,
-                        }}
-                      >
-                        <View
-                          style={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: 17,
-                            backgroundColor: colors.primarySurface,
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 13 }}>
-                            {getHolidayCollaboratorInitials(collaborator)}
-                          </Text>
-                        </View>
-                        <View style={{ flex: 1, paddingRight: 8 }}>
-                          <Text style={{ color: colors.text, fontSize: 14, fontWeight: "500" }}>
-                            {getHolidayCollaboratorName(collaborator)}
-                          </Text>
-                          <Text
-                            style={{
-                              color: colors.textTertiary,
-                              fontSize: 12,
-                              textTransform: "capitalize",
-                            }}
-                          >
-                            {collaborator.role}
-                          </Text>
-                        </View>
-                      </View>
-
-                      {controller.holiday?.is_owner && collaborator.role !== "owner" ? (
-                        <TouchableOpacity
-                          onPress={() => controller.removeCollaborator(collaborator)}
-                          style={{ paddingHorizontal: 8, paddingVertical: 4 }}
-                        >
-                          <Text style={{ color: colors.error, fontSize: 13, fontWeight: "600" }}>
-                            Remove
-                          </Text>
-                        </TouchableOpacity>
-                      ) : null}
-                    </View>
-                  ))
-                )}
-              </View>
-            </ScrollView>
-          )}
-        </View>
-      </Modal>
+      {controller.holiday ? (
+        <GiftListSettingsSheet
+          page={controller.settingsPage}
+          holiday={controller.holiday}
+          summary={giftSummary}
+          schedulingReminder={controller.schedulingReminder}
+          shareUrl={controller.shareUrl}
+          collaborators={controller.collaborators}
+          shareLoading={controller.shareLoading}
+          shareError={controller.shareError}
+          regenerating={controller.regenerating}
+          onClose={controller.closeSettings}
+          onBack={controller.openSettings}
+          onOpenSharing={controller.openSharing}
+          onScheduleReminder={controller.triggerScheduleReminder}
+          onRefreshShare={controller.refreshShareData}
+          onNativeShare={controller.handleNativeShare}
+          onRegenerateLink={controller.triggerRegenerateLink}
+          onRemoveCollaborator={controller.removeCollaborator}
+        />
+      ) : null}
     </GestureHandlerRootView>
   );
 }
