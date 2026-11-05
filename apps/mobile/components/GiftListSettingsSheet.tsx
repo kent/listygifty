@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import type { GiftListSummary } from "@niftygifty/types";
+import type { GiftListSummary, GiftNotificationSetting } from "@niftygifty/types";
 import { GiftListStats } from "@/components/GiftListStats";
 import { InlineError } from "@/components/InlineError";
 import { formatShortDate } from "@/lib/formatters";
@@ -20,7 +20,17 @@ import {
 } from "@/lib/models";
 import { useTheme } from "@/lib/theme";
 
-export type GiftListSettingsPage = "menu" | "stats" | "sharing";
+export type GiftListSettingsPage = "menu" | "stats" | "sharing" | "gift-emails";
+
+export const GIFT_EMAIL_OPTIONS: { value: GiftNotificationSetting; label: string; detail: string }[] = [
+  { value: "instant", label: "Right away", detail: "Email me a few minutes after someone adds a gift" },
+  { value: "daily", label: "Daily summary", detail: "Include new gifts in my daily email of list changes" },
+  { value: "off", label: "Off", detail: "Don't email me about this list" },
+];
+
+function giftEmailsLabel(setting: GiftNotificationSetting | null | undefined) {
+  return GIFT_EMAIL_OPTIONS.find((option) => option.value === (setting ?? "instant"))?.label ?? "Right away";
+}
 
 interface GiftListSettingsSheetProps {
   page: GiftListSettingsPage | null;
@@ -32,10 +42,13 @@ interface GiftListSettingsSheetProps {
   shareLoading: boolean;
   shareError: string | null;
   regenerating: boolean;
+  savingGiftEmails: boolean;
   onClose: () => void;
   onBack: () => void;
   onOpenStats: () => void;
   onOpenSharing: () => void;
+  onOpenGiftEmails: () => void;
+  onChangeGiftEmails: (setting: GiftNotificationSetting) => void;
   onScheduleReminder: () => void;
   onRefreshShare: () => void;
   onNativeShare: () => void;
@@ -167,6 +180,8 @@ export function GiftListSettingsSheet(props: GiftListSettingsSheetProps) {
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         {page === "sharing" ? (
           <SharingPage {...props} />
+        ) : page === "gift-emails" ? (
+          <GiftEmailsPage {...props} />
         ) : page === "stats" ? (
           <>
             <SheetHeader title="Stats" left={<BackButton onPress={props.onBack} />} />
@@ -207,6 +222,14 @@ export function GiftListSettingsSheet(props: GiftListSettingsSheetProps) {
                 disabled={!holiday.date}
                 loading={props.schedulingReminder}
               />
+              {holiday.collaborator_count > 1 ? (
+                <SettingsRow
+                  icon="mail-outline"
+                  title="New gift emails"
+                  detail={giftEmailsLabel(holiday.gift_notifications)}
+                  onPress={props.onOpenGiftEmails}
+                />
+              ) : null}
 
               <View style={{ height: 8 }} />
               <SectionTitle>Sharing</SectionTitle>
@@ -223,6 +246,52 @@ export function GiftListSettingsSheet(props: GiftListSettingsSheetProps) {
         )}
       </View>
     </Modal>
+  );
+}
+
+function GiftEmailsPage({ holiday, savingGiftEmails, onBack, onChangeGiftEmails }: GiftListSettingsSheetProps) {
+  const { colors } = useTheme();
+  const current = holiday.gift_notifications ?? "instant";
+
+  return (
+    <>
+      <SheetHeader title="New Gift Emails" left={<BackButton onPress={onBack} />} />
+      <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
+        <Text style={{ color: colors.textTertiary, fontSize: 14 }}>
+          When someone else adds a gift to {holiday.name}. Only you see this setting.
+        </Text>
+        {GIFT_EMAIL_OPTIONS.map((option) => {
+          const selected = option.value === current;
+          return (
+            <TouchableOpacity
+              key={option.value}
+              onPress={() => onChangeGiftEmails(option.value)}
+              disabled={savingGiftEmails}
+              accessibilityRole="radio"
+              accessibilityLabel={option.label}
+              accessibilityState={{ checked: selected, disabled: savingGiftEmails }}
+              style={{
+                backgroundColor: colors.card,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: selected ? colors.primary : colors.border,
+                padding: 14,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.text, fontSize: 15, fontWeight: "600" }}>{option.label}</Text>
+                <Text style={{ color: colors.textTertiary, fontSize: 13 }}>{option.detail}</Text>
+              </View>
+              {selected ? <Ionicons name="checkmark" size={20} color={colors.primary} /> : null}
+            </TouchableOpacity>
+          );
+        })}
+        {savingGiftEmails ? <ActivityIndicator size="small" color={colors.primary} /> : null}
+      </ScrollView>
+    </>
   );
 }
 

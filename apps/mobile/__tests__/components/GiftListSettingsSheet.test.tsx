@@ -44,10 +44,13 @@ function renderSheet(overrides: Partial<Props> = {}) {
     shareLoading: false,
     shareError: null,
     regenerating: false,
+    savingGiftEmails: false,
     onClose: jest.fn(),
     onBack: jest.fn(),
     onOpenStats: jest.fn(),
     onOpenSharing: jest.fn(),
+    onOpenGiftEmails: jest.fn(),
+    onChangeGiftEmails: jest.fn(),
     onScheduleReminder: jest.fn(),
     onRefreshShare: jest.fn(),
     onNativeShare: jest.fn(),
@@ -129,5 +132,29 @@ describe("GiftListSettingsSheet", () => {
     fireEvent.press(screen.getByRole("button", { name: "Back to list settings" }));
 
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("new gift emails", () => {
+  it("shows your setting on a shared list and opens its page", () => {
+    const props = renderSheet({ holiday: { ...holiday, gift_notifications: "daily" } });
+
+    expect(screen.getByText("Daily summary")).toBeTruthy();
+    fireEvent.press(screen.getByLabelText("New gift emails"));
+    expect(props.onOpenGiftEmails).toHaveBeenCalled();
+  });
+
+  it("isn't offered on a list nobody else is on", () => {
+    renderSheet({ holiday: { ...holiday, collaborator_count: 1 } });
+
+    expect(screen.queryByLabelText("New gift emails")).toBeNull();
+  });
+
+  it("marks your current choice and saves a new one", () => {
+    const props = renderSheet({ page: "gift-emails", holiday: { ...holiday, gift_notifications: "instant" } });
+
+    expect(screen.getByLabelText("Right away").props.accessibilityState.checked).toBe(true);
+    fireEvent.press(screen.getByLabelText("Off"));
+    expect(props.onChangeGiftEmails).toHaveBeenCalledWith("off");
   });
 });

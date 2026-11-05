@@ -15,7 +15,7 @@ import { downloadIcsEvent } from "@/lib/calendar-download";
 import { AppHeader } from "@/components/layout";
 import { GiftFilters } from "@/components/filters";
 import { GiftGrid, GiftListSummaryBar, HolidayReports, ImportGiftsDialog } from "@/components/gifts";
-import { ShareHolidayDialog } from "@/components/holidays";
+import { GiftNotificationsDialog, ShareHolidayDialog } from "@/components/holidays";
 import { CursorOverlay } from "@/components/cursors";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -406,6 +406,9 @@ export default function HolidayDetailPage() {
                 <Download className="h-4 w-4" />
                 <span className="hidden sm:inline">Export</span>
               </Button>
+              {holiday.collaborator_count > 1 && (
+                <GiftNotificationsDialog holiday={holiday} onUpdated={setHoliday} />
+              )}
               <ShareHolidayDialog
                 holiday={holiday}
                 trigger={

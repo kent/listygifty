@@ -229,6 +229,13 @@ export const holidaysService = {
     resetBootstrapState();
     invalidateCachedResources("holidays:");
   },
+
+  async updateNotifications(id: number, giftNotifications: Parameters<typeof baseHolidaysService.updateNotifications>[1]) {
+    const holiday = await baseHolidaysService.updateNotifications(id, giftNotifications);
+    resetBootstrapState();
+    invalidateCachedResources("holidays:");
+    return holiday;
+  },
 };
 
 export const giftsService = {

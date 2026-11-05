@@ -32,6 +32,9 @@ class AllMailersRenderTest < ActionMailer::TestCase
         )
       }
     },
+    GiftListMailer => {
+      gifts_added: -> { GiftListMailer.gifts_added(@user, holidays(:christmas), gift_changes.select(&:created?)) }
+    },
     GuestClaimMailer => {
       claim_confirmation: -> { GuestClaimMailer.claim_confirmation(guest_claim) }
     },

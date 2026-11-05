@@ -4,7 +4,7 @@ class HolidaysController < ApplicationController
   skip_before_action :authenticate!, only: [ :templates ]
   skip_before_action :set_current_workspace, only: [ :templates ]
   skip_before_action :require_workspace_member, only: [ :templates ]
-  before_action :set_holiday, only: %i[show update destroy share collaborators remove_collaborator leave]
+  before_action :set_holiday, only: %i[show update destroy share collaborators remove_collaborator leave notifications]
   before_action :require_owner, only: %i[destroy remove_collaborator]
 
   def index
@@ -79,6 +79,18 @@ class HolidaysController < ApplicationController
     holiday_user = @holiday.holiday_users.find_by(user: current_user)
     holiday_user&.destroy!
     head :no_content
+  end
+
+  # PATCH /holidays/:id/notifications
+  # Changes only the current user's own setting for this list.
+  def notifications
+    membership = @holiday.holiday_users.find { |holiday_user| holiday_user.user_id == current_user.id }
+
+    if membership.update(gift_notifications: params.require(:gift_notifications))
+      render json: HolidayBlueprint.render(@holiday, current_user: current_user)
+    else
+      render json: { errors: membership.errors.full_messages }, status: :unprocessable_entity
+    end
   end
 
   # GET /holidays/:id/collaborators

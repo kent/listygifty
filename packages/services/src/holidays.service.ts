@@ -4,6 +4,7 @@ import type {
   CreateHolidayRequest,
   ShareLinkResponse,
   HolidayCollaborator,
+  GiftNotificationSetting,
 } from "@niftygifty/types";
 
 export interface HolidaysService {
@@ -19,6 +20,8 @@ export interface HolidaysService {
   leave(id: number): Promise<void>;
   getCollaborators(id: number): Promise<HolidayCollaborator[]>;
   removeCollaborator(holidayId: number, userId: number): Promise<void>;
+  /** Changes only your own setting for this list. */
+  updateNotifications(id: number, giftNotifications: GiftNotificationSetting): Promise<Holiday>;
 }
 
 export function createHolidaysService(client: ApiClient): HolidaysService {
@@ -69,6 +72,10 @@ export function createHolidaysService(client: ApiClient): HolidaysService {
 
     removeCollaborator(holidayId: number, userId: number) {
       return client.delete(`/holidays/${holidayId}/collaborators/${userId}`);
+    },
+
+    updateNotifications(id: number, giftNotifications: GiftNotificationSetting) {
+      return client.patch<Holiday>(`/holidays/${id}/notifications`, { gift_notifications: giftNotifications });
     },
   };
 }

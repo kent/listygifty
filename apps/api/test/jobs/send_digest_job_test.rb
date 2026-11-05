@@ -68,4 +68,35 @@ class SendDigestJobTest < ActiveSupport::TestCase
   ensure
     ActionMailer::Base.unregister_interceptor(interceptor) if interceptor
   end
+
+  test "lists set to instant leave new gifts out, since those were already emailed" do
+    @recipients.last.update!(digest_enabled: false)
+    GiftChange.create!(gift: gifts(:book), holiday: holidays(:christmas), user: @actor,
+      change_type: "created", changes_data: { name: gifts(:book).name })
+
+    SendDigestJob.perform_now
+
+    body = ActionMailer::Base.deliveries.sole.text_part.decoded
+    assert_includes body, "New gift"
+    assert_not_includes body, gifts(:book).name
+  end
+
+  test "lists set to daily keep new gifts in the digest" do
+    @recipients.last.update!(digest_enabled: false)
+    HolidayUser.find_by!(holiday: holidays(:christmas), user: @recipients.first).update!(gift_notifications: "daily")
+    GiftChange.create!(gift: gifts(:book), holiday: holidays(:christmas), user: @actor,
+      change_type: "created", changes_data: { name: gifts(:book).name })
+
+    SendDigestJob.perform_now
+
+    assert_includes ActionMailer::Base.deliveries.sole.text_part.decoded, gifts(:book).name
+  end
+
+  test "lists set to off are left out of the digest" do
+    HolidayUser.where(holiday: holidays(:christmas)).update_all(gift_notifications: "off")
+
+    SendDigestJob.perform_now
+
+    assert_empty ActionMailer::Base.deliveries
+  end
 end

@@ -26,7 +26,9 @@ class SendDigestJob < ApplicationJob
       # notified_at flag lets the first recipient consume everyone else's email.
       changes = GiftChange.joins(holiday: :holiday_users)
                           .includes(:gift, :holiday, :user)
-                          .where(holiday_users: { user_id: user.id, role: %w[owner collaborator] })
+                          .where(holiday_users: { user_id: user.id, role: %w[owner collaborator], gift_notifications: %w[instant daily] })
+                          # Lists set to instant already emailed new gifts, so only their edits are left.
+                          .where("holiday_users.gift_notifications = 'daily' OR gift_changes.change_type <> 'created'")
                           .where("gift_changes.created_at >= holiday_users.created_at")
                           .where("gift_changes.created_at > ?", user.last_digest_sent_at || user.created_at)
                           .where(gift_changes: { created_at: ..cutoff })

@@ -145,6 +145,7 @@ Rails.application.routes.draw do
       get :share
       post :share
       delete :leave
+      patch :notifications
       get :collaborators
       delete "collaborators/:user_id", action: :remove_collaborator, as: :remove_collaborator
     end
