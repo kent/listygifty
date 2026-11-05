@@ -8,6 +8,15 @@ import { humanizeError } from "@/lib/error-message";
 import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { useRequestGuard } from "./use-request-guard";
 
+/**
+ * The last data each page saw, per user, workspace and resource, so going back
+ * to a page renders it straight away instead of flashing an empty state.
+ * Each entry notes the placeholder it was saved alongside: if the placeholder
+ * has changed since (bootstrap was refreshed), the placeholder is newer and wins.
+ * Lives only in memory and is cleared on sign-out.
+ */
+const lastSeen = new Map<string, { data: unknown; placeholder: unknown }>();
+
 interface UseWorkspaceDataOptions<T> {
   /** Function to fetch data - called when workspace changes */
   fetcher: () => Promise<T>;
@@ -17,12 +26,18 @@ interface UseWorkspaceDataOptions<T> {
   requireAuth?: boolean;
   /** Route/resource identifier whose change requires a fresh request. */
   resourceKey?: string | number;
+  /** Real data to show while the first request is in flight, e.g. from the bootstrap payload. */
+  placeholderData?: T;
+  /** Remember the last data for this page so a revisit shows it while it refreshes. */
+  cacheKey?: string;
 }
 
 interface UseWorkspaceDataResult<T> {
   data: T;
   setData: React.Dispatch<React.SetStateAction<T>>;
   isLoading: boolean;
+  /** True once `data` is real (fetched, updated locally, remembered or a placeholder), not just `initialData`. */
+  hasData: boolean;
   error: string | null;
   refetch: () => Promise<void>;
   user: ReturnType<typeof useAuth>["user"];
@@ -38,6 +53,8 @@ export function useWorkspaceData<T>({
   initialData,
   requireAuth = true,
   resourceKey,
+  placeholderData,
+  cacheKey,
 }: UseWorkspaceDataOptions<T>): UseWorkspaceDataResult<T> {
   const { isAuthenticated, isLoading: authLoading, user, signOut } = useAuth();
   const { currentWorkspace, isLoading: workspaceLoading, error: workspaceError } = useWorkspace();
@@ -46,17 +63,26 @@ export function useWorkspaceData<T>({
   const scope = JSON.stringify([isAuthenticated ? user?.clerk_user_id : null, currentWorkspace?.id, resourceKey]);
   const { start, invalidate, isActive } = useRequestGuard(scope);
   const canLoad = !authLoading && !workspaceLoading && isAuthenticated && !!currentWorkspace;
-  const [snapshot, setSnapshot] = useState<{ scope: string; data: T; loading: boolean; error: string | null } | null>(null);
+  const [snapshot, setSnapshot] = useState<{ scope: string; data: T; hasData: boolean; loading: boolean; error: string | null } | null>(null);
   const activeSnapshot = snapshot?.scope === scope ? snapshot : null;
-  const data = activeSnapshot ? activeSnapshot.data : initialData as T;
+  const cacheId = cacheKey ? `${cacheKey}:${scope}` : null;
+  const entry = cacheId !== null ? lastSeen.get(cacheId) : undefined;
+  const remembered = entry !== undefined && entry.placeholder === placeholderData;
+  const fallback = {
+    data: (remembered ? entry.data : placeholderData !== undefined ? placeholderData : initialData) as T,
+    hasData: remembered || placeholderData !== undefined,
+  };
+  const data = activeSnapshot ? activeSnapshot.data : fallback.data;
 
-  // Track the fetcher to avoid stale closures
+  // Track the fetcher and fallback to avoid stale closures
   const fetcherRef = useRef(fetcher);
-  const initialDataRef = useRef(initialData as T);
+  const fallbackRef = useRef(fallback);
+  const placeholderRef = useRef(placeholderData);
   useLayoutEffect(() => {
     fetcherRef.current = fetcher;
-    initialDataRef.current = initialData as T;
-  }, [fetcher, initialData]);
+    fallbackRef.current = fallback;
+    placeholderRef.current = placeholderData;
+  });
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -68,36 +94,43 @@ export function useWorkspaceData<T>({
   const loadData = useCallback(async () => {
     if (!canLoad || !isActive()) return;
     const isCurrent = start();
-    setSnapshot((current) => ({ scope, data: current?.scope === scope ? current.data : initialDataRef.current, loading: true, error: null }));
+    setSnapshot((current) => ({ ...(current?.scope === scope ? current : fallbackRef.current), scope, loading: true, error: null }));
     try {
       const result = await fetcherRef.current();
-      if (isCurrent()) setSnapshot({ scope, data: result, loading: false, error: null });
+      if (isCurrent()) {
+        if (cacheId) lastSeen.set(cacheId, { data: result, placeholder: placeholderRef.current });
+        setSnapshot({ scope, data: result, hasData: true, loading: false, error: null });
+      }
     } catch (err) {
       if (isCurrent()) {
         setSnapshot((current) => ({
+          ...(current?.scope === scope ? current : fallbackRef.current),
           scope,
-          data: current?.scope === scope ? current.data : initialDataRef.current,
           loading: false,
           error: humanizeError(err, "Failed to load data. Please try again."),
         }));
       }
     }
-  }, [canLoad, isActive, start, scope]);
+  }, [canLoad, isActive, start, scope, cacheId]);
 
   const setData = useCallback<React.Dispatch<React.SetStateAction<T>>>((action) => {
     if (!isActive()) return;
     invalidate();
     setSnapshot((current) => {
-      const previous = current?.scope === scope ? current.data : initialDataRef.current;
+      const previous = current?.scope === scope ? current.data : fallbackRef.current.data;
       const next = typeof action === "function" ? (action as (previous: T) => T)(previous) : action;
-      return { scope, data: next, loading: false, error: null };
+      if (cacheId) lastSeen.set(cacheId, { data: next, placeholder: placeholderRef.current });
+      return { scope, data: next, hasData: true, loading: false, error: null };
     });
-  }, [isActive, invalidate, scope]);
+  }, [isActive, invalidate, scope, cacheId]);
 
   // Reload data when workspace changes
   useEffect(() => {
     if (canLoad) void loadData();
-    else if (!authLoading && !isAuthenticated) setSnapshot(null);
+    else if (!authLoading && !isAuthenticated) {
+      setSnapshot(null);
+      lastSeen.clear();
+    }
     return invalidate;
   }, [authLoading, isAuthenticated, canLoad, loadData, invalidate]);
 
@@ -107,6 +140,7 @@ export function useWorkspaceData<T>({
     data,
     setData,
     isLoading,
+    hasData: activeSnapshot ? activeSnapshot.hasData : fallback.hasData,
     error: workspaceError || activeSnapshot?.error || null,
     refetch: loadData,
     user,

@@ -9,6 +9,9 @@ const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   search: "section=new",
   setData: vi.fn(),
+  loaded: { hasData: true, isLoading: false },
+  bootstrapData: null as null | { holidays: unknown[]; holiday_templates: unknown[] },
+  hookOptions: null as null | { placeholderData?: unknown; cacheKey?: string },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -17,14 +20,19 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/services", () => ({ holidaysService: { create: mocks.create } }));
 vi.mock("@/hooks", () => ({
-  useWorkspaceData: () => ({
-    data: { holidays: [], templates: [] },
-    setData: mocks.setData,
-    error: null,
-    user: null,
-    signOut: vi.fn(),
-  }),
+  useWorkspaceData: (options: { placeholderData?: unknown; cacheKey?: string }) => {
+    mocks.hookOptions = options;
+    return {
+      data: { holidays: [], templates: [] },
+      setData: mocks.setData,
+      ...mocks.loaded,
+      error: null,
+      user: null,
+      signOut: vi.fn(),
+    };
+  },
 }));
+vi.mock("@/contexts/workspace-context", () => ({ useWorkspace: () => ({ bootstrapData: mocks.bootstrapData }) }));
 vi.mock("@/components/layout", () => ({ AppHeader: () => null }));
 vi.mock("@/components/holidays", () => ({ HolidaysNav: () => null }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -33,6 +41,8 @@ beforeEach(() => {
   mocks.push.mockReset();
   mocks.setData.mockReset();
   mocks.search = "section=new";
+  mocks.loaded = { hasData: true, isLoading: false };
+  mocks.bootstrapData = null;
   mocks.create.mockReset().mockResolvedValue({ id: 42, name: "Mom's Birthday" });
 });
 
@@ -94,5 +104,32 @@ describe("creating a gift list", () => {
       await waitFor(() => expect(toast.error).toHaveBeenCalledWith("The server hit a snag. Try again in a moment."));
       expect(mocks.push).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("opening Gift Lists", () => {
+  it("doesn't flash the getting-started screen while your lists load", () => {
+    mocks.search = "";
+    mocks.loaded = { hasData: false, isLoading: true };
+    render(<HolidaysPage />);
+    expect(screen.getByRole("heading", { name: "Gift Lists" })).toBeTruthy();
+    expect(screen.queryByText("Start Planning Your Gifts")).toBeNull();
+  });
+
+  it("starts from the lists the app already loaded, and remembers them for the next visit", () => {
+    const holidays = [{ id: 1, name: "Christmas 2026" }];
+    const templates = [{ id: 9, name: "Birthday" }];
+    mocks.bootstrapData = { holidays, holiday_templates: templates };
+    render(<HolidaysPage />);
+    expect(mocks.hookOptions?.placeholderData).toEqual({ holidays, templates });
+    expect(mocks.hookOptions?.cacheKey).toBeTruthy();
+  });
+
+  it("keeps the same placeholder between renders, so the remembered lists stay valid", () => {
+    mocks.bootstrapData = { holidays: [], holiday_templates: [] };
+    const { rerender } = render(<HolidaysPage />);
+    const placeholder = mocks.hookOptions?.placeholderData;
+    rerender(<HolidaysPage />);
+    expect(mocks.hookOptions?.placeholderData).toBe(placeholder);
   });
 });
