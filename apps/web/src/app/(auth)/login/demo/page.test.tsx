@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
   isSignedIn: false,
   redirect: "/oauth/authorize?request_token=abc" as string | null,
+  email: null as string | null,
 }));
 
 vi.mock("@clerk/nextjs", () => ({
@@ -19,7 +20,11 @@ vi.mock("@clerk/nextjs", () => ({
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: mocks.replace }),
-  useSearchParams: () => new URLSearchParams(mocks.redirect ? { redirect_url: mocks.redirect } : {}),
+  useSearchParams: () =>
+    new URLSearchParams({
+      ...(mocks.redirect ? { redirect_url: mocks.redirect } : {}),
+      ...(mocks.email ? { email: mocks.email } : {}),
+    }),
 }));
 vi.mock("@/services", () => ({
   AUTH_ROUTES: { signIn: "/login", afterSignIn: "/dashboard" },
@@ -30,6 +35,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.isSignedIn = false;
   mocks.redirect = "/oauth/authorize?request_token=abc";
+  mocks.email = null;
 });
 
 function submit(email: string) {
@@ -58,6 +64,27 @@ describe("demo sign-in", () => {
 
     expect((await screen.findByRole("alert")).textContent).toBe("That isn't the demo account email.");
     expect(mocks.signInCreate).not.toHaveBeenCalled();
+  });
+
+  it("signs straight in when the regular sign-in form hands over the demo email", async () => {
+    mocks.email = "demo@listygifty.com";
+    mocks.create.mockResolvedValue({ ticket: "ticket-1" });
+    mocks.signInCreate.mockResolvedValue({ status: "complete", createdSessionId: "sess_1" });
+
+    render(<DemoSignInPage />);
+
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/oauth/authorize?request_token=abc"));
+    expect(mocks.create).toHaveBeenCalledTimes(1);
+    expect(mocks.create).toHaveBeenCalledWith("demo@listygifty.com");
+  });
+
+  it("waits for a click when the handed-over email isn't the demo account", () => {
+    mocks.email = "someone@example.com";
+
+    render(<DemoSignInPage />);
+
+    expect(mocks.create).not.toHaveBeenCalled();
+    expect((screen.getByLabelText("Email") as HTMLInputElement).value).toBe("");
   });
 
   it("asks someone already signed in to sign out first", () => {
