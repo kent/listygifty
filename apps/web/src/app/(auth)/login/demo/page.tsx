@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SignOutButton, useAuth, useSignIn } from "@clerk/nextjs";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { demoSignInPath, isDemoAccountEmail } from "@/lib/demo-account";
 import { safeRedirect } from "@/lib/safe-redirect";
 import { AUTH_ROUTES, demoSessionService } from "@/services";
 
@@ -18,18 +19,20 @@ function DemoSignIn() {
   const redirectUrl = safeRedirect(searchParams.get("redirect_url"));
   const { isLoaded, signIn, setActive } = useSignIn();
   const { isSignedIn } = useAuth();
-  const [email, setEmail] = useState("");
+  // Set when the regular sign-in form sends someone here with the demo email.
+  const handedOffEmail = searchParams.get("email");
+  const [email, setEmail] = useState(isDemoAccountEmail(handedOffEmail) ? handedOffEmail!.trim() : "");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const autoSubmitted = useRef(false);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function signInAsDemo(value: string) {
     if (!isLoaded || !signIn || submitting) return;
 
     setSubmitting(true);
     setError(null);
     try {
-      const { ticket } = await demoSessionService.create(email.trim());
+      const { ticket } = await demoSessionService.create(value.trim());
       const attempt = await signIn.create({ strategy: "ticket", ticket });
       if (attempt.status !== "complete" || !attempt.createdSessionId) {
         throw new Error("The demo sign-in didn't finish. Try again.");
@@ -41,6 +44,19 @@ function DemoSignIn() {
       setSubmitting(false);
     }
   }
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void signInAsDemo(email);
+  }
+
+  useEffect(() => {
+    if (autoSubmitted.current || !isLoaded || !signIn || isSignedIn || !isDemoAccountEmail(handedOffEmail)) return;
+    autoSubmitted.current = true;
+    void signInAsDemo(handedOffEmail!);
+    // signInAsDemo reads the latest state when it runs; this only has to fire once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, signIn, isSignedIn, handedOffEmail]);
 
   const backToSignIn = `${AUTH_ROUTES.signIn}?redirect_url=${encodeURIComponent(redirectUrl)}`;
 
@@ -56,7 +72,7 @@ function DemoSignIn() {
         {isSignedIn ? (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">You&apos;re signed in to another account. Sign out first to use the demo account.</p>
-            <SignOutButton redirectUrl={`/login/demo?redirect_url=${encodeURIComponent(redirectUrl)}`}>
+            <SignOutButton redirectUrl={demoSignInPath(redirectUrl, handedOffEmail ?? undefined)}>
               <Button className="w-full">Sign out</Button>
             </SignOutButton>
           </div>
