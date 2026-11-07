@@ -1001,6 +1001,9 @@ export interface ExchangeParticipant extends BaseEntity {
   has_user: boolean;
   wishlist_count: number;
   invite_token?: string; // Only visible to admin
+  phone?: string | null; // Only visible to the organizer, in E.164 form
+  last_nudged_at?: string | null; // Only visible to the organizer
+  can_nudge?: boolean; // Only visible to the organizer
   matched_participant_id?: number | null;
   matched_participant?: ExchangeParticipantWithWishlist | null;
 }
@@ -1066,7 +1069,22 @@ export interface CreateExchangeParticipantRequest {
 }
 
 export interface UpdateExchangeParticipantRequest {
-  exchange_participant: Partial<CreateExchangeParticipantRequest["exchange_participant"]>;
+  exchange_participant: Partial<CreateExchangeParticipantRequest["exchange_participant"]> & { phone?: string };
+}
+
+// A nudge can fix the email or add a phone number before it sends.
+export interface NudgeExchangeParticipantRequest {
+  exchange_participant?: {
+    email?: string;
+    phone?: string;
+  };
+}
+
+export interface NudgeExchangeParticipantResponse {
+  participant: ExchangeParticipant;
+  emailed: boolean;
+  text: "sent" | "failed" | "skipped";
+  text_error: string | null;
 }
 
 export interface CreateWishlistItemRequest {
@@ -1134,6 +1152,8 @@ export const EXCHANGE_API_ENDPOINTS = {
     `/gift_exchanges/${exchangeId}/exchange_participants/${participantId}`,
   resendInvite: (exchangeId: number, participantId: number) => 
     `/gift_exchanges/${exchangeId}/exchange_participants/${participantId}/resend_invite`,
+  nudgeParticipant: (exchangeId: number, participantId: number) =>
+    `/gift_exchanges/${exchangeId}/exchange_participants/${participantId}/nudge`,
   
   // Wishlist Items
   wishlistItems: (exchangeId: number, participantId: number) => 

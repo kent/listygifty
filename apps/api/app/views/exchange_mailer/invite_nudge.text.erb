@@ -1,0 +1,13 @@
+Still saving you a spot.
+
+<%= @owner.safe_name %> invited you to <%= @exchange.name %> and is waiting to hear from you before drawing names. It takes a minute: join, add a few things you'd like, and you're in.
+
+<% if @exchange.exchange_date %>
+The exchange is on <%= @exchange.exchange_date.strftime("%B %-d, %Y") %>.
+
+<% end %>
+I'm in: <%= @invite_url %>
+
+Not this year? You can say no from the same link, and <%= @owner.safe_name %> will know not to wait.
+
+You were invited as <%= @participant.name %> at <%= @participant.email %>.

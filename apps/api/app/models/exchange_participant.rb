@@ -28,8 +28,10 @@ class ExchangeParticipant < ApplicationRecord
   validates :invite_token, presence: true, uniqueness: true
   validates :status, presence: true, inclusion: { in: STATUSES }
   validates :email, uniqueness: { scope: :gift_exchange_id, message: "is already a participant" }
+  validates :phone, format: { with: PhoneNumber::E164, message: "doesn't look like a phone number" }, allow_nil: true
 
   before_validation :generate_invite_token, on: :create
+  before_validation :normalize_phone
 
   scope :invited, -> { where(status: "invited") }
   scope :accepted, -> { where(status: "accepted") }
@@ -56,6 +58,7 @@ class ExchangeParticipant < ApplicationRecord
       user: nil,
       name: anonymized_name,
       email: "deleted-#{id}@#{ANONYMIZED_EMAIL_DOMAIN}",
+      phone: nil,
       status: "declined",
       invite_token: SecureRandom.urlsafe_base64(32)
     )
@@ -84,6 +87,16 @@ class ExchangeParticipant < ApplicationRecord
     ExchangeExclusion.exists_between?(self, other_participant)
   end
 
+  def nudged_recently?
+    last_nudged_at.present? && last_nudged_at > ExchangeNudgeService::COOLDOWN.ago
+  end
+
+  # Someone the organizer invited who hasn't answered, and wasn't nudged in
+  # the last day.
+  def nudgeable?
+    status == "invited" && gift_exchange.editable? && !nudged_recently?
+  end
+
   private
 
   # The giver still has to recognize who they drew, so a first name stays. It
@@ -92,6 +105,10 @@ class ExchangeParticipant < ApplicationRecord
   def anonymized_name
     first_word = name.to_s.split.first
     first_word.nil? || first_word.include?("@") ? ANONYMIZED_NAME : first_word
+  end
+
+  def normalize_phone
+    self.phone = PhoneNumber.normalize(phone)
   end
 
   def generate_invite_token

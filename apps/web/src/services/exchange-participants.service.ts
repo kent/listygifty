@@ -3,6 +3,8 @@ import type {
   ExchangeParticipant,
   CreateExchangeParticipantRequest,
   UpdateExchangeParticipantRequest,
+  NudgeExchangeParticipantRequest,
+  NudgeExchangeParticipantResponse,
 } from "@niftygifty/types";
 
 class ExchangeParticipantsService {
@@ -48,6 +50,17 @@ class ExchangeParticipantsService {
   async resendInvite(exchangeId: number, participantId: number): Promise<{ message: string }> {
     return apiClient.post<{ message: string }>(
       `/gift_exchanges/${exchangeId}/exchange_participants/${participantId}/resend_invite`
+    );
+  }
+
+  async nudge(
+    exchangeId: number,
+    participantId: number,
+    details: NudgeExchangeParticipantRequest["exchange_participant"]
+  ): Promise<NudgeExchangeParticipantResponse> {
+    return apiClient.post<NudgeExchangeParticipantResponse>(
+      `/gift_exchanges/${exchangeId}/exchange_participants/${participantId}/nudge`,
+      { exchange_participant: details }
     );
   }
 }

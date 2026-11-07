@@ -319,6 +319,13 @@ const apiEnv: pulumi.Input<pulumi.Input<gcp.types.input.cloudrunv2.ServiceTempla
   secretEnv("STRIPE_WEBHOOK_SECRET", `${secretPrefix}stripe-webhook-secret`),
   secretEnv("POSTMARK_API_TOKEN", `${secretPrefix}postmark-api-token`),
   secretEnv("OPENAI_API_KEY", `${secretPrefix}openai-api-key`),
+  // Nudge texts go out through Twilio from Listy Gifty's number. The API key
+  // can only send and read messages. These secrets were created with gcloud,
+  // since the deployer can't create secrets, so they aren't in apiSecretSlugs.
+  plainEnv("TWILIO_FROM_NUMBER", "+12893797875"),
+  secretEnv("TWILIO_ACCOUNT_SID", `${secretPrefix}twilio-account-sid`),
+  secretEnv("TWILIO_API_KEY_SID", `${secretPrefix}twilio-api-key-sid`),
+  secretEnv("TWILIO_API_KEY_SECRET", `${secretPrefix}twilio-api-key-secret`),
   secretEnv("CORS_ORIGINS", `${secretPrefix}cors-origins`),
   secretEnv("FRONTEND_URL", `${secretPrefix}frontend-url`),
 ];

@@ -1,0 +1,35 @@
+<% content_for :preview_text do %><%= @owner.safe_name %> is waiting to hear from you before drawing names.<% end %>
+
+<h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #18181b;">
+  Still saving you a spot
+</h1>
+
+<p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
+  <strong><%= @owner.safe_name %></strong> invited you to
+  <strong><%= @exchange.name %></strong> and is waiting to hear from you before drawing names.
+  It takes a minute: join, add a few things you&apos;d like, and you&apos;re in.
+</p>
+
+<% if @exchange.exchange_date %>
+<p style="margin: 0 0 24px 0; font-size: 14px; color: #52525b;">
+  <span style="margin-right: 8px;">📅</span> The exchange is on <strong><%= @exchange.exchange_date.strftime("%B %-d, %Y") %></strong>.
+</p>
+<% end %>
+
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 24px;">
+  <tr>
+    <td align="center">
+      <a href="<%= @invite_url %>" class="button" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px;">
+        I&apos;m In
+      </a>
+    </td>
+  </tr>
+</table>
+
+<p style="margin: 0 0 8px 0; font-size: 14px; color: #52525b;">
+  Not this year? You can say no from the same link, and <%= @owner.safe_name %> will know not to wait.
+</p>
+
+<p style="margin: 0; font-size: 12px; color: #a1a1aa;">
+  You were invited as <%= @participant.name %> at <%= @participant.email %>.
+</p>

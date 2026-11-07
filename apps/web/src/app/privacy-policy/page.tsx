@@ -9,7 +9,7 @@ export const metadata: Metadata = createPageMetadata({
   keywords: ["Listy Gifty privacy", "gift planning data privacy"],
 });
 
-const lastUpdated = "March 2, 2026";
+const lastUpdated = "November 7, 2026";
 
 export default function PrivacyPolicyPage() {
   return (
@@ -33,6 +33,11 @@ export default function PrivacyPolicyPage() {
           <p>
             We collect account information (such as your name and email), content you create in the app (including gift
             lists, people, gifts, and notes), and usage data needed to operate, secure, and improve the service.
+          </p>
+          <p>
+            A gift exchange organizer can add the mobile number of someone they invited. We use that number only to text
+            that person reminders about their invitation. The texts are sent through our messaging provider, Twilio, and
+            replying STOP ends them.
           </p>
         </section>
 

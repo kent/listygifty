@@ -48,6 +48,18 @@ class ExchangeParticipantBlueprint < ApplicationBlueprint
     field :invite_token do |participant|
       participant.invite_token
     end
+
+    field :phone do |participant|
+      participant.phone
+    end
+
+    field :last_nudged_at do |participant|
+      participant.last_nudged_at
+    end
+
+    field :can_nudge do |participant|
+      participant.nudgeable?
+    end
   end
 
   view :admin do

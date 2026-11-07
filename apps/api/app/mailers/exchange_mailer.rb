@@ -12,6 +12,20 @@ class ExchangeMailer < ApplicationMailer
     )
   end
 
+  # The organizer's nudge for someone who hasn't answered their invite.
+  # Sent by ExchangeNudgeService.
+  def invite_nudge(participant)
+    @participant = participant
+    @exchange = participant.gift_exchange
+    @owner = @exchange.user
+    @invite_url = "#{ENV.fetch("FRONTEND_URL", "https://listygifty.com")}/join/exchange/#{participant.invite_token}"
+
+    mail(
+      to: participant.email,
+      subject: "👋 #{@owner.safe_name} is still saving you a spot in #{@exchange.name}"
+    )
+  end
+
   def joined_organizer(participant)
     @participant = participant
     @exchange = participant.gift_exchange
