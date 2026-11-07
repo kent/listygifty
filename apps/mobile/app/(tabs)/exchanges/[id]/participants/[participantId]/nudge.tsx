@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { NUDGE_TEXT_FROM_NUMBER } from "@niftygifty/types";
 import { InlineError } from "@/components/InlineError";
 import { useNudgeExchangeParticipantController } from "@/lib/controllers";
 import { useTheme } from "@/lib/theme";
@@ -78,7 +79,7 @@ export default function NudgeExchangeParticipantScreen() {
           style={{ ...inputStyle, marginBottom: 8 }}
         />
         <Text style={{ color: colors.muted, fontSize: 12, marginBottom: controller.phone.trim() ? 16 : 24 }}>
-          The text comes from Listy Gifty. They can reply STOP to opt out.
+          The text comes from Listy Gifty at {NUDGE_TEXT_FROM_NUMBER}. They can reply STOP to opt out.
         </Text>
 
         {controller.phone.trim() ? (

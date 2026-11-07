@@ -55,6 +55,7 @@ it("emails and texts the invite, then goes back", async () => {
 
   expect(await screen.findByText("Nudge Ana")).toBeTruthy();
   expect(screen.getByLabelText("Email").props.value).toBe("ana@example.com");
+  expect(screen.getByText(/comes from Listy Gifty at \(289\) 379-7875/)).toBeTruthy();
   fireEvent.changeText(screen.getByLabelText("Mobile number"), "289 379 7875");
   fireEvent.press(screen.getByRole("checkbox", { name: "Ana said it's OK to text them about this exchange." }));
   fireEvent.press(screen.getByRole("button", { name: "Send nudge" }));

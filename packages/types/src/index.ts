@@ -1145,6 +1145,10 @@ export interface AcceptInviteResponse {
 }
 
 // API Endpoints for gift exchanges
+// The number nudge texts come from, as people see it on their phone. Matches
+// TWILIO_FROM_NUMBER on the API.
+export const NUDGE_TEXT_FROM_NUMBER = "(289) 379-7875";
+
 export const EXCHANGE_API_ENDPOINTS = {
   // Gift Exchanges
   giftExchanges: "/gift_exchanges",

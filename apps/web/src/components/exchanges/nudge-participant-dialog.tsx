@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import type { ExchangeParticipant } from "@niftygifty/types";
+import { NUDGE_TEXT_FROM_NUMBER, type ExchangeParticipant } from "@niftygifty/types";
 import { exchangeParticipantsService } from "@/services";
 import { humanizeError } from "@/lib/error-message";
 import { formatPhone } from "@/lib/phone";
@@ -120,7 +120,7 @@ export function NudgeParticipantDialog({ exchangeId, participant, onClose, onNud
               className={INPUT_CLASS}
             />
             <p className="text-xs text-slate-600 dark:text-slate-400">
-              The text comes from Listy Gifty. They can reply STOP to opt out.{" "}
+              The text comes from Listy Gifty at {NUDGE_TEXT_FROM_NUMBER}. They can reply STOP to opt out.{" "}
               <a href="/sms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
                 How texts work
               </a>
