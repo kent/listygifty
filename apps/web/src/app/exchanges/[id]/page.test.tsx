@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   ExchangeExclusion,
   ExchangeParticipant,
@@ -695,6 +695,11 @@ describe("someone who declined", () => {
 describe("nudging someone who hasn't joined", () => {
   const ana = person(2, "Ana", { can_nudge: true });
 
+  // Radix's checkbox measures itself, and jsdom has no ResizeObserver.
+  beforeAll(() => {
+    vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
+  });
+
   beforeEach(() => {
     mocks.getBySlug.mockResolvedValue(
       exchangeWith({ status: "inviting", exchange_participants: [organizer, ana] })
@@ -718,10 +723,15 @@ describe("nudging someone who hasn't joined", () => {
 
     expect((within(dialog).getByLabelText("Email") as HTMLInputElement).value).toBe("ana@example.com");
     fireEvent.change(within(dialog).getByLabelText(/Mobile number/), { target: { value: "289 379 7875" } });
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: "Ana said it's OK to text them about this exchange." }));
     fireEvent.click(within(dialog).getByRole("button", { name: "Send nudge" }));
 
     await waitFor(() =>
-      expect(mocks.nudge).toHaveBeenCalledWith(7, 2, { email: "ana@example.com", phone: "289 379 7875" })
+      expect(mocks.nudge).toHaveBeenCalledWith(7, 2, {
+        email: "ana@example.com",
+        phone: "289 379 7875",
+        text_consent: true,
+      })
     );
     expect(mocks.toastSuccess).toHaveBeenCalledWith("Nudged Ana by email and text");
     expect(await screen.findByText("(289) 379-7875")).toBeTruthy();
@@ -738,12 +748,51 @@ describe("nudging someone who hasn't joined", () => {
     const dialog = await openNudge();
 
     fireEvent.change(within(dialog).getByLabelText(/Mobile number/), { target: { value: "4165550100" } });
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: /said it's OK to text them/ }));
     fireEvent.click(within(dialog).getByRole("button", { name: "Send nudge" }));
 
     await waitFor(() =>
       expect(mocks.toastWarning).toHaveBeenCalledWith(
         "Emailed Ana, but the text didn't go through. That number can't get texts. It may be a landline."
       )
+    );
+  });
+
+  it("won't text until the organizer confirms it's OK", async () => {
+    const dialog = await openNudge();
+
+    expect(within(dialog).queryByRole("checkbox")).toBeNull();
+    fireEvent.change(within(dialog).getByLabelText(/Mobile number/), { target: { value: "4165550100" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Send nudge" }));
+
+    expect(
+      await within(dialog).findByText("Check this box to text them, or clear the number to just email them.")
+    ).toBeTruthy();
+    expect(mocks.nudge).not.toHaveBeenCalled();
+  });
+
+  it("remembers that they said texts are OK", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({
+        status: "inviting",
+        exchange_participants: [
+          organizer,
+          { ...ana, phone: "+12893797875", text_consent_at: "2026-11-07T15:00:00Z" },
+        ],
+      })
+    );
+    mocks.nudge.mockResolvedValue({ participant: { ...ana, can_nudge: false }, emailed: true, text: "sent", text_error: null });
+    const dialog = await openNudge();
+
+    expect(within(dialog).getByRole("checkbox")).toHaveProperty("ariaChecked", "true");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Send nudge" }));
+
+    await waitFor(() =>
+      expect(mocks.nudge).toHaveBeenCalledWith(7, 2, {
+        email: "ana@example.com",
+        phone: "(289) 379-7875",
+        text_consent: true,
+      })
     );
   });
 

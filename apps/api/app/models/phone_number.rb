@@ -5,7 +5,23 @@
 module PhoneNumber
   E164 = /\A\+[1-9]\d{7,14}\z/
 
+  # Canada's area codes, including the non-geographic ones. US carriers only
+  # take texts from registered numbers, so Listy Gifty texts Canadian and US
+  # numbers from different senders. See TextMessenger.sender_for.
+  CANADIAN_AREA_CODES = %w[
+    204 226 236 249 250 257 263 289 306 343 354 365 367 368 382 387 403 416
+    418 428 431 437 438 450 460 468 474 506 514 519 548 579 581 584 587 600
+    604 613 622 633 639 644 647 655 672 677 683 688 705 709 742 753 778 780
+    782 807 819 825 867 873 879 902 905 942
+  ].to_set.freeze
+
   module_function
+
+  # A North American number outside Canada. That's nearly always the US, and
+  # the few Caribbean numbers that share +1 follow the same carrier rules.
+  def us?(value)
+    value.to_s.match?(/\A\+1\d{10}\z/) && !CANADIAN_AREA_CODES.include?(value[2, 3])
+  end
 
   # Returns the E.164 form, nil for a blank value, or the trimmed input when
   # it can't be read as a number, so validation can say so.

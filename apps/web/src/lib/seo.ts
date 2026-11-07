@@ -61,6 +61,13 @@ export const PUBLIC_MARKETING_PAGES = [
     priority: 0.4,
   },
   {
+    path: "/sms",
+    title: "Text Messages",
+    description: "The one kind of text Listy Gifty sends, how people agree to get it, and how to stop it.",
+    changeFrequency: "yearly",
+    priority: 0.3,
+  },
+  {
     path: "/terms",
     title: "Terms of Service",
     description: "The terms for using Listy Gifty, including accounts, shared lists, gift exchanges, and connected assistants.",

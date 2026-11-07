@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { InlineError } from "@/components/InlineError";
 import { useNudgeExchangeParticipantController } from "@/lib/controllers";
 import { useTheme } from "@/lib/theme";
@@ -76,9 +77,28 @@ export default function NudgeExchangeParticipantScreen() {
           textContentType="telephoneNumber"
           style={{ ...inputStyle, marginBottom: 8 }}
         />
-        <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 24 }}>
+        <Text style={{ color: colors.muted, fontSize: 12, marginBottom: controller.phone.trim() ? 16 : 24 }}>
           The text comes from Listy Gifty. They can reply STOP to opt out.
         </Text>
+
+        {controller.phone.trim() ? (
+          <TouchableOpacity
+            onPress={controller.toggleTextConsent}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: controller.textConsent }}
+            accessibilityLabel={`${controller.name} said it's OK to text them about this exchange.`}
+            style={{ flexDirection: "row", alignItems: "flex-start", gap: 10, minHeight: 44, marginBottom: 16 }}
+          >
+            <Ionicons
+              name={controller.textConsent ? "checkbox" : "square-outline"}
+              size={22}
+              color={controller.textConsent ? colors.primary : colors.textTertiary}
+            />
+            <Text style={{ flex: 1, color: colors.text, fontSize: 15 }}>
+              {controller.name} said it&apos;s OK to text them about this exchange.
+            </Text>
+          </TouchableOpacity>
+        ) : null}
 
         <TouchableOpacity
           onPress={controller.handleSubmit}

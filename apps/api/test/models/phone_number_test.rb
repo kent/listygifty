@@ -30,4 +30,13 @@ class PhoneNumberTest < ActiveSupport::TestCase
     assert participant.valid?
     assert_nil participant.phone
   end
+
+  test "tells US numbers from Canadian ones" do
+    assert PhoneNumber.us?("+13475029752")
+    assert PhoneNumber.us?("+12125550100")
+    assert_not PhoneNumber.us?("+14167881373")
+    assert_not PhoneNumber.us?("+12893797875")
+    assert_not PhoneNumber.us?("+447700900123")
+    assert_not PhoneNumber.us?(nil)
+  end
 end

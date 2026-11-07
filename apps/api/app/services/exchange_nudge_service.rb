@@ -1,6 +1,7 @@
 # An organizer's reminder to someone they invited who hasn't joined yet. It
 # emails the invite link again and, when the organizer has the person's
-# mobile number, texts it too.
+# mobile number and has confirmed the person said it's OK to text them,
+# texts it too.
 #
 # Each person can be nudged once a day, and an organizer can send at most
 # DAILY_LIMIT nudges a day across their exchanges, so a nudge never turns
@@ -11,13 +12,16 @@ class ExchangeNudgeService
 
   class Error < StandardError; end
 
-  # text is :sent, :failed or :skipped (no phone number, or texting is off).
+  # text is :sent, :failed or :skipped (no number, no consent, or texting is
+  # off).
   Result = Data.define(:participant, :text, :text_error)
 
   # email and phone, when given, update the person's details first, so the
-  # organizer can fix a typo or add a number in the same step.
-  def self.nudge!(participant, email: nil, phone: nil)
-    new(participant).nudge!(email: email, phone: phone)
+  # organizer can fix a typo or add a number in the same step. text_consent
+  # true records that the person said it's OK to text them, false withdraws
+  # it, and nil leaves it as it was.
+  def self.nudge!(participant, email: nil, phone: nil, text_consent: nil)
+    new(participant).nudge!(email: email, phone: phone, text_consent: text_consent)
   end
 
   def initialize(participant)
@@ -25,13 +29,14 @@ class ExchangeNudgeService
     @exchange = participant.gift_exchange
   end
 
-  def nudge!(email:, phone:)
+  def nudge!(email:, phone:, text_consent:)
     @exchange.with_lock do
       @participant.reload
       check_nudgeable!
 
       @participant.email = email unless email.nil?
       @participant.phone = phone unless phone.nil?
+      @participant.text_consent_at = (text_consent ? Time.current : nil) unless text_consent.nil?
       @participant.last_nudged_at = Time.current
       @participant.save!
 
@@ -48,7 +53,8 @@ class ExchangeNudgeService
     invite_url = "#{ENV.fetch("FRONTEND_URL", "https://listygifty.com")}/join/exchange/#{participant.invite_token}"
 
     "Listy Gifty: #{exchange.user.safe_name} saved you a spot in #{exchange.name}. " \
-      "Join before names are drawn: #{invite_url}\n\nReply STOP to opt out."
+      "Join before names are drawn: #{invite_url}\n\n" \
+      "Msg & data rates may apply. Reply HELP for help, STOP to opt out."
   end
 
   private
@@ -71,7 +77,7 @@ class ExchangeNudgeService
   end
 
   def send_text
-    return [ :skipped, nil ] if @participant.phone.blank? || !TextMessenger.configured?
+    return [ :skipped, nil ] unless @participant.textable? && TextMessenger.configured?
 
     TextMessenger.deliver(to: @participant.phone, body: self.class.text_body(@participant))
     [ :sent, nil ]

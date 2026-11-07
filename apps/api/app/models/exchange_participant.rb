@@ -32,6 +32,7 @@ class ExchangeParticipant < ApplicationRecord
 
   before_validation :generate_invite_token, on: :create
   before_validation :normalize_phone
+  before_save :forget_text_consent
 
   scope :invited, -> { where(status: "invited") }
   scope :accepted, -> { where(status: "accepted") }
@@ -97,6 +98,11 @@ class ExchangeParticipant < ApplicationRecord
     status == "invited" && gift_exchange.editable? && !nudged_recently?
   end
 
+  # The organizer confirmed this person said it's OK to text this number.
+  def textable?
+    phone.present? && text_consent_at.present?
+  end
+
   private
 
   # The giver still has to recognize who they drew, so a first name stays. It
@@ -109,6 +115,14 @@ class ExchangeParticipant < ApplicationRecord
 
   def normalize_phone
     self.phone = PhoneNumber.normalize(phone)
+  end
+
+  # Consent covers one number. A new number needs the organizer to confirm
+  # again, unless they're confirming it in the same save.
+  def forget_text_consent
+    return unless phone.blank? || (will_save_change_to_phone? && !will_save_change_to_text_consent_at?)
+
+    self.text_consent_at = nil
   end
 
   def generate_invite_token

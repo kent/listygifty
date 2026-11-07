@@ -19,12 +19,14 @@ class ExchangeNudgesTest < ActionDispatch::IntegrationTest
 
   test "emails and texts the invite link, and saves the number for next time" do
     perform_enqueued_jobs do
-      nudge(@jordan, phone: "(289) 379-7875")
+      nudge(@jordan, phone: "(289) 379-7875", text_consent: true)
     end
 
     assert_response :success
     assert_equal "sent", json_response["text"]
     assert_equal "+12893797875", @jordan.reload.phone
+    assert @jordan.text_consent_at.present?
+    assert json_response.dig("participant", "text_consent_at").present?
     assert @jordan.last_nudged_at.present?
     assert_not json_response.dig("participant", "can_nudge")
 
@@ -37,7 +39,46 @@ class ExchangeNudgesTest < ActionDispatch::IntegrationTest
     assert_equal "+12893797875", text[:to]
     assert_includes text[:body], "Family Secret Santa"
     assert_includes text[:body], "/join/exchange/#{@jordan.invite_token}"
-    assert_includes text[:body], "Reply STOP to opt out."
+    assert_includes text[:body], "Msg & data rates may apply. Reply HELP for help, STOP to opt out."
+  end
+
+  test "doesn't text unless the organizer confirms it's OK" do
+    nudge(@jordan, phone: "(289) 379-7875")
+
+    assert_response :success
+    assert_equal "skipped", json_response["text"]
+    assert_equal "+12893797875", @jordan.reload.phone
+    assert_empty TextMessenger.deliveries
+  end
+
+  test "remembers that it's OK to text a number, and asks again for a new one" do
+    nudge(@jordan, phone: "2893797875", text_consent: true)
+    assert_equal 1, TextMessenger.deliveries.size
+
+    travel 25.hours do
+      nudge(@jordan)
+      assert_equal "sent", json_response["text"]
+      assert_equal 2, TextMessenger.deliveries.size
+    end
+
+    @jordan.reload.update!(phone: "4165550100")
+    assert_nil @jordan.text_consent_at
+
+    travel 50.hours do
+      nudge(@jordan)
+      assert_equal "skipped", json_response["text"]
+      assert_equal 2, TextMessenger.deliveries.size
+    end
+  end
+
+  test "doesn't text US numbers until there's a US number to text from" do
+    nudge(@jordan, phone: "(347) 502-9752", text_consent: true)
+
+    assert_response :success
+    assert_equal "failed", json_response["text"]
+    assert_equal TextMessenger::US_UNAVAILABLE, json_response["text_error"]
+    assert_empty TextMessenger.deliveries
+    assert_equal "+13475029752", @jordan.reload.phone
   end
 
   test "without a number it only emails" do
@@ -103,7 +144,7 @@ class ExchangeNudgesTest < ActionDispatch::IntegrationTest
 
     TextMessenger.stub(:deliver, refuse) do
       assert_enqueued_emails 1 do
-        nudge(@jordan, phone: "2893797875")
+        nudge(@jordan, phone: "2893797875", text_consent: true)
       end
     end
 
