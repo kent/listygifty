@@ -39,7 +39,7 @@ class ExchangeNudgesTest < ActionDispatch::IntegrationTest
     assert_equal "+12893797875", text[:to]
     assert_includes text[:body], "Family Secret Santa"
     assert_includes text[:body], "/join/exchange/#{@jordan.invite_token}"
-    assert_includes text[:body], "Reply STOP to opt out."
+    assert_includes text[:body], "Msg & data rates may apply. Reply HELP for help, STOP to opt out."
   end
 
   test "doesn't text unless the organizer confirms it's OK" do

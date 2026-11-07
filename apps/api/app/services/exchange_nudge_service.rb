@@ -53,7 +53,8 @@ class ExchangeNudgeService
     invite_url = "#{ENV.fetch("FRONTEND_URL", "https://listygifty.com")}/join/exchange/#{participant.invite_token}"
 
     "Listy Gifty: #{exchange.user.safe_name} saved you a spot in #{exchange.name}. " \
-      "Join before names are drawn: #{invite_url}\n\nReply STOP to opt out."
+      "Join before names are drawn: #{invite_url}\n\n" \
+      "Msg & data rates may apply. Reply HELP for help, STOP to opt out."
   end
 
   private

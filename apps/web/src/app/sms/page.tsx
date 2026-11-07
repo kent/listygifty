@@ -15,7 +15,7 @@ export const metadata: Metadata = createPageMetadata({
 
 const LINK_CLASS = "font-medium text-violet-600 underline-offset-2 hover:underline dark:text-violet-400";
 const SAMPLE_TEXT =
-  "Listy Gifty: Kent saved you a spot in Family Secret Santa. Join before names are drawn: https://listygifty.com/join/exchange/6Ry2kQ\n\nReply STOP to opt out.";
+  "Listy Gifty: Kent saved you a spot in Family Secret Santa. Join before names are drawn: https://listygifty.com/join/exchange/6Ry2kQ\n\nMsg & data rates may apply. Reply HELP for help, STOP to opt out.";
 
 export default function SmsPage() {
   return (
@@ -53,8 +53,17 @@ export default function SmsPage() {
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">How someone agrees to get texts</h2>
           <p>
             The organizer is someone the person knows, like a family member, friend or coworker, who invited them to
-            the exchange. They ask the person whether it&apos;s OK to text them about it. Then, in Listy Gifty, the
-            organizer:
+            the exchange. Before adding a number, the organizer asks the person, in person, by phone or in a message,
+            something like this:
+          </p>
+          <blockquote className="max-w-2xl border-l-4 border-violet-300 pl-4 italic dark:border-violet-700">
+            &ldquo;Is it OK if Listy Gifty texts you a reminder with the link to join our gift exchange? It&apos;s at
+            most one text a day, only until you join or say no. Message and data rates may apply. You can reply HELP
+            for help or STOP to stop the texts. Their terms are at listygifty.com/terms and their privacy policy is at
+            listygifty.com/privacy-policy.&rdquo;
+          </blockquote>
+          <p>
+            Only if the person says yes does the organizer go ahead. Then, in Listy Gifty, the organizer:
           </p>
           <ol className="list-decimal space-y-2 pl-6">
             <li>Opens the gift exchange and clicks Nudge next to the person who hasn&apos;t joined.</li>
@@ -66,7 +75,8 @@ export default function SmsPage() {
           </ol>
           <p>
             We record when the organizer confirmed it. If the number changes, the organizer has to confirm again before
-            we text the new number.
+            we text the new number. The first text says who it&apos;s from and who invited them, and explains HELP and
+            STOP, so the person knows what they agreed to and how to stop it.
           </p>
           <figure className="space-y-2">
             <figcaption className="text-sm font-medium text-slate-900 dark:text-white">What the organizer sees</figcaption>
