@@ -449,6 +449,9 @@ export default function ExchangeDetailScreen() {
               ? () => controller.reinviteParticipant(participant)
               : undefined}
             reinviteDisabled={controller.resendingParticipantId !== null}
+            onNudge={canAddParticipants && participant.status === "invited"
+              ? () => controller.goToNudgeParticipant(participant)
+              : undefined}
             onCopyInvite={
               canAddParticipants && participant.status === "invited" && participant.invite_token
                 ? () => controller.copyParticipantInvite(participant)
