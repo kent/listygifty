@@ -35,9 +35,14 @@ export default function PrivacyPolicyPage() {
             lists, people, gifts, and notes), and usage data needed to operate, secure, and improve the service.
           </p>
           <p>
-            A gift exchange organizer can add the mobile number of someone they invited. We use that number only to text
-            that person reminders about their invitation. The texts are sent through our messaging provider, Twilio, and
-            replying STOP ends them.
+            A gift exchange organizer can add the mobile number of someone they invited, after that person says it&apos;s
+            OK to text them. We use that number only to text that person reminders about their invitation. The texts are
+            sent through our messaging provider, Twilio, and replying STOP ends them. We don&apos;t sell or share mobile
+            numbers, or anyone&apos;s agreement to get texts, with third parties for their marketing. See{" "}
+            <Link href="/sms" className="font-medium text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
+              Text messages
+            </Link>{" "}
+            for how texts work.
           </p>
         </section>
 

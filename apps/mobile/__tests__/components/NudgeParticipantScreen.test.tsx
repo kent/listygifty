@@ -56,10 +56,41 @@ it("emails and texts the invite, then goes back", async () => {
   expect(await screen.findByText("Nudge Ana")).toBeTruthy();
   expect(screen.getByLabelText("Email").props.value).toBe("ana@example.com");
   fireEvent.changeText(screen.getByLabelText("Mobile number"), "289 379 7875");
+  fireEvent.press(screen.getByRole("checkbox", { name: "Ana said it's OK to text them about this exchange." }));
   fireEvent.press(screen.getByRole("button", { name: "Send nudge" }));
 
   await waitFor(() => expect(mockRouter.back).toHaveBeenCalledTimes(1));
-  expect(mockNudge).toHaveBeenCalledWith(7, 2, { email: "ana@example.com", phone: "289 379 7875" });
+  expect(mockNudge).toHaveBeenCalledWith(7, 2, { email: "ana@example.com", phone: "289 379 7875", text_consent: true });
+});
+
+it("won't text until the organizer confirms it's OK", async () => {
+  render(<NudgeExchangeParticipantScreen />);
+
+  expect(await screen.findByText("Nudge Ana")).toBeTruthy();
+  expect(screen.queryByRole("checkbox")).toBeNull();
+  fireEvent.changeText(screen.getByLabelText("Mobile number"), "289 379 7875");
+  fireEvent.press(screen.getByRole("button", { name: "Send nudge" }));
+
+  expect(await screen.findByText("Check the box to text them, or clear the number to just email them.")).toBeTruthy();
+  expect(mockNudge).not.toHaveBeenCalled();
+});
+
+it("remembers that they said texts are OK", async () => {
+  mockGetById.mockResolvedValue({
+    id: 7,
+    name: "Family Secret Santa",
+    status: "inviting",
+    exchange_participants: [{ ...ana, phone: "+12893797875", text_consent_at: "2026-11-07T15:00:00Z" }],
+  });
+  mockNudge.mockResolvedValue({ participant: { ...ana, can_nudge: false }, emailed: true, text: "sent", text_error: null });
+  render(<NudgeExchangeParticipantScreen />);
+
+  expect((await screen.findByRole("checkbox")).props.accessibilityState).toEqual({ checked: true });
+  fireEvent.press(screen.getByRole("button", { name: "Send nudge" }));
+
+  await waitFor(() =>
+    expect(mockNudge).toHaveBeenCalledWith(7, 2, { email: "ana@example.com", phone: "(289) 379-7875", text_consent: true })
+  );
 });
 
 it("tells the organizer when the text didn't go through", async () => {

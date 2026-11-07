@@ -682,6 +682,9 @@ export function useNudgeExchangeParticipantController() {
 
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  // Carriers need the person's OK before Listy Gifty texts them, so the
+  // organizer confirms it. Without it the API only emails.
+  const [textConsent, setTextConsent] = useState(false);
   const [prefilledFor, setPrefilledFor] = useState<number | null>(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -691,6 +694,7 @@ export function useNudgeExchangeParticipantController() {
     if (!participant || prefilledFor === participant.id) return;
     setEmail(participant.email ?? "");
     setPhone(formatPhone(participant.phone));
+    setTextConsent(Boolean(participant.phone && participant.text_consent_at));
     setPrefilledFor(participant.id);
   }, [participant, prefilledFor]);
 
@@ -703,6 +707,11 @@ export function useNudgeExchangeParticipantController() {
       setError("Enter a valid email");
       return;
     }
+    const hasPhone = phone.trim() !== "";
+    if (hasPhone && !textConsent) {
+      setError("Check the box to text them, or clear the number to just email them.");
+      return;
+    }
 
     setError(null);
     setSending(true);
@@ -710,6 +719,7 @@ export function useNudgeExchangeParticipantController() {
       const result = await exchangeParticipants.nudge(exchangeId, participant.id, {
         email: email.trim(),
         phone: phone.trim(),
+        text_consent: hasPhone && textConsent,
       });
       track("mobile_exchange_participant_nudged", {
         exchange_id: exchangeId,
@@ -726,7 +736,7 @@ export function useNudgeExchangeParticipantController() {
     } finally {
       setSending(false);
     }
-  }, [captureScreen, email, exchangeId, exchangeParticipants, name, participant, phone, router, track]);
+  }, [captureScreen, email, exchangeId, exchangeParticipants, name, participant, phone, router, textConsent, track]);
 
   return {
     demo,
@@ -741,6 +751,8 @@ export function useNudgeExchangeParticipantController() {
     sending,
     setEmail,
     setPhone,
+    textConsent,
+    toggleTextConsent: () => setTextConsent((value) => !value),
   };
 }
 

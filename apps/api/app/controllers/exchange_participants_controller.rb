@@ -83,8 +83,12 @@ class ExchangeParticipantsController < ApplicationController
   private
 
   def nudge_params
-    permitted = params.fetch(:exchange_participant, {}).permit(:email, :phone)
-    { email: permitted[:email]&.strip.presence, phone: permitted.key?(:phone) ? permitted[:phone].to_s : nil }.compact
+    permitted = params.fetch(:exchange_participant, {}).permit(:email, :phone, :text_consent)
+    {
+      email: permitted[:email]&.strip.presence,
+      phone: permitted.key?(:phone) ? permitted[:phone].to_s : nil,
+      text_consent: permitted.key?(:text_consent) ? ActiveModel::Type::Boolean.new.cast(permitted[:text_consent]) == true : nil
+    }.compact
   end
 
   def set_gift_exchange

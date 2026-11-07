@@ -57,6 +57,10 @@ class ExchangeParticipantBlueprint < ApplicationBlueprint
       participant.last_nudged_at
     end
 
+    field :text_consent_at do |participant|
+      participant.text_consent_at
+    end
+
     field :can_nudge do |participant|
       participant.nudgeable?
     end

@@ -1003,6 +1003,9 @@ export interface ExchangeParticipant extends BaseEntity {
   invite_token?: string; // Only visible to admin
   phone?: string | null; // Only visible to the organizer, in E.164 form
   last_nudged_at?: string | null; // Only visible to the organizer
+  // When the organizer confirmed this person said it's OK to text them. Only
+  // visible to the organizer.
+  text_consent_at?: string | null;
   can_nudge?: boolean; // Only visible to the organizer
   matched_participant_id?: number | null;
   matched_participant?: ExchangeParticipantWithWishlist | null;
@@ -1077,6 +1080,8 @@ export interface NudgeExchangeParticipantRequest {
   exchange_participant?: {
     email?: string;
     phone?: string;
+    // True when the person said it's OK to text them. Without it, no text.
+    text_consent?: boolean;
   };
 }
 
