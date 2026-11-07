@@ -1340,6 +1340,33 @@ export const screenshotServices = {
       );
       return clone(participant);
     },
+    // Records the nudge on the sample participant. Nothing is emailed or texted.
+    async nudge(exchangeId: number, participantId: number, details: { email?: string; phone?: string } = {}) {
+      const participants = getExchangeParticipants(exchangeId);
+      const existing = participants.find((participant) => participant.id === participantId);
+      if (!existing) throw new Error("Sample participant not found.");
+      const digits = details.phone?.replace(/\D/g, "") ?? "";
+      const phone = details.phone === undefined
+        ? existing.phone ?? null
+        : digits.length === 10 ? `+1${digits}` : digits ? `+${digits}` : null;
+      const participant: ExchangeParticipant = {
+        ...existing,
+        email: details.email ?? existing.email,
+        phone,
+        last_nudged_at: new Date().toISOString(),
+        can_nudge: false,
+      };
+      exchangeParticipantsStore = {
+        ...exchangeParticipantsStore,
+        [exchangeId]: participants.map((item) => (item.id === participantId ? participant : item)),
+      };
+      return {
+        participant: clone(participant),
+        emailed: true,
+        text: phone ? ("sent" as const) : ("skipped" as const),
+        text_error: null,
+      };
+    },
   },
   exchangeExclusions: {
     async getAll(exchangeId: number) {

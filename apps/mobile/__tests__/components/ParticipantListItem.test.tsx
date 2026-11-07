@@ -93,3 +93,33 @@ it("lets the organizer invite a declined participant again without sharing a dea
   fireEvent.press(screen.getByRole("button", { name: "Invite Alex Parker again" }));
   expect(onReinvite).toHaveBeenCalledTimes(1);
 });
+
+describe("nudging someone who hasn't joined", () => {
+  it("offers a nudge and shows their number", () => {
+    const onNudge = jest.fn();
+    render(
+      <ParticipantListItem
+        participant={buildParticipant({ phone: "+12893797875", can_nudge: true })}
+        onNudge={onNudge}
+      />
+    );
+
+    expect(screen.getByText("(289) 379-7875")).toBeTruthy();
+    fireEvent.press(screen.getByRole("button", { name: "Nudge Alex Parker" }));
+    expect(onNudge).toHaveBeenCalledTimes(1);
+  });
+
+  it("waits a day between nudges", () => {
+    const onNudge = jest.fn();
+    render(<ParticipantListItem participant={buildParticipant({ can_nudge: false })} onNudge={onNudge} />);
+
+    expect(screen.getByText("Nudged")).toBeTruthy();
+    fireEvent.press(screen.getByRole("button", { name: "Nudged Alex Parker in the last day" }));
+    expect(onNudge).not.toHaveBeenCalled();
+  });
+
+  it("isn't offered once they've joined", () => {
+    render(<ParticipantListItem participant={buildParticipant({ status: "accepted" })} onNudge={jest.fn()} />);
+    expect(screen.queryByText("Nudge")).toBeNull();
+  });
+});

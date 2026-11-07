@@ -13,6 +13,7 @@ import { useFocusResource } from "@/lib/controllers/use-focus-resource";
 import { scheduleExchangeReminder } from "@/lib/notifications";
 import { humanizeError } from "@/lib/error-message";
 import { normalizeAuthReturnPath } from "@/lib/auth-return";
+import { formatPhone } from "@/lib/formatters";
 import {
   buildCreateExchangePayload,
   buildCreateExchangeExclusionPayload,
@@ -561,6 +562,8 @@ export function useExchangeDetailController() {
     goToMatch: () => router.push(`/(tabs)/exchanges/${exchangeId}/my-match`),
     goToNewParticipant: () =>
       router.push(`/(tabs)/exchanges/${exchangeId}/participants/new`),
+    goToNudgeParticipant: (participant: ExchangeParticipant) =>
+      router.push(`/(tabs)/exchanges/${exchangeId}/participants/${participant.id}/nudge`),
     goToWishlist: () => router.push(`/(tabs)/exchanges/${exchangeId}/my-wishlist`),
     handleStartExchange: startExchange,
     handleScheduleReminder: scheduleReminder,
@@ -651,6 +654,93 @@ export function useNewExchangeParticipantController() {
     handleSubmit,
     saving,
     updateField,
+  };
+}
+
+// Reminds someone who hasn't answered their invite. It always emails, and
+// texts too when there's a mobile number. The organizer can fix the email or
+// add a number here, and the API keeps both for next time.
+export function useNudgeExchangeParticipantController() {
+  const demo = useDemoMode();
+  const { id, participantId } = useLocalSearchParams<{ id: string; participantId: string }>();
+  const router = useRouter();
+  const captureScreen = useScreenActivity();
+  const { giftExchanges, exchangeParticipants } = useServices();
+  const track = useAnalytics();
+  const exchangeId = Number.parseInt(id ?? "", 10);
+  const personId = Number.parseInt(participantId ?? "", 10);
+  const isValid = Number.isFinite(exchangeId) && Number.isFinite(personId);
+
+  const resource = useFocusResource<GiftExchangeWithParticipants | null>({
+    enabled: isValid,
+    errorMessage: "Failed to load exchange",
+    initialValue: null as GiftExchangeWithParticipants | null,
+    key: exchangeId,
+    load: () => giftExchanges.getById(exchangeId),
+  });
+  const participant = resource.data?.exchange_participants.find((item) => item.id === personId) ?? null;
+
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [prefilledFor, setPrefilledFor] = useState<number | null>(null);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fill the form once. A refresh on focus shouldn't wipe what they typed.
+  useEffect(() => {
+    if (!participant || prefilledFor === participant.id) return;
+    setEmail(participant.email ?? "");
+    setPhone(formatPhone(participant.phone));
+    setPrefilledFor(participant.id);
+  }, [participant, prefilledFor]);
+
+  const name = participant?.display_name || participant?.name || "";
+
+  const handleSubmit = useCallback(async () => {
+    const isCurrentScreen = captureScreen();
+    if (!participant) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError("Enter a valid email");
+      return;
+    }
+
+    setError(null);
+    setSending(true);
+    try {
+      const result = await exchangeParticipants.nudge(exchangeId, participant.id, {
+        email: email.trim(),
+        phone: phone.trim(),
+      });
+      track("mobile_exchange_participant_nudged", {
+        exchange_id: exchangeId,
+        participant_id: participant.id,
+        text: result.text,
+      });
+      await haptics.success();
+      if (result.text === "failed") {
+        Alert.alert("Emailed, but no text", `${name} got the email. ${result.text_error ?? "The text didn't go through."}`);
+      }
+      if (isCurrentScreen()) router.back();
+    } catch (submitError) {
+      setError(humanizeError(submitError, "Couldn't send the nudge. Try again."));
+    } finally {
+      setSending(false);
+    }
+  }, [captureScreen, email, exchangeId, exchangeParticipants, name, participant, phone, router, track]);
+
+  return {
+    demo,
+    email,
+    error: error ?? resource.error,
+    handleCancel: () => router.back(),
+    handleSubmit,
+    loading: resource.loading && !participant,
+    name,
+    participant,
+    phone,
+    sending,
+    setEmail,
+    setPhone,
   };
 }
 

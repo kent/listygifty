@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { ExchangeParticipant } from "@niftygifty/types";
 import { useTheme } from "@/lib/theme";
+import { formatPhone } from "@/lib/formatters";
 
 interface ParticipantListItemProps {
   participant: ExchangeParticipant;
@@ -9,6 +10,8 @@ interface ParticipantListItemProps {
   onShareInvite?: () => void;
   onReinvite?: () => void;
   reinviteDisabled?: boolean;
+  // Shown for people who haven't answered. Disabled for a day after a nudge.
+  onNudge?: () => void;
   showWishlistCount?: boolean;
 }
 
@@ -18,6 +21,7 @@ export function ParticipantListItem({
   onShareInvite,
   onReinvite,
   reinviteDisabled = false,
+  onNudge,
   showWishlistCount = false,
 }: ParticipantListItemProps) {
   const { colors, isDark } = useTheme();
@@ -57,6 +61,9 @@ export function ParticipantListItem({
             {participant.email}
           </Text>
         ) : null}
+        {participant.phone ? (
+          <Text style={{ color: colors.muted, fontSize: 12 }}>{formatPhone(participant.phone)}</Text>
+        ) : null}
         <Text style={{ color: statusIcon.color, fontSize: 12 }}>{statusLabel}</Text>
       </View>
 
@@ -91,6 +98,34 @@ export function ParticipantListItem({
               {participant.wishlist_count === 0 ? "No ideas yet" : `${participant.wishlist_count} ${participant.wishlist_count === 1 ? "idea" : "ideas"}`}
             </Text>
           </View>
+        ) : null}
+
+        {onNudge && participant.status === "invited" ? (
+          <TouchableOpacity
+            onPress={onNudge}
+            disabled={participant.can_nudge === false}
+            accessibilityRole="button"
+            accessibilityLabel={participant.can_nudge === false
+              ? `Nudged ${participant.display_name || participant.name} in the last day`
+              : `Nudge ${participant.display_name || participant.name}`}
+            accessibilityState={{ disabled: participant.can_nudge === false }}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
+              borderRadius: 12,
+              paddingHorizontal: 8,
+              paddingVertical: 10,
+              minHeight: 44,
+              backgroundColor: colors.primarySurface,
+              opacity: participant.can_nudge === false ? 0.5 : 1,
+            }}
+          >
+            <Ionicons name="notifications-outline" size={14} color={colors.primary} />
+            <Text style={{ color: colors.primary, fontSize: 12, fontWeight: "700" }}>
+              {participant.can_nudge === false ? "Nudged" : "Nudge"}
+            </Text>
+          </TouchableOpacity>
         ) : null}
 
         {onCopyInvite && participant.status === "invited" ? (

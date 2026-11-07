@@ -371,6 +371,15 @@ export const exchangeParticipantsService = {
     resetBootstrapState();
     invalidateCachedResources("gift-exchanges:");
   },
+  async nudge(
+    exchangeId: number,
+    participantId: number,
+    details: Parameters<typeof baseExchangeParticipantsService.nudge>[2]
+  ) {
+    const result = await baseExchangeParticipantsService.nudge(exchangeId, participantId, details);
+    invalidateCachedResources("gift-exchanges:");
+    return result;
+  },
   async create(exchangeId: number, data: Parameters<typeof baseExchangeParticipantsService.create>[1]) {
     const participant = await baseExchangeParticipantsService.create(exchangeId, data);
     resetBootstrapState();
