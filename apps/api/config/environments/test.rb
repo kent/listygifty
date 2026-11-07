@@ -36,6 +36,9 @@ Rails.application.configure do
   # ActionMailer::Base.deliveries array.
   config.action_mailer.delivery_method = :test
 
+  # Collect texts in TextMessenger.deliveries instead of sending them.
+  config.to_prepare { TextMessenger.delivery_method = :test }
+
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "example.com" }
 

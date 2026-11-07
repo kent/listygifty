@@ -15,10 +15,12 @@ const mocks = vi.hoisted(() => ({
   createParticipant: vi.fn(),
   deleteParticipant: vi.fn(),
   resendInvite: vi.fn(),
+  nudge: vi.fn(),
   getExclusions: vi.fn(),
   getNotifications: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
+  toastWarning: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
@@ -26,7 +28,9 @@ vi.mock("@/contexts/auth-context", () => ({
   useAuth: () => ({ isAuthenticated: true, isLoading: false, user: null, signOut: vi.fn() }),
 }));
 vi.mock("@/components/layout", () => ({ AppHeader: () => null }));
-vi.mock("sonner", () => ({ toast: { success: mocks.toastSuccess, error: mocks.toastError } }));
+vi.mock("sonner", () => ({
+  toast: { success: mocks.toastSuccess, error: mocks.toastError, warning: mocks.toastWarning },
+}));
 vi.mock("@/services", () => ({
   AUTH_ROUTES: { signIn: "/login" },
   giftExchangesService: { getBySlug: mocks.getBySlug },
@@ -34,6 +38,7 @@ vi.mock("@/services", () => ({
     create: mocks.createParticipant,
     delete: mocks.deleteParticipant,
     resendInvite: mocks.resendInvite,
+    nudge: mocks.nudge,
   },
   exchangeExclusionsService: { getAll: mocks.getExclusions },
   exchangeNotificationsService: { getAll: mocks.getNotifications },
@@ -148,10 +153,12 @@ beforeEach(() => {
   mocks.createParticipant.mockReset();
   mocks.deleteParticipant.mockReset().mockResolvedValue(undefined);
   mocks.resendInvite.mockReset().mockResolvedValue({ message: "Invitation resent" });
+  mocks.nudge.mockReset();
   mocks.getExclusions.mockReset().mockResolvedValue([]);
   mocks.getNotifications.mockReset().mockResolvedValue([]);
   mocks.toastSuccess.mockReset();
   mocks.toastError.mockReset();
+  mocks.toastWarning.mockReset();
 });
 
 describe("the wishlist card", () => {
@@ -430,7 +437,7 @@ describe("keeping the exchange current after roster changes", () => {
   });
 
   it("refreshes after resending an invite", async () => {
-    const pending = person(2, "Ana");
+    const pending = person(2, "Ana", { status: "declined" });
     mocks.getBySlug.mockResolvedValue(
       exchangeWith({ status: "inviting", exchange_participants: [organizer, pending] })
     );
@@ -599,7 +606,7 @@ describe("the publish dialog", () => {
 });
 
 describe("icon buttons in the roster", () => {
-  const ana = person(2, "Ana");
+  const ana = person(2, "Ana", { can_nudge: true });
   const bea = person(3, "Bea", { status: "accepted" });
 
   beforeEach(() => {
@@ -615,7 +622,7 @@ describe("icon buttons in the roster", () => {
 
     for (const name of [
       "Copy invite for Ana",
-      "Resend invite to Ana",
+      "Nudge Ana",
       "Remove Ana",
       "Remove Bea",
       "Remove rule between Kent and Bea",
@@ -682,5 +689,74 @@ describe("someone who declined", () => {
     await renderPage();
 
     expect(await screen.findByRole("button", { name: /Resend invite to Parker/ })).toBeTruthy();
+  });
+});
+
+describe("nudging someone who hasn't joined", () => {
+  const ana = person(2, "Ana", { can_nudge: true });
+
+  beforeEach(() => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({ status: "inviting", exchange_participants: [organizer, ana] })
+    );
+  });
+
+  async function openNudge() {
+    await renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Nudge Ana" }));
+    return screen.findByRole("dialog");
+  }
+
+  it("emails and texts them, and remembers the number", async () => {
+    mocks.nudge.mockResolvedValue({
+      participant: { ...ana, phone: "+12893797875", can_nudge: false, last_nudged_at: "2026-11-07T15:00:00Z" },
+      emailed: true,
+      text: "sent",
+      text_error: null,
+    });
+    const dialog = await openNudge();
+
+    expect((within(dialog).getByLabelText("Email") as HTMLInputElement).value).toBe("ana@example.com");
+    fireEvent.change(within(dialog).getByLabelText(/Mobile number/), { target: { value: "289 379 7875" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Send nudge" }));
+
+    await waitFor(() =>
+      expect(mocks.nudge).toHaveBeenCalledWith(7, 2, { email: "ana@example.com", phone: "289 379 7875" })
+    );
+    expect(mocks.toastSuccess).toHaveBeenCalledWith("Nudged Ana by email and text");
+    expect(await screen.findByText("(289) 379-7875")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Nudged Ana in the last day" })).toHaveProperty("disabled", true);
+  });
+
+  it("says so when the email went but the text didn't", async () => {
+    mocks.nudge.mockResolvedValue({
+      participant: { ...ana, can_nudge: false },
+      emailed: true,
+      text: "failed",
+      text_error: "That number can't get texts. It may be a landline.",
+    });
+    const dialog = await openNudge();
+
+    fireEvent.change(within(dialog).getByLabelText(/Mobile number/), { target: { value: "4165550100" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Send nudge" }));
+
+    await waitFor(() =>
+      expect(mocks.toastWarning).toHaveBeenCalledWith(
+        "Emailed Ana, but the text didn't go through. That number can't get texts. It may be a landline."
+      )
+    );
+  });
+
+  it("shows the API's reason when the nudge is refused", async () => {
+    mocks.nudge.mockRejectedValue(
+      new ApiError(422, { error: "You already nudged Ana today. You can nudge them again tomorrow." })
+    );
+    const dialog = await openNudge();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Send nudge" }));
+
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith("You already nudged Ana today. You can nudge them again tomorrow.")
+    );
   });
 });

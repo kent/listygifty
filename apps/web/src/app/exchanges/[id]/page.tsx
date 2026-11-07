@@ -18,6 +18,8 @@ import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { AppHeader } from "@/components/layout";
 import { getExchangeNextStep } from "@/components/exchanges/exchange-next-step";
 import { MatchOverviewCard } from "@/components/exchanges/match-overview-card";
+import { NudgeParticipantDialog } from "@/components/exchanges/nudge-participant-dialog";
+import { formatPhone } from "@/lib/phone";
 import { pluralize } from "@/components/exchanges/pluralize";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,6 +70,7 @@ import {
   Bell,
   RotateCcw,
   Shuffle,
+  BellRing,
 } from "lucide-react";
 import { toast } from "sonner";
 import type {
@@ -149,6 +152,7 @@ export default function ExchangeDetailPage({
   const [deleting, setDeleting] = useState(false);
   const [redoingMode, setRedoingMode] = useState<"reopen" | "redraw" | null>(null);
   const [participantToRemove, setParticipantToRemove] = useState<ExchangeParticipant | null>(null);
+  const [participantToNudge, setParticipantToNudge] = useState<ExchangeParticipant | null>(null);
   const [newParticipant, setNewParticipant] = useState({ name: "", email: "" });
   const [newExclusion, setNewExclusion] = useState({ participant_a_id: "", participant_b_id: "" });
 
@@ -261,6 +265,19 @@ export default function ExchangeDetailPage({
     } catch {
       toast.error("Failed to resend invitation");
     }
+  };
+
+  const handleNudged = (nudged: ExchangeParticipant) => {
+    setExchange((prev) =>
+      prev
+        ? {
+            ...prev,
+            exchange_participants: prev.exchange_participants.map((participant) =>
+              participant.id === nudged.id ? { ...participant, ...nudged } : participant
+            ),
+          }
+        : prev
+    );
   };
 
   const handleCopyInvite = async (participant: ExchangeParticipant) => {
@@ -765,6 +782,9 @@ export default function ExchangeDetailPage({
                           {participant.email && (
                             <p className="break-words text-xs text-slate-600 dark:text-slate-400">{participant.email}</p>
                           )}
+                          {participant.phone && (
+                            <p className="text-xs text-slate-600 dark:text-slate-400">{formatPhone(participant.phone)}</p>
+                          )}
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -797,7 +817,21 @@ export default function ExchangeDetailPage({
                             <Copy className="h-3 w-3" />
                           </Button>
                         )}
-                        {isOwner && participant.status !== "accepted" && exchange.status !== "active" && exchange.status !== "completed" && (
+                        {isOwner && participant.status === "invited" && exchange.status !== "active" && exchange.status !== "completed" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className={CARD_ACTION_CLASS}
+                            onClick={() => setParticipantToNudge(participant)}
+                            disabled={!participant.can_nudge}
+                            aria-label={participant.can_nudge ? `Nudge ${participant.display_name}` : `Nudged ${participant.display_name} in the last day`}
+                            title={participant.can_nudge ? "Remind them by email or text" : "You can nudge them again a day after the last nudge"}
+                          >
+                            <BellRing className="h-3 w-3 mr-1" />
+                            {participant.can_nudge ? "Nudge" : "Nudged"}
+                          </Button>
+                        )}
+                        {isOwner && participant.status === "declined" && exchange.status !== "active" && exchange.status !== "completed" && (
                           <Button
                             size="icon-sm"
                             variant="ghost"
@@ -1022,6 +1056,15 @@ export default function ExchangeDetailPage({
             </Card>
           )}
         </div>
+
+        {isOwner && (
+          <NudgeParticipantDialog
+            exchangeId={exchange.id}
+            participant={participantToNudge}
+            onClose={() => setParticipantToNudge(null)}
+            onNudged={handleNudged}
+          />
+        )}
 
         {participantToRemove && (
           <AlertDialog

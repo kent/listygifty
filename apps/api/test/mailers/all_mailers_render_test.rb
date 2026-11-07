@@ -15,6 +15,7 @@ class AllMailersRenderTest < ActionMailer::TestCase
     },
     ExchangeMailer => {
       invitation: -> { ExchangeMailer.invitation(@annabel) },
+      invite_nudge: -> { ExchangeMailer.invite_nudge(@annabel) },
       joined_organizer: -> { ExchangeMailer.joined_organizer(@annabel) },
       join_confirmation: -> { ExchangeMailer.join_confirmation(@annabel) },
       wishlist_reminder: -> { ExchangeMailer.wishlist_reminder(@annabel) },

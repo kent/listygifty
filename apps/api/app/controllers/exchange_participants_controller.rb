@@ -1,8 +1,8 @@
 class ExchangeParticipantsController < ApplicationController
   before_action :set_gift_exchange
-  before_action :require_owner, only: %i[create update destroy resend_invite]
-  before_action :set_participant, only: %i[show update destroy resend_invite]
-  before_action :require_editable, only: %i[create update destroy resend_invite]
+  before_action :require_owner, only: %i[create update destroy resend_invite nudge]
+  before_action :set_participant, only: %i[show update destroy resend_invite nudge]
+  before_action :require_editable, only: %i[create update destroy resend_invite nudge]
 
   def index
     participants = @gift_exchange.exchange_participants.includes(:user, :exchange_wishlist_items)
@@ -62,7 +62,30 @@ class ExchangeParticipantsController < ApplicationController
     render json: { message: "Invitation resent" }
   end
 
+  # Reminds someone who hasn't answered their invite, by email and, when the
+  # organizer has their number, by text. The organizer can fix the email or
+  # add a phone number in the same request.
+  def nudge
+    result = ExchangeNudgeService.nudge!(@participant, **nudge_params)
+
+    render json: {
+      participant: ExchangeParticipantBlueprint.render_as_hash(result.participant, view: :organizer),
+      emailed: true,
+      text: result.text,
+      text_error: result.text_error
+    }
+  rescue ExchangeNudgeService::Error => e
+    render_error(e.message)
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+  end
+
   private
+
+  def nudge_params
+    permitted = params.fetch(:exchange_participant, {}).permit(:email, :phone)
+    { email: permitted[:email]&.strip.presence, phone: permitted.key?(:phone) ? permitted[:phone].to_s : nil }.compact
+  end
 
   def set_gift_exchange
     @gift_exchange = GiftExchange
@@ -111,6 +134,6 @@ class ExchangeParticipantsController < ApplicationController
   end
 
   def participant_params
-    params.require(:exchange_participant).permit(:name, :email)
+    params.require(:exchange_participant).permit(:name, :email, :phone)
   end
 end

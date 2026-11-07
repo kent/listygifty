@@ -102,6 +102,7 @@ Rails.application.routes.draw do
     resources :exchange_participants, only: %i[index show create update destroy] do
       member do
         post :resend_invite
+        post :nudge
       end
       resources :exchange_wishlist_items, only: %i[index show create update destroy]
     end
