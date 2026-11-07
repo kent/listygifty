@@ -722,6 +722,7 @@ describe("nudging someone who hasn't joined", () => {
     const dialog = await openNudge();
 
     expect((within(dialog).getByLabelText("Email") as HTMLInputElement).value).toBe("ana@example.com");
+    expect(within(dialog).getByText(/comes from Listy Gifty at \(289\) 379-7875/)).toBeTruthy();
     fireEvent.change(within(dialog).getByLabelText(/Mobile number/), { target: { value: "289 379 7875" } });
     fireEvent.click(within(dialog).getByRole("checkbox", { name: "Ana said it's OK to text them about this exchange." }));
     fireEvent.click(within(dialog).getByRole("button", { name: "Send nudge" }));

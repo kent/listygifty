@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BellRing } from "lucide-react";
+import { NUDGE_TEXT_FROM_NUMBER } from "@niftygifty/types";
 import { createPageMetadata } from "@/lib/seo";
 
 // The public explanation of Listy Gifty's texts. Carriers' toll-free
@@ -155,7 +156,7 @@ function NudgeFormPreview() {
       <div className="space-y-1">
         <PreviewField label="Mobile number (optional)" value="(416) 555-0123" />
         <p className="text-xs text-slate-600 dark:text-slate-400">
-          The text comes from Listy Gifty. They can reply STOP to opt out.
+          The text comes from Listy Gifty at {NUDGE_TEXT_FROM_NUMBER}. They can reply STOP to opt out.
         </p>
       </div>
       <div className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
