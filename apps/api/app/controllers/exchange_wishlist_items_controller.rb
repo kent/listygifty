@@ -1,25 +1,24 @@
 class ExchangeWishlistItemsController < ApplicationController
   before_action :set_participant
   before_action :require_wishlist_viewer, only: %i[index show]
-  before_action :require_participant_owner, only: %i[create update destroy]
+  before_action :require_participant_owner, only: %i[create update destroy reorder]
   before_action :set_wishlist_item, only: %i[show update destroy]
 
   def index
-    items = @participant.exchange_wishlist_items
-    render json: ExchangeWishlistItemBlueprint.render(items)
+    render json: render_items(@participant.wishlist_items.with_attached_photo)
   end
 
   def show
-    render json: ExchangeWishlistItemBlueprint.render(@wishlist_item)
+    render json: render_items(@wishlist_item)
   end
 
   def create
     attributes = wishlist_item_params
-    item = @participant.exchange_wishlist_items.new(attributes)
+    item = @participant.wishlist!.wishlist_items.new(attributes)
 
     if persist_with_photo_quota(item, attributes[:photo]) { item.save }
       ExchangeNotificationService.wishlist_item_added!(item)
-      render json: ExchangeWishlistItemBlueprint.render(item), status: :created
+      render json: render_items(item), status: :created
     else
       render json: { errors: item.errors.full_messages }, status: :unprocessable_entity
     end
@@ -28,7 +27,7 @@ class ExchangeWishlistItemsController < ApplicationController
   def update
     attributes = wishlist_item_params
     if persist_with_photo_quota(@wishlist_item, attributes[:photo]) { @wishlist_item.update(attributes) }
-      render json: ExchangeWishlistItemBlueprint.render(@wishlist_item)
+      render json: render_items(@wishlist_item)
     else
       render json: { errors: @wishlist_item.errors.full_messages }, status: :unprocessable_entity
     end
@@ -39,7 +38,19 @@ class ExchangeWishlistItemsController < ApplicationController
     head :no_content
   end
 
+  # PATCH .../exchange_wishlist_items/reorder with { item_ids: [3, 1, 2] }
+  def reorder
+    @participant.wishlist!.reorder!(item_ids: Array(params[:item_ids]))
+    render json: render_items(@participant.wishlist_items.reload)
+  rescue ArgumentError => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
   private
+
+  def render_items(items)
+    ExchangeWishlistItemBlueprint.render(items, participant_id: @participant.id)
+  end
 
   def set_participant
     @participant = ExchangeParticipant.includes(:gift_exchange).find(params[:exchange_participant_id])
@@ -60,7 +71,7 @@ class ExchangeWishlistItemsController < ApplicationController
   end
 
   def set_wishlist_item
-    @wishlist_item = @participant.exchange_wishlist_items.find(params[:id])
+    @wishlist_item = @participant.wishlist_items.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Wishlist item not found" }, status: :not_found
   end
@@ -96,7 +107,7 @@ class ExchangeWishlistItemsController < ApplicationController
       existing_bytes = item.persisted? && item.photo.attached? ? item.photo.blob.byte_size : 0
       requested_bytes = uploaded_photo.size
       projected_bytes = photo_storage_bytes_for_current_user - existing_bytes + requested_bytes
-      if projected_bytes > ExchangeWishlistItem::MAX_PHOTO_STORAGE_PER_USER_BYTES
+      if projected_bytes > WishlistItem::MAX_PHOTO_STORAGE_PER_USER_BYTES
         item.errors.add(:photo, "storage limit of 50 MB has been reached")
         false
       else
@@ -106,15 +117,22 @@ class ExchangeWishlistItemsController < ApplicationController
   end
 
   def photo_storage_bytes_for_current_user
-    item_ids = ExchangeWishlistItem.joins(:exchange_participant)
-      .where(exchange_participants: { user_id: current_user.id })
-      .select(:id)
+    item_ids = WishlistItem.joins(:wishlist).where(wishlists: { user_id: current_user.id }).select(:id)
     ActiveStorage::Attachment.joins(:blob)
-      .where(record_type: "ExchangeWishlistItem", record_id: item_ids, name: "photo")
+      .where(record_type: "WishlistItem", record_id: item_ids, name: "photo")
       .sum("active_storage_blobs.byte_size")
   end
 
+  # The exchange screens send description, link and one price. Wishlist items
+  # store notes, url and a price range, so one price fills both ends.
   def wishlist_item_params
-    params.require(:wishlist_item).permit(:name, :description, :link, :price, :photo)
+    permitted = params.require(:wishlist_item).permit(:name, :description, :link, :price, :photo)
+    attributes = permitted.slice(:name, :photo).to_h
+    attributes[:notes] = permitted[:description] if permitted.key?(:description)
+    attributes[:url] = permitted[:link] if permitted.key?(:link)
+    if permitted.key?(:price)
+      attributes[:price_min] = attributes[:price_max] = permitted[:price].presence
+    end
+    attributes
   end
 end

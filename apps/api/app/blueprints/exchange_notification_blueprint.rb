@@ -15,6 +15,6 @@ class ExchangeNotificationBlueprint < ApplicationBlueprint
   end
 
   field :wishlist_item_id do |notification|
-    notification.exchange_wishlist_item_id
+    notification.wishlist_item_id
   end
 end

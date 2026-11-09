@@ -20,7 +20,7 @@ class SendWishlistRemindersJobTest < ActiveSupport::TestCase
 
   test "reminds someone who joined two days ago and has no ideas" do
     annabel = joined("Annabel", days_ago: 2)
-    joined("Bartholomew", days_ago: 2).exchange_wishlist_items.create!(name: "Wool socks")
+    joined("Bartholomew", days_ago: 2).wishlist!.wishlist_items.create!(name: "Wool socks")
     joined("Cordelia", days_ago: 1)
     @exchange.exchange_participants.create!(name: "Dorian", email: "dorian@example.com", created_at: 5.days.ago)
 
@@ -96,7 +96,7 @@ class SendWishlistRemindersJobTest < ActiveSupport::TestCase
   test "stops once they add an idea" do
     annabel = joined("Annabel", days_ago: 2)
     SendWishlistRemindersJob.perform_now
-    annabel.exchange_wishlist_items.create!(name: "A good book")
+    annabel.wishlist!.wishlist_items.create!(name: "A good book")
 
     travel_to Time.zone.local(2026, 12, 10, 11)
     SendWishlistRemindersJob.perform_now
@@ -134,6 +134,26 @@ class SendWishlistRemindersJobTest < ActiveSupport::TestCase
   end
 
   private
+
+  test "the reminder job skips people whose wishlist has items, even if added on the Wishlists page" do
+    annabel = joined("Annabel", days_ago: 2)
+    annabel.user.ensure_personal_workspace!.wishlists.create!(user: annabel.user, name: "Birthday")
+      .tap { |list| annabel.update!(wishlist: list) }
+      .wishlist_items.create!(name: "Lamp")
+
+    SendWishlistRemindersJob.perform_now
+
+    assert_empty ActionMailer::Base.deliveries
+  end
+
+  test "the reminder job counts archived items as empty" do
+    annabel = joined("Annabel", days_ago: 2)
+    annabel.wishlist!.wishlist_items.create!(name: "Old idea", archived_at: Time.current)
+
+    SendWishlistRemindersJob.perform_now
+
+    assert_equal [ annabel.email ], ActionMailer::Base.deliveries.sole.to
+  end
 
   def joined(name, days_ago:, exchange: @exchange)
     email = "#{name.downcase}-#{exchange.id}@example.com"

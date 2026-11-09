@@ -78,9 +78,9 @@ class GiftExchangeBlueprint < ApplicationBlueprint
 
   def self.my_participant_view(exchange, participant)
     if %w[active completed].include?(exchange.status) && participant.matched_participant_id.present?
-      :with_match
+      :own_with_match
     else
-      :default
+      :own
     end
   end
 end

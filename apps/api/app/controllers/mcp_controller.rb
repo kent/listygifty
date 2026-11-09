@@ -678,6 +678,7 @@ class McpController < ApplicationController
         handler: ->(args) {
           wishlist = find_owned_wishlist(args["wishlist_id"])
           item = wishlist.wishlist_items.create!(slice_args(args, wishlist_item_attributes))
+          ExchangeNotificationService.wishlist_item_added!(item)
           serialize_wishlist_item(item)
         }
       },
@@ -970,7 +971,7 @@ class McpController < ApplicationController
         schema: participant_reference_schema,
         handler: ->(args) {
           participant = find_exchange_participant_for_wishlist(args)
-          ExchangeWishlistItemBlueprint.render_as_hash(participant.exchange_wishlist_items)
+          ExchangeWishlistItemBlueprint.render_as_hash(participant.wishlist_items, participant_id: participant.id)
         }
       },
       "create_exchange_wishlist_item" => {
@@ -979,9 +980,9 @@ class McpController < ApplicationController
         schema: exchange_wishlist_item_schema(required: %w[exchange_id participant_id name]),
         handler: ->(args) {
           participant = find_owned_exchange_participant(args)
-          item = participant.exchange_wishlist_items.create!(slice_args(args, exchange_wishlist_item_attributes))
+          item = participant.wishlist!.wishlist_items.create!(exchange_wishlist_item_attributes(args))
           ExchangeNotificationService.wishlist_item_added!(item)
-          ExchangeWishlistItemBlueprint.render_as_hash(item)
+          ExchangeWishlistItemBlueprint.render_as_hash(item, participant_id: participant.id)
         }
       },
       "update_exchange_wishlist_item" => {
@@ -990,9 +991,9 @@ class McpController < ApplicationController
         schema: exchange_wishlist_item_schema(required: %w[exchange_id participant_id item_id], include_item_id: true),
         handler: ->(args) {
           participant = find_owned_exchange_participant(args)
-          item = participant.exchange_wishlist_items.find(args["item_id"])
-          item.update!(slice_args(args, exchange_wishlist_item_attributes))
-          ExchangeWishlistItemBlueprint.render_as_hash(item)
+          item = participant.wishlist_items.find(args["item_id"])
+          item.update!(exchange_wishlist_item_attributes(args))
+          ExchangeWishlistItemBlueprint.render_as_hash(item, participant_id: participant.id)
         }
       },
       "delete_exchange_wishlist_item" => {
@@ -1004,7 +1005,7 @@ class McpController < ApplicationController
           item_id: integer_property("Exchange wishlist item ID")
         }, %w[exchange_id participant_id item_id]),
         handler: ->(args) {
-          find_owned_exchange_participant(args).exchange_wishlist_items.find(args["item_id"]).destroy!
+          find_owned_exchange_participant(args).wishlist_items.find(args["item_id"]).destroy!
           { deleted: true }
         }
       },
@@ -1191,8 +1192,15 @@ class McpController < ApplicationController
     }, %w[exchange_id participant_id])
   end
 
-  def exchange_wishlist_item_attributes
-    %w[name description link price]
+  # Exchange tools speak description, link and one price. Wishlist items
+  # store notes, url and a range, so one price fills both ends.
+  def exchange_wishlist_item_attributes(args)
+    given = slice_args(args, %w[name description link price])
+    attributes = given.slice(:name)
+    attributes[:notes] = given[:description] if given.key?(:description)
+    attributes[:url] = given[:link] if given.key?(:link)
+    attributes[:price_min] = attributes[:price_max] = given[:price] if given.key?(:price)
+    attributes
   end
 
   def exchange_wishlist_item_schema(required:, include_item_id: false)
@@ -1265,7 +1273,7 @@ class McpController < ApplicationController
 
   def accessible_exchanges
     GiftExchange.for_user(@current_user)
-                .includes(exchange_participants: [ :matched_participant, :exchange_wishlist_items ])
+                .includes(exchange_participants: [ :matched_participant, :wishlist, :wishlist_items ])
   end
 
   def find_exchange(id)

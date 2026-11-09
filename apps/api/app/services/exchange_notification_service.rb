@@ -12,18 +12,23 @@ class ExchangeNotificationService
     ExchangeMailer.join_confirmation(participant).deliver_later
   end
 
+  # One wishlist can back several exchanges, so the giver in each exchange
+  # where names are drawn hears about the new idea, once.
   def self.wishlist_item_added!(item)
-    exchange = item.gift_exchange
-    return [] unless %w[active completed].include?(exchange.status)
+    owners_places = ExchangeParticipant
+      .where(wishlist_id: item.wishlist_id, user_id: item.wishlist.user_id)
+      .joins(:gift_exchange)
+      .where(gift_exchanges: { status: %w[active completed] })
 
-    exchange.exchange_participants
-      .where(matched_participant_id: item.exchange_participant_id)
-      .filter_map do |giver|
-        next unless giver.user_id.present?
-
-        notification = exchange.exchange_notifications.create!(
+    ExchangeParticipant
+      .where(matched_participant_id: owners_places.select(:id))
+      .where.not(user_id: nil)
+      .includes(:gift_exchange)
+      .order(:id)
+      .map do |giver|
+        notification = giver.gift_exchange.exchange_notifications.create!(
           recipient_participant: giver,
-          exchange_wishlist_item: item,
+          wishlist_item: item,
           kind: "wishlist_item_added"
         )
         ExchangeMailer.wishlist_updated(notification).deliver_later

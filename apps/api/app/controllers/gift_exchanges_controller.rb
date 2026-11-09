@@ -11,7 +11,7 @@ class GiftExchangesController < ApplicationController
     exchanges = GiftExchange
                 .where(id: workspace_exchange_ids)
                 .or(GiftExchange.where(id: participating_exchange_ids))
-                .includes(exchange_participants: [ :matched_participant, :exchange_wishlist_items ])
+                .includes(exchange_participants: [ :matched_participant, :wishlist, :wishlist_items ])
                 .order(created_at: :desc)
     render json: GiftExchangeBlueprint.render(exchanges, current_user: current_user, view: :with_my_participation)
   end
@@ -94,7 +94,7 @@ class GiftExchangesController < ApplicationController
   def set_gift_exchange
     exchanges = GiftExchange
                 .for_user(current_user)
-                .includes(exchange_participants: [ :matched_participant, :exchange_wishlist_items ])
+                .includes(exchange_participants: [ :matched_participant, :wishlist, :wishlist_items ])
     @gift_exchange = exchanges.find_by(slug: params[:id]) || exchanges.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Gift exchange not found" }, status: :not_found
