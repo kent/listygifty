@@ -927,7 +927,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_09_120000) do
   add_foreign_key "exchange_participants", "users"
   add_foreign_key "exchange_participants", "wishlists", on_delete: :nullify
   add_foreign_key "exchange_wishlist_items", "exchange_participants", on_delete: :cascade
-  add_foreign_key "exchange_wishlist_items", "wishlist_items", on_delete: :nullify
+  add_foreign_key "exchange_wishlist_items", "wishlist_items", on_delete: :cascade
   add_foreign_key "gift_changes", "gifts"
   add_foreign_key "gift_changes", "holidays"
   add_foreign_key "gift_changes", "users"

@@ -36,6 +36,7 @@ class ExchangeParticipant < ApplicationRecord
   before_validation :generate_invite_token, on: :create
   before_validation :normalize_phone
   before_save :forget_text_consent
+  before_save :link_default_wishlist
 
   scope :invited, -> { where(status: "invited") }
   scope :accepted, -> { where(status: "accepted") }
@@ -70,7 +71,7 @@ class ExchangeParticipant < ApplicationRecord
 
   def accept!(accepting_user)
     chosen = wishlist if wishlist&.user_id == accepting_user.id
-    update!(user: accepting_user, status: "accepted", wishlist: chosen || accepting_user.default_wishlist!)
+    update!(user: accepting_user, status: "accepted", wishlist: chosen)
   end
 
   # The wishlist this exchange shows, linking the person's default one the
@@ -131,6 +132,15 @@ class ExchangeParticipant < ApplicationRecord
   def anonymized_name
     first_word = name.to_s.split.first
     first_word.nil? || first_word.include?("@") ? ANONYMIZED_NAME : first_word
+  end
+
+  # Organizers, share-link joiners and invitees all land here, so none of
+  # them opens an exchange to an empty list while their real one sits
+  # elsewhere.
+  def link_default_wishlist
+    return if user.nil? || wishlist_id.present? || status != "accepted"
+
+    self.wishlist = user.default_wishlist!
   end
 
   def wishlist_owned_by_user

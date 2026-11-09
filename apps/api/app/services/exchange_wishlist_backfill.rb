@@ -18,7 +18,7 @@ class ExchangeWishlistBackfill
     copied = 0
     ExchangeParticipant.transaction do
       participants_with_items.each { |participant| copied += copy_items(participant) }
-      ExchangeParticipant.where.not(user_id: nil).where(wishlist_id: nil).includes(:user).find_each do |participant|
+      ExchangeParticipant.accepted.where.not(user_id: nil).where(wishlist_id: nil).includes(:user).find_each do |participant|
         link(participant, participant.user.default_wishlist!)
       end
     end

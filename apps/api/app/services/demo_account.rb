@@ -145,10 +145,12 @@ class DemoAccount
   # wishlist. Other participants use example.com addresses, which the mail
   # interceptor never sends to.
   def seed_exchange(user, workspace)
+    holiday_list = workspace.wishlists.find_by!(user: user, name: "Holiday Wishlist")
     exchange = workspace.gift_exchanges.create!(user: user, name: "Family Secret Santa", status: "active",
       exchange_date: Date.new(2026, 12, 20), budget_min: 25, budget_max: 50)
     participants = {
-      demo: exchange.exchange_participants.create!(user: user, name: "#{FIRST_NAME} #{LAST_NAME}", email: EMAIL, status: "accepted"),
+      demo: exchange.exchange_participants.create!(user: user, name: "#{FIRST_NAME} #{LAST_NAME}", email: EMAIL,
+        status: "accepted", wishlist: holiday_list),
       alex: exchange.exchange_participants.create!(name: "Alex Parker", email: ALEX_EMAIL, status: "accepted"),
       sam: exchange.exchange_participants.create!(name: "Sam Lee", email: "sam.lee@example.com", status: "accepted"),
       nina: exchange.exchange_participants.create!(name: "Nina Rivera", email: "nina.rivera@example.com", status: "accepted")
@@ -156,9 +158,7 @@ class DemoAccount
     { demo: :alex, alex: :nina, nina: :sam, sam: :demo }.each do |giver, receiver|
       participants.fetch(giver).update!(matched_participant: participants.fetch(receiver))
     end
-    demo = participants.fetch(:demo)
-    demo.update!(wishlist: workspace.wishlists.find_by!(user: user, name: "Holiday Wishlist"))
-    demo.wishlist.wishlist_items.create!(name: "Coffee subscription", price_min: 35, price_max: 35,
+    holiday_list.wishlist_items.create!(name: "Coffee subscription", price_min: 35, price_max: 35,
       notes: "Light roast, whole bean.", url: "https://example.com/coffee-subscription")
 
     # Alex needs an account to own a wishlist. It never signs in, and its list

@@ -7,7 +7,8 @@ class ExchangeNotification < ApplicationRecord
 
   validates :kind, presence: true, inclusion: { in: KINDS }
   validate :participant_belongs_to_exchange
-  validate :wishlist_item_belongs_to_exchange
+  # A notice stays valid after the owner points the exchange at another list.
+  validate :wishlist_item_belongs_to_exchange, on: :create
 
   scope :unread, -> { where(read_at: nil) }
   scope :recent_first, -> { order(created_at: :desc) }

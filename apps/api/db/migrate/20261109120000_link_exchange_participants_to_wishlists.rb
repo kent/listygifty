@@ -15,13 +15,16 @@ class LinkExchangeParticipantsToWishlists < ActiveRecord::Migration[8.0]
       add_reference :exchange_notifications, :wishlist_item, foreign_key: { on_delete: :cascade }
     end
     unless column_exists?(:exchange_wishlist_items, :wishlist_item_id)
-      add_reference :exchange_wishlist_items, :wishlist_item, foreign_key: { on_delete: :nullify }
+      add_reference :exchange_wishlist_items, :wishlist_item, foreign_key: { on_delete: :cascade }
     end
 
     # New code no longer destroys old rows itself, so deleting a participant
     # or an old item must not trip these keys.
     replace_foreign_key :exchange_wishlist_items, :exchange_participants, on_delete: :cascade
     replace_foreign_key :exchange_notifications, :exchange_wishlist_items, on_delete: :nullify
+    # Deleting a copied item or list deletes the old row it came from, so a
+    # later backfill run can't copy it back.
+    replace_foreign_key :exchange_wishlist_items, :wishlist_items, on_delete: :cascade
 
     ExchangeWishlistBackfill.call
   end

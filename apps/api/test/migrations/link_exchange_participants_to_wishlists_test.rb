@@ -95,13 +95,46 @@ class LinkExchangeParticipantsToWishlistsTest < ActiveSupport::TestCase
     assert_empty participant.wishlist.wishlist_items
   end
 
-  test "links a user with no exchange items to the wishlist they already have" do
+  test "doesn't show a list the person never used in an exchange" do
     participant = join(@first_exchange)
+    participant.update_columns(wishlist_id: nil)
     existing = @user.personal_workspace.wishlists.create!(user: @user, name: "Birthday", visibility: "private")
 
     migration.up
 
-    assert_equal existing, participant.reload.wishlist
+    refute_equal existing, participant.reload.wishlist
+    assert_equal "My Wishlist", participant.wishlist.name
+  end
+
+  test "deleting a copied item doesn't bring it back on a re-run" do
+    participant = join(@first_exchange)
+    legacy_add(participant, "Keep")
+    legacy_add(participant, "Delete me")
+    migration.up
+
+    participant.reload.wishlist.wishlist_items.find_by!(name: "Delete me").destroy!
+
+    assert_equal 0, ExchangeWishlistBackfill.call
+    assert_equal %w[Keep], participant.reload.wishlist.wishlist_items.pluck(:name)
+  end
+
+  test "deleting the whole copied wishlist doesn't bring it back" do
+    participant = join(@first_exchange)
+    legacy_add(participant, "Old idea")
+    migration.up
+
+    participant.reload.wishlist.destroy!
+
+    assert_equal 0, ExchangeWishlistBackfill.call
+    assert_empty participant.reload.wishlist.wishlist_items
+  end
+
+  test "doesn't give a declined place a wishlist" do
+    declined = @first_exchange.exchange_participants.create!(user: @user, name: "Alice", email: @user.email, status: "declined")
+
+    migration.up
+
+    assert_nil declined.reload.wishlist_id
   end
 
   test "leaves people without an account alone" do
@@ -124,8 +157,12 @@ class LinkExchangeParticipantsToWishlistsTest < ActiveSupport::TestCase
     GiftExchange.create!(workspace: workspaces(:two), user: users(:two), name: name, budget_max: 50)
   end
 
+  # Built the way production rows are before this migration: accepted, with
+  # an account, and no wishlist yet.
   def join(exchange)
-    exchange.exchange_participants.create!(user: @user, name: "Alice", email: @user.email, status: "accepted")
+    exchange.exchange_participants.create!(name: "Alice", email: @user.email).tap do |participant|
+      participant.update_columns(user_id: @user.id, status: "accepted")
+    end
   end
 
   def legacy_add(participant, name, created_at: Time.current, **attributes)

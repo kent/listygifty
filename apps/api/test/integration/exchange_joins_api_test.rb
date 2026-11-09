@@ -155,4 +155,11 @@ class ExchangeJoinsApiTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_nil json_response["share_url"]
   end
+  test "joining by share link links the joiner's wishlist" do
+    post "/exchange_join/#{@exchange.share_token}/join", headers: @joiner_headers, as: :json
+
+    assert_response :success
+    place = @exchange.participant_for(@joiner)
+    assert_equal "My Wishlist", place.wishlist&.name
+  end
 end

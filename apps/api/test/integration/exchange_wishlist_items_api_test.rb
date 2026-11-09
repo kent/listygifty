@@ -326,6 +326,21 @@ class ExchangeWishlistItemsApiTest < ActionDispatch::IntegrationTest
       ExchangeNotification.where(kind: "wishlist_item_added").pluck(:gift_exchange_id).sort
   end
 
+  test "a Secret Santa can still mark an older notice read after the owner switches lists" do
+    santa = draw_with_santa
+    post gift_exchange_exchange_participant_exchange_wishlist_items_path(@exchange, @participant),
+      headers: @auth_headers, params: { wishlist_item: { name: "Lamp" } }, as: :json
+    notification = ExchangeNotification.find_by!(kind: "wishlist_item_added")
+    birthday = @user.personal_workspace.wishlists.create!(user: @user, name: "Birthday")
+    @participant.update!(wishlist: birthday)
+
+    patch read_gift_exchange_exchange_notification_path(@exchange, notification),
+      headers: auth_headers_for(santa), as: :json
+
+    assert_response :success
+    assert notification.reload.read?
+  end
+
   test "adding on the Wishlists page tells the Secret Santa too" do
     draw_with_santa
 

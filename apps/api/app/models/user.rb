@@ -112,11 +112,12 @@ class User < ApplicationRecord
     own_workspace.or(holidays.where.not(workspace_id: workspaces.select(:id)))
   end
 
-  # The list a new exchange uses: the one their other exchanges use, else the
-  # one they touched last, else a new empty one.
+  # The list a new exchange uses: the one their other exchanges use, else
+  # their "My Wishlist", else a new one. Any other list they made, a baby
+  # registry say, stays out of exchanges until they choose it.
   def default_wishlist!
     exchange_participants.where.not(wishlist_id: nil).order(updated_at: :desc, id: :desc).first&.wishlist ||
-      wishlists.order(updated_at: :desc, id: :desc).first ||
+      wishlists.where(name: Wishlist::DEFAULT_NAME).order(updated_at: :desc, id: :desc).first ||
       ensure_personal_workspace!.wishlists.create!(user: self, name: Wishlist::DEFAULT_NAME, visibility: "private")
   end
 

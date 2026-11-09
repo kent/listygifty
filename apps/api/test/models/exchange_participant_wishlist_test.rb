@@ -30,14 +30,40 @@ class ExchangeParticipantWishlistTest < ActiveSupport::TestCase
     assert_equal birthday, second.reload.wishlist
   end
 
-  test "with no exchange lists, a new exchange uses the wishlist touched last" do
-    wishlist("Old")
-    newest = travel(1.minute) { wishlist("Newest") }
+  test "a new exchange never picks up a list the person hasn't used in an exchange" do
+    registry = wishlist("Baby registry")
 
     participant = invite(@first)
     participant.accept!(@user)
 
-    assert_equal newest, participant.reload.wishlist
+    refute_equal registry, participant.reload.wishlist
+    assert_equal "My Wishlist", participant.wishlist.name
+  end
+
+  test "reuses the person's My Wishlist when no exchange uses a list" do
+    mine = wishlist("My Wishlist")
+    travel(1.minute) { wishlist("Baby registry") }
+
+    participant = invite(@first)
+    participant.accept!(@user)
+
+    assert_equal mine, participant.reload.wishlist
+  end
+
+  test "an organizer's own place gets a wishlist when the exchange is created" do
+    birthday = wishlist("Birthday")
+    join(@first).update!(wishlist: birthday)
+
+    organizer_place = @second.exchange_participants.create!(user: @user, name: "Alice", email: @user.email, status: "accepted")
+
+    assert_equal birthday, organizer_place.wishlist
+  end
+
+  test "a declined place doesn't get a wishlist" do
+    declined = @first.exchange_participants.create!(user: @user, name: "Alice", email: @user.email, status: "declined")
+
+    assert_nil declined.wishlist
+    assert_empty @user.wishlists
   end
 
   test "accepting again keeps the wishlist the person chose" do
