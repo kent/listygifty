@@ -6,6 +6,7 @@ class ExchangeParticipant < ApplicationRecord
 
   belongs_to :gift_exchange
   belongs_to :user, optional: true
+  belongs_to :wishlist, optional: true
   belongs_to :matched_participant,
     class_name: "ExchangeParticipant",
     optional: true,
