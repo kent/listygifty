@@ -64,7 +64,8 @@ class LinkExchangeParticipantsToWishlistsTest < ActiveSupport::TestCase
     participant = join(@first_exchange)
     legacy = legacy_add(participant, "Mug")
     blob = ActiveStorage::Blob.create_and_upload!(io: StringIO.new("img"), filename: "mug.png", content_type: "image/png")
-    ActiveStorage::Attachment.create!(record_type: "ExchangeWishlistItem", record_id: legacy.id, name: "photo", blob: blob)
+    # The ExchangeWishlistItem class is gone, so write the row the old API left.
+    ActiveStorage::Attachment.insert_all!([ { record_type: "ExchangeWishlistItem", record_id: legacy.id, name: "photo", blob_id: blob.id, created_at: Time.current } ])
 
     migration.up
 

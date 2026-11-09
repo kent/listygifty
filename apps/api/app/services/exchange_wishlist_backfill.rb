@@ -9,8 +9,6 @@ class ExchangeWishlistBackfill
     self.table_name = "exchange_wishlist_items"
   end
 
-  DEFAULT_NAME = "My Wishlist".freeze
-
   def self.call
     new.call
   end
@@ -21,7 +19,7 @@ class ExchangeWishlistBackfill
     ExchangeParticipant.transaction do
       participants_with_items.each { |participant| copied += copy_items(participant) }
       ExchangeParticipant.where.not(user_id: nil).where(wishlist_id: nil).includes(:user).find_each do |participant|
-        link(participant, default_for(participant.user))
+        link(participant, participant.user.default_wishlist!)
       end
     end
     copied
@@ -75,18 +73,9 @@ class ExchangeWishlistBackfill
     user = participant.user
     others_with_items = ExchangeParticipant.where(user_id: user.id).where.not(id: participant.id)
       .where(id: LegacyItem.select(:exchange_participant_id)).exists?
-    name = others_with_items ? participant.gift_exchange.name : DEFAULT_NAME
+    name = others_with_items ? participant.gift_exchange.name : Wishlist::DEFAULT_NAME
 
     user.ensure_personal_workspace!.wishlists.create!(user: user, name: name, visibility: "private")
-  end
-
-  # The list their other exchanges use, else the list they touched last, else
-  # a new empty one.
-  def default_for(user)
-    linked = ExchangeParticipant.where(user_id: user.id).where.not(wishlist_id: nil)
-      .order(updated_at: :desc, id: :desc).first&.wishlist
-    linked || user.wishlists.order(updated_at: :desc, id: :desc).first ||
-      user.ensure_personal_workspace!.wishlists.create!(user: user, name: DEFAULT_NAME, visibility: "private")
   end
 
   def link(participant, wishlist)

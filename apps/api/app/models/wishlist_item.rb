@@ -1,8 +1,13 @@
 class WishlistItem < ApplicationRecord
   PRIORITIES = { normal: 0, high: 1, most_wanted: 2 }.freeze
+  MAX_PHOTO_BYTES = 5 * 1024 * 1024
+  MAX_PHOTO_STORAGE_PER_USER_BYTES = 50 * 1024 * 1024
+  ALLOWED_PHOTO_TYPES = %w[image/jpeg image/png image/webp image/gif].freeze
 
   belongs_to :wishlist
   has_many :claims, class_name: "WishlistItemClaim", dependent: :destroy
+  has_many :exchange_notifications, dependent: :destroy
+  has_one_attached :photo
 
   validates :name, presence: true, length: { maximum: 500 }
   validates :notes, length: { maximum: 5_000 }, allow_blank: true
@@ -15,11 +20,12 @@ class WishlistItem < ApplicationRecord
   validates :priority, inclusion: { in: PRIORITIES.values }
   validates :url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid URL" }, allow_blank: true
   validate :price_range_valid
+  validate :acceptable_photo
 
   scope :active, -> { where(archived_at: nil) }
   scope :archived, -> { where.not(archived_at: nil) }
-  scope :by_priority, -> { order(priority: :desc, position: :asc) }
-  scope :by_position, -> { order(:position) }
+  # The owner's order. Priority is kept, but it doesn't sort.
+  scope :ordered, -> { order(:position, :id) }
   scope :available, -> { active.where("quantity > (SELECT COALESCE(SUM(quantity), 0) FROM wishlist_item_claims WHERE wishlist_item_claims.wishlist_item_id = wishlist_items.id)") }
 
   before_create :set_position
@@ -50,6 +56,12 @@ class WishlistItem < ApplicationRecord
     update!(archived_at: nil)
   end
 
+  # One price for screens that show one: the top of the range, or the only
+  # price given.
+  def single_price
+    price_max || price_min
+  end
+
   def price_display
     return nil if price_min.nil? && price_max.nil?
 
@@ -67,6 +79,13 @@ class WishlistItem < ApplicationRecord
     if price_min > price_max
       errors.add(:price_max, "must be greater than or equal to minimum price")
     end
+  end
+
+  def acceptable_photo
+    return unless photo.attached?
+
+    errors.add(:photo, "must be smaller than 5 MB") if photo.blob.byte_size > MAX_PHOTO_BYTES
+    errors.add(:photo, "must be a JPEG, PNG, WebP, or GIF") unless ALLOWED_PHOTO_TYPES.include?(photo.blob.content_type)
   end
 
   def set_position

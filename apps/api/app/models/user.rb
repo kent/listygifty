@@ -112,6 +112,14 @@ class User < ApplicationRecord
     own_workspace.or(holidays.where.not(workspace_id: workspaces.select(:id)))
   end
 
+  # The list a new exchange uses: the one their other exchanges use, else the
+  # one they touched last, else a new empty one.
+  def default_wishlist!
+    exchange_participants.where.not(wishlist_id: nil).order(updated_at: :desc, id: :desc).first&.wishlist ||
+      wishlists.order(updated_at: :desc, id: :desc).first ||
+      ensure_personal_workspace!.wishlists.create!(user: self, name: Wishlist::DEFAULT_NAME, visibility: "private")
+  end
+
   def ensure_personal_workspace!
     existing = personal_workspace
     return existing if existing
