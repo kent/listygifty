@@ -1,10 +1,17 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useCallback, useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
-import { giftExchangesService, wishlistItemsService } from "@/services";
+import {
+  exchangeParticipantsService,
+  giftExchangesService,
+  wishlistItemsService,
+  wishlistsService,
+} from "@/services";
+import { moveItem } from "@/lib/move-item";
+import { ItemOrderControls, ItemRank } from "@/components/wishlists/item-order-controls";
 import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { AppHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -20,9 +27,15 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, DollarSign, Trash2, Image, ExternalLink } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Image, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import type { GiftExchange, WishlistItem } from "@niftygifty/types";
+import type { ExchangeWishlistRef, GiftExchange, Wishlist, WishlistItem } from "@niftygifty/types";
+
+// Older APIs send one price and no display string.
+function priceLabel(item: WishlistItem): string | null {
+  if (item.price_display) return item.price_display;
+  return item.price ? `$${parseFloat(item.price).toFixed(2)}` : null;
+}
 
 export default function MyWishlistPage({
   params,
@@ -37,6 +50,8 @@ export default function MyWishlistPage({
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [myWishlists, setMyWishlists] = useState<Wishlist[]>([]);
+  const [switching, setSwitching] = useState(false);
   const [newItem, setNewItem] = useState({
     name: "",
     description: "",
@@ -50,6 +65,10 @@ export default function MyWishlistPage({
     }
   }, [authLoading, isAuthenticated, router]);
 
+  const loadItems = useCallback(async (exchangeId: number, participantId: number) => {
+    setItems(await wishlistItemsService.getAll(exchangeId, participantId));
+  }, []);
+
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -59,11 +78,12 @@ export default function MyWishlistPage({
         setExchange(exchangeData);
 
         if (exchangeData.my_participant) {
-          const itemsData = await wishlistItemsService.getAll(
-            exchangeData.id,
-            exchangeData.my_participant.id
-          );
-          setItems(itemsData);
+          await loadItems(exchangeData.id, exchangeData.my_participant.id);
+          // Only for offering a different list. The page works without it.
+          wishlistsService
+            .getAll()
+            .then((lists) => setMyWishlists(lists.filter((list) => list.is_owner)))
+            .catch(() => setMyWishlists([]));
         }
       } finally {
         setLoading(false);
@@ -71,7 +91,43 @@ export default function MyWishlistPage({
     }
 
     loadData();
-  }, [isAuthenticated, slug]);
+  }, [isAuthenticated, slug, loadItems]);
+
+  const handleMove = async (index: number, delta: -1 | 1) => {
+    if (!exchange?.my_participant) return;
+    const reordered = moveItem(items, index, delta);
+    if (reordered === items) return;
+
+    setItems(reordered);
+    try {
+      setItems(
+        await wishlistItemsService.reorder(
+          exchange.id,
+          exchange.my_participant.id,
+          reordered.map((item) => item.id)
+        )
+      );
+    } catch {
+      toast.error("Couldn't save the new order");
+      await loadItems(exchange.id, exchange.my_participant.id).catch(() => undefined);
+    }
+  };
+
+  const handleChooseWishlist = async (wishlistId: number) => {
+    const me = exchange?.my_participant;
+    if (!exchange || !me || wishlistId === me.wishlist?.id) return;
+
+    setSwitching(true);
+    try {
+      const updated = await exchangeParticipantsService.chooseWishlist(exchange.id, me.id, wishlistId);
+      setExchange({ ...exchange, my_participant: { ...me, wishlist: updated.wishlist ?? null } });
+      await loadItems(exchange.id, me.id);
+    } catch {
+      toast.error("Couldn't switch wishlists");
+    } finally {
+      setSwitching(false);
+    }
+  };
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,6 +210,9 @@ export default function MyWishlistPage({
             <p className="break-words text-slate-600 dark:text-slate-400">
               Add items you would like to receive for {exchange.name}
             </p>
+            <p className="break-words text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Your Secret Santa sees these in this order. Put the ones you want most at the top.
+            </p>
           </div>
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
@@ -226,6 +285,15 @@ export default function MyWishlistPage({
           </Dialog>
         </div>
 
+        {exchange.my_participant.wishlist && (
+          <WishlistInUse
+            current={exchange.my_participant.wishlist}
+            choices={myWishlists}
+            switching={switching}
+            onChoose={handleChooseWishlist}
+          />
+        )}
+
         {items.length === 0 ? (
           <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
             <CardContent className="py-12 text-center">
@@ -244,10 +312,19 @@ export default function MyWishlistPage({
           </Card>
         ) : (
           <div className="space-y-3">
-            {items.map((item) => (
+            {items.map((item, index) => (
               <Card key={item.id} className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
                 <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="flex items-center gap-1">
+                      <ItemRank rank={index + 1} />
+                      <ItemOrderControls
+                        rank={index + 1}
+                        total={items.length}
+                        itemName={item.name}
+                        onMove={(delta) => handleMove(index, delta)}
+                      />
+                    </div>
                     {item.photo_url ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
@@ -267,11 +344,8 @@ export default function MyWishlistPage({
                         <p className="break-words text-sm text-slate-600 dark:text-slate-400 mt-1">{item.description}</p>
                       )}
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm">
-                        {item.price && (
-                          <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                            <DollarSign className="h-3 w-3" />
-                            {parseFloat(item.price).toFixed(2)}
-                          </span>
+                        {priceLabel(item) && (
+                          <span className="text-slate-600 dark:text-slate-400">{priceLabel(item)}</span>
                         )}
                         {item.link && (
                           <a
@@ -303,6 +377,54 @@ export default function MyWishlistPage({
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+/** Which of your wishlists this exchange shows, and a way to pick another. */
+function WishlistInUse({
+  current,
+  choices,
+  switching,
+  onChoose,
+}: {
+  current: ExchangeWishlistRef;
+  choices: Wishlist[];
+  switching: boolean;
+  onChoose: (wishlistId: number) => void;
+}) {
+  const options = choices.some((list) => list.id === current.id)
+    ? choices.map((list) => ({ id: list.id, name: list.name }))
+    : [{ id: current.id, name: current.name }, ...choices.map((list) => ({ id: list.id, name: list.name }))];
+
+  return (
+    <div className="mb-6 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white/60 p-4 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
+      <p className="break-words">
+        This is your wishlist <strong>{current.name}</strong>. Anything you add here shows there too.{" "}
+        <Link href={`/wishlists/${current.id}`} className="text-violet-600 underline dark:text-violet-400">
+          Open in Wishlists
+        </Link>
+      </p>
+      {options.length > 1 && (
+        <div className="flex shrink-0 items-center gap-2">
+          <Label htmlFor="exchange-wishlist-choice" className="whitespace-nowrap">
+            Use a different wishlist
+          </Label>
+          <select
+            id="exchange-wishlist-choice"
+            value={current.id}
+            disabled={switching}
+            onChange={(event) => onChoose(Number(event.target.value))}
+            className="h-11 rounded-md border border-slate-200 bg-white px-2 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white sm:h-9"
+          >
+            {options.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
     </div>
   );
 }

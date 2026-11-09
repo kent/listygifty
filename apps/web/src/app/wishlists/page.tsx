@@ -98,6 +98,11 @@ function WishlistCard({ wishlist }: { wishlist: Wishlist }) {
                   </span>
                 )}
               </div>
+              {wishlist.exchanges && wishlist.exchanges.length > 0 && (
+                <p className="mt-1 break-words text-xs text-violet-700 dark:text-violet-300">
+                  Used in {wishlist.exchanges.map((exchange) => exchange.name).join(", ")}
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Badge variant="outline" className={getVisibilityColor(wishlist.visibility)}>

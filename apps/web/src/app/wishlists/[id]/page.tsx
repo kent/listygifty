@@ -4,6 +4,8 @@ import { useState, use } from "react";
 import { pluralize } from "@/components/exchanges/pluralize";
 import Link from "next/link";
 import { wishlistsService } from "@/services";
+import { moveItem } from "@/lib/move-item";
+import { ItemOrderControls, ItemRank } from "@/components/wishlists/item-order-controls";
 import { useWorkspaceData } from "@/hooks";
 import { AppHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -72,6 +74,7 @@ function PriorityBadge({ priority }: { priority: number }) {
 function ItemCard({
   item,
   isOwner,
+  order,
   onClaim,
   onUnclaim,
   onMarkPurchased,
@@ -80,6 +83,8 @@ function ItemCard({
 }: {
   item: StandaloneWishlistItem;
   isOwner: boolean;
+  /** Rank and move controls. The owner gets the controls, everyone sees the rank. */
+  order: { rank: number; total: number; onMove: (delta: -1 | 1) => void };
   onClaim: (itemId: number, purchased: boolean) => Promise<void>;
   onUnclaim: (itemId: number) => Promise<void>;
   onMarkPurchased: (itemId: number) => Promise<void>;
@@ -118,7 +123,8 @@ function ItemCard({
   return (
     <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
       <CardContent className="p-4">
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3 sm:gap-4">
+          <ItemRank rank={order.rank} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <h3 className="font-medium text-slate-900 dark:text-white">{item.name}</h3>
@@ -238,6 +244,14 @@ function ItemCard({
             )}
 
             {/* Owner menu */}
+            {isOwner && (
+              <ItemOrderControls
+                rank={order.rank}
+                total={order.total}
+                itemName={item.name}
+                onMove={order.onMove}
+              />
+            )}
             {isOwner && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -582,6 +596,22 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
   }
 
   const items = wishlist.wishlist_items || [];
+  const linkedExchanges = wishlist.exchanges ?? [];
+
+  const handleMove = async (index: number, delta: -1 | 1) => {
+    const reordered = moveItem(items, index, delta);
+    if (reordered === items) return;
+
+    setWishlist({ ...wishlist, wishlist_items: reordered });
+    try {
+      const positions = Object.fromEntries(reordered.map((item, position) => [item.id, position]));
+      const saved = await wishlistsService.reorderItems(wishlist.id, positions);
+      setWishlist({ ...wishlist, wishlist_items: saved });
+    } catch {
+      toast.error("Couldn't save the new order");
+      refetch();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -642,6 +672,17 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
+        {/* A Secret Santa sees this list, whatever its sharing setting says */}
+        {wishlist.is_owner && linkedExchanges.length > 0 && (
+          <Card className="mb-6 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+            <CardContent className="py-4 text-sm text-amber-900 dark:text-amber-100">
+              {wishlist.visibility === "private"
+                ? `Your Secret Santa in ${linkedExchanges.map((exchange) => exchange.name).join(", ")} sees this list, even though it's private.`
+                : `Your Secret Santa in ${linkedExchanges.map((exchange) => exchange.name).join(", ")} sees this list.`}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Anti-spoiler banner for owner */}
         {wishlist.is_owner && wishlist.anti_spoiler_enabled && (
           <Card className="mb-6 bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800">
@@ -683,11 +724,12 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
           </Card>
         ) : (
           <div className="space-y-3">
-            {items.map((item) => (
+            {items.map((item, index) => (
               <ItemCard
                 key={item.id}
                 item={item}
                 isOwner={wishlist.is_owner}
+                order={{ rank: index + 1, total: items.length, onMove: (delta) => handleMove(index, delta) }}
                 onClaim={handleClaim}
                 onUnclaim={handleUnclaim}
                 onMarkPurchased={handleMarkPurchased}

@@ -1009,6 +1009,14 @@ export interface ExchangeParticipant extends BaseEntity {
   can_nudge?: boolean; // Only visible to the organizer
   matched_participant_id?: number | null;
   matched_participant?: ExchangeParticipantWithWishlist | null;
+  // Your own place only: the wishlist of yours this exchange shows.
+  wishlist?: ExchangeWishlistRef | null;
+}
+
+export interface ExchangeWishlistRef {
+  id: number;
+  name: string;
+  item_count: number;
 }
 
 export interface ExchangeParticipantWithWishlist extends ExchangeParticipant {
@@ -1023,6 +1031,10 @@ export interface WishlistItem extends BaseEntity {
   price: string | null;
   photo_url: string | null;
   has_photo: boolean;
+  // Newer APIs only. Older ones leave these out.
+  position?: number;
+  price_display?: string | null;
+  wishlist_id?: number;
 }
 
 export interface ExchangeExclusion extends BaseEntity {
@@ -1418,6 +1430,15 @@ export interface Wishlist extends BaseEntity {
     name: string;
     image_url: string | null;
   };
+  // Owner only: the exchanges that show this list to a Secret Santa.
+  exchanges?: WishlistExchangeRef[];
+}
+
+export interface WishlistExchangeRef {
+  id: number;
+  name: string;
+  slug: string;
+  status: string;
 }
 
 export interface WishlistWithItems extends Wishlist {

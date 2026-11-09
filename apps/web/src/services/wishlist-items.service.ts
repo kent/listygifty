@@ -46,6 +46,13 @@ class WishlistItemsService {
     return apiClient.delete(this.buildUrl(exchangeId, participantId, itemId));
   }
 
+  // Every item, in the order the owner wants. The API refuses a stale list.
+  async reorder(exchangeId: number, participantId: number, itemIds: number[]): Promise<WishlistItem[]> {
+    return apiClient.patch<WishlistItem[]>(`${this.buildUrl(exchangeId, participantId)}/reorder`, {
+      item_ids: itemIds,
+    });
+  }
+
   // Upload photo using FormData
   async uploadPhoto(
     exchangeId: number,

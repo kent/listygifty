@@ -14,6 +14,14 @@ class ExchangeParticipantsService {
     );
   }
 
+  // Point your place in an exchange at another of your own wishlists.
+  async chooseWishlist(exchangeId: number, participantId: number, wishlistId: number): Promise<ExchangeParticipant> {
+    return apiClient.patch<ExchangeParticipant>(
+      `/gift_exchanges/${exchangeId}/exchange_participants/${participantId}/wishlist`,
+      { wishlist_id: wishlistId }
+    );
+  }
+
   async getById(exchangeId: number, participantId: number): Promise<ExchangeParticipant> {
     return apiClient.get<ExchangeParticipant>(
       `/gift_exchanges/${exchangeId}/exchange_participants/${participantId}`

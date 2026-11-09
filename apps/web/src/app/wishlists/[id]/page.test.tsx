@@ -8,14 +8,18 @@ const mocks = vi.hoisted(() => ({
   wishlist: null as unknown,
   share: vi.fn(),
   revokeShare: vi.fn(),
+  reorderItems: vi.fn(),
+  setData: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
-vi.mock("@/services", () => ({ wishlistsService: { share: mocks.share, revokeShare: mocks.revokeShare } }));
+vi.mock("@/services", () => ({
+  wishlistsService: { share: mocks.share, revokeShare: mocks.revokeShare, reorderItems: mocks.reorderItems },
+}));
 vi.mock("@/hooks", () => ({
   useWorkspaceData: () => ({
     data: mocks.wishlist,
-    setData: vi.fn(),
+    setData: mocks.setData,
     isLoading: false,
     error: null,
     user: null,
@@ -138,5 +142,65 @@ describe("wishlist control names", () => {
     await renderPage();
     expect(screen.getByRole("button", { name: "Mark Lego set as purchased" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Remove claim on Lego set" })).toBeTruthy();
+  });
+});
+
+describe("exchanges that show this list", () => {
+  it("detail page says which exchanges see this list", async () => {
+    mocks.wishlist = wishlist({
+      visibility: "private",
+      exchanges: [{ id: 5, name: "Giannone XMas 2026", slug: "giannone-xmas-2026", status: "active" }],
+    });
+
+    await renderPage();
+
+    expect(screen.getByText("Your Secret Santa in Giannone XMas 2026 sees this list, even though it's private.")).toBeTruthy();
+  });
+
+  it("doesn't call a shared list private", async () => {
+    mocks.wishlist = wishlist({
+      visibility: "shared",
+      exchanges: [{ id: 5, name: "Giannone XMas 2026", slug: "giannone-xmas-2026", status: "active" }],
+    });
+
+    await renderPage();
+
+    expect(screen.getByText("Your Secret Santa in Giannone XMas 2026 sees this list.")).toBeTruthy();
+  });
+
+  it("says nothing for a list no exchange uses", async () => {
+    mocks.wishlist = wishlist({ exchanges: [] });
+
+    await renderPage();
+
+    expect(screen.queryByText(/Your Secret Santa in/)).toBeNull();
+  });
+});
+
+describe("putting a wishlist in order", () => {
+  const second = { ...item, id: 2, name: "Board game" } as StandaloneWishlistItem;
+
+  it("moves an item down", async () => {
+    mocks.wishlist = wishlist({ wishlist_items: [item, second] });
+    mocks.reorderItems.mockResolvedValue([second, item]);
+    mocks.setData.mockReset();
+
+    await renderPage();
+    expect(screen.getByLabelText("Rank 1")).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Move Lego set down" }));
+    });
+
+    expect(mocks.reorderItems).toHaveBeenCalledWith(7, { 2: 0, 1: 1 });
+    expect(mocks.setData).toHaveBeenCalledWith(expect.objectContaining({ wishlist_items: [second, item] }));
+  });
+
+  it("doesn't offer ordering to someone who doesn't own the list", async () => {
+    mocks.wishlist = wishlist({ is_owner: false, wishlist_items: [item, second] });
+
+    await renderPage();
+
+    expect(screen.queryByRole("button", { name: "Move Lego set down" })).toBeNull();
   });
 });

@@ -20,6 +20,7 @@ export interface WishlistItemsService {
     data: UpdateWishlistItemRequest["wishlist_item"]
   ): Promise<WishlistItem>;
   delete(exchangeId: number, participantId: number, itemId: number): Promise<void>;
+  reorder(exchangeId: number, participantId: number, itemIds: number[]): Promise<WishlistItem[]>;
   uploadPhoto(
     exchangeId: number,
     participantId: number,
@@ -66,6 +67,12 @@ export function createWishlistItemsService(client: ApiClient): WishlistItemsServ
 
     delete(exchangeId: number, participantId: number, itemId: number) {
       return client.delete(buildUrl(exchangeId, participantId, itemId));
+    },
+
+    reorder(exchangeId: number, participantId: number, itemIds: number[]) {
+      return client.patch<WishlistItem[]>(`${buildUrl(exchangeId, participantId)}/reorder`, {
+        item_ids: itemIds,
+      });
     },
 
     async uploadPhoto(
