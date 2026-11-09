@@ -34,10 +34,14 @@ export default function MyWishlistScreen() {
             tintColor={colors.primary}
           />
         }
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <WishlistItemCard
             item={item}
             editable
+            rank={index + 1}
+            total={controller.items.length}
+            onMoveUp={() => void controller.handleMoveItem(index, -1)}
+            onMoveDown={() => void controller.handleMoveItem(index, 1)}
             onDelete={() => controller.handleDeleteItem(item.id)}
           />
         )}
@@ -77,7 +81,7 @@ export default function MyWishlistScreen() {
           controller.items.length > 0 ? (
             <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
               {controller.items.length} item{controller.items.length !== 1 ? "s" : ""} in your
-              wishlist
+              wishlist. Your Secret Santa sees them in this order.
             </Text>
           ) : null
         }

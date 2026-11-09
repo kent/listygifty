@@ -11,11 +11,27 @@ interface WishlistItemCardProps {
   editable?: boolean;
   onDelete?: () => void;
   onPress?: () => void;
+  /** Place in the owner's order, starting at 1. */
+  rank?: number;
+  total?: number;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
 }
 
-export function WishlistItemCard({ item, editable = false, onDelete, onPress }: WishlistItemCardProps) {
+export function WishlistItemCard({
+  item,
+  editable = false,
+  onDelete,
+  onPress,
+  rank,
+  total,
+  onMoveUp,
+  onMoveDown,
+}: WishlistItemCardProps) {
   const { colors } = useTheme();
-  const formattedPrice = formatCurrency(item.price);
+  // Older APIs send one price and no display string.
+  const formattedPrice = item.price_display || formatCurrency(item.price);
+  const canReorder = editable && rank !== undefined && total !== undefined && onMoveUp && onMoveDown;
 
   const handleOpenLink = async () => {
     if (item.link) {
@@ -34,6 +50,24 @@ export function WishlistItemCard({ item, editable = false, onDelete, onPress }: 
       }}
     >
       <View style={{ flexDirection: "row", gap: 12 }}>
+        {rank !== undefined ? (
+          <View
+            accessible
+            accessibilityLabel={`Rank ${rank}`}
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 14,
+              backgroundColor: colors.surfaceSecondary,
+              justifyContent: "center",
+              alignItems: "center",
+              alignSelf: "center",
+            }}
+          >
+            <Text style={{ color: colors.primary, fontSize: 14, fontWeight: "700" }}>{rank}</Text>
+          </View>
+        ) : null}
+
         {/* Photo or placeholder */}
         {item.photo_url ? (
           <Image
@@ -96,6 +130,37 @@ export function WishlistItemCard({ item, editable = false, onDelete, onPress }: 
             ) : null}
           </View>
         </View>
+
+        {canReorder ? (
+          <View style={{ justifyContent: "center" }}>
+            <HapticPressable
+              onPress={(event) => {
+                event?.stopPropagation?.();
+                onMoveUp();
+              }}
+              disabled={rank === 1}
+              accessibilityRole="button"
+              accessibilityLabel={`Move ${item.name} up`}
+              accessibilityState={{ disabled: rank === 1 }}
+              style={{ padding: 4, opacity: rank === 1 ? 0.3 : 1 }}
+            >
+              <Ionicons name="chevron-up" size={22} color={colors.text} />
+            </HapticPressable>
+            <HapticPressable
+              onPress={(event) => {
+                event?.stopPropagation?.();
+                onMoveDown();
+              }}
+              disabled={rank === total}
+              accessibilityRole="button"
+              accessibilityLabel={`Move ${item.name} down`}
+              accessibilityState={{ disabled: rank === total }}
+              style={{ padding: 4, opacity: rank === total ? 0.3 : 1 }}
+            >
+              <Ionicons name="chevron-down" size={22} color={colors.text} />
+            </HapticPressable>
+          </View>
+        ) : null}
 
         {/* Delete button for editable items */}
         {editable && onDelete ? (

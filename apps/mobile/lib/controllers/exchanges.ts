@@ -14,6 +14,7 @@ import { scheduleExchangeReminder } from "@/lib/notifications";
 import { humanizeError } from "@/lib/error-message";
 import { normalizeAuthReturnPath } from "@/lib/auth-return";
 import { formatPhone } from "@/lib/formatters";
+import { moveItem } from "@/lib/move-item";
 import {
   buildCreateExchangePayload,
   buildCreateExchangeExclusionPayload,
@@ -881,11 +882,42 @@ export function useExchangeWishlistController() {
     [exchangeId, resource, resource.data.exchange?.my_participant?.id, wishlistItems]
   );
 
+  // Your Secret Santa sees the list in this order.
+  const moveItemInList = useCallback(
+    async (index: number, delta: -1 | 1) => {
+      const participantId = resource.data.exchange?.my_participant?.id;
+      if (!participantId) {
+        return;
+      }
+
+      const current = resource.data.items;
+      const reordered = moveItem(current, index, delta);
+      if (reordered === current) {
+        return;
+      }
+
+      resource.setData((state) => ({ ...state, items: reordered }));
+      try {
+        const saved = await wishlistItems.reorder(
+          exchangeId,
+          participantId,
+          reordered.map((item) => item.id)
+        );
+        resource.setData((state) => ({ ...state, items: saved }));
+      } catch {
+        Alert.alert("Error", "Couldn't save the new order");
+        await resource.reload();
+      }
+    },
+    [exchangeId, resource, wishlistItems]
+  );
+
   return {
     error: !isValidExchangeId ? "Invalid exchange ID" : resource.error,
     exchange: resource.data.exchange,
     handleAddItem: addItem,
     handleDeleteItem: deleteItem,
+    handleMoveItem: moveItemInList,
     items: resource.data.items,
     loading: isValidExchangeId && resource.loading,
     refreshing: resource.refreshing,

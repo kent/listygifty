@@ -1560,6 +1560,17 @@ export const screenshotServices = {
         [participantId]: getParticipantWishlist(participantId).filter((item) => item.id !== itemId),
       };
     },
+    async reorder(_exchangeId: number, participantId: number, itemIds: number[]) {
+      const byId = new Map(getParticipantWishlist(participantId).map((item) => [item.id, item]));
+      wishlistItemsStore = {
+        ...wishlistItemsStore,
+        [participantId]: itemIds.flatMap((id) => {
+          const item = byId.get(id);
+          return item ? [item] : [];
+        }),
+      };
+      return clone(getParticipantWishlist(participantId));
+    },
     async uploadPhoto(_exchangeId: number, participantId: number, itemId: number, _formData: FormData) {
       wishlistItemsStore = {
         ...wishlistItemsStore,
