@@ -12,6 +12,7 @@ class DemoAccount
   RESET_AFTER = 1.hour
   TICKET_LIFETIME = 10.minutes
   WISHLIST_NAME = "My Birthday Wishlist"
+  ALEX_EMAIL = "alex.parker@example.com".freeze
 
   def self.email?(value)
     value.is_a?(String) && value.strip.casecmp?(EMAIL)
@@ -148,16 +149,29 @@ class DemoAccount
       exchange_date: Date.new(2026, 12, 20), budget_min: 25, budget_max: 50)
     participants = {
       demo: exchange.exchange_participants.create!(user: user, name: "#{FIRST_NAME} #{LAST_NAME}", email: EMAIL, status: "accepted"),
-      alex: exchange.exchange_participants.create!(name: "Alex Parker", email: "alex.parker@example.com", status: "accepted"),
+      alex: exchange.exchange_participants.create!(name: "Alex Parker", email: ALEX_EMAIL, status: "accepted"),
       sam: exchange.exchange_participants.create!(name: "Sam Lee", email: "sam.lee@example.com", status: "accepted"),
       nina: exchange.exchange_participants.create!(name: "Nina Rivera", email: "nina.rivera@example.com", status: "accepted")
     }
     { demo: :alex, alex: :nina, nina: :sam, sam: :demo }.each do |giver, receiver|
       participants.fetch(giver).update!(matched_participant: participants.fetch(receiver))
     end
-    participants.fetch(:demo).exchange_wishlist_items.create!(name: "Coffee subscription", price: 35,
-      description: "Light roast, whole bean.", link: "https://example.com/coffee-subscription")
-    participants.fetch(:alex).exchange_wishlist_items.create!(name: "Desk plant", price: 28,
-      description: "Something hard to kill.", link: "https://example.com/desk-plant")
+    demo = participants.fetch(:demo)
+    demo.update!(wishlist: workspace.wishlists.find_by!(user: user, name: "Holiday Wishlist"))
+    demo.wishlist.wishlist_items.create!(name: "Coffee subscription", price_min: 35, price_max: 35,
+      notes: "Light roast, whole bean.", url: "https://example.com/coffee-subscription")
+
+    # Alex needs an account to own a wishlist. It never signs in, and its list
+    # lives in the demo workspace, private, so a reset clears it with the rest.
+    alex = participants.fetch(:alex)
+    alex_user = User.find_or_create_by!(email: ALEX_EMAIL) do |placeholder|
+      placeholder.clerk_user_id = "demo_alex_parker"
+      placeholder.first_name = "Alex"
+      placeholder.last_name = "Parker"
+    end
+    alex_list = workspace.wishlists.create!(user: alex_user, name: Wishlist::DEFAULT_NAME, visibility: "private")
+    alex_list.wishlist_items.create!(name: "Desk plant", price_min: 28, price_max: 28,
+      notes: "Something hard to kill.", url: "https://example.com/desk-plant")
+    alex.update!(user: alex_user, wishlist: alex_list)
   end
 end

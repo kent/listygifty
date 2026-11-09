@@ -666,10 +666,10 @@ class McpController < ApplicationController
         }
       },
       "list_wishlist_items" => {
-        description: "List the active items on a wishlist the user can see, highest priority first.",
+        description: "List the active items on a wishlist the user can see, in the owner's order of preference.",
         scope: "read",
         schema: tool_schema({ wishlist_id: integer_property("Wishlist ID") }, [ "wishlist_id" ]),
-        handler: ->(args) { serialize_wishlist_items(find_wishlist(args["wishlist_id"]).wishlist_items.active.by_priority) }
+        handler: ->(args) { serialize_wishlist_items(find_wishlist(args["wishlist_id"]).wishlist_items.active.ordered) }
       },
       "create_wishlist_item" => {
         description: "Add an item to a wishlist the user owns, for example when they say \"add noise-cancelling headphones to my birthday wishlist\". Include a product URL, price range, priority, or quantity when the user gives one. Anyone the wishlist is shared with will see the new item.",
