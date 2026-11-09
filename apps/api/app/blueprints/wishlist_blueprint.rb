@@ -34,6 +34,15 @@ class WishlistBlueprint < ApplicationBlueprint
     wishlist.claimed_count(viewer: options[:current_user])
   end
 
+  # Only the owner learns which of their exchanges show this list.
+  field :exchanges do |wishlist, options|
+    next [] unless options[:current_user] && wishlist.owner?(options[:current_user])
+
+    wishlist.linked_exchanges.order(:id).map do |exchange|
+      { id: exchange.id, name: exchange.name, slug: exchange.slug, status: exchange.status }
+    end
+  end
+
   field :owner do |wishlist|
     {
       id: wishlist.user.id,
@@ -44,7 +53,7 @@ class WishlistBlueprint < ApplicationBlueprint
 
   view :with_items do
     association :wishlist_items, blueprint: WishlistItemBlueprint do |wishlist, _options|
-      wishlist.wishlist_items.active.by_priority
+      wishlist.wishlist_items.active.ordered
     end
   end
 
@@ -57,7 +66,7 @@ class WishlistBlueprint < ApplicationBlueprint
 
     # Blueprinter only merges a Hash here. A lambda is silently ignored.
     association :wishlist_items, blueprint: WishlistItemBlueprint, options: { public_view: true } do |wishlist, _options|
-      wishlist.wishlist_items.active.by_priority
+      wishlist.wishlist_items.active.ordered
     end
   end
 

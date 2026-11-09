@@ -26,7 +26,7 @@ class ExchangeParticipantBlueprint < ApplicationBlueprint
   end
 
   field :wishlist_count do |participant|
-    participant.exchange_wishlist_items.count
+    participant.wishlist_items.size
   end
 
   view :with_match do
@@ -41,7 +41,23 @@ class ExchangeParticipantBlueprint < ApplicationBlueprint
   end
 
   view :with_wishlist do
-    association :exchange_wishlist_items, blueprint: ExchangeWishlistItemBlueprint, name: :wishlist_items
+    field :wishlist_items do |participant|
+      ExchangeWishlistItemBlueprint.render_as_hash(participant.wishlist_items, participant_id: participant.id)
+    end
+  end
+
+  # The person's own place in an exchange: which of their wishlists it uses.
+  view :own do
+    field :wishlist do |participant|
+      next nil unless participant.wishlist
+
+      { id: participant.wishlist.id, name: participant.wishlist.name, item_count: participant.wishlist_items.size }
+    end
+  end
+
+  view :own_with_match do
+    include_view :with_match
+    include_view :own
   end
 
   view :organizer do

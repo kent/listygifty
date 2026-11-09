@@ -28,7 +28,7 @@ class SendWishlistRemindersJob < ApplicationJob
     ExchangeParticipant
       .accepted
       .where.not(user_id: nil)
-      .where.missing(:exchange_wishlist_items)
+      .where.missing(:wishlist_items)
       .where(created_at: ..FIRST_AFTER.ago)
       .joins(:gift_exchange)
       .where(gift_exchanges: { status: %w[inviting active] })

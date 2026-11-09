@@ -215,7 +215,7 @@ class AdminMcpControllerTest < ActionDispatch::IntegrationTest
     assert_includes names, "admin_confirm_user_deletion"
 
     resources = call_tool("admin_list_resource_types").fetch("resources").pluck("name")
-    assert_equal 28, resources.length
+    assert_equal 27, resources.length
     assert_includes resources, "email_deliveries"
     assert_includes resources, "gift_suggestions"
   end

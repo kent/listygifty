@@ -39,3 +39,23 @@ describe("wishlists page when the list can't be loaded", () => {
     expect(screen.queryByText(/Request timeout/)).toBeNull();
   });
 });
+
+describe("wishlists used by exchanges", () => {
+  it("says which exchanges use a list", async () => {
+    mocks.getAll.mockResolvedValue([
+      {
+        id: 9, name: "My Wishlist", is_owner: true, item_count: 6, claimed_count: 0, visibility: "private", target_date: null,
+        exchanges: [
+          { id: 4, name: "Family Christmas 2026", slug: "family-christmas-2026-2", status: "active" },
+          { id: 5, name: "Giannone XMas 2026", slug: "giannone-xmas-2026", status: "active" },
+        ],
+      },
+      { id: 10, name: "Birthday", is_owner: true, item_count: 0, claimed_count: 0, visibility: "private", target_date: null, exchanges: [] },
+    ]);
+
+    render(<WishlistsPage />);
+
+    expect(await screen.findByText("Used in Family Christmas 2026, Giannone XMas 2026")).toBeTruthy();
+    expect(screen.getAllByText(/^Used in/)).toHaveLength(1);
+  });
+});

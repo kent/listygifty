@@ -103,8 +103,13 @@ Rails.application.routes.draw do
       member do
         post :resend_invite
         post :nudge
+        patch :wishlist, action: :update_wishlist
       end
-      resources :exchange_wishlist_items, only: %i[index show create update destroy]
+      resources :exchange_wishlist_items, only: %i[index show create update destroy] do
+        collection do
+          patch :reorder
+        end
+      end
     end
     resources :exchange_exclusions, only: %i[index create destroy]
   end

@@ -106,7 +106,7 @@ class AccountDeletionServiceTest < ActiveSupport::TestCase
     # Exchanges on both sides of the line.
     owned = inviting_exchange(leaver, relative, name: "Their exchange")
     _, rows = drawn_exchange(relative, leaver, admin, name: "Relative's exchange")
-    rows.second.exchange_wishlist_items.create!(name: "Tea")
+    rows.second.wishlist!.wishlist_items.create!(name: "Tea")
 
     details = [ leaver.email, leaver.last_name, leaver.phone, leaver.username ]
 
@@ -177,13 +177,13 @@ class AccountDeletionServiceTest < ActiveSupport::TestCase
     organizer = person("organizer")
     leaver = person("leaver")
     _, (organizer_row, leaver_row, _third_row) = drawn_exchange(organizer, leaver, person("third"))
-    idea = leaver_row.exchange_wishlist_items.create!(name: "Tea")
+    idea = leaver_row.wishlist!.wishlist_items.create!(name: "Tea")
     notification = ExchangeNotification.create!(gift_exchange: organizer_row.gift_exchange,
-      recipient_participant: organizer_row, exchange_wishlist_item: idea, kind: "wishlist_item_added")
+      recipient_participant: organizer_row, wishlist_item: idea, kind: "wishlist_item_added")
 
     AccountDeletionService.delete!(leaver)
 
-    assert_not ExchangeWishlistItem.exists?(idea.id)
+    assert_not WishlistItem.exists?(idea.id)
     assert_not ExchangeNotification.exists?(notification.id)
   end
 
@@ -191,7 +191,7 @@ class AccountDeletionServiceTest < ActiveSupport::TestCase
     organizer = person("organizer")
     leaver = person("leaver")
     _, (_organizer_row, leaver_row, _third_row) = drawn_exchange(organizer, leaver, person("third"))
-    idea = leaver_row.exchange_wishlist_items.create!(name: "Tea")
+    idea = leaver_row.wishlist!.wishlist_items.create!(name: "Tea")
     idea.photo.attach(io: StringIO.new("image"), filename: "tea.png", content_type: "image/png")
     clear_enqueued_jobs
 
@@ -280,9 +280,9 @@ class AccountDeletionServiceTest < ActiveSupport::TestCase
   test "an owned exchange with a wishlist notification can still be deleted" do
     leaver = person("leaver")
     exchange, (leaver_row, relative_row, *) = drawn_exchange(leaver, person("relative"))
-    idea = relative_row.exchange_wishlist_items.create!(name: "Tea")
+    idea = relative_row.wishlist!.wishlist_items.create!(name: "Tea")
     ExchangeNotification.create!(gift_exchange: exchange, recipient_participant: leaver_row,
-      exchange_wishlist_item: idea, kind: "wishlist_item_added")
+      wishlist_item: idea, kind: "wishlist_item_added")
 
     AccountDeletionService.delete!(leaver)
 

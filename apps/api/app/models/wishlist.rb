@@ -1,10 +1,13 @@
 class Wishlist < ApplicationRecord
   VISIBILITIES = %w[private workspace shared].freeze
+  DEFAULT_NAME = "My Wishlist".freeze
 
   belongs_to :user
   belongs_to :workspace
   has_many :wishlist_items, dependent: :destroy
   has_many :claims, through: :wishlist_items
+  # Exchanges show this list to the owner's Secret Santa.
+  has_many :exchange_participants, dependent: :nullify
 
   has_secure_token :share_token
 
@@ -49,6 +52,28 @@ class Wishlist < ApplicationRecord
 
   def revoke_share_link!
     update!(share_token: nil, visibility: "private")
+  end
+
+  # Exchanges where the owner uses this list.
+  def linked_exchanges
+    GiftExchange.where(id: exchange_participants.where(user_id: user_id).select(:gift_exchange_id))
+  end
+
+  # Puts every active item in the given order. The ids must be exactly the
+  # active items, so a stale screen can't drop or invent one.
+  def reorder!(item_ids:)
+    ids = Array(item_ids).map { |id| Integer(id.to_s, exception: false) }
+    with_lock do
+      active_ids = wishlist_items.active.pluck(:id)
+      unless ids.size == active_ids.size && ids.compact.sort == active_ids.sort
+        raise ArgumentError, "item_ids must list every item on the wishlist exactly once"
+      end
+
+      now = Time.current
+      ids.each_with_index do |id, position|
+        wishlist_items.where(id: id).update_all(position: position, updated_at: now)
+      end
+    end
   end
 
   def item_count

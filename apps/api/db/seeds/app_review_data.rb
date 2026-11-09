@@ -610,23 +610,37 @@ module AppReviewSeedData
       )
       participant.name = attrs[:name]
       participant.status = "accepted"
-      participant.user = attrs[:reviewer] ? user : nil
+      if attrs[:reviewer]
+        participant.user = user
+      else
+        # A wishlist needs an owner, so the reviewer's match gets an account
+        # that never signs in. Its list lives in the review workspace, private.
+        participant.user = placeholder_user(attrs)
+        participant.wishlist ||= exchange.workspace.wishlists.find_or_create_by!(
+          user: participant.user, name: Wishlist::DEFAULT_NAME
+        ) { |list| list.visibility = "private" }
+      end
       participant.save!
       participants[attrs[:key]] = participant
     end
   end
 
+  def placeholder_user(attrs)
+    User.find_or_create_by!(email: attrs[:email]) do |placeholder|
+      placeholder.clerk_user_id = "seed_review_#{attrs[:key]}"
+      placeholder.first_name, placeholder.last_name = attrs[:name].split(" ", 2)
+    end
+  end
+
   def ensure_exchange_wishlist_items(participants)
     EXCHANGE_PARTICIPANTS.each do |participant_attrs|
-      participant = participants.fetch(participant_attrs[:key])
+      wishlist = participants.fetch(participant_attrs[:key]).wishlist!
       participant_attrs[:wishlist_items].each do |attrs|
-        item = ExchangeWishlistItem.find_or_initialize_by(
-          exchange_participant: participant,
-          name: attrs[:name]
-        )
-        item.description = attrs[:description]
-        item.price = attrs[:price]
-        item.link = attrs[:link]
+        item = wishlist.wishlist_items.find_or_initialize_by(name: attrs[:name])
+        item.notes = attrs[:description]
+        item.url = attrs[:link]
+        item.price_min = attrs[:price]
+        item.price_max = attrs[:price]
         item.save!
       end
     end

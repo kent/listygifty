@@ -167,7 +167,7 @@ class GiftExchangeLifecycleTest < ActionDispatch::IntegrationTest
         as: :json
 
       assert_response :created
-      ExchangeWishlistItem.find(json_response.fetch("id"))
+      WishlistItem.find(json_response.fetch("id"))
     end
   end
 
@@ -291,13 +291,13 @@ class GiftExchangeLifecycleTest < ActionDispatch::IntegrationTest
         as: :json
       assert_response :success
       assert_equal matched_participant.id, json_response["id"]
-      assert_equal matched_participant.exchange_wishlist_items.count, json_response.fetch("wishlist_items").size
+      assert_equal matched_participant.wishlist_items.count, json_response.fetch("wishlist_items").size
 
       get gift_exchange_exchange_participant_exchange_wishlist_items_path(exchange, matched_participant),
         headers: headers,
         as: :json
       assert_response :success
-      assert_equal matched_participant.exchange_wishlist_items.pluck(:name).sort,
+      assert_equal matched_participant.wishlist_items.pluck(:name).sort,
         json_response.map { |item| item["name"] }.sort
 
       get gift_exchange_exchange_participant_path(exchange, unmatched_participant),

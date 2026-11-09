@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_09_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -270,10 +270,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
     t.datetime "read_at"
     t.bigint "recipient_participant_id", null: false
     t.datetime "updated_at", null: false
+    t.bigint "wishlist_item_id"
     t.index ["exchange_wishlist_item_id"], name: "index_exchange_notifications_on_exchange_wishlist_item_id"
     t.index ["gift_exchange_id"], name: "index_exchange_notifications_on_gift_exchange_id"
     t.index ["recipient_participant_id", "kind", "created_at"], name: "index_exchange_notifications_for_delivery"
     t.index ["recipient_participant_id"], name: "index_exchange_notifications_on_recipient_participant_id"
+    t.index ["wishlist_item_id"], name: "index_exchange_notifications_on_wishlist_item_id"
   end
 
   create_table "exchange_participants", force: :cascade do |t|
@@ -289,6 +291,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
     t.datetime "text_consent_at"
     t.datetime "updated_at", null: false
     t.bigint "user_id"
+    t.bigint "wishlist_id"
     t.index ["email"], name: "index_exchange_participants_on_email"
     t.index ["gift_exchange_id", "email"], name: "index_exchange_participants_on_gift_exchange_id_and_email", unique: true
     t.index ["gift_exchange_id"], name: "index_exchange_participants_on_gift_exchange_id"
@@ -296,6 +299,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
     t.index ["matched_participant_id"], name: "index_exchange_participants_on_matched_participant_id"
     t.index ["status"], name: "index_exchange_participants_on_status"
     t.index ["user_id"], name: "index_exchange_participants_on_user_id"
+    t.index ["wishlist_id"], name: "index_exchange_participants_on_wishlist_id"
   end
 
   create_table "exchange_wishlist_items", force: :cascade do |t|
@@ -306,8 +310,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
     t.string "name", null: false
     t.decimal "price", precision: 10, scale: 2
     t.datetime "updated_at", null: false
+    t.bigint "wishlist_item_id"
     t.index ["exchange_participant_id"], name: "index_exchange_wishlist_items_on_exchange_participant_id"
     t.index ["name"], name: "index_exchange_wishlist_items_on_name"
+    t.index ["wishlist_item_id"], name: "index_exchange_wishlist_items_on_wishlist_item_id"
   end
 
   create_table "gift_changes", force: :cascade do |t|
@@ -913,12 +919,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
   add_foreign_key "exchange_exclusions", "exchange_participants", column: "participant_b_id"
   add_foreign_key "exchange_exclusions", "gift_exchanges"
   add_foreign_key "exchange_notifications", "exchange_participants", column: "recipient_participant_id"
-  add_foreign_key "exchange_notifications", "exchange_wishlist_items"
+  add_foreign_key "exchange_notifications", "exchange_wishlist_items", on_delete: :nullify
   add_foreign_key "exchange_notifications", "gift_exchanges"
+  add_foreign_key "exchange_notifications", "wishlist_items", on_delete: :cascade
   add_foreign_key "exchange_participants", "exchange_participants", column: "matched_participant_id"
   add_foreign_key "exchange_participants", "gift_exchanges"
   add_foreign_key "exchange_participants", "users"
-  add_foreign_key "exchange_wishlist_items", "exchange_participants"
+  add_foreign_key "exchange_participants", "wishlists", on_delete: :nullify
+  add_foreign_key "exchange_wishlist_items", "exchange_participants", on_delete: :cascade
+  add_foreign_key "exchange_wishlist_items", "wishlist_items", on_delete: :cascade
   add_foreign_key "gift_changes", "gifts"
   add_foreign_key "gift_changes", "holidays"
   add_foreign_key "gift_changes", "users"

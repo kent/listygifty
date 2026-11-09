@@ -70,9 +70,9 @@ export default function MyMatchScreen() {
             </View>
           </View>
         }
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View style={{ marginBottom: 12 }}>
-            <WishlistItemCard item={item} />
+            <WishlistItemCard item={item} rank={index + 1} />
           </View>
         )}
         ListEmptyComponent={

@@ -6,7 +6,7 @@ class WishlistItemsController < ApplicationController
   before_action :require_owner, only: %i[create update destroy reorder]
 
   def index
-    items = @wishlist.wishlist_items.active.by_priority.includes(:claims)
+    items = @wishlist.wishlist_items.active.ordered.includes(:claims)
     render json: WishlistItemBlueprint.render(items, current_user: current_user)
   end
 
@@ -18,6 +18,7 @@ class WishlistItemsController < ApplicationController
     item = @wishlist.wishlist_items.build(item_params)
 
     if item.save
+      ExchangeNotificationService.wishlist_item_added!(item)
       render json: WishlistItemBlueprint.render(item, current_user: current_user), status: :created
     else
       render json: { errors: item.errors.full_messages }, status: :unprocessable_entity
@@ -50,7 +51,7 @@ class WishlistItemsController < ApplicationController
       end
     end
 
-    items = @wishlist.wishlist_items.active.by_position
+    items = @wishlist.wishlist_items.active.ordered
     render json: WishlistItemBlueprint.render(items, current_user: current_user)
   rescue ActiveRecord::RecordNotFound => e
     render json: { error: "Item not found: #{e.message}" }, status: :not_found

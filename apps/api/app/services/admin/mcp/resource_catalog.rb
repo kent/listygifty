@@ -26,7 +26,6 @@ module Admin
         "gift_exchanges" => GiftExchange,
         "exchange_participants" => ExchangeParticipant,
         "exchange_exclusions" => ExchangeExclusion,
-        "exchange_wishlist_items" => ExchangeWishlistItem,
         "exchange_notifications" => ExchangeNotification,
         "match_arrangements" => MatchArrangement,
         "match_slots" => MatchSlot,

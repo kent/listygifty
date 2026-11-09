@@ -102,7 +102,7 @@ class ExchangeMailer < ApplicationMailer
     @participant = notification.recipient_participant
     @exchange = notification.gift_exchange
     @match = @participant.matched_participant
-    @item = notification.exchange_wishlist_item
+    @item = notification.wishlist_item
     @frontend_url = ENV.fetch("FRONTEND_URL", "https://listygifty.com")
     @exchange_url = "#{@frontend_url}/exchanges/#{@exchange.slug}/my-match"
 

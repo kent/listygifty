@@ -167,12 +167,12 @@ class AllMailersRenderTest < ActionMailer::TestCase
   end
 
   def wishlist_added_notification(recipient)
-    item = recipient.matched_participant.exchange_wishlist_items.create!(name: "Wool socks")
+    item = recipient.matched_participant.wishlist!.wishlist_items.create!(name: "Wool socks")
     ExchangeNotification.create!(
       gift_exchange: @exchange,
       recipient_participant: recipient,
       kind: "wishlist_item_added",
-      exchange_wishlist_item: item
+      wishlist_item: item
     )
   end
 

@@ -1,11 +1,11 @@
 class ExchangeParticipantsController < ApplicationController
   before_action :set_gift_exchange
   before_action :require_owner, only: %i[create update destroy resend_invite nudge]
-  before_action :set_participant, only: %i[show update destroy resend_invite nudge]
+  before_action :set_participant, only: %i[show update destroy resend_invite nudge update_wishlist]
   before_action :require_editable, only: %i[create update destroy resend_invite nudge]
 
   def index
-    participants = @gift_exchange.exchange_participants.includes(:user, :exchange_wishlist_items)
+    participants = @gift_exchange.exchange_participants.includes(:user, :wishlist_items)
     if @gift_exchange.owner?(current_user)
       render json: ExchangeParticipantBlueprint.render(participants, view: :organizer)
     else
@@ -47,6 +47,20 @@ class ExchangeParticipantsController < ApplicationController
   def destroy
     @participant.destroy!
     head :no_content
+  end
+
+  # PATCH /gift_exchanges/:gift_exchange_id/exchange_participants/:id/wishlist
+  # Points this exchange at another of the person's own wishlists.
+  def update_wishlist
+    unless @participant.user_id == current_user.id
+      return render json: { error: "You can only choose the wishlist for your own place" }, status: :forbidden
+    end
+
+    wishlist = current_user.wishlists.find_by(id: params[:wishlist_id])
+    return render json: { error: "Wishlist not found" }, status: :not_found unless wishlist
+
+    @participant.update!(wishlist: wishlist)
+    render json: ExchangeParticipantBlueprint.render(@participant, view: :own)
   end
 
   def resend_invite
@@ -94,7 +108,7 @@ class ExchangeParticipantsController < ApplicationController
   def set_gift_exchange
     @gift_exchange = GiftExchange
                      .for_user(current_user)
-                     .includes(exchange_participants: [ :matched_participant, :exchange_wishlist_items ])
+                     .includes(exchange_participants: [ :matched_participant, :wishlist, :wishlist_items ])
                      .find(params[:gift_exchange_id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Gift exchange not found" }, status: :not_found
@@ -118,7 +132,7 @@ class ExchangeParticipantsController < ApplicationController
   end
 
   def participant_response_view
-    return :default if @participant.user_id == current_user.id
+    return :own if @participant.user_id == current_user.id
     return :with_wishlist if current_user_matched_to_participant?
     return :organizer if @gift_exchange.owner?(current_user)
 

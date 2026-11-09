@@ -697,4 +697,15 @@ class GiftExchangesApiTest < ActionDispatch::IntegrationTest
     get gift_exchanges_path, as: :json
     assert_response :unauthorized
   end
+  test "the organizer's own place in a new exchange uses their wishlist" do
+    list = @user.personal_workspace.wishlists.create!(user: @user, name: "Birthday")
+    @participant.update!(wishlist: list)
+
+    post gift_exchanges_path, headers: @auth_headers, as: :json,
+      params: { gift_exchange: { name: "Office Swap", budget_max: 30 } }
+
+    assert_response :created
+    place = GiftExchange.find(json_response["id"]).participant_for(@user)
+    assert_equal list, place.wishlist
+  end
 end

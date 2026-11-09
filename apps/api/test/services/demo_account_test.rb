@@ -36,13 +36,32 @@ class DemoAccountTest < ActiveSupport::TestCase
     assert_equal "user_demo_created", user.clerk_user_id
 
     workspace = user.personal_workspace
-    assert_equal [ "Holiday Wishlist", "My Birthday Wishlist" ], workspace.wishlists.pluck(:name).sort
+    assert_equal [ "Holiday Wishlist", "My Birthday Wishlist" ], user.wishlists.where(workspace: workspace).pluck(:name).sort
     assert_equal 3, workspace.wishlists.find_by!(name: "My Birthday Wishlist").wishlist_items.count
     assert_equal [ "Christmas 2026", "Mom's Birthday" ], workspace.holidays.pluck(:name).sort
     assert_equal 3, workspace.people.count
     exchange = workspace.gift_exchanges.sole
     assert_equal "active", exchange.status
     assert_equal "Alex Parker", exchange.participant_for(user).matched_participant.name
+  end
+
+  test "demo match still has Desk plant, and the demo exchange uses the Holiday Wishlist" do
+    DemoAccount.new(clerk: @clerk).sign_in_ticket!
+    user = User.find_by!(email: DemoAccount::EMAIL)
+    mine = user.personal_workspace.gift_exchanges.sole.participant_for(user)
+
+    assert_equal [ "Desk plant" ], mine.matched_participant.wishlist_items.map(&:name)
+    assert_equal "Holiday Wishlist", mine.wishlist.name
+    assert_equal [ "Cozy reading lamp", "Coffee subscription" ], mine.wishlist_items.map(&:name)
+  end
+
+  test "a reset doesn't pile up Alex's wishlists" do
+    DemoAccount.new(clerk: @clerk).sign_in_ticket!
+    travel DemoAccount::RESET_AFTER + 1.minute
+    DemoAccount.new(clerk: FakeClerk.new([ "user_demo_created" ], [], [])).sign_in_ticket!
+
+    alex = User.find_by!(email: "alex.parker@example.com")
+    assert_equal 1, alex.wishlists.count
   end
 
   test "reuses the Clerk user that already has the demo email" do

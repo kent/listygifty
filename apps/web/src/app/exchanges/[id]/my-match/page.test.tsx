@@ -63,3 +63,27 @@ describe("asking your match for more ideas", () => {
     expect(screen.getByRole("button", { name: /^Ask for more ideas/ })).toBeTruthy();
   });
 });
+
+describe("getting back to your own wishlist", () => {
+  it("links to your own wishlist", async () => {
+    await renderPage();
+
+    const link = await screen.findByRole("link", { name: "Your wishlist" });
+    expect(link.getAttribute("href")).toBe("/exchanges/family-christmas/my-wishlist");
+  });
+
+  it("numbers your match's ideas in their order", async () => {
+    mocks.getById.mockResolvedValue({
+      display_name: "Ana",
+      wishlist_items: [
+        { id: 1, name: "Mixer bowl", description: null, link: null, price: null, photo_url: null, has_photo: false },
+        { id: 2, name: "Wool socks", description: null, link: null, price: null, photo_url: null, has_photo: false },
+      ],
+    });
+
+    await renderPage();
+
+    expect(await screen.findByLabelText("Rank 1")).toBeTruthy();
+    expect(screen.getByLabelText("Rank 2")).toBeTruthy();
+  });
+});

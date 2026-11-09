@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Gift, DollarSign, ExternalLink, Image, Calendar, List, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { ItemRank } from "@/components/wishlists/item-order-controls";
 import type { GiftExchange, ExchangeParticipantWithWishlist } from "@niftygifty/types";
 
 export default function MyMatchPage({
@@ -130,13 +131,22 @@ export default function MyMatchPage({
       <AppHeader user={user} onSignOut={signOut} />
 
       <main className="relative z-10 container mx-auto px-4 py-8 max-w-3xl">
-        <Link
-          href={`/exchanges/${slug}`}
-          className="inline-flex items-center text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to {exchange.name}
-        </Link>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <Link
+            href={`/exchanges/${slug}`}
+            className="inline-flex items-center text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to {exchange.name}
+          </Link>
+          {/* After the draw, Home sends people here, so this is the way back to their own list. */}
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/exchanges/${slug}/my-wishlist`}>
+              <List className="h-4 w-4 mr-2" />
+              Your wishlist
+            </Link>
+          </Button>
+        </div>
 
         {/* Match Reveal Card */}
         <Card className="border-amber-200 dark:border-slate-800 bg-gradient-to-br from-amber-500/10 to-orange-500/10 mb-8">
@@ -201,10 +211,11 @@ export default function MyMatchPage({
           </Card>
         ) : (
           <div className="space-y-3">
-            {wishlistItems.map((item) => (
+            {wishlistItems.map((item, index) => (
               <Card key={item.id} className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
+                    <ItemRank rank={index + 1} />
                     {item.photo_url ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
@@ -224,10 +235,9 @@ export default function MyMatchPage({
                         <p className="break-words text-sm text-slate-600 dark:text-slate-400 mt-1">{item.description}</p>
                       )}
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
-                        {item.price && (
-                          <span className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
-                            <DollarSign className="h-3 w-3" />
-                            {parseFloat(item.price).toFixed(2)}
+                        {(item.price_display || item.price) && (
+                          <span className="text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                            {item.price_display || `$${parseFloat(item.price!).toFixed(2)}`}
                           </span>
                         )}
                         {item.link && (

@@ -24,6 +24,39 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
     assert json_response.any? { |w| w["id"] == @wishlist.id }
   end
 
+  test "items come back in position order even when priority differs" do
+    low = @wishlist.wishlist_items.create!(name: "First by hand", position: 0, priority: 0)
+    high = @wishlist.wishlist_items.create!(name: "Most wanted", position: 1, priority: WishlistItem::PRIORITIES[:most_wanted])
+
+    get wishlist_wishlist_items_path(@wishlist), headers: @auth_headers, as: :json
+    assert_equal [ low.id, high.id ], json_response.map { _1["id"] }
+
+    get wishlist_path(@wishlist), headers: @auth_headers, as: :json
+    assert_equal [ low.id, high.id ], json_response["wishlist_items"].map { _1["id"] }
+
+    @wishlist.update!(visibility: "shared")
+    get "/w/#{@wishlist.share_token}", as: :json
+    assert_equal [ low.id, high.id ], json_response["wishlist_items"].map { _1["id"] }
+  end
+
+  test "owner sees which exchanges use the list, others don't" do
+    exchange = GiftExchange.create!(workspace: workspaces(:two), user: users(:two), name: "Giannone", budget_max: 50)
+    exchange.exchange_participants.create!(user: @user, name: "Alice", email: @user.email, status: "accepted", wishlist: @wishlist)
+    @wishlist.update!(visibility: "workspace")
+
+    get wishlist_path(@wishlist), headers: @auth_headers, as: :json
+    assert_equal [ { "id" => exchange.id, "name" => "Giannone", "slug" => exchange.slug, "status" => exchange.status } ],
+      json_response["exchanges"]
+
+    get wishlists_path, headers: @auth_headers, as: :json
+    assert_equal [ "Giannone" ], json_response.find { _1["id"] == @wishlist.id }["exchanges"].map { _1["name"] }
+
+    WorkspaceMembership.create!(workspace: @workspace, user: users(:two), role: "member")
+    get wishlist_path(@wishlist), headers: auth_headers_for(users(:two), workspace: @workspace), as: :json
+    assert_response :success
+    assert_equal [], json_response["exchanges"]
+  end
+
   test "show returns a wishlist" do
     get wishlist_path(@wishlist), headers: @auth_headers, as: :json
     assert_response :success

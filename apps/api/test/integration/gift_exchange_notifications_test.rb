@@ -171,10 +171,10 @@ class GiftExchangeNotificationsTest < ActionDispatch::IntegrationTest
       mail.subject.include?("Your Secret Santa needs a little help")
     end
 
-    wishlist_item = giver.exchange_wishlist_items.create!(name: "A useful idea")
+    wishlist_item = giver.wishlist!.wishlist_items.create!(name: "A useful idea")
     wishlist_notification = @exchange.exchange_notifications.create!(
       recipient_participant: recipient,
-      exchange_wishlist_item: wishlist_item,
+      wishlist_item: wishlist_item,
       kind: "wishlist_item_added"
     )
     wishlist_mail = ExchangeMailer.wishlist_updated(wishlist_notification).deliver_now
