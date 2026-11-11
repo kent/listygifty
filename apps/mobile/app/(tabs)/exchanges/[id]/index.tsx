@@ -13,6 +13,8 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { ParticipantListItem } from "@/components/ParticipantListItem";
 import { ExchangeExclusionsSection } from "@/components/ExchangeExclusionsSection";
 import { ScreenLoader } from "@/components/ScreenLoader";
+import { MatchRevealCard } from "@/components/MatchRevealCard";
+import { MatchWishlistSection } from "@/components/MatchWishlistSection";
 import { formatBudgetRange, formatLongDate } from "@/lib/formatters";
 import { canManageExchangeWishlist, canViewExchangeMatch, getExchangeWishlistSubtitle } from "@/lib/models";
 import { useTheme } from "@/lib/theme";
@@ -59,10 +61,13 @@ export default function ExchangeDetailScreen() {
   const isActive = exchange.status === "active";
   const canAddParticipants =
     exchange.is_owner && exchange.status !== "active" && exchange.status !== "completed";
-  const hasMatch = canViewExchangeMatch(exchange);
+  const matchedParticipant = canViewExchangeMatch(exchange)
+    ? exchange.my_participant?.matched_participant
+    : null;
+  const matchName = matchedParticipant?.display_name || matchedParticipant?.name || "";
   const canManageWishlist = canManageExchangeWishlist(exchange);
   const shouldShowParticipantActions =
-    canManageWishlist || hasMatch || controller.canScheduleReminder;
+    canManageWishlist || Boolean(matchedParticipant) || controller.canScheduleReminder;
 
   return (
     <ScrollView
@@ -193,31 +198,16 @@ export default function ExchangeDetailScreen() {
 
       {shouldShowParticipantActions ? (
         <View style={{ gap: 12, marginBottom: 24 }}>
-          {hasMatch ? (
-            <TouchableOpacity
-              onPress={controller.goToMatch}
-              style={{
-                backgroundColor: colors.successLight,
-                padding: 16,
-                borderRadius: 12,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                <Ionicons name="gift-outline" size={24} color={colors.success} />
-                <View>
-                  <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600" }}>
-                    Unwrap My Match
-                  </Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
-                    See your person and their gift ideas
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.success} />
-            </TouchableOpacity>
+          {matchedParticipant ? (
+            <View testID="match-overview" style={{ gap: 16, marginBottom: 12 }}>
+              <MatchRevealCard matchName={matchName} />
+              <MatchWishlistSection
+                matchName={matchName}
+                items={matchedParticipant.wishlist_items ?? []}
+                nudge={controller.matchNudge}
+                demo={controller.demo}
+              />
+            </View>
           ) : null}
 
           {canManageWishlist ? (
