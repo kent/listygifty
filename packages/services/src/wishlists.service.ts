@@ -6,7 +6,6 @@ import {
   type CreateWishlistRequest,
   type UpdateWishlistRequest,
   type ShareWishlistResponse,
-  type RevealClaimsResponse,
   type StandaloneWishlistItem,
   type CreateStandaloneWishlistItemRequest,
   type UpdateStandaloneWishlistItemRequest,
@@ -26,7 +25,6 @@ export interface WishlistsService {
   delete(id: number): Promise<void>;
   share(id: number): Promise<ShareWishlistResponse>;
   revokeShare(id: number): Promise<{ message: string; visibility: string }>;
-  revealClaims(id: number): Promise<RevealClaimsResponse>;
 
   // Items
   getItems(wishlistId: number): Promise<StandaloneWishlistItem[]>;
@@ -79,10 +77,6 @@ export function createWishlistsService(client: ApiClient): WishlistsService {
 
     revokeShare(id: number) {
       return client.delete<{ message: string; visibility: string }>(WISHLIST_API_ENDPOINTS.revokeShare(id));
-    },
-
-    revealClaims(id: number) {
-      return client.post<RevealClaimsResponse>(WISHLIST_API_ENDPOINTS.revealClaims(id));
     },
 
     // Items

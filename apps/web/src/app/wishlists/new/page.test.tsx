@@ -10,7 +10,7 @@ vi.mock("@/hooks", () => ({
 vi.mock("@/components/layout", () => ({ AppHeader: () => null }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-// Radix Select and Switch measure themselves; jsdom has no ResizeObserver.
+// Radix Select measures itself; jsdom has no ResizeObserver.
 beforeAll(() => {
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
 });
@@ -39,6 +39,11 @@ describe("new wishlist form", () => {
     expect(screen.getByLabelText(/^Wishlist Name/)).toBeTruthy();
     expect(screen.getByLabelText("Description")).toBeTruthy();
     expect(screen.getByLabelText(/^Target Date/)).toBeTruthy();
-    expect(screen.getByRole("switch", { name: "Anti-Spoiler Mode" })).toBeTruthy();
+  });
+
+  it("offers no way to see what people buy", () => {
+    render(<NewWishlistPage />);
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.getByText(/won't see what anyone reserves or buys/)).toBeTruthy();
   });
 });

@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -33,17 +32,15 @@ export default function NewWishlistPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<WishlistVisibility>("private");
-  const [antiSpoilerEnabled, setAntiSpoilerEnabled] = useState(true);
   const [targetDate, setTargetDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const clearDraft = useFormDraft(
     "new-wishlist",
-    { name, description, visibility, antiSpoilerEnabled, targetDate },
+    { name, description, visibility, targetDate },
     (draft) => {
       setName(draft.name);
       setDescription(draft.description);
       setVisibility(draft.visibility);
-      setAntiSpoilerEnabled(draft.antiSpoilerEnabled);
       setTargetDate(draft.targetDate);
     }
   );
@@ -62,7 +59,6 @@ export default function NewWishlistPage() {
         name: name.trim(),
         description: description.trim() || undefined,
         visibility,
-        anti_spoiler_enabled: antiSpoilerEnabled,
         target_date: targetDate || undefined,
       });
 
@@ -182,23 +178,11 @@ export default function NewWishlistPage() {
                 </Select>
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800">
-                <div className="flex items-center gap-3">
-                  <EyeOff className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-                  <div>
-                    <Label htmlFor="anti-spoiler" className="font-medium text-violet-900 dark:text-violet-100">
-                      Anti-Spoiler Mode
-                    </Label>
-                    <p className="text-sm text-violet-600 dark:text-violet-400">
-                      Hide who claimed which items until you reveal them
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  id="anti-spoiler"
-                  checked={antiSpoilerEnabled}
-                  onCheckedChange={setAntiSpoilerEnabled}
-                />
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800">
+                <EyeOff className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                <p className="text-sm text-violet-600 dark:text-violet-400">
+                  You won&apos;t see what anyone reserves or buys from this list, so your gifts stay a surprise.
+                </p>
               </div>
 
               <div className="flex gap-3 pt-4">

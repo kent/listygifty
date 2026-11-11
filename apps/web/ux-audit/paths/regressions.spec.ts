@@ -20,7 +20,7 @@ test("fixes found late: each one proven in a real browser", async ({ browser }, 
 
   type List = { id: number };
   const created = await api<List>(page, "POST", "/wishlists", {
-    wishlist: { name: "My birthday", visibility: "shared", anti_spoiler_enabled: true },
+    wishlist: { name: "My birthday", visibility: "shared" },
   });
   const listId = created.body.id;
   await api(page, "POST", `/wishlists/${listId}/wishlist_items`, { wishlist_item: { name: "Pasta machine" } });

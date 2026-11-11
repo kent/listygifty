@@ -127,7 +127,6 @@ export interface Wishlist extends BaseEntity {
   name: string;
   description: string | null;
   visibility: WishlistVisibility;
-  anti_spoiler_enabled: boolean;
   target_date: string | null;
   user_id: number;
   workspace_id: number;
@@ -150,7 +149,6 @@ export interface WishlistItemClaim extends BaseEntity {
   message: string | null;
   claimed_at: string;
   purchased_at: string | null;
-  revealed_at: string | null;
   is_guest: boolean;
   claimer: {
     id?: number;

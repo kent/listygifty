@@ -36,7 +36,6 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
-  Eye,
   EyeOff,
   ExternalLink,
   Gift,
@@ -301,7 +300,6 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
   const [itemQuantity, setItemQuantity] = useState("1");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirmItem, setDeleteConfirmItem] = useState<StandaloneWishlistItem | null>(null);
-  const [showRevealConfirm, setShowRevealConfirm] = useState(false);
 
   const {
     data: wishlist,
@@ -362,19 +360,6 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Failed to copy link");
-    }
-  };
-
-  const handleRevealClaims = async () => {
-    if (!wishlist) return;
-
-    try {
-      const result = await wishlistsService.revealClaims(wishlist.id);
-      toast.success(`${result.revealed_count} claims revealed`);
-      setShowRevealConfirm(false);
-      refetch();
-    } catch {
-      toast.error("Failed to reveal claims");
     }
   };
 
@@ -652,12 +637,6 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
                   <Share2 className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Share</span>
                 </Button>
-                {wishlist.anti_spoiler_enabled && (
-                  <Button variant="outline" size="sm" onClick={() => setShowRevealConfirm(true)} aria-label="Reveal claims">
-                    <Eye className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Reveal</span>
-                  </Button>
-                )}
                 <Button
                   size="sm"
                   onClick={() => setShowAddItemDialog(true)}
@@ -683,18 +662,17 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
           </Card>
         )}
 
-        {/* Anti-spoiler banner for owner */}
-        {wishlist.is_owner && wishlist.anti_spoiler_enabled && (
+        {wishlist.is_owner && (
           <Card className="mb-6 bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800">
             <CardContent className="py-4">
               <div className="flex items-center gap-3">
                 <EyeOff className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                 <div>
                   <p className="font-medium text-violet-900 dark:text-violet-100">
-                    Anti-Spoiler Mode Active
+                    Your gifts stay a surprise
                   </p>
                   <p className="text-sm text-violet-600 dark:text-violet-400">
-                    Claim details are hidden. Click &quot;Reveal Claims&quot; to see who claimed what.
+                    You won&apos;t see what anyone reserves or buys from this list.
                   </p>
                 </div>
               </div>
@@ -916,28 +894,6 @@ export default function WishlistDetailPage({ params }: { params: Promise<{ id: s
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Reveal Claims Confirmation Dialog */}
-      <Dialog open={showRevealConfirm} onOpenChange={setShowRevealConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reveal All Claims</DialogTitle>
-            <DialogDescription>
-              This will show you who has claimed or purchased items on your wishlist. This cannot be undone.
-              Are you sure you want to reveal all claims?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRevealConfirm(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleRevealClaims}>
-              <Eye className="h-4 w-4 mr-2" />
-              Reveal Claims
             </Button>
           </DialogFooter>
         </DialogContent>

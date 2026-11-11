@@ -111,7 +111,6 @@ Restart Claude Desktop and start asking about your gifts:
 - `niftygifty_claim_wishlist_item` - Claim item
 - `niftygifty_unclaim_wishlist_item` - Remove claim
 - `niftygifty_share_wishlist` - Get share link
-- `niftygifty_reveal_wishlist_claims` - Reveal who bought what
 
 ### Gift Exchanges (Secret Santa)
 - `niftygifty_list_gift_exchanges` - List exchanges

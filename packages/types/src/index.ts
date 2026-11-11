@@ -1416,7 +1416,6 @@ export interface Wishlist extends BaseEntity {
   name: string;
   description: string | null;
   visibility: WishlistVisibility;
-  anti_spoiler_enabled: boolean;
   target_date: string | null;
   user_id: number;
   workspace_id: number;
@@ -1475,7 +1474,6 @@ export interface WishlistItemClaim extends BaseEntity {
   message: string | null;
   claimed_at: string;
   purchased_at: string | null;
-  revealed_at: string | null;
   is_guest: boolean;
   claimer: {
     id?: number;
@@ -1492,7 +1490,6 @@ export interface CreateWishlistRequest {
     name: string;
     description?: string;
     visibility?: WishlistVisibility;
-    anti_spoiler_enabled?: boolean;
     target_date?: string;
   };
 }
@@ -1552,11 +1549,6 @@ export interface ShareWishlistResponse {
   visibility: WishlistVisibility;
 }
 
-export interface RevealClaimsResponse {
-  message: string;
-  revealed_count: number;
-}
-
 export interface GuestClaimResponse {
   message: string;
   claim_id: number;
@@ -1579,7 +1571,6 @@ export const WISHLIST_API_ENDPOINTS = {
   wishlist: (id: number) => `/wishlists/${id}`,
   shareWishlist: (id: number) => `/wishlists/${id}/share`,
   revokeShare: (id: number) => `/wishlists/${id}/revoke_share`,
-  revealClaims: (id: number) => `/wishlists/${id}/reveal_claims`,
 
   // Wishlist Items
   wishlistItems: (wishlistId: number) => `/wishlists/${wishlistId}/wishlist_items`,
