@@ -66,10 +66,6 @@ export const wishlistTools: Tool[] = [
           type: "string",
           description: "Target date in YYYY-MM-DD format (e.g., birthday)",
         },
-        anti_spoiler_enabled: {
-          type: "boolean",
-          description: "Hide who claimed items until revealed (default: true)",
-        },
       },
       required: ["name"],
     },
@@ -100,10 +96,6 @@ export const wishlistTools: Tool[] = [
         target_date: {
           type: "string",
           description: "New target date",
-        },
-        anti_spoiler_enabled: {
-          type: "boolean",
-          description: "Update anti-spoiler setting",
         },
       },
       required: ["wishlist_id"],
@@ -282,20 +274,6 @@ export const wishlistTools: Tool[] = [
       required: ["wishlist_id"],
     },
   },
-  {
-    name: "niftygifty_reveal_wishlist_claims",
-    description: "Reveal who claimed items on your wishlist (disables anti-spoiler).",
-    inputSchema: {
-      type: "object",
-      properties: {
-        wishlist_id: {
-          type: "number",
-          description: "The wishlist ID",
-        },
-      },
-      required: ["wishlist_id"],
-    },
-  },
 ];
 
 export async function handleWishlistTool(
@@ -328,9 +306,6 @@ export async function handleWishlistTool(
       if (args.description) wishlistData.description = args.description;
       if (args.visibility) wishlistData.visibility = args.visibility;
       if (args.target_date) wishlistData.target_date = args.target_date;
-      if (args.anti_spoiler_enabled !== undefined) {
-        wishlistData.anti_spoiler_enabled = args.anti_spoiler_enabled;
-      }
 
       const wishlist = await client.post<Wishlist>("/wishlists", {
         wishlist: wishlistData,
@@ -350,9 +325,6 @@ export async function handleWishlistTool(
       if (args.visibility !== undefined) updateData.visibility = args.visibility;
       if (args.target_date !== undefined)
         updateData.target_date = args.target_date;
-      if (args.anti_spoiler_enabled !== undefined) {
-        updateData.anti_spoiler_enabled = args.anti_spoiler_enabled;
-      }
 
       const wishlist = await client.patch<Wishlist>(
         `/wishlists/${wishlistId}`,
@@ -463,14 +435,6 @@ export async function handleWishlistTool(
         share_url: result.share_url,
         share_token: result.share_token,
       };
-    }
-
-    case "niftygifty_reveal_wishlist_claims": {
-      const wishlistId = args.wishlist_id as number;
-      const result = await client.post<{ message: string; revealed_count: number }>(
-        `/wishlists/${wishlistId}/reveal_claims`
-      );
-      return result;
     }
 
     default:

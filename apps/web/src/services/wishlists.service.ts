@@ -7,7 +7,6 @@ import {
   type CreateWishlistRequest,
   type UpdateWishlistRequest,
   type ShareWishlistResponse,
-  type RevealClaimsResponse,
   type StandaloneWishlistItem,
   type CreateStandaloneWishlistItemRequest,
   type UpdateStandaloneWishlistItemRequest,
@@ -46,10 +45,6 @@ class WishlistsService {
 
   async revokeShare(id: number): Promise<{ message: string; visibility: WishlistVisibility }> {
     return apiClient.delete<{ message: string; visibility: WishlistVisibility }>(WISHLIST_API_ENDPOINTS.revokeShare(id));
-  }
-
-  async revealClaims(id: number): Promise<RevealClaimsResponse> {
-    return apiClient.post<RevealClaimsResponse>(WISHLIST_API_ENDPOINTS.revealClaims(id));
   }
 
   // Items

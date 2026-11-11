@@ -2,6 +2,9 @@ class Wishlist < ApplicationRecord
   VISIBILITIES = %w[private workspace shared].freeze
   DEFAULT_NAME = "My Wishlist".freeze
 
+  # Migrations run before servers on the old code stop, so drop it in a later deploy.
+  self.ignored_columns += %w[anti_spoiler_enabled]
+
   belongs_to :user
   belongs_to :workspace
   has_many :wishlist_items, dependent: :destroy
@@ -80,25 +83,22 @@ class Wishlist < ApplicationRecord
     wishlist_items.active.count
   end
 
-  # An owner with anti-spoiler on must not be able to tell what was claimed until
-  # they reveal it. Everyone else needs the real numbers to avoid doubling up.
+  # The owner must never be able to tell what was reserved or bought, or they
+  # know what they're getting. Everyone else needs the real numbers to avoid
+  # doubling up.
   def hides_claims_from?(viewer)
-    anti_spoiler_enabled && owner?(viewer)
+    owner?(viewer)
   end
 
   def claimed_count(viewer: nil)
-    claims = WishlistItemClaim.joins(:wishlist_item)
+    return 0 if hides_claims_from?(viewer)
+
+    WishlistItemClaim.joins(:wishlist_item)
       .where(wishlist_items: { wishlist_id: id, archived_at: nil })
-    claims = claims.revealed if hides_claims_from?(viewer)
-    claims.sum(:quantity)
+      .sum(:quantity)
   end
 
   def total_claimed_items
     claims.count
-  end
-
-  def hidden_claims_count
-    return 0 unless anti_spoiler_enabled
-    claims.where(revealed_at: nil).count
   end
 end

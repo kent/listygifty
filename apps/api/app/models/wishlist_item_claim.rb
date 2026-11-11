@@ -1,6 +1,9 @@
 class WishlistItemClaim < ApplicationRecord
   STATUSES = %w[reserved purchased].freeze
 
+  # Migrations run before servers on the old code stop, so drop it in a later deploy.
+  self.ignored_columns += %w[revealed_at]
+
   belongs_to :wishlist_item
   belongs_to :user, optional: true
 
@@ -26,8 +29,6 @@ class WishlistItemClaim < ApplicationRecord
   scope :by_guest_email, ->(email) { where(claimer_email: email.downcase) }
   scope :reserved, -> { where(status: "reserved") }
   scope :purchased, -> { where(status: "purchased") }
-  scope :revealed, -> { where.not(revealed_at: nil) }
-  scope :unrevealed, -> { where(revealed_at: nil) }
 
   delegate :wishlist, to: :wishlist_item
 
@@ -41,14 +42,6 @@ class WishlistItemClaim < ApplicationRecord
 
   def mark_purchased!
     update!(status: "purchased", purchased_at: Time.current)
-  end
-
-  def reveal!
-    update!(revealed_at: Time.current)
-  end
-
-  def revealed?
-    revealed_at.present?
   end
 
   def reserved?

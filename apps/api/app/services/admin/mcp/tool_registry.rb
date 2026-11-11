@@ -271,8 +271,7 @@ module Admin
               quantity: claim.quantity,
               status: claim.status,
               claimed_at: claim.claimed_at,
-              purchased_at: claim.purchased_at,
-              revealed_at: claim.revealed_at
+              purchased_at: claim.purchased_at
             }
           end
         audit!("sensitive.wishlist_claims.reveal", resource: wishlist, metadata: { reason: reason, count: claims.length })

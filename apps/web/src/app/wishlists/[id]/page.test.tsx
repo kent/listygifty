@@ -44,7 +44,6 @@ function wishlist(overrides: Partial<WishlistWithItems> = {}) {
     id: 7,
     name: "Birthday",
     is_owner: true,
-    anti_spoiler_enabled: true,
     claimed_count: 0,
     share_url: "https://listygifty.test/w/abc",
     wishlist_items: [item],
@@ -113,7 +112,6 @@ describe("wishlist control names", () => {
   it("names the header buttons, whose text is hidden on mobile", async () => {
     await renderPage();
     expect(screen.getByLabelText("Share")).toBeTruthy();
-    expect(screen.getByLabelText("Reveal claims")).toBeTruthy();
     expect(screen.getByLabelText("Add Item")).toBeTruthy();
   });
 
@@ -142,6 +140,20 @@ describe("wishlist control names", () => {
     await renderPage();
     expect(screen.getByRole("button", { name: "Mark Lego set as purchased" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Remove claim on Lego set" })).toBeTruthy();
+  });
+});
+
+describe("keeping the owner's gifts a surprise", () => {
+  it("tells the owner they won't see claims and offers no way to reveal them", async () => {
+    await renderPage();
+    expect(screen.getByText("You won't see what anyone reserves or buys from this list.")).toBeTruthy();
+    expect(screen.queryByText(/reveal/i)).toBeNull();
+  });
+
+  it("doesn't tell someone else that claims are hidden", async () => {
+    mocks.wishlist = wishlist({ is_owner: false });
+    await renderPage();
+    expect(screen.queryByText("Your gifts stay a surprise")).toBeNull();
   });
 });
 

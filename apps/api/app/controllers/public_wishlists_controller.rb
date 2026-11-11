@@ -11,6 +11,11 @@ class PublicWishlistsController < ApplicationController
 
   # POST /w/:token/items/:item_id/claim
   def claim
+    # Checked first: "fully claimed" would tell the owner someone bought it.
+    if owner_viewing
+      return render json: { error: "You cannot claim items from your own wishlist" }, status: :forbidden
+    end
+
     guest_name = claim_params[:claimer_name]
     guest_email = claim_params[:claimer_email].to_s.strip.downcase
 

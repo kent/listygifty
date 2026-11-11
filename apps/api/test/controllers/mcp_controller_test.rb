@@ -76,10 +76,10 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "wishlist tools hide unrevealed claims from an owner with anti-spoiler on" do
-    wishlist = Wishlist.create!(user: @user, workspace: @workspace, name: "Surprises", anti_spoiler_enabled: true)
+  test "wishlist tools hide claims from the owner" do
+    wishlist = Wishlist.create!(user: @user, workspace: @workspace, name: "Surprises")
     item = wishlist.wishlist_items.create!(name: "Socks")
-    item.claims.create!(claimer_name: "Guest", claimer_email: "guest@example.com")
+    item.claims.create!(claimer_name: "Guest", claimer_email: "guest@example.com", status: "purchased")
 
     fetched = tool_payload(call_tool("get_wishlist", { wishlist_id: wishlist.id }))
     listed = tool_payload(call_tool("list_wishlist_items", { wishlist_id: wishlist.id }))
@@ -645,8 +645,7 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     wishlist = tool_payload(call_tool("create_wishlist", {
       workspace_id: @workspace.id,
       name: "MCP Birthday List",
-      visibility: "workspace",
-      anti_spoiler_enabled: true
+      visibility: "workspace"
     }))
 
     item = tool_payload(call_tool("create_wishlist_item", {

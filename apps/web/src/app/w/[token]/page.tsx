@@ -307,10 +307,8 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
                 </>
               ) : (
                 <>
-                  Claim items to let others know what you&apos;re planning to get.
-                  {wishlist.anti_spoiler_enabled && (
-                    <> The owner won&apos;t see who claimed what until they choose to reveal it.</>
-                  )}
+                  Claim items to let others know what you&apos;re planning to get. The owner won&apos;t see what&apos;s
+                  been claimed.
                 </>
               )}
             </p>

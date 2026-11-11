@@ -13,8 +13,8 @@ class McpController < ApplicationController
   # confirmation. Read-scoped tools are read-only. Write tools that overwrite,
   # remove, or irreversibly change data are destructive.
   DESTRUCTIVE_TOOLS = %w[
-    decline_exchange_invite publish_gift_exchange redo_gift_exchange reveal_wishlist_claims
-    revoke_wishlist_share start_gift_exchange unclaim_wishlist_item
+    decline_exchange_invite publish_gift_exchange redo_gift_exchange revoke_wishlist_share
+    start_gift_exchange unclaim_wishlist_item
   ].freeze
   DESTRUCTIVE_PREFIXES = %w[delete_ remove_ update_].freeze
   # Tools that reach people outside the user's account: emails to arbitrary
@@ -585,7 +585,7 @@ class McpController < ApplicationController
   def wishlist_tool_handlers
     {
       "get_wishlist" => {
-        description: "Get one wishlist with all of its active items. Claims the owner has not revealed stay hidden, so the owner's surprises are not spoiled.",
+        description: "Get one wishlist with all of its active items. The owner never sees what has been claimed or bought, so their surprises are not spoiled.",
         scope: "read",
         schema: tool_schema({ wishlist_id: integer_property("Wishlist ID") }, [ "wishlist_id" ]),
         handler: ->(args) { serialize_wishlist(find_wishlist(args["wishlist_id"]), with_items: true) }
@@ -598,32 +598,30 @@ class McpController < ApplicationController
           name: string_property("Wishlist name"),
           description: string_property("Description"),
           visibility: enum_property(%w[private workspace shared]),
-          anti_spoiler_enabled: boolean_property,
           target_date: string_property("Target date in YYYY-MM-DD format")
         }, %w[workspace_id name]),
         handler: ->(args) {
           workspace = find_workspace(args["workspace_id"])
           wishlist = workspace.wishlists.create!(
             user: @current_user,
-            **slice_args(args, %w[name description visibility anti_spoiler_enabled target_date])
+            **slice_args(args, %w[name description visibility target_date])
           )
           serialize_wishlist(wishlist)
         }
       },
       "update_wishlist" => {
-        description: "Change a wishlist the user owns: its name, description, visibility, target date, or anti-spoiler setting. Only the fields provided are changed.",
+        description: "Change a wishlist the user owns: its name, description, visibility, or target date. Only the fields provided are changed.",
         scope: "write",
         schema: tool_schema({
           wishlist_id: integer_property("Wishlist ID"),
           name: string_property,
           description: string_property,
           visibility: enum_property(%w[private workspace shared]),
-          anti_spoiler_enabled: boolean_property,
           target_date: string_property("Target date in YYYY-MM-DD format")
         }, [ "wishlist_id" ]),
         handler: ->(args) {
           wishlist = find_owned_wishlist(args["wishlist_id"])
-          wishlist.update!(slice_args(args, %w[name description visibility anti_spoiler_enabled target_date]))
+          wishlist.update!(slice_args(args, %w[name description visibility target_date]))
           serialize_wishlist(wishlist)
         }
       },
@@ -654,15 +652,6 @@ class McpController < ApplicationController
           wishlist = find_owned_wishlist(args["wishlist_id"])
           wishlist.revoke_share_link!
           serialize_wishlist(wishlist)
-        }
-      },
-      "reveal_wishlist_claims" => {
-        description: "Reveal all hidden claims on an owned wishlist",
-        scope: "write",
-        schema: tool_schema({ wishlist_id: integer_property("Wishlist ID") }, [ "wishlist_id" ]),
-        handler: ->(args) {
-          wishlist = find_owned_wishlist(args["wishlist_id"])
-          { revealed_count: wishlist.claims.unrevealed.update_all(revealed_at: Time.current) }
         }
       },
       "list_wishlist_items" => {

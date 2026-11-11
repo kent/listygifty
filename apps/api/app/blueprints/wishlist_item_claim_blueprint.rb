@@ -1,5 +1,5 @@
 class WishlistItemClaimBlueprint < ApplicationBlueprint
-  fields :status, :quantity, :message, :claimed_at, :purchased_at, :revealed_at, :created_at, :updated_at
+  fields :status, :quantity, :message, :claimed_at, :purchased_at, :created_at, :updated_at
 
   field :wishlist_item_id do |claim|
     claim.wishlist_item_id

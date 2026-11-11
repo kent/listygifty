@@ -242,7 +242,7 @@ The MCP server provides tools for managing gifts:
 ### Wishlist Tools
 - `list_wishlists` - List wishlists in a workspace
 - `get_wishlist`, `create_wishlist`, `update_wishlist`, `delete_wishlist`
-- `share_wishlist`, `revoke_wishlist_share`, `reveal_wishlist_claims`
+- `share_wishlist`, `revoke_wishlist_share`
 - `list_wishlist_items`, `create_wishlist_item`, `update_wishlist_item`, `delete_wishlist_item`
 - `claim_wishlist_item`, `unclaim_wishlist_item`, `mark_wishlist_item_purchased`
 

@@ -84,7 +84,7 @@ Records are created and updated through their Rails models so validations and ca
 
 | Tool | Contract |
 |---|---|
-| `admin_reveal_wishlist_claims` | Requires `wishlist_id` and a non-empty `reason`. Returns item, claimant identity, quantities, and purchase/reveal state. It never returns claim tokens. |
+| `admin_reveal_wishlist_claims` | Requires `wishlist_id` and a non-empty `reason`. Returns item, claimant identity, quantities, and purchase state. It never returns claim tokens. |
 | `admin_reveal_exchange_matches` | Requires `exchange_id` and a non-empty `reason`. Returns each giver and matched recipient identity. It never returns invite or share tokens. |
 
 Normal CRUD output always redacts token/key/secret/digest fields. It additionally redacts `matched_participant_id` and claimant identity fields so the explicit tools are the only supported reveal path.
