@@ -1,5 +1,5 @@
 class WishlistBlueprint < ApplicationBlueprint
-  fields :name, :description, :visibility, :anti_spoiler_enabled, :target_date, :created_at, :updated_at
+  fields :name, :description, :visibility, :target_date, :created_at, :updated_at
 
   field :user_id do |wishlist|
     wishlist.user_id

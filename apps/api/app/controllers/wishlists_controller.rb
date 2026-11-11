@@ -1,8 +1,8 @@
 class WishlistsController < ApplicationController
   include WorkspaceScoped
 
-  before_action :set_wishlist, only: %i[show update destroy share revoke_share reveal_claims]
-  before_action :require_owner, only: %i[update destroy share revoke_share reveal_claims]
+  before_action :set_wishlist, only: %i[show update destroy share revoke_share]
+  before_action :require_owner, only: %i[update destroy share revoke_share]
 
   def index
     wishlists = Wishlist.visible_to(current_user, current_workspace)
@@ -60,16 +60,6 @@ class WishlistsController < ApplicationController
     }
   end
 
-  # POST /wishlists/:id/reveal_claims
-  def reveal_claims
-    revealed_count = @wishlist.claims.unrevealed.update_all(revealed_at: Time.current)
-
-    render json: {
-      message: "#{revealed_count} claims revealed",
-      revealed_count: revealed_count
-    }
-  end
-
   private
 
   def set_wishlist
@@ -86,7 +76,7 @@ class WishlistsController < ApplicationController
   end
 
   def wishlist_params
-    params.require(:wishlist).permit(:name, :description, :visibility, :anti_spoiler_enabled, :target_date)
+    params.require(:wishlist).permit(:name, :description, :visibility, :target_date)
   end
 
   def wishlist_share_url(token)

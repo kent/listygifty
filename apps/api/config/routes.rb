@@ -128,7 +128,6 @@ Rails.application.routes.draw do
     member do
       post :share
       delete :revoke_share
-      post :reveal_claims
     end
     resources :wishlist_items, only: %i[index show create update destroy] do
       collection do

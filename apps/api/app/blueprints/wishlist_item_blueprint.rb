@@ -1,9 +1,9 @@
 class WishlistItemBlueprint < ApplicationBlueprint
-  # An unrevealed claim must look like no claim to an owner with anti-spoiler on,
-  # so every field that describes claims starts from this. Public views only
-  # carry a current_user for the owner, so guests always get the real numbers.
+  # A claim must look like no claim to the owner, so every field that describes
+  # claims starts from this. Public views only carry a current_user for the
+  # owner, so guests always get the real numbers.
   def self.visible_claims(item, options)
-    item.wishlist.hides_claims_from?(options[:current_user]) ? item.claims.revealed : item.claims
+    item.wishlist.hides_claims_from?(options[:current_user]) ? item.claims.none : item.claims
   end
 
   def self.visible_claimed_quantity(item, options)
@@ -48,17 +48,10 @@ class WishlistItemBlueprint < ApplicationBlueprint
     WishlistItemClaimBlueprint.render_as_hash(claim) if claim
   end
 
-  # Claims are shown based on view context
-  # - Owner with anti_spoiler: only revealed claims
-  # - Non-owner or anti_spoiler off: all claims
-  # - Public view: no claimer details, just counts
+  # The public view never says who claimed, only status and quantity.
   field :claims do |item, options|
     if options[:public_view]
-      # Public view: just show claim status, no details
-      claims = item.wishlist.hides_claims_from?(options[:current_user]) ? item.claims.revealed : item.claims
-      claims.map do |claim|
-        { status: claim.status, quantity: claim.quantity }
-      end
+      visible_claims(item, options).map { |claim| { status: claim.status, quantity: claim.quantity } }
     else
       WishlistItemClaimBlueprint.render_as_hash(visible_claims(item, options))
     end

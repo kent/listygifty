@@ -185,13 +185,6 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
     assert_nil @wishlist.reload.share_token
   end
 
-  test "reveal_claims reveals hidden claims" do
-    @wishlist.update!(anti_spoiler_enabled: true)
-
-    post reveal_claims_wishlist_path(@wishlist), headers: @auth_headers, as: :json
-    assert_response :success
-  end
-
   # ============================================================================
   # Wishlist Items Tests
   # ============================================================================
@@ -415,47 +408,31 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
   # Anti-Spoiler Tests
   # ============================================================================
 
-  test "an unrevealed claim looks like no claim to an owner with anti-spoiler on" do
-    item = claimed_item(anti_spoiler: true)
+  test "a purchase looks like no claim to the owner" do
+    item = claimed_item
 
     assert_claims_seen item, headers: @auth_headers, quantity: 0, count: 0
   end
 
-  test "revealing claims shows them to the owner" do
-    item = claimed_item(anti_spoiler: true)
+  test "an owner can't switch hiding off" do
+    item = claimed_item
 
-    post reveal_claims_wishlist_path(@wishlist), headers: @auth_headers, as: :json
+    patch wishlist_path(@wishlist), headers: @auth_headers, params: { wishlist: { anti_spoiler_enabled: false } }, as: :json
     assert_response :success
-    assert_equal 1, json_response["revealed_count"]
+    assert_not json_response.key?("anti_spoiler_enabled")
 
-    assert_claims_seen item, headers: @auth_headers, quantity: 2, count: 1
+    assert_claims_seen item, headers: @auth_headers, quantity: 0, count: 0
   end
 
-  test "a claim made after a reveal stays hidden from the owner" do
-    item = claimed_item(anti_spoiler: true, quantity: 3)
-    post reveal_claims_wishlist_path(@wishlist), headers: @auth_headers, as: :json
-    assert_response :success
-
-    item.claims.create!(claimer_name: "Late Guest", claimer_email: "late@example.com")
-
-    assert_claims_seen item, headers: @auth_headers, quantity: 2, count: 1
-  end
-
-  test "a non-owner still sees unrevealed claims so they do not double up" do
-    item = claimed_item(anti_spoiler: true)
+  test "a non-owner still sees claims so they do not double up" do
+    item = claimed_item
     workspaces(:one).workspace_memberships.create!(user: users(:two), role: "member")
 
     assert_claims_seen item, headers: auth_headers_for(users(:two), workspace: workspaces(:one)), quantity: 2, count: 1
   end
 
-  test "an owner with anti-spoiler off sees every claim" do
-    item = claimed_item(anti_spoiler: false)
-
-    assert_claims_seen item, headers: @auth_headers, quantity: 2, count: 1
-  end
-
-  test "guests still see unrevealed claims so they do not double up" do
-    item = claimed_item(anti_spoiler: true)
+  test "guests still see claims so they do not double up" do
+    item = claimed_item
     @wishlist.update!(visibility: "shared", share_token: "spoiler_public_token")
 
     get "/w/spoiler_public_token", as: :json
@@ -466,9 +443,9 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
   end
 
   test "an owner opening their own share link can't see what was claimed" do
-    @wishlist.update!(visibility: "shared", share_token: "own_link", anti_spoiler_enabled: true)
+    @wishlist.update!(visibility: "shared", share_token: "own_link")
     item = @wishlist.wishlist_items.create!(name: "Surprise")
-    item.claims.create!(user: users(:two))
+    item.claims.create!(user: users(:two), status: "purchased")
 
     get "/w/own_link", headers: auth_headers_for(@wishlist.user), as: :json
 
@@ -481,19 +458,24 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
     assert_equal 0, json_response["claimed_count"]
   end
 
-  test "an owner sees claims on their share link once anti-spoiler is off" do
-    @wishlist.update!(visibility: "shared", share_token: "open_link", anti_spoiler_enabled: false)
+  test "an owner claiming from their own share link isn't told it's taken" do
+    @wishlist.update!(visibility: "shared", share_token: "own_claim_link")
     item = @wishlist.wishlist_items.create!(name: "Surprise")
-    item.claims.create!(user: users(:two))
+    item.claims.create!(user: users(:two), status: "purchased")
 
-    get "/w/open_link", headers: auth_headers_for(@wishlist.user), as: :json
+    assert_no_difference("WishlistItemClaim.count") do
+      post "/w/own_claim_link/items/#{item.id}/claim",
+        headers: auth_headers_for(@wishlist.user),
+        params: { claim: { claimer_name: "Me", claimer_email: "me@example.com" } },
+        as: :json
+    end
 
-    seen = json_response["wishlist_items"].find { |candidate| candidate["id"] == item.id }
-    assert_not seen["is_available"]
+    assert_response :forbidden
+    assert_equal "You cannot claim items from your own wishlist", json_response["error"]
   end
 
   test "guests and other signed-in people still see real status on a share link" do
-    @wishlist.update!(visibility: "shared", share_token: "guest_link", anti_spoiler_enabled: true)
+    @wishlist.update!(visibility: "shared", share_token: "guest_link")
     item = @wishlist.wishlist_items.create!(name: "Surprise")
     item.claims.create!(user: users(:two))
 
@@ -542,10 +524,10 @@ class WishlistsApiTest < ActionDispatch::IntegrationTest
 
   private
 
-  def claimed_item(anti_spoiler:, quantity: 2)
-    @wishlist.update!(anti_spoiler_enabled: anti_spoiler, visibility: "workspace")
-    item = @wishlist.wishlist_items.create!(name: "Surprise", quantity: quantity)
-    item.claims.create!(claimer_name: "Early Guest", claimer_email: "early@example.com", quantity: 2)
+  def claimed_item
+    @wishlist.update!(visibility: "workspace")
+    item = @wishlist.wishlist_items.create!(name: "Surprise", quantity: 2)
+    item.claims.create!(claimer_name: "Guest", claimer_email: "guest@example.com", quantity: 2, status: "purchased")
     item
   end
 
