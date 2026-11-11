@@ -146,7 +146,8 @@ test("five users complete a private exchange lifecycle with real local mail", as
   const matchOverview = participantPage.getByTestId("match-overview");
   const participantRoster = participantPage.getByTestId("participant-roster");
   await expect(matchOverview.getByText("Your match", { exact: true })).toBeVisible();
-  await expect(matchOverview.getByRole("link", { name: /^See .*'s wishlist$/ })).toBeVisible();
+  await expect(matchOverview.getByRole("heading", { level: 3, name: /'s wishlist$/ })).toBeVisible();
+  await expect(matchOverview.getByRole("button", { name: /^Ask for (more )?ideas from .* anonymously$/ })).toBeVisible();
   expect((await matchOverview.boundingBox())!.y).toBeLessThan((await participantRoster.boundingBox())!.y);
 
   for (const user of E2E_USERS) {
@@ -192,7 +193,11 @@ test("five users complete a private exchange lifecycle with real local mail", as
   await expect(giverSession.page.getByText(itemName, { exact: true })).toBeVisible();
   await giverSession.page.getByRole("button", { name: /Ask for more ideas from .* anonymously/ }).click();
   await expect(giverSession.page.getByText("Anonymous request sent")).toBeVisible();
-  await giverSession.page.getByRole("button", { name: /Ask for more ideas from .* anonymously/ }).click();
+  await expect(giverSession.page.getByRole("button", { name: "Request sent" })).toBeDisabled();
+  await giverSession.page.goto(page.url());
+  const giverMatch = giverSession.page.getByTestId("match-overview");
+  await expect(giverMatch.getByText(itemName, { exact: true })).toBeVisible();
+  await giverMatch.getByRole("button", { name: /Ask for more ideas from .* anonymously/ }).click();
   await expect(giverSession.page.getByText(/already sent in the last 24 hours/)).toBeVisible();
   await giverSession.context.close();
 

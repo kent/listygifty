@@ -11,9 +11,8 @@ import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { AppHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Gift, DollarSign, ExternalLink, Image, Calendar, List, MessageCircle } from "lucide-react";
-import { toast } from "sonner";
-import { ItemRank } from "@/components/wishlists/item-order-controls";
+import { MatchWishlist } from "@/components/exchanges/match-wishlist";
+import { ArrowLeft, Gift, DollarSign, Calendar, List } from "lucide-react";
 import type { GiftExchange, ExchangeParticipantWithWishlist } from "@niftygifty/types";
 
 export default function MyMatchPage({
@@ -27,7 +26,6 @@ export default function MyMatchPage({
   const [exchange, setExchange] = useState<GiftExchange | null>(null);
   const [match, setMatch] = useState<ExchangeParticipantWithWishlist | null>(null);
   const [loading, setLoading] = useState(true);
-  const [nudging, setNudging] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -110,20 +108,6 @@ export default function MyMatchPage({
     );
   }
 
-  const wishlistItems = match.wishlist_items || [];
-
-  const handleNudge = async () => {
-    setNudging(true);
-    try {
-      await giftExchangesService.nudgeMatch(exchange.id);
-      toast.success("Anonymous request sent");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not send request");
-    } finally {
-      setNudging(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-500/5 dark:from-violet-900/10 via-transparent to-transparent" />
@@ -178,87 +162,12 @@ export default function MyMatchPage({
           </CardContent>
         </Card>
 
-        {/* Wishlist */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <h2 className="min-w-0 break-words text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <List className="h-5 w-5 shrink-0 text-violet-500 dark:text-violet-400" />
-            <span className="min-w-0 break-words">{match.display_name}&apos;s Wishlist</span>
-          </h2>
-          <Button
-            variant="outline"
-            onClick={handleNudge}
-            disabled={nudging}
-            aria-label={nudging ? undefined : `Ask for more ideas from ${match.display_name} anonymously`}
-          >
-            <MessageCircle className="h-4 w-4 mr-2" />
-            {nudging ? "Sending..." : "Ask for more ideas"}
-          </Button>
-        </div>
-
-        {wishlistItems.length === 0 ? (
-          <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
-            <CardContent className="py-12 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 mx-auto mb-4">
-                <Gift className="h-8 w-8 text-slate-400 dark:text-slate-500" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No wishlist items yet</h3>
-              <p className="text-slate-600 dark:text-slate-400">
-                {match.display_name} has not added any items to their wishlist yet.
-                <br />
-                Check back later or surprise them with something thoughtful!
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {wishlistItems.map((item, index) => (
-              <Card key={item.id} className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
-                    <ItemRank rank={index + 1} />
-                    {item.photo_url ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={item.photo_url}
-                        alt={item.name}
-                        className="w-20 h-20 rounded-lg object-cover shrink-0"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-                        {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                        <Image className="h-8 w-8 text-slate-400 dark:text-slate-600" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="break-words font-semibold text-slate-900 dark:text-white text-lg">{item.name}</h3>
-                      {item.description && (
-                        <p className="break-words text-sm text-slate-600 dark:text-slate-400 mt-1">{item.description}</p>
-                      )}
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
-                        {(item.price_display || item.price) && (
-                          <span className="text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
-                            {item.price_display || `$${parseFloat(item.price!).toFixed(2)}`}
-                          </span>
-                        )}
-                        {item.link && (
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-sm text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 bg-violet-500/10 px-2 py-1 rounded"
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                            View Product
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        <MatchWishlist
+          exchangeId={exchange.id}
+          matchName={match.display_name}
+          items={match.wishlist_items ?? []}
+          canNudge={exchange.capabilities.nudge_match}
+        />
 
         <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-8">
           🤫 Remember: Keep your match a secret!

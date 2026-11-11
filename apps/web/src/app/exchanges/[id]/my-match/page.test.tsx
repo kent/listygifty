@@ -39,28 +39,30 @@ beforeEach(() => {
     exchange_date: null,
     budget_min: null,
     budget_max: null,
+    capabilities: { nudge_match: true },
     my_participant: { matched_participant_id: 2 },
   });
   mocks.getById.mockReset().mockResolvedValue({ display_name: "Ana", wishlist_items: [] });
 });
 
-describe("asking your match for more ideas", () => {
+describe("asking your match for ideas", () => {
   it("starts its accessible name with the visible label", async () => {
     await renderPage();
-    const button = screen.getByRole("button", { name: "Ask for more ideas from Ana anonymously" });
-    expect(button.textContent).toBe("Ask for more ideas");
+    const button = screen.getByRole("button", { name: "Ask for ideas from Ana anonymously" });
+    expect(button.textContent).toBe("Ask for ideas");
   });
 
   it("reads the same as the button while sending", async () => {
     const request = deferred<void>();
     mocks.nudgeMatch.mockReturnValue(request.promise);
     await renderPage();
-    fireEvent.click(screen.getByRole("button", { name: /^Ask for more ideas/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Ask for ideas/ }));
 
     const sending = await screen.findByRole("button", { name: "Sending..." });
     expect(sending.textContent).toBe("Sending...");
     await act(async () => request.resolve());
-    expect(screen.getByRole("button", { name: /^Ask for more ideas/ })).toBeTruthy();
+    expect(mocks.nudgeMatch).toHaveBeenCalledWith(7);
+    expect(screen.getByRole("button", { name: "Request sent" })).toBeTruthy();
   });
 });
 

@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react-native";
 import { Alert } from "react-native";
-import { useExchangeInviteController, useExchangeMatchController } from "@/lib/controllers/exchanges";
+import { useExchangeDetailController, useExchangeInviteController, useExchangeMatchController } from "@/lib/controllers/exchanges";
 
 const mockRouter = { replace: jest.fn(), push: jest.fn(), back: jest.fn() };
 const mockAccept = jest.fn();
@@ -47,13 +47,31 @@ it("sends an anonymous wishlist request once and shows delivery errors", async (
   mockData = { exchange: { id: 32, capabilities: { nudge_match: true } }, matchWishlist: [] };
   mockNudge.mockRejectedValueOnce(Object.assign(new Error("Your anonymous request was already sent in the last 24 hours"), {status:422}));
   const { result } = renderHook(useExchangeMatchController);
-  await act(async () => result.current.nudgeMatch());
-  expect(result.current.nudgeError).toContain("24 hours");
-  expect(result.current.nudgeSent).toBe(false);
+  await act(async () => result.current.nudge.nudgeMatch());
+  expect(result.current.nudge.nudgeError).toContain("24 hours");
+  expect(result.current.nudge.nudgeSent).toBe(false);
   mockNudge.mockResolvedValue(undefined);
-  await act(async () => result.current.nudgeMatch());
-  await act(async () => result.current.nudgeMatch());
+  await act(async () => result.current.nudge.nudgeMatch());
+  await act(async () => result.current.nudge.nudgeMatch());
   expect(mockNudge).toHaveBeenCalledTimes(2);
   expect(mockNudge).toHaveBeenLastCalledWith(32);
-  expect(result.current.nudgeSent).toBe(true);
+  expect(result.current.nudge.nudgeSent).toBe(true);
+});
+
+it("asks your match for ideas from the exchange screen", async () => {
+  mockData = { id: 32, status: "active", is_owner: false, capabilities: { nudge_match: true }, exchange_participants: [] };
+  mockNudge.mockResolvedValue(undefined);
+  const { result } = renderHook(useExchangeDetailController);
+  expect(result.current.matchNudge.canNudge).toBe(true);
+  await act(async () => result.current.matchNudge.nudgeMatch());
+  expect(mockNudge).toHaveBeenCalledWith(32);
+  expect(result.current.matchNudge.nudgeSent).toBe(true);
+});
+
+it("won't ask a match who deleted their account", async () => {
+  mockData = { id: 32, status: "active", is_owner: false, capabilities: { nudge_match: false }, exchange_participants: [] };
+  const { result } = renderHook(useExchangeDetailController);
+  expect(result.current.matchNudge.canNudge).toBe(false);
+  await act(async () => result.current.matchNudge.nudgeMatch());
+  expect(mockNudge).not.toHaveBeenCalled();
 });

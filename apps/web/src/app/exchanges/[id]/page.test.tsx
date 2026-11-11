@@ -5,6 +5,7 @@ import type {
   ExchangeExclusion,
   ExchangeParticipant,
   GiftExchangeWithParticipants,
+  WishlistItem,
 } from "@niftygifty/types";
 import { ApiError } from "@/lib/api-client";
 import ExchangeDetailPage from "./page";
@@ -18,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   nudge: vi.fn(),
   getExclusions: vi.fn(),
   getNotifications: vi.fn(),
+  nudgeMatch: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
   toastWarning: vi.fn(),
@@ -33,7 +35,7 @@ vi.mock("sonner", () => ({
 }));
 vi.mock("@/services", () => ({
   AUTH_ROUTES: { signIn: "/login" },
-  giftExchangesService: { getBySlug: mocks.getBySlug },
+  giftExchangesService: { getBySlug: mocks.getBySlug, nudgeMatch: mocks.nudgeMatch },
   exchangeParticipantsService: {
     create: mocks.createParticipant,
     delete: mocks.deleteParticipant,
@@ -218,6 +220,77 @@ describe("the wishlist card", () => {
     await renderPage();
 
     expect(screen.getByText("1 item")).toBeTruthy();
+  });
+});
+
+describe("your match", () => {
+  const ana = person(2, "Ana", { user_id: 200, status: "accepted", has_user: true });
+
+  function drawnExchange(wishlistItems: WishlistItem[]) {
+    const bea = person(3, "Bea", { user_id: 300, status: "accepted", has_user: true });
+    return exchangeWith({
+      status: "active",
+      is_owner: false,
+      share_url: null,
+      exchange_participants: [organizer, ana, bea],
+      capabilities: { ...exchangeWith().capabilities, view_match: true, nudge_match: true },
+      my_participant: {
+        ...ana,
+        matched_participant_id: bea.id,
+        matched_participant: { ...bea, wishlist_items: wishlistItems },
+      },
+    });
+  }
+
+  it("shows their wishlist right on the exchange", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      drawnExchange([
+        {
+          ...timestamps,
+          id: 9,
+          exchange_participant_id: 3,
+          name: "Wool socks",
+          description: "Size 8",
+          link: "https://example.com/socks",
+          price: "20.0",
+          photo_url: null,
+          has_photo: false,
+        },
+      ])
+    );
+
+    await renderPage();
+
+    const match = screen.getByTestId("match-overview");
+    expect(within(match).getByRole("heading", { level: 2, name: "Bea" })).toBeTruthy();
+    expect(within(match).getByRole("heading", { level: 3, name: "Bea's wishlist" })).toBeTruthy();
+    expect(within(match).getByText("Wool socks")).toBeTruthy();
+    expect(within(match).getByRole("link", { name: "View Product" }).getAttribute("href")).toBe(
+      "https://example.com/socks"
+    );
+  });
+
+  it("asks them for ideas anonymously when their wishlist is empty", async () => {
+    mocks.getBySlug.mockResolvedValue(drawnExchange([]));
+    mocks.nudgeMatch.mockResolvedValue(undefined);
+
+    await renderPage();
+    const match = screen.getByTestId("match-overview");
+    expect(within(match).getByText("No ideas yet")).toBeTruthy();
+    fireEvent.click(within(match).getByRole("button", { name: "Ask for ideas from Bea anonymously" }));
+
+    await waitFor(() => expect(mocks.nudgeMatch).toHaveBeenCalledWith(7));
+    expect(await within(match).findByRole("button", { name: "Request sent" })).toBeTruthy();
+  });
+
+  it("isn't shown before names are drawn", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({ status: "inviting", is_owner: false, my_participant: ana, share_url: null })
+    );
+
+    await renderPage();
+
+    expect(screen.queryByTestId("match-overview")).toBeNull();
   });
 });
 

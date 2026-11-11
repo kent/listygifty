@@ -188,6 +188,7 @@ export function useExchangeDetailController() {
     key: exchangeId,
     load: () => giftExchanges.getById(exchangeId),
   });
+  const matchNudge = useMatchNudge(resource.data);
 
   const exclusionsResource = useFocusResource<ExchangeExclusion[]>({
     enabled: isValidExchangeId && resource.data?.is_owner === true,
@@ -559,8 +560,8 @@ export function useExchangeDetailController() {
     exclusions: exclusionsResource.data,
     exclusionsError: exclusionsResource.error,
     exclusionsLoading: exclusionsResource.loading,
+    demo,
     exchange: resource.data,
-    goToMatch: () => router.push(`/(tabs)/exchanges/${exchangeId}/my-match`),
     goToNewParticipant: () =>
       router.push(`/(tabs)/exchanges/${exchangeId}/participants/new`),
     goToNudgeParticipant: (participant: ExchangeParticipant) =>
@@ -569,6 +570,7 @@ export function useExchangeDetailController() {
     handleStartExchange: startExchange,
     handleScheduleReminder: scheduleReminder,
     loading: isValidExchangeId && resource.loading,
+    matchNudge,
     openExclusionModal,
     refreshing: resource.refreshing,
     readinessItems: resource.data
@@ -757,17 +759,40 @@ export function useNudgeExchangeParticipantController() {
   };
 }
 
+// Asks your match for wishlist ideas without saying who asked.
+function useMatchNudge(exchange: GiftExchange | null) {
+  const { giftExchanges } = useServices();
+  const [nudging, setNudging] = useState(false);
+  const [nudgeSent, setNudgeSent] = useState(false);
+  const [nudgeError, setNudgeError] = useState<string | null>(null);
+  const exchangeId = exchange?.id;
+  const canNudge = exchange?.capabilities.nudge_match === true;
+  useEffect(() => { setNudgeSent(false); setNudgeError(null); }, [exchangeId]);
+
+  const nudgeMatch = useCallback(async () => {
+    if (nudging || nudgeSent || !canNudge || exchangeId === undefined) return;
+    setNudging(true);
+    setNudgeError(null);
+    try {
+      await giftExchanges.nudgeMatch(exchangeId);
+      setNudgeSent(true);
+      await haptics.success();
+    } catch (error) {
+      setNudgeError(humanizeError(error, "Could not send the request. Try again."));
+    } finally {
+      setNudging(false);
+    }
+  }, [canNudge, exchangeId, giftExchanges, nudgeSent, nudging]);
+
+  return { canNudge, nudgeMatch, nudging, nudgeSent, nudgeError };
+}
+
 export function useExchangeMatchController() {
   const demo = useDemoMode();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { giftExchanges, wishlistItems } = useServices();
   const exchangeId = Number.parseInt(id ?? "", 10);
   const isValidExchangeId = Number.isFinite(exchangeId);
-
-  const [nudging, setNudging] = useState(false);
-  const [nudgeSent, setNudgeSent] = useState(false);
-  const [nudgeError, setNudgeError] = useState<string | null>(null);
-  useEffect(() => { setNudgeSent(false); setNudgeError(null); }, [exchangeId]);
 
   const resource = useFocusResource<ExchangeMatchState>({
     enabled: isValidExchangeId,
@@ -784,25 +809,11 @@ export function useExchangeMatchController() {
       return { exchange, matchWishlist };
     },
   });
-
-  const nudgeMatch = useCallback(async () => {
-    if (nudging || nudgeSent || !resource.data.exchange?.capabilities.nudge_match) return;
-    setNudging(true);
-    setNudgeError(null);
-    try {
-      await giftExchanges.nudgeMatch(exchangeId);
-      setNudgeSent(true);
-      await haptics.success();
-    } catch (error) {
-      setNudgeError(humanizeError(error, "Could not send the request. Try again."));
-    } finally {
-      setNudging(false);
-    }
-  }, [exchangeId, giftExchanges, nudgeSent, nudging, resource.data.exchange]);
+  const nudge = useMatchNudge(resource.data.exchange);
 
   return {
     demo,
-    nudgeMatch, nudging, nudgeSent, nudgeError,
+    nudge,
     error: !isValidExchangeId ? "Invalid exchange ID" : resource.error,
     exchange: resource.data.exchange,
     loading: isValidExchangeId && resource.loading,
