@@ -680,7 +680,9 @@ export default function ExchangeDetailPage({
           (exchange.status === "active" || exchange.status === "completed") && (
             <MatchOverviewCard
               match={myParticipant.matched_participant}
+              exchangeId={exchange.id}
               exchangeSlug={slug}
+              canNudge={exchange.capabilities.nudge_match}
             />
           )}
 
