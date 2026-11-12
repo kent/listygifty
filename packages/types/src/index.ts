@@ -1011,6 +1011,35 @@ export interface ExchangeParticipant extends BaseEntity {
   matched_participant?: ExchangeParticipantWithWishlist | null;
   // Your own place only: the wishlist of yours this exchange shows.
   wishlist?: ExchangeWishlistRef | null;
+  // Someone else, opened on their own: what you can see of their wishlist.
+  wishlist_access?: WishlistAccess;
+  // Only when wishlist_access lets you read it.
+  wishlist_items?: WishlistItem[];
+}
+
+// What you can see of another person's wishlist in an exchange. "match" is
+// the person you drew. Everyone else's list opens once they approve a request.
+export type WishlistAccess =
+  | "own"
+  | "match"
+  | "approved"
+  | "pending"
+  | "denied"
+  | "none"
+  | "unavailable";
+
+export const VISIBLE_WISHLIST_ACCESS: readonly WishlistAccess[] = ["own", "match", "approved"];
+
+export type WishlistAccessRequestStatus = "pending" | "approved" | "denied";
+
+export interface WishlistAccessRequest extends BaseEntity {
+  gift_exchange_id: number;
+  status: WishlistAccessRequestStatus;
+  decided_at: string | null;
+  requester_participant_id: number;
+  requester_name: string;
+  requested_participant_id: number;
+  requested_name: string;
 }
 
 export interface ExchangeWishlistRef {
@@ -1051,7 +1080,12 @@ export interface ExchangeExclusion extends BaseEntity {
   };
 }
 
-export type ExchangeNotificationKind = "wishlist_item_added" | "wishlist_nudge";
+export type ExchangeNotificationKind =
+  | "wishlist_item_added"
+  | "wishlist_nudge"
+  | "wishlist_access_requested"
+  | "wishlist_access_approved"
+  | "wishlist_access_denied";
 
 export interface ExchangeNotification extends BaseEntity {
   gift_exchange_id: number;
@@ -1059,6 +1093,16 @@ export interface ExchangeNotification extends BaseEntity {
   message: string;
   wishlist_item_id: number | null;
   read_at: string | null;
+  // Newer APIs only, on the wishlist_access_* kinds.
+  wishlist_access_request?: WishlistAccessRequest | null;
+}
+
+// A request the person asked still has to answer.
+export function isPendingWishlistRequest(notification: ExchangeNotification): boolean {
+  return (
+    notification.kind === "wishlist_access_requested" &&
+    notification.wishlist_access_request?.status === "pending"
+  );
 }
 
 // Request types

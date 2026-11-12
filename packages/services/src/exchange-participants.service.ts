@@ -7,6 +7,8 @@ import type {
 } from "@niftygifty/types";
 
 export interface ExchangeParticipantsService {
+  // Someone in the exchange, with what you can see of their wishlist.
+  getById(exchangeId: number, participantId: number): Promise<ExchangeParticipant>;
   resendInvite(exchangeId: number, participantId: number): Promise<void>;
   nudge(
     exchangeId: number,
@@ -23,6 +25,9 @@ export function createExchangeParticipantsService(
   client: ApiClient
 ): ExchangeParticipantsService {
   return {
+    getById(exchangeId, participantId) {
+      return client.get<ExchangeParticipant>(`/gift_exchanges/${exchangeId}/exchange_participants/${participantId}`);
+    },
     async resendInvite(exchangeId, participantId) {
       await client.post(`/gift_exchanges/${exchangeId}/exchange_participants/${participantId}/resend_invite`);
     },
