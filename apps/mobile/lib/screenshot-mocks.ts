@@ -4,6 +4,7 @@ import type {
   ExchangeInviteDetails,
   ExchangeJoinDetails,
   ExchangeJoinResponse,
+  ExchangeNotification,
   ExchangeParticipant,
   Gift,
   GiftExchange,
@@ -13,6 +14,8 @@ import type {
   HolidayCollaborator,
   Person,
   ShareLinkResponse,
+  WishlistAccess,
+  WishlistAccessRequest,
   WishlistItem,
 } from "@niftygifty/types";
 
@@ -866,21 +869,26 @@ let nextExchangeId = 400;
 let nextExchangeParticipantId = 500;
 let nextExchangeExclusionId = 600;
 let nextWishlistItemId = 800;
+let nextWishlistAccessRequestId = 900;
 let exchangeExclusionsStore: ExchangeExclusion[] = [];
+// Requests the sample viewer made, by "requesterId:requestedId".
+let wishlistAccessStore: Record<string, WishlistAccess> = {};
 
 // Each demo starts from the same isolated sample records. No live API is used.
 const initialSampleState = clone({
   giftStatusesStore, peopleStore, holidaysStore, holidayCollaboratorsStore,
   giftsStore, exchangesStore, exchangeParticipantsStore, wishlistItemsStore,
-  exchangeExclusionsStore, nextPersonId, nextHolidayId, nextGiftId,
+  exchangeExclusionsStore, wishlistAccessStore, nextPersonId, nextHolidayId, nextGiftId,
   nextExchangeId, nextExchangeParticipantId, nextExchangeExclusionId, nextWishlistItemId,
+  nextWishlistAccessRequestId,
 });
 
 export function resetSampleData() {
   ({ giftStatusesStore, peopleStore, holidaysStore, holidayCollaboratorsStore,
     giftsStore, exchangesStore, exchangeParticipantsStore, wishlistItemsStore,
-    exchangeExclusionsStore, nextPersonId, nextHolidayId, nextGiftId,
+    exchangeExclusionsStore, wishlistAccessStore, nextPersonId, nextHolidayId, nextGiftId,
     nextExchangeId, nextExchangeParticipantId, nextExchangeExclusionId, nextWishlistItemId,
+    nextWishlistAccessRequestId,
   } = clone(initialSampleState));
 }
 
@@ -994,6 +1002,21 @@ function withMatchedParticipant(
 function getExchangeParticipantsWithMatches(exchangeId: number): ExchangeParticipant[] {
   const participants = getExchangeParticipants(exchangeId);
   return participants.map((participant) => withMatchedParticipant(participant, participants));
+}
+
+function getSampleViewer(exchangeId: number): ExchangeParticipant {
+  const viewer = getExchangeParticipants(exchangeId).find((participant) => participant.user_id === 1);
+  if (!viewer) throw new Error("You aren't taking part in this sample exchange.");
+  return viewer;
+}
+
+function getSampleWishlistAccess(exchangeId: number, viewer: ExchangeParticipant, other: ExchangeParticipant): WishlistAccess {
+  const exchange = exchangesStore.find((item) => item.id === exchangeId);
+  const drawn = exchange?.status === "active" || exchange?.status === "completed";
+  if (other.id === viewer.id) return "own";
+  if (drawn && viewer.matched_participant_id === other.id) return "match";
+  return wishlistAccessStore[`${viewer.id}:${other.id}`]
+    ?? (other.status === "accepted" && other.has_user ? "none" : "unavailable");
 }
 
 function joinState(exchange: GiftExchange) {
@@ -1308,6 +1331,19 @@ export const screenshotServices = {
     },
   },
   exchangeParticipants: {
+    // Someone in a sample exchange, as the sample viewer sees them.
+    async getById(exchangeId: number, participantId: number) {
+      const participant = getExchangeParticipants(exchangeId).find((item) => item.id === participantId);
+      if (!participant) throw new Error("Sample participant not found.");
+      const access = getSampleWishlistAccess(exchangeId, getSampleViewer(exchangeId), participant);
+      const visible = access === "own" || access === "match" || access === "approved";
+      const { matched_participant_id: _secret, ...peer } = participant;
+      return clone({
+        ...peer,
+        wishlist_access: access,
+        ...(visible ? { wishlist_items: getParticipantWishlist(participantId) } : {}),
+      } satisfies ExchangeParticipant);
+    },
     async create(exchangeId: number, data: Partial<ExchangeParticipant>) {
       const participant: ExchangeParticipant = {
         id: nextExchangeParticipantId++,
@@ -1376,6 +1412,41 @@ export const screenshotServices = {
         text: phone && textConsentAt ? ("sent" as const) : ("skipped" as const),
         text_error: null,
       };
+    },
+  },
+  // Sample people never ask the viewer for anything, and asking them only
+  // records the request. Nothing is sent.
+  exchangeNotifications: {
+    async getAll(_exchangeId: number): Promise<ExchangeNotification[]> {
+      return [];
+    },
+  },
+  wishlistAccessRequests: {
+    async create(exchangeId: number, participantId: number): Promise<WishlistAccessRequest> {
+      const viewer = getSampleViewer(exchangeId);
+      const requested = getExchangeParticipants(exchangeId).find((item) => item.id === participantId);
+      if (!requested || getSampleWishlistAccess(exchangeId, viewer, requested) !== "none") {
+        throw new Error("You can't ask this sample person.");
+      }
+      wishlistAccessStore = { ...wishlistAccessStore, [`${viewer.id}:${requested.id}`]: "pending" };
+      return {
+        id: nextWishlistAccessRequestId++,
+        gift_exchange_id: exchangeId,
+        status: "pending",
+        decided_at: null,
+        requester_participant_id: viewer.id,
+        requester_name: viewer.display_name,
+        requested_participant_id: requested.id,
+        requested_name: requested.display_name,
+        created_at: nowIso,
+        updated_at: nowIso,
+      };
+    },
+    async approve(_exchangeId: number, _requestId: number): Promise<WishlistAccessRequest> {
+      throw new Error("Sample request not found.");
+    },
+    async deny(_exchangeId: number, _requestId: number): Promise<WishlistAccessRequest> {
+      throw new Error("Sample request not found.");
     },
   },
   exchangeExclusions: {

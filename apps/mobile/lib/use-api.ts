@@ -12,6 +12,8 @@ import {
   wishlistItemsService,
   exchangeInvitesService,
   exchangeJoinsService,
+  exchangeNotificationsService,
+  wishlistAccessRequestsService,
 } from "./api";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { screenshotServices } from "@/lib/screenshot-mocks";
@@ -52,6 +54,8 @@ export function useServices() {
       wishlistItems: wishlistItemsService,
       exchangeInvites: exchangeInvitesService,
       exchangeJoins: exchangeJoinsService,
+      exchangeNotifications: exchangeNotificationsService,
+      wishlistAccessRequests: wishlistAccessRequestsService,
     }),
     []
   );

@@ -122,4 +122,19 @@ describe("nudging someone who hasn't joined", () => {
     render(<ParticipantListItem participant={buildParticipant({ status: "accepted" })} onNudge={jest.fn()} />);
     expect(screen.queryByText("Nudge")).toBeNull();
   });
+
+  it("opens the person when they can be opened", () => {
+    const onPress = jest.fn();
+    render(<ParticipantListItem participant={buildParticipant({ status: "accepted", has_user: true })} onPress={onPress} />);
+
+    fireEvent.press(screen.getByLabelText("Open Alex Parker"));
+
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it("isn't a button when there's nothing to open", () => {
+    render(<ParticipantListItem participant={buildParticipant()} />);
+
+    expect(screen.queryByLabelText("Open Alex Parker")).toBeNull();
+  });
 });

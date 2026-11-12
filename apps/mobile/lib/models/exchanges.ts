@@ -1,10 +1,13 @@
-import type {
-  CreateExchangeParticipantRequest,
-  CreateExchangeExclusionRequest,
-  ExchangeExclusion,
-  CreateGiftExchangeRequest,
-  GiftExchange,
-  GiftExchangeWithParticipants,
+import {
+  VISIBLE_WISHLIST_ACCESS,
+  type CreateExchangeParticipantRequest,
+  type CreateExchangeExclusionRequest,
+  type ExchangeExclusion,
+  type ExchangeParticipant,
+  type CreateGiftExchangeRequest,
+  type GiftExchange,
+  type GiftExchangeWithParticipants,
+  type WishlistAccess,
 } from "@niftygifty/types";
 import { parseLocalDate } from "@/lib/formatters";
 import { parseOptionalDecimal, trim, trimOrUndefined } from "./inputs";
@@ -329,6 +332,32 @@ export function hasExchangeExclusionBetween(
       (exclusion.participant_a_id === participantBId &&
         exclusion.participant_b_id === participantAId)
   );
+}
+
+// Anyone taking part can open anyone who joined, to see or ask for their wishlist.
+export function canOpenExchangeParticipant(exchange: GiftExchange, participant: ExchangeParticipant): boolean {
+  return Boolean(exchange.my_participant) && participant.status === "accepted" && participant.has_user;
+}
+
+export function canSeeWishlist(access: WishlistAccess): boolean {
+  return VISIBLE_WISHLIST_ACCESS.includes(access);
+}
+
+// What to say when you can't see someone's wishlist yet.
+export function getClosedWishlistCopy(access: WishlistAccess, name: string): { title: string; body: string } {
+  switch (access) {
+    case "pending":
+      return { title: "Request sent", body: `We'll let you know when ${name} answers.` };
+    case "denied":
+      return { title: `${name} is keeping their wishlist private`, body: "They said no to sharing it." };
+    case "unavailable":
+      return { title: `${name} hasn't joined yet`, body: "Once they join, you can ask to see their wishlist." };
+    default:
+      return {
+        title: `${name}'s wishlist is private`,
+        body: `Ask to see it. ${name} gets a notification and can say yes or no.`,
+      };
+  }
 }
 
 export function buildExchangeInviteUrl(inviteToken: string): string {

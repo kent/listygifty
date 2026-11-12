@@ -11,6 +11,8 @@ import {
   createWishlistItemsService,
   createExchangeInvitesService,
   createExchangeJoinsService,
+  createExchangeNotificationsService,
+  createWishlistAccessRequestsService,
   createAnalyticsService,
   createAccountService,
 } from "@niftygifty/services";
@@ -54,6 +56,8 @@ const baseExchangeExclusionsService = createExchangeExclusionsService(apiClient)
 const baseBootstrapService = createBootstrapService(apiClient);
 export const wishlistItemsService = createWishlistItemsService(apiClient);
 export const exchangeInvitesService = createExchangeInvitesService(apiClient);
+export const exchangeNotificationsService = createExchangeNotificationsService(apiClient);
+export const wishlistAccessRequestsService = createWishlistAccessRequestsService(apiClient);
 const baseExchangeJoinsService = createExchangeJoinsService(apiClient);
 
 let bootstrapPromise: Promise<void> | null = null;
@@ -366,6 +370,9 @@ export const exchangeJoinsService = {
 };
 
 export const exchangeParticipantsService = {
+  getById(exchangeId: number, participantId: number) {
+    return baseExchangeParticipantsService.getById(exchangeId, participantId);
+  },
   async resendInvite(exchangeId: number, participantId: number) {
     await baseExchangeParticipantsService.resendInvite(exchangeId, participantId);
     resetBootstrapState();

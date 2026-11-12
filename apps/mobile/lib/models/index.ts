@@ -2,6 +2,7 @@ export type {
   ExchangeInviteDetails,
   ExchangeJoinDetails,
   ExchangeExclusion,
+  ExchangeNotification,
   ExchangeParticipant,
   Gift,
   GiftExchange,
@@ -10,6 +11,7 @@ export type {
   Holiday,
   HolidayCollaborator,
   Person,
+  WishlistAccess,
   WishlistItem,
 } from "@niftygifty/types";
 
