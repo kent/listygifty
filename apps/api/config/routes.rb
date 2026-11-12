@@ -99,6 +99,12 @@ Rails.application.routes.draw do
         patch :read
       end
     end
+    resources :wishlist_access_requests, only: %i[create] do
+      member do
+        post :approve
+        post :deny
+      end
+    end
     resources :exchange_participants, only: %i[index show create update destroy] do
       member do
         post :resend_invite

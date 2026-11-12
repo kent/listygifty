@@ -5,6 +5,7 @@ class ExchangeNotificationsController < ApplicationController
   def index
     notifications = @gift_exchange.exchange_notifications
       .where(recipient_participant: @participant)
+      .includes(wishlist_access_request: { requester_participant: :user, requested_participant: :user })
       .recent_first
     render json: ExchangeNotificationBlueprint.render(notifications)
   end

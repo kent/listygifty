@@ -24,6 +24,15 @@ class AllMailersRenderTest < ActionMailer::TestCase
       match_assignment: -> { ExchangeMailer.match_assignment(@annabel) },
       wishlist_updated: -> { ExchangeMailer.wishlist_updated(wishlist_added_notification(@annabel)) },
       wishlist_nudge: -> { ExchangeMailer.wishlist_nudge(nudge_notification(@annabel)) },
+      wishlist_access_requested: -> {
+        ExchangeMailer.wishlist_access_requested(access_notification(@bartholomew, @annabel, "wishlist_access_requested"))
+      },
+      wishlist_access_approved: -> {
+        ExchangeMailer.wishlist_access_approved(access_notification(@bartholomew, @annabel, "wishlist_access_approved"))
+      },
+      wishlist_access_denied: -> {
+        ExchangeMailer.wishlist_access_denied(access_notification(@bartholomew, @annabel, "wishlist_access_denied"))
+      },
       cancellation: -> {
         ExchangeMailer.cancellation(
           email: @annabel.email,
@@ -111,14 +120,19 @@ class AllMailersRenderTest < ActionMailer::TestCase
   end
 
   test "match emails never name the person who drew the recipient" do
-    [ @annabel, @bartholomew, @cordelia ].each do |recipient|
+    everyone = [ @annabel, @bartholomew, @cordelia ]
+    everyone.each do |recipient|
       drawer = ExchangeParticipant.find_by!(matched_participant: recipient)
+      asker = (everyone - [ recipient, drawer ]).sole
       secrets = [ drawer.name, drawer.display_name, drawer.email ]
 
       {
         match_assignment: ExchangeMailer.match_assignment(recipient),
         wishlist_updated: ExchangeMailer.wishlist_updated(wishlist_added_notification(recipient)),
-        wishlist_nudge: ExchangeMailer.wishlist_nudge(nudge_notification(recipient))
+        wishlist_nudge: ExchangeMailer.wishlist_nudge(nudge_notification(recipient)),
+        wishlist_access_requested: ExchangeMailer.wishlist_access_requested(
+          access_notification(asker, recipient, "wishlist_access_requested")
+        )
       }.each do |action, mail|
         content = [ mail.subject, mail.text_part.decoded, mail.html_part.decoded ].join("\n")
 
@@ -178,6 +192,16 @@ class AllMailersRenderTest < ActionMailer::TestCase
 
   def nudge_notification(recipient)
     ExchangeNotification.create!(gift_exchange: @exchange, recipient_participant: recipient, kind: "wishlist_nudge")
+  end
+
+  def access_notification(requester, requested, kind)
+    access_request = WishlistAccessRequest.find_or_create_by!(
+      gift_exchange: @exchange,
+      requester_participant: requester,
+      requested_participant: requested
+    )
+    recipient = kind == "wishlist_access_requested" ? requested : requester
+    access_request.exchange_notifications.create!(gift_exchange: @exchange, recipient_participant: recipient, kind: kind)
   end
 
   def gift_changes

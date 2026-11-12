@@ -138,6 +138,44 @@ class ExchangeMailer < ApplicationMailer
     )
   end
 
+  # To the person asked. The exchange page is where they say yes or no.
+  def wishlist_access_requested(notification)
+    @participant = notification.recipient_participant
+    @requester = notification.wishlist_access_request.requester_participant
+    @exchange = notification.gift_exchange
+    @exchange_url = exchange_url(@exchange)
+
+    mail(
+      to: @participant.delivery_email,
+      subject: "👀 #{@requester.display_name} wants to see your wishlist"
+    )
+  end
+
+  def wishlist_access_approved(notification)
+    access_request = notification.wishlist_access_request
+    @participant = notification.recipient_participant
+    @requested = access_request.requested_participant
+    @exchange = notification.gift_exchange
+    @wishlist_url = "#{exchange_url(@exchange)}/participants/#{@requested.id}"
+
+    mail(
+      to: @participant.delivery_email,
+      subject: "🎁 #{@requested.display_name} shared their wishlist with you"
+    )
+  end
+
+  def wishlist_access_denied(notification)
+    @participant = notification.recipient_participant
+    @requested = notification.wishlist_access_request.requested_participant
+    @exchange = notification.gift_exchange
+    @exchange_url = exchange_url(@exchange)
+
+    mail(
+      to: @participant.delivery_email,
+      subject: "#{@requested.display_name} is keeping their wishlist private"
+    )
+  end
+
   private
 
   def exchange_url(exchange)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_09_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_11_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -270,11 +270,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_09_120000) do
     t.datetime "read_at"
     t.bigint "recipient_participant_id", null: false
     t.datetime "updated_at", null: false
+    t.bigint "wishlist_access_request_id"
     t.bigint "wishlist_item_id"
     t.index ["exchange_wishlist_item_id"], name: "index_exchange_notifications_on_exchange_wishlist_item_id"
     t.index ["gift_exchange_id"], name: "index_exchange_notifications_on_gift_exchange_id"
     t.index ["recipient_participant_id", "kind", "created_at"], name: "index_exchange_notifications_for_delivery"
     t.index ["recipient_participant_id"], name: "index_exchange_notifications_on_recipient_participant_id"
+    t.index ["wishlist_access_request_id"], name: "index_exchange_notifications_on_wishlist_access_request_id"
     t.index ["wishlist_item_id"], name: "index_exchange_notifications_on_wishlist_item_id"
   end
 
@@ -795,6 +797,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_09_120000) do
     t.index ["subscription_plan", "created_at"], name: "index_users_on_subscription_plan_and_created_at"
   end
 
+  create_table "wishlist_access_requests", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "decided_at"
+    t.bigint "gift_exchange_id", null: false
+    t.bigint "requested_participant_id", null: false
+    t.bigint "requester_participant_id", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gift_exchange_id"], name: "index_wishlist_access_requests_on_gift_exchange_id"
+    t.index ["requested_participant_id"], name: "index_wishlist_access_requests_on_requested_participant_id"
+    t.index ["requester_participant_id", "requested_participant_id"], name: "index_wishlist_access_requests_on_pair", unique: true
+  end
+
   create_table "wishlist_item_claims", force: :cascade do |t|
     t.string "claim_token"
     t.datetime "claimed_at", null: false
@@ -921,6 +936,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_09_120000) do
   add_foreign_key "exchange_notifications", "exchange_participants", column: "recipient_participant_id"
   add_foreign_key "exchange_notifications", "exchange_wishlist_items", on_delete: :nullify
   add_foreign_key "exchange_notifications", "gift_exchanges"
+  add_foreign_key "exchange_notifications", "wishlist_access_requests", on_delete: :cascade
   add_foreign_key "exchange_notifications", "wishlist_items", on_delete: :cascade
   add_foreign_key "exchange_participants", "exchange_participants", column: "matched_participant_id"
   add_foreign_key "exchange_participants", "gift_exchanges"
@@ -973,6 +989,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_09_120000) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "wishlist_access_requests", "exchange_participants", column: "requested_participant_id", on_delete: :cascade
+  add_foreign_key "wishlist_access_requests", "exchange_participants", column: "requester_participant_id", on_delete: :cascade
+  add_foreign_key "wishlist_access_requests", "gift_exchanges"
   add_foreign_key "wishlist_item_claims", "users"
   add_foreign_key "wishlist_item_claims", "wishlist_items"
   add_foreign_key "wishlist_items", "wishlists"

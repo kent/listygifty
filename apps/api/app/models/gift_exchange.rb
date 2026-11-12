@@ -5,6 +5,7 @@ class GiftExchange < ApplicationRecord
   belongs_to :user
   belongs_to :workspace
   has_many :exchange_participants, dependent: :destroy
+  has_many :wishlist_access_requests, dependent: :delete_all
   has_many :users, through: :exchange_participants
   has_many :exchange_exclusions, dependent: :destroy
   has_many :exchange_notifications, dependent: :destroy
@@ -46,6 +47,10 @@ class GiftExchange < ApplicationRecord
 
   def editable?
     %w[draft inviting].include?(status)
+  end
+
+  def drawn?
+    %w[active completed].include?(status)
   end
 
   # The share link joins people while the roster is still open; it dies at
