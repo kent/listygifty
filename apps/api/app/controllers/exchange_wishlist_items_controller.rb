@@ -64,8 +64,7 @@ class ExchangeWishlistItemsController < ApplicationController
   end
 
   def require_wishlist_viewer
-    return if participant_owner?
-    return if current_user_matched_to_participant?
+    return if current_user_participant&.can_see_wishlist_of?(@participant)
 
     render json: { error: "Access denied" }, status: :forbidden
   end
@@ -87,12 +86,6 @@ class ExchangeWishlistItemsController < ApplicationController
 
   def current_user_participant
     @current_user_participant ||= @gift_exchange.exchange_participants.find_by(user_id: current_user.id)
-  end
-
-  def current_user_matched_to_participant?
-    return false unless %w[active completed].include?(@gift_exchange.status)
-
-    current_user_participant&.matched_participant_id == @participant.id
   end
 
   def persist_with_photo_quota(item, uploaded_photo)

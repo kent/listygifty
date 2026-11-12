@@ -15,8 +15,14 @@ import { ExchangeExclusionsSection } from "@/components/ExchangeExclusionsSectio
 import { ScreenLoader } from "@/components/ScreenLoader";
 import { MatchRevealCard } from "@/components/MatchRevealCard";
 import { MatchWishlistSection } from "@/components/MatchWishlistSection";
+import { WishlistRequestsSection } from "@/components/WishlistRequestsSection";
 import { formatBudgetRange, formatLongDate } from "@/lib/formatters";
-import { canManageExchangeWishlist, canViewExchangeMatch, getExchangeWishlistSubtitle } from "@/lib/models";
+import {
+  canManageExchangeWishlist,
+  canOpenExchangeParticipant,
+  canViewExchangeMatch,
+  getExchangeWishlistSubtitle,
+} from "@/lib/models";
 import { useTheme } from "@/lib/theme";
 import { useExchangeDetailController } from "@/lib/controllers";
 
@@ -126,6 +132,12 @@ export default function ExchangeDetailScreen() {
           </View>
         ) : null}
       </View>
+
+      <WishlistRequestsSection
+        requests={controller.wishlistRequests}
+        answeringRequestId={controller.answeringRequestId}
+        onAnswer={controller.answerWishlistRequest}
+      />
 
       {controller.canShareJoinLink ? (
         <View
@@ -435,6 +447,9 @@ export default function ExchangeDetailScreen() {
           <ParticipantListItem
             key={participant.id}
             participant={participant}
+            onPress={canOpenExchangeParticipant(exchange, participant)
+              ? () => controller.goToParticipant(participant)
+              : undefined}
             onReinvite={canAddParticipants && participant.status === "declined"
               ? () => controller.reinviteParticipant(participant)
               : undefined}

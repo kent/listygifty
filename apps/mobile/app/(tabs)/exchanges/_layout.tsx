@@ -34,6 +34,10 @@ export default function ExchangesLayout() {
         options={{ title: "Add Participant", presentation: "modal" }}
       />
       <Stack.Screen
+        name="[id]/participants/[participantId]/index"
+        options={{ title: "Participant" }}
+      />
+      <Stack.Screen
         name="[id]/participants/[participantId]/nudge"
         options={{ title: "Nudge", presentation: "modal" }}
       />

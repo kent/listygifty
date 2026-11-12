@@ -67,3 +67,25 @@ it("blocks live API access in demo even when a real session was configured", asy
   await expect(apiClient.post("/holidays", { holiday: { name: "Must stay local" } })).rejects.toThrow("Demo mode uses sample data");
   expect(token).not.toHaveBeenCalled();
 });
+
+it("opens sample people and simulates asking for a wishlist", async () => {
+  const exchange = await demoServices.giftExchanges.getById(301);
+  const me = exchange.my_participant!;
+  const match = await demoServices.exchangeParticipants.getById(301, me.matched_participant_id!);
+  expect(match.wishlist_access).toBe("match");
+  expect(match.wishlist_items?.length).toBeGreaterThan(0);
+
+  const other = exchange.exchange_participants.find((p) => p.id !== me.id && p.id !== me.matched_participant_id && p.status === "accepted")!;
+  const closed = await demoServices.exchangeParticipants.getById(301, other.id);
+  expect(closed.wishlist_access).toBe("none");
+  expect(closed.wishlist_items).toBeUndefined();
+  expect(closed).not.toHaveProperty("matched_participant_id");
+
+  await demoServices.wishlistAccessRequests.create(301, other.id);
+  expect((await demoServices.exchangeParticipants.getById(301, other.id)).wishlist_access).toBe("pending");
+  await expect(demoServices.wishlistAccessRequests.create(301, other.id)).rejects.toThrow();
+  expect(await demoServices.exchangeNotifications.getAll(301)).toEqual([]);
+
+  endDemo(); startDemo();
+  expect((await demoServices.exchangeParticipants.getById(301, other.id)).wishlist_access).toBe("none");
+});

@@ -13,11 +13,21 @@ class ExchangeParticipantsController < ApplicationController
     end
   end
 
+  # Anyone in the exchange can open anyone else. They see the wishlist of the
+  # person they drew or who said yes to them, and otherwise where they stand.
   def show
-    view = participant_response_view
-    return render json: { error: "Access denied" }, status: :forbidden unless view
+    organizer = @gift_exchange.owner?(current_user)
+    viewer = current_user_participant
 
-    render json: ExchangeParticipantBlueprint.render(@participant, view: view)
+    if @participant.user_id == current_user.id
+      render json: ExchangeParticipantBlueprint.render(@participant, view: :own)
+    elsif viewer
+      render json: ExchangeParticipantBlueprint.render_peer_as_hash(@participant, viewer: viewer, organizer: organizer)
+    elsif organizer
+      render json: ExchangeParticipantBlueprint.render(@participant, view: :organizer)
+    else
+      render json: { error: "Access denied" }, status: :forbidden
+    end
   end
 
   def create
@@ -131,24 +141,10 @@ class ExchangeParticipantsController < ApplicationController
     render_error("An exchange can't be changed after names are drawn", status: :unprocessable_entity)
   end
 
-  def participant_response_view
-    return :own if @participant.user_id == current_user.id
-    return :with_wishlist if current_user_matched_to_participant?
-    return :organizer if @gift_exchange.owner?(current_user)
-
-    nil
-  end
-
   def current_user_participant
     @current_user_participant ||= @gift_exchange.exchange_participants.find do |participant|
       participant.user_id == current_user.id
     end
-  end
-
-  def current_user_matched_to_participant?
-    return false unless %w[active completed].include?(@gift_exchange.status)
-
-    current_user_participant&.matched_participant_id == @participant.id
   end
 
   def participant_params

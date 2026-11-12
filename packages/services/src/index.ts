@@ -18,6 +18,14 @@ export {
 export { createWishlistItemsService, type WishlistItemsService } from "./wishlist-items.service";
 export { createExchangeInvitesService, type ExchangeInvitesService } from "./exchange-invites.service";
 export { createExchangeJoinsService, type ExchangeJoinsService } from "./exchange-joins.service";
+export {
+  createExchangeNotificationsService,
+  type ExchangeNotificationsService,
+} from "./exchange-notifications.service";
+export {
+  createWishlistAccessRequestsService,
+  type WishlistAccessRequestsService,
+} from "./wishlist-access-requests.service";
 
 // Standalone Wishlists
 export { createWishlistsService, type WishlistsService } from "./wishlists.service";

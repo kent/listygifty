@@ -22,7 +22,7 @@ class ExchangeDrawingService
       participants.anonymized.destroy_all
       participants.where.not(user_id: nil).update_all(status: "accepted", updated_at: Time.current)
       participants.where(user_id: nil).update_all(status: "invited", updated_at: Time.current)
-      @exchange.exchange_notifications.delete_all
+      @exchange.exchange_notifications.where(kind: ExchangeNotification::DRAW_KINDS).delete_all
       @exchange.update!(status: "inviting", published_at: nil)
     end
 
@@ -33,7 +33,7 @@ class ExchangeDrawingService
     GiftExchange.transaction do
       require_published!
       ExchangeMatchingService.new(@exchange).perform!(redraw: true)
-      @exchange.exchange_notifications.delete_all
+      @exchange.exchange_notifications.where(kind: ExchangeNotification::DRAW_KINDS).delete_all
     end
 
     deliver_assignments

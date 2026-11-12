@@ -9,6 +9,17 @@ class ExchangeParticipantBlueprint < ApplicationBlueprint
     render_as_hash(participants).map { |participant| participant.except(:email, "email") }
   end
 
+  # Someone else in the exchange as viewer sees them: what the viewer can see
+  # of their wishlist, and the list only when the viewer may read it.
+  def self.render_peer_as_hash(participant, viewer:, organizer:)
+    peer = render_as_hash(
+      participant,
+      view: organizer ? :organizer_peer : :peer,
+      wishlist_access: viewer.wishlist_access_to(participant)
+    )
+    organizer ? peer : peer.except(:email, "email")
+  end
+
   field :gift_exchange_id do |participant|
     participant.gift_exchange_id
   end
@@ -60,6 +71,17 @@ class ExchangeParticipantBlueprint < ApplicationBlueprint
     include_view :own
   end
 
+  view :peer do
+    field :wishlist_access do |_participant, options|
+      options[:wishlist_access]
+    end
+
+    field :wishlist_items,
+          if: ->(_name, _participant, options) { ExchangeParticipant::WISHLIST_VISIBLE_ACCESS.include?(options[:wishlist_access]) } do |participant|
+      ExchangeWishlistItemBlueprint.render_as_hash(participant.wishlist_items, participant_id: participant.id)
+    end
+  end
+
   view :organizer do
     field :invite_token do |participant|
       participant.invite_token
@@ -80,6 +102,11 @@ class ExchangeParticipantBlueprint < ApplicationBlueprint
     field :can_nudge do |participant|
       participant.nudgeable?
     end
+  end
+
+  view :organizer_peer do
+    include_view :organizer
+    include_view :peer
   end
 
   view :admin do

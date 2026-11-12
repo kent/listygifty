@@ -1,5 +1,7 @@
 class ExchangeParticipant < ApplicationRecord
   STATUSES = %w[invited accepted declined].freeze
+  # The wishlist_access_to answers that let someone read the list.
+  WISHLIST_VISIBLE_ACCESS = %w[own match approved].freeze
   ANONYMIZED_NAME = "Former member".freeze
   # .invalid is reserved (RFC 2606), so this can never reach a real mailbox.
   ANONYMIZED_EMAIL_DOMAIN = "deleted.invalid".freeze
@@ -24,6 +26,16 @@ class ExchangeParticipant < ApplicationRecord
     foreign_key: :recipient_participant_id,
     dependent: :destroy,
     inverse_of: :recipient_participant
+  has_many :sent_wishlist_access_requests,
+    class_name: "WishlistAccessRequest",
+    foreign_key: :requester_participant_id,
+    dependent: :delete_all,
+    inverse_of: :requester_participant
+  has_many :received_wishlist_access_requests,
+    class_name: "WishlistAccessRequest",
+    foreign_key: :requested_participant_id,
+    dependent: :delete_all,
+    inverse_of: :requested_participant
 
   validates :name, presence: true
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
@@ -58,6 +70,8 @@ class ExchangeParticipant < ApplicationRecord
   # token kills any invite link still sitting in an inbox.
   def anonymize!
     exchange_notifications.destroy_all
+    sent_wishlist_access_requests.delete_all
+    received_wishlist_access_requests.delete_all
     update!(
       user: nil,
       wishlist: nil,
@@ -103,6 +117,28 @@ class ExchangeParticipant < ApplicationRecord
   # `@clerk.user` fallback address, so user.email is not safe for delivery.
   def delivery_email
     email
+  end
+
+  # What this person can see of other's wishlist: own, match, approved,
+  # pending, denied, none, or unavailable. It only ever describes this
+  # person's own draw, so it can't give away who anyone else drew.
+  def wishlist_access_to(other)
+    return "own" if other.id == id
+    return "match" if gift_exchange.drawn? && matched_participant_id == other.id
+
+    request = sent_wishlist_access_requests.find_by(requested_participant_id: other.id)
+    return request.status if request
+
+    other.wishlist_requestable? ? "none" : "unavailable"
+  end
+
+  def can_see_wishlist_of?(other)
+    WISHLIST_VISIBLE_ACCESS.include?(wishlist_access_to(other))
+  end
+
+  # Joined with an account, so there's a list to ask about and someone to ask.
+  def wishlist_requestable?
+    status == "accepted" && user_id.present?
   end
 
   def excluded_from?(other_participant)

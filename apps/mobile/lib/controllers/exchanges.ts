@@ -3,6 +3,7 @@ import { Alert, Share } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
+import { isPendingWishlistRequest } from "@niftygifty/types";
 import { useAnalytics } from "@/lib/analytics";
 import { haptics } from "@/lib/haptics";
 import { runtimeConfig } from "@/lib/runtime-config";
@@ -42,9 +43,11 @@ import {
   type ExchangeFormValues,
   type ExchangeInviteDetails,
   type ExchangeJoinDetails,
+  type ExchangeNotification,
   type ExchangeParticipant,
   type GiftExchange,
   type GiftExchangeWithParticipants,
+  type WishlistAccess,
   type WishlistItem,
   type WishlistItemFormValues,
 } from "@/lib/models";
@@ -57,6 +60,11 @@ type ExchangeWishlistState = {
 type ExchangeMatchState = {
   exchange: GiftExchangeWithParticipants | null;
   matchWishlist: WishlistItem[];
+};
+
+type ExchangeParticipantState = {
+  exchange: GiftExchangeWithParticipants | null;
+  participant: ExchangeParticipant | null;
 };
 
 type WishlistItemSaveMode = "done" | "another";
@@ -167,11 +175,13 @@ export function useExchangeDetailController() {
   const demo = useDemoMode();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { giftExchanges, exchangeExclusions, exchangeParticipants } = useServices();
+  const { giftExchanges, exchangeExclusions, exchangeParticipants, exchangeNotifications, wishlistAccessRequests } =
+    useServices();
   const track = useAnalytics();
   const exchangeId = Number.parseInt(id ?? "", 10);
   const isValidExchangeId = Number.isFinite(exchangeId);
   const [starting, setStarting] = useState(false);
+  const [answeringRequestId, setAnsweringRequestId] = useState<number | null>(null);
   const [schedulingReminder, setSchedulingReminder] = useState(false);
   const [resendingParticipantId, setResendingParticipantId] = useState<number | null>(null);
   const [exclusionModalVisible, setExclusionModalVisible] = useState(false);
@@ -197,6 +207,44 @@ export function useExchangeDetailController() {
     key: resource.data?.updated_at ?? exchangeId,
     load: () => exchangeExclusions.getAll(exchangeId),
   });
+
+  const notificationsResource = useFocusResource<ExchangeNotification[]>({
+    enabled: isValidExchangeId && Boolean(resource.data?.my_participant),
+    errorMessage: "Failed to load wishlist requests",
+    initialValue: [] as ExchangeNotification[],
+    key: exchangeId,
+    load: () => exchangeNotifications.getAll(exchangeId),
+  });
+  const wishlistRequests = useMemo(
+    () => notificationsResource.data.filter(isPendingWishlistRequest),
+    [notificationsResource.data]
+  );
+
+  const answerWishlistRequest = useCallback(
+    async (notification: ExchangeNotification, approve: boolean) => {
+      const request = notification.wishlist_access_request;
+      if (!request || answeringRequestId !== null) return;
+      setAnsweringRequestId(request.id);
+      try {
+        const answered = approve
+          ? await wishlistAccessRequests.approve(exchangeId, request.id)
+          : await wishlistAccessRequests.deny(exchangeId, request.id);
+        notificationsResource.setData((current) =>
+          current.map((item) => (item.id === notification.id ? { ...item, wishlist_access_request: answered } : item))
+        );
+        track("mobile_exchange_wishlist_request_answered", { exchange_id: exchangeId, approved: approve });
+        await haptics.success();
+      } catch (answerError) {
+        await haptics.error();
+        Alert.alert("Couldn't Answer", humanizeError(answerError, "Try again."));
+        // It may have been answered somewhere else.
+        await notificationsResource.reload();
+      } finally {
+        setAnsweringRequestId(null);
+      }
+    },
+    [answeringRequestId, exchangeId, notificationsResource, track, wishlistAccessRequests]
+  );
 
   const startExchange = useCallback(() => {
     if (!resource.data || !canStartExchange(resource.data)) {
@@ -537,9 +585,14 @@ export function useExchangeDetailController() {
     if (resource.data?.is_owner) {
       exclusionsResource.refresh();
     }
-  }, [exclusionsResource, resource]);
+    if (resource.data?.my_participant) {
+      notificationsResource.refresh();
+    }
+  }, [exclusionsResource, notificationsResource, resource]);
 
   return {
+    answerWishlistRequest,
+    answeringRequestId,
     canShareJoinLink: Boolean(
       resource.data?.is_owner &&
         resource.data.share_url &&
@@ -566,6 +619,12 @@ export function useExchangeDetailController() {
       router.push(`/(tabs)/exchanges/${exchangeId}/participants/new`),
     goToNudgeParticipant: (participant: ExchangeParticipant) =>
       router.push(`/(tabs)/exchanges/${exchangeId}/participants/${participant.id}/nudge`),
+    goToParticipant: (participant: ExchangeParticipant) =>
+      router.push(
+        participant.id === resource.data?.my_participant?.id
+          ? `/(tabs)/exchanges/${exchangeId}/my-wishlist`
+          : `/(tabs)/exchanges/${exchangeId}/participants/${participant.id}`
+      ),
     goToWishlist: () => router.push(`/(tabs)/exchanges/${exchangeId}/my-wishlist`),
     handleStartExchange: startExchange,
     handleScheduleReminder: scheduleReminder,
@@ -588,6 +647,7 @@ export function useExchangeDetailController() {
     startBlocker: resource.data ? getExchangeStartBlocker(resource.data) : null,
     triggerRefresh,
     updateExclusionParticipant,
+    wishlistRequests,
   };
 }
 
@@ -818,6 +878,76 @@ export function useExchangeMatchController() {
     exchange: resource.data.exchange,
     loading: isValidExchangeId && resource.loading,
     matchWishlist: resource.data.matchWishlist,
+    refreshing: resource.refreshing,
+    retryLoad: resource.reload,
+    triggerRefresh: resource.refresh,
+  };
+}
+
+// Someone else in the exchange: their wishlist when you can see it, and a way
+// to ask for it when you can't.
+export function useExchangeParticipantController() {
+  const demo = useDemoMode();
+  const { id, participantId } = useLocalSearchParams<{ id: string; participantId: string }>();
+  const router = useRouter();
+  const { giftExchanges, exchangeParticipants, wishlistAccessRequests } = useServices();
+  const track = useAnalytics();
+  const exchangeId = Number.parseInt(id ?? "", 10);
+  const personId = Number.parseInt(participantId ?? "", 10);
+  const isValid = Number.isFinite(exchangeId) && Number.isFinite(personId);
+  const [asking, setAsking] = useState(false);
+  const [askError, setAskError] = useState<string | null>(null);
+
+  const resource = useFocusResource<ExchangeParticipantState>({
+    enabled: isValid,
+    errorMessage: "Failed to load this person",
+    initialValue: { exchange: null, participant: null } satisfies ExchangeParticipantState,
+    key: `${exchangeId}:${personId}`,
+    load: async () => {
+      const [exchange, participant] = await Promise.all([
+        giftExchanges.getById(exchangeId),
+        exchangeParticipants.getById(exchangeId, personId),
+      ]);
+      return { exchange, participant };
+    },
+  });
+  const { exchange, participant } = resource.data;
+  const nudge = useMatchNudge(exchange);
+  const access: WishlistAccess =
+    participant && participant.id === exchange?.my_participant?.id
+      ? "own"
+      : participant?.wishlist_access ?? "unavailable";
+
+  const askForWishlist = useCallback(async () => {
+    if (!participant || asking || access !== "none") return;
+    setAsking(true);
+    setAskError(null);
+    try {
+      await wishlistAccessRequests.create(exchangeId, participant.id);
+      resource.setData((current) =>
+        current.participant ? { ...current, participant: { ...current.participant, wishlist_access: "pending" } } : current
+      );
+      track("mobile_exchange_wishlist_requested", { exchange_id: exchangeId, participant_id: participant.id });
+      await haptics.success();
+    } catch (error) {
+      setAskError(humanizeError(error, "Could not send the request. Try again."));
+    } finally {
+      setAsking(false);
+    }
+  }, [access, asking, exchangeId, participant, resource, track, wishlistAccessRequests]);
+
+  return {
+    access,
+    askError,
+    askForWishlist,
+    asking,
+    demo,
+    error: !isValid ? "Invalid participant" : resource.error,
+    exchange,
+    goToMyWishlist: () => router.push(`/(tabs)/exchanges/${exchangeId}/my-wishlist`),
+    loading: isValid && resource.loading,
+    nudge,
+    participant,
     refreshing: resource.refreshing,
     retryLoad: resource.reload,
     triggerRefresh: resource.refresh,

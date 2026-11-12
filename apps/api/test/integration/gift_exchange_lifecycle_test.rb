@@ -291,7 +291,9 @@ class GiftExchangeLifecycleTest < ActionDispatch::IntegrationTest
         as: :json
       assert_response :success
       assert_equal matched_participant.id, json_response["id"]
+      assert_equal "match", json_response["wishlist_access"]
       assert_equal matched_participant.wishlist_items.count, json_response.fetch("wishlist_items").size
+      refute json_response.key?("matched_participant_id")
 
       get gift_exchange_exchange_participant_exchange_wishlist_items_path(exchange, matched_participant),
         headers: headers,
@@ -303,7 +305,11 @@ class GiftExchangeLifecycleTest < ActionDispatch::IntegrationTest
       get gift_exchange_exchange_participant_path(exchange, unmatched_participant),
         headers: headers,
         as: :json
-      assert_response :forbidden
+      assert_response :success
+      assert_equal "none", json_response["wishlist_access"]
+      %w[wishlist_items email matched_participant_id matched_participant].each do |secret|
+        refute json_response.key?(secret), "an unmatched person was shown #{secret}"
+      end
 
       get gift_exchange_exchange_participant_exchange_wishlist_items_path(exchange, unmatched_participant),
         headers: headers,

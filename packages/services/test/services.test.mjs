@@ -75,6 +75,22 @@ test("anonymous wishlist requests preserve the server's cooldown feedback", asyn
   assert.equal(fetch.mock.calls[0].arguments[1].method, "POST");
 });
 
+test("wishlist requests ask by participant and answer by request", async (t) => {
+  const { createWishlistAccessRequestsService } = await import("../dist/wishlist-access-requests.service.js");
+  const fetch = t.mock.method(globalThis, "fetch", async () => json({ id: 9, status: "pending" }));
+  const requests = createWishlistAccessRequestsService(client());
+  await requests.create(32, 123);
+  await requests.approve(32, 9);
+  await requests.deny(32, 9);
+  const calls = fetch.mock.calls.map((call) => [call.arguments[1].method, call.arguments[0]]);
+  assert.deepEqual(calls, [
+    ["POST", "https://api.example.test/gift_exchanges/32/wishlist_access_requests"],
+    ["POST", "https://api.example.test/gift_exchanges/32/wishlist_access_requests/9/approve"],
+    ["POST", "https://api.example.test/gift_exchanges/32/wishlist_access_requests/9/deny"],
+  ]);
+  assert.deepEqual(JSON.parse(fetch.mock.calls[0].arguments[1].body), { participant_id: 123 });
+});
+
 test("reinviting a participant uses the authenticated resend endpoint", async (t) => {
   const { createExchangeParticipantsService } = await import("../dist/exchange-participants.service.js");
   const fetch = t.mock.method(globalThis, "fetch", async () => json({ message: "Invitation resent" }));

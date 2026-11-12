@@ -1,0 +1,18 @@
+<% content_for :preview_text do %><%= @requested.display_name %> would rather keep their wishlist private.<% end %>
+
+<h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #18181b;">
+  <%= @requested.display_name %> is keeping their wishlist private.
+</h1>
+<p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
+  Hi <strong><%= @participant.display_name %></strong>. <%= @requested.display_name %> said no
+  to sharing their wishlist in <strong><%= @exchange.name %></strong>. No hard feelings.
+</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td align="center">
+      <a href="<%= @exchange_url %>" class="button" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px;">
+        Back to the Exchange
+      </a>
+    </td>
+  </tr>
+</table>

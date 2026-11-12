@@ -1,5 +1,8 @@
 import type { ExchangeExclusion, ExchangeParticipant, GiftExchange } from "@niftygifty/types";
 import {
+  canOpenExchangeParticipant,
+  canSeeWishlist,
+  getClosedWishlistCopy,
   canViewExchangeMatch,
   getExchangeDrawConfirmation,
   canManageExchangeWishlist,
@@ -357,4 +360,31 @@ it("warns before leaving pending people out of a draw", () => {
   expect(message).toContain("Sam");
   expect(message).toContain("left out");
   expect(message).toContain("1 person still needs wishlist ideas");
+});
+
+describe("opening someone in an exchange", () => {
+  const joined = buildParticipant({ id: 11, status: "accepted", has_user: true });
+
+  it("is for anyone taking part, and only reaches people who joined", () => {
+    const exchange = buildExchange({ my_participant: buildParticipant({ status: "accepted", has_user: true }) });
+
+    expect(canOpenExchangeParticipant(exchange, joined)).toBe(true);
+    expect(canOpenExchangeParticipant(exchange, buildParticipant({ id: 12, status: "invited", has_user: false }))).toBe(false);
+    expect(canOpenExchangeParticipant(buildExchange({ my_participant: null }), joined)).toBe(false);
+  });
+
+  it("shows a wishlist only for you, your match, or after a yes", () => {
+    expect((["own", "match", "approved"] as const).every(canSeeWishlist)).toBe(true);
+    expect((["pending", "denied", "none", "unavailable"] as const).some(canSeeWishlist)).toBe(false);
+  });
+
+  it("says where you stand when you can't see it", () => {
+    expect(getClosedWishlistCopy("none", "Ana")).toEqual({
+      title: "Ana's wishlist is private",
+      body: "Ask to see it. Ana can say yes or no, and won't know it was you.",
+    });
+    expect(getClosedWishlistCopy("pending", "Ana")).toEqual({ title: "Request sent", body: "We'll let you know when Ana answers." });
+    expect(getClosedWishlistCopy("denied", "Ana").title).toBe("Ana is keeping their wishlist private");
+    expect(getClosedWishlistCopy("unavailable", "Ana").title).toBe("Ana hasn't joined yet");
+  });
 });

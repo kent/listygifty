@@ -12,6 +12,8 @@ interface ParticipantListItemProps {
   reinviteDisabled?: boolean;
   // Shown for people who haven't answered. Disabled for a day after a nudge.
   onNudge?: () => void;
+  // Opens the person, to see or ask for their wishlist.
+  onPress?: () => void;
   showWishlistCount?: boolean;
 }
 
@@ -22,9 +24,11 @@ export function ParticipantListItem({
   onReinvite,
   reinviteDisabled = false,
   onNudge,
+  onPress,
   showWishlistCount = false,
 }: ParticipantListItemProps) {
   const { colors, isDark } = useTheme();
+  const name = participant.display_name || participant.name;
 
   const statusIcons: Record<string, { name: keyof typeof Ionicons.glyphMap; color: string }> = {
     accepted: { name: "checkmark-circle", color: colors.success },
@@ -50,22 +54,31 @@ export function ParticipantListItem({
         borderBottomColor: colors.border,
       }}
     >
-      <Ionicons name={statusIcon.name} size={20} color={statusIcon.color} />
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={!onPress}
+        accessibilityRole={onPress ? "button" : undefined}
+        accessibilityLabel={onPress ? `Open ${name}` : undefined}
+        accessibilityHint={onPress ? "See or ask for their wishlist" : undefined}
+        style={{ flex: 1, flexDirection: "row", alignItems: "center", minHeight: 44 }}
+      >
+        <Ionicons name={statusIcon.name} size={20} color={statusIcon.color} />
 
-      <View style={{ flex: 1, marginLeft: 12 }}>
-        <Text style={{ color: colors.text, fontSize: 16 }}>
-          {participant.display_name || participant.name}
-        </Text>
-        {participant.email ? (
-          <Text style={{ color: colors.muted, fontSize: 12 }} numberOfLines={1}>
-            {participant.email}
-          </Text>
-        ) : null}
-        {participant.phone ? (
-          <Text style={{ color: colors.muted, fontSize: 12 }}>{formatPhone(participant.phone)}</Text>
-        ) : null}
-        <Text style={{ color: statusIcon.color, fontSize: 12 }}>{statusLabel}</Text>
-      </View>
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={{ color: colors.text, fontSize: 16 }}>{name}</Text>
+          {participant.email ? (
+            <Text style={{ color: colors.muted, fontSize: 12 }} numberOfLines={1}>
+              {participant.email}
+            </Text>
+          ) : null}
+          {participant.phone ? (
+            <Text style={{ color: colors.muted, fontSize: 12 }}>{formatPhone(participant.phone)}</Text>
+          ) : null}
+          <Text style={{ color: statusIcon.color, fontSize: 12 }}>{statusLabel}</Text>
+        </View>
+
+        {onPress ? <Ionicons name="chevron-forward" size={16} color={colors.muted} style={{ marginHorizontal: 4 }} /> : null}
+      </TouchableOpacity>
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         {onReinvite && participant.status === "declined" ? (
@@ -73,7 +86,7 @@ export function ParticipantListItem({
             onPress={onReinvite}
             disabled={reinviteDisabled}
             accessibilityRole="button"
-            accessibilityLabel={`Invite ${participant.display_name || participant.name} again`}
+            accessibilityLabel={`Invite ${name} again`}
             style={{ minHeight: 44, justifyContent: "center", paddingHorizontal: 8, opacity: reinviteDisabled ? 0.5 : 1 }}
           >
             <Text style={{ color: colors.primary, fontSize: 12, fontWeight: "700" }}>Invite again</Text>
@@ -106,8 +119,8 @@ export function ParticipantListItem({
             disabled={participant.can_nudge === false}
             accessibilityRole="button"
             accessibilityLabel={participant.can_nudge === false
-              ? `Nudged ${participant.display_name || participant.name} in the last day`
-              : `Nudge ${participant.display_name || participant.name}`}
+              ? `Nudged ${name} in the last day`
+              : `Nudge ${name}`}
             accessibilityState={{ disabled: participant.can_nudge === false }}
             style={{
               flexDirection: "row",
@@ -132,7 +145,7 @@ export function ParticipantListItem({
           <TouchableOpacity
             onPress={onCopyInvite}
             accessibilityRole="button"
-            accessibilityLabel={`Copy invite for ${participant.display_name || participant.name}`}
+            accessibilityLabel={`Copy invite for ${name}`}
             style={{
               flexDirection: "row",
               alignItems: "center",
@@ -155,7 +168,7 @@ export function ParticipantListItem({
           <TouchableOpacity
             onPress={onShareInvite}
             accessibilityRole="button"
-            accessibilityLabel={`Share invite for ${participant.display_name || participant.name}`}
+            accessibilityLabel={`Share invite for ${name}`}
             style={{
               flexDirection: "row",
               alignItems: "center",

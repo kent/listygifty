@@ -1,11 +1,16 @@
 class ExchangeNotification < ApplicationRecord
-  KINDS = %w[wishlist_item_added wishlist_nudge].freeze
+  # About the draw, so a redraw or reopen clears them.
+  DRAW_KINDS = %w[wishlist_item_added wishlist_nudge].freeze
+  WISHLIST_ACCESS_KINDS = %w[wishlist_access_requested wishlist_access_approved wishlist_access_denied].freeze
+  KINDS = (DRAW_KINDS + WISHLIST_ACCESS_KINDS).freeze
 
   belongs_to :gift_exchange
   belongs_to :recipient_participant, class_name: "ExchangeParticipant"
   belongs_to :wishlist_item, optional: true
+  belongs_to :wishlist_access_request, optional: true
 
   validates :kind, presence: true, inclusion: { in: KINDS }
+  validates :wishlist_access_request, presence: true, if: -> { WISHLIST_ACCESS_KINDS.include?(kind) }
   validate :participant_belongs_to_exchange
   # A notice stays valid after the owner points the exchange at another list.
   validate :wishlist_item_belongs_to_exchange, on: :create

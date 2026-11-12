@@ -1,0 +1,22 @@
+<% content_for :preview_text do %>Someone in <%= @exchange.name %> asked to see your wishlist. Say yes or no.<% end %>
+
+<h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #18181b;">
+  Someone has requested to view your wishlist.
+</h1>
+<p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
+  Hi <strong><%= @participant.display_name %></strong>. Someone in
+  <strong><%= @exchange.name %></strong> asked to see your wishlist. We won't say who.
+</p>
+<p style="margin: 0 0 24px 0; font-size: 14px; color: #52525b;">
+  Say yes and they can see your ideas. Say no and your list stays private. Either
+  way, we'll let them know.
+</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td align="center">
+      <a href="<%= @exchange_url %>" class="button" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px;">
+        Answer the Request
+      </a>
+    </td>
+  </tr>
+</table>
