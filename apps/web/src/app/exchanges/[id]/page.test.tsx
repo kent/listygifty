@@ -3,8 +3,10 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   ExchangeExclusion,
+  ExchangeNotification,
   ExchangeParticipant,
   GiftExchangeWithParticipants,
+  WishlistAccessRequest,
   WishlistItem,
 } from "@niftygifty/types";
 import { ApiError } from "@/lib/api-client";
@@ -19,6 +21,9 @@ const mocks = vi.hoisted(() => ({
   nudge: vi.fn(),
   getExclusions: vi.fn(),
   getNotifications: vi.fn(),
+  markRead: vi.fn(),
+  approveRequest: vi.fn(),
+  denyRequest: vi.fn(),
   nudgeMatch: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
@@ -43,7 +48,8 @@ vi.mock("@/services", () => ({
     nudge: mocks.nudge,
   },
   exchangeExclusionsService: { getAll: mocks.getExclusions },
-  exchangeNotificationsService: { getAll: mocks.getNotifications },
+  exchangeNotificationsService: { getAll: mocks.getNotifications, markRead: mocks.markRead },
+  wishlistAccessRequestsService: { approve: mocks.approveRequest, deny: mocks.denyRequest },
 }));
 
 const timestamps = { created_at: "2026-10-01T00:00:00Z", updated_at: "2026-10-01T00:00:00Z" };
@@ -158,6 +164,9 @@ beforeEach(() => {
   mocks.nudge.mockReset();
   mocks.getExclusions.mockReset().mockResolvedValue([]);
   mocks.getNotifications.mockReset().mockResolvedValue([]);
+  mocks.markRead.mockReset();
+  mocks.approveRequest.mockReset();
+  mocks.denyRequest.mockReset();
   mocks.toastSuccess.mockReset();
   mocks.toastError.mockReset();
   mocks.toastWarning.mockReset();
@@ -291,6 +300,123 @@ describe("your match", () => {
     await renderPage();
 
     expect(screen.queryByTestId("match-overview")).toBeNull();
+  });
+});
+
+describe("opening someone from the roster", () => {
+  const ana = person(2, "Ana", { user_id: 200, status: "accepted", has_user: true });
+  const bea = person(3, "Bea", { user_id: 300, status: "accepted", has_user: true });
+  const cal = person(4, "Cal");
+
+  function roster() {
+    return screen.getByTestId("participant-roster");
+  }
+
+  it("links everyone who joined, and your own name to your wishlist", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({
+        status: "active",
+        is_owner: false,
+        share_url: null,
+        exchange_participants: [organizer, ana, bea, cal],
+        my_participant: ana,
+      })
+    );
+
+    await renderPage();
+
+    const link = (name: string) => within(roster()).queryByRole("link", { name });
+    expect(link("Kent")?.getAttribute("href")).toBe("/exchanges/family-christmas/participants/1");
+    expect(link("Bea")?.getAttribute("href")).toBe("/exchanges/family-christmas/participants/3");
+    expect(link("Ana")?.getAttribute("href")).toBe("/exchanges/family-christmas/my-wishlist");
+    expect(link("Cal")).toBeNull();
+  });
+
+  it("links nobody for an organizer who isn't taking part", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({ exchange_participants: [ana, bea], my_participant: null })
+    );
+
+    await renderPage();
+
+    expect(within(roster()).queryAllByRole("link")).toHaveLength(0);
+  });
+});
+
+describe("answering a wishlist request", () => {
+  const ana = person(2, "Ana", { user_id: 200, status: "accepted", has_user: true });
+
+  function accessRequest(status: WishlistAccessRequest["status"]): WishlistAccessRequest {
+    return {
+      ...timestamps,
+      id: 41,
+      gift_exchange_id: 7,
+      status,
+      decided_at: status === "pending" ? null : timestamps.updated_at,
+      requester_participant_id: 1,
+      requester_name: "Kent",
+      requested_participant_id: 2,
+      requested_name: "Ana",
+    };
+  }
+
+  function requestNotification(): ExchangeNotification {
+    return {
+      ...timestamps,
+      id: 51,
+      gift_exchange_id: 7,
+      kind: "wishlist_access_requested",
+      message: "Kent asked to see your wishlist.",
+      wishlist_item_id: null,
+      read_at: null,
+      wishlist_access_request: accessRequest("pending"),
+    };
+  }
+
+  beforeEach(() => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({ status: "active", is_owner: false, share_url: null, my_participant: ana })
+    );
+    mocks.getNotifications.mockResolvedValue([requestNotification()]);
+  });
+
+  it("says yes from the notification", async () => {
+    mocks.approveRequest.mockResolvedValue(accessRequest("approved"));
+
+    await renderPage();
+    const card = await screen.findByTestId("exchange-notifications");
+    expect(within(card).getByText("Kent asked to see your wishlist.")).toBeTruthy();
+    fireEvent.click(within(card).getByRole("button", { name: "Let Kent see your wishlist" }));
+
+    await waitFor(() => expect(mocks.approveRequest).toHaveBeenCalledWith(7, 41));
+    expect(await within(card).findByText("You said yes")).toBeTruthy();
+    expect(within(card).queryByRole("button", { name: /Kent/ })).toBeNull();
+    expect(mocks.toastSuccess).toHaveBeenCalledWith("Kent can see your wishlist now");
+  });
+
+  it("says no from the notification", async () => {
+    mocks.denyRequest.mockResolvedValue(accessRequest("denied"));
+
+    await renderPage();
+    const card = await screen.findByTestId("exchange-notifications");
+    fireEvent.click(within(card).getByRole("button", { name: "Keep your wishlist private from Kent" }));
+
+    await waitFor(() => expect(mocks.denyRequest).toHaveBeenCalledWith(7, 41));
+    expect(await within(card).findByText("You said no")).toBeTruthy();
+  });
+
+  it("shows the latest answer when it was already given elsewhere", async () => {
+    mocks.approveRequest.mockRejectedValue(new ApiError(422, { error: "You already answered this request" }));
+
+    await renderPage();
+    const card = await screen.findByTestId("exchange-notifications");
+    mocks.getNotifications.mockResolvedValue([
+      { ...requestNotification(), read_at: timestamps.updated_at, wishlist_access_request: accessRequest("denied") },
+    ]);
+    fireEvent.click(within(card).getByRole("button", { name: "Let Kent see your wishlist" }));
+
+    expect(await within(card).findByText("You said no")).toBeTruthy();
+    expect(mocks.toastError).toHaveBeenCalledWith("You already answered this request");
   });
 });
 

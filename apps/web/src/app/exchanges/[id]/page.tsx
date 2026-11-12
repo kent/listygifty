@@ -11,6 +11,7 @@ import {
   exchangeParticipantsService,
   exchangeExclusionsService,
   exchangeNotificationsService,
+  wishlistAccessRequestsService,
 } from "@/services";
 import { ApiError } from "@/lib/api-client";
 import { humanizeError } from "@/lib/error-message";
@@ -18,6 +19,7 @@ import { signInUrlForCurrentPage } from "@/lib/sign-in-redirect";
 import { AppHeader } from "@/components/layout";
 import { getExchangeNextStep } from "@/components/exchanges/exchange-next-step";
 import { MatchOverviewCard } from "@/components/exchanges/match-overview-card";
+import { ExchangeNotificationList } from "@/components/exchanges/exchange-notification-list";
 import { NudgeParticipantDialog } from "@/components/exchanges/nudge-participant-dialog";
 import { formatPhone } from "@/lib/phone";
 import { pluralize } from "@/components/exchanges/pluralize";
@@ -139,6 +141,7 @@ export default function ExchangeDetailPage({
   const [exchange, setExchange] = useState<GiftExchangeWithParticipants | null>(null);
   const [exclusions, setExclusions] = useState<ExchangeExclusion[]>([]);
   const [notifications, setNotifications] = useState<ExchangeNotification[]>([]);
+  const [answeringId, setAnsweringId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<"not-found" | "load-failed" | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -373,7 +376,8 @@ export default function ExchangeDetailPage({
       if (!exchange) return;
       const updated = await giftExchangesService.redo(exchange.id, mode);
       setExchange(updated);
-      setNotifications([]);
+      // The redo clears notices about the old draw. Wishlist requests stay.
+      if (updated.my_participant) await refreshNotifications(updated.id);
       setShowRedoDialog(false);
       toast.success(
         mode === "reopen"
@@ -385,6 +389,49 @@ export default function ExchangeDetailPage({
       toast.error(message);
     } finally {
       setRedoingMode(null);
+    }
+  };
+
+  const refreshNotifications = async (exchangeId: number) => {
+    setNotifications(await exchangeNotificationsService.getAll(exchangeId).catch(() => []));
+  };
+
+  const handleMarkRead = async (notification: ExchangeNotification) => {
+    if (!exchange) return;
+    try {
+      const updated = await exchangeNotificationsService.markRead(exchange.id, notification.id);
+      setNotifications((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+    } catch {
+      // It stays unread, so they can try again.
+    }
+  };
+
+  const handleAnswerRequest = async (notification: ExchangeNotification, approve: boolean) => {
+    const request = notification.wishlist_access_request;
+    if (!exchange || !request) return;
+    setAnsweringId(notification.id);
+    try {
+      const answered = approve
+        ? await wishlistAccessRequestsService.approve(exchange.id, request.id)
+        : await wishlistAccessRequestsService.deny(exchange.id, request.id);
+      setNotifications((current) =>
+        current.map((item) =>
+          item.id === notification.id
+            ? { ...item, read_at: item.read_at ?? answered.updated_at, wishlist_access_request: answered }
+            : item
+        )
+      );
+      toast.success(
+        approve
+          ? `${request.requester_name} can see your wishlist now`
+          : `Your wishlist stays private from ${request.requester_name}`
+      );
+    } catch (err: unknown) {
+      toast.error(humanizeError(err, "Could not answer the request"));
+      // It may have been answered somewhere else.
+      await refreshNotifications(exchange.id);
+    } finally {
+      setAnsweringId(null);
     }
   };
 
@@ -446,6 +493,14 @@ export default function ExchangeDetailPage({
   const myParticipant = exchange.my_participant;
   const nextStep = getExchangeNextStep({ ...exchange, exchange_participants: participants });
   const pendingCount = participants.filter((p) => p.status === "invited").length;
+
+  // Anyone taking part can open anyone who joined, to see or ask for their wishlist.
+  const participantHref = (participant: ExchangeParticipant) => {
+    if (!myParticipant || participant.status !== "accepted" || !participant.has_user) return null;
+    return participant.id === myParticipant.id
+      ? `/exchanges/${slug}/my-wishlist`
+      : `/exchanges/${slug}/participants/${participant.id}`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -772,94 +827,105 @@ export default function ExchangeDetailPage({
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {participants.map((participant) => (
-                    <div
-                      key={participant.id}
-                      className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
-                    >
-                      <div className="flex min-w-0 grow basis-40 items-center gap-3">
-                        {getStatusIcon(participant.status)}
-                        <div className="min-w-0">
-                          <p className="break-words text-slate-900 dark:text-white font-medium">{participant.display_name}</p>
-                          {participant.email && (
-                            <p className="break-words text-xs text-slate-600 dark:text-slate-400">{participant.email}</p>
+                  {participants.map((participant) => {
+                    const profileHref = participantHref(participant);
+                    return (
+                      <div
+                        key={participant.id}
+                        className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
+                      >
+                        <div className="flex min-w-0 grow basis-40 items-center gap-3">
+                          {getStatusIcon(participant.status)}
+                          <div className="min-w-0">
+                            <p className="break-words text-slate-900 dark:text-white font-medium">
+                              {profileHref ? (
+                                <Link href={profileHref} className="underline-offset-4 hover:underline">
+                                  {participant.display_name}
+                                </Link>
+                              ) : (
+                                participant.display_name
+                              )}
+                            </p>
+                            {participant.email && (
+                              <p className="break-words text-xs text-slate-600 dark:text-slate-400">{participant.email}</p>
+                            )}
+                            {participant.phone && (
+                              <p className="text-xs text-slate-600 dark:text-slate-400">{formatPhone(participant.phone)}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={
+                              participant.status === "accepted"
+                                ? "border-green-500/40 text-green-800 dark:text-green-400"
+                                : participant.status === "declined"
+                                  ? "border-red-500/40 text-red-700 dark:text-red-400"
+                                  : "border-amber-500/40 text-amber-800 dark:text-amber-400"
+                            }
+                          >
+                            {getParticipantStatusLabel(participant.status)}
+                          </Badge>
+                          {participant.wishlist_count > 0 && (
+                            <Badge variant="outline" className="text-xs">
+                              {pluralize(participant.wishlist_count, "item")}
+                            </Badge>
                           )}
-                          {participant.phone && (
-                            <p className="text-xs text-slate-600 dark:text-slate-400">{formatPhone(participant.phone)}</p>
+                          {isOwner && participant.status === "invited" && (
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              className={ROW_ICON_BUTTON_CLASS}
+                              onClick={() => handleCopyInvite(participant)}
+                              aria-label={`Copy invite for ${participant.display_name}`}
+                              title="Copy invite"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          )}
+                          {isOwner && participant.status === "invited" && exchange.status !== "active" && exchange.status !== "completed" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className={CARD_ACTION_CLASS}
+                              onClick={() => setParticipantToNudge(participant)}
+                              disabled={!participant.can_nudge}
+                              aria-label={participant.can_nudge ? `Nudge ${participant.display_name}` : `Nudged ${participant.display_name} in the last day`}
+                              title={participant.can_nudge ? "Remind them by email or text" : "You can nudge them again a day after the last nudge"}
+                            >
+                              <BellRing className="h-3 w-3 mr-1" />
+                              {participant.can_nudge ? "Nudge" : "Nudged"}
+                            </Button>
+                          )}
+                          {isOwner && participant.status === "declined" && exchange.status !== "active" && exchange.status !== "completed" && (
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              className={ROW_ICON_BUTTON_CLASS}
+                              onClick={() => handleResendInvite(participant)}
+                              aria-label={`Resend invite to ${participant.display_name}`}
+                              title="Resend invite"
+                            >
+                              <Send className="h-3 w-3" />
+                            </Button>
+                          )}
+                          {isOwner && exchange.status !== "active" && exchange.status !== "completed" && (
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              className={ROW_REMOVE_BUTTON_CLASS}
+                              onClick={() => setParticipantToRemove(participant)}
+                              aria-label={`Remove ${participant.display_name}`}
+                              title="Remove"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           )}
                         </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className={
-                            participant.status === "accepted"
-                              ? "border-green-500/40 text-green-800 dark:text-green-400"
-                              : participant.status === "declined"
-                                ? "border-red-500/40 text-red-700 dark:text-red-400"
-                                : "border-amber-500/40 text-amber-800 dark:text-amber-400"
-                          }
-                        >
-                          {getParticipantStatusLabel(participant.status)}
-                        </Badge>
-                        {participant.wishlist_count > 0 && (
-                          <Badge variant="outline" className="text-xs">
-                            {pluralize(participant.wishlist_count, "item")}
-                          </Badge>
-                        )}
-                        {isOwner && participant.status === "invited" && (
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            className={ROW_ICON_BUTTON_CLASS}
-                            onClick={() => handleCopyInvite(participant)}
-                            aria-label={`Copy invite for ${participant.display_name}`}
-                            title="Copy invite"
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        )}
-                        {isOwner && participant.status === "invited" && exchange.status !== "active" && exchange.status !== "completed" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className={CARD_ACTION_CLASS}
-                            onClick={() => setParticipantToNudge(participant)}
-                            disabled={!participant.can_nudge}
-                            aria-label={participant.can_nudge ? `Nudge ${participant.display_name}` : `Nudged ${participant.display_name} in the last day`}
-                            title={participant.can_nudge ? "Remind them by email or text" : "You can nudge them again a day after the last nudge"}
-                          >
-                            <BellRing className="h-3 w-3 mr-1" />
-                            {participant.can_nudge ? "Nudge" : "Nudged"}
-                          </Button>
-                        )}
-                        {isOwner && participant.status === "declined" && exchange.status !== "active" && exchange.status !== "completed" && (
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            className={ROW_ICON_BUTTON_CLASS}
-                            onClick={() => handleResendInvite(participant)}
-                            aria-label={`Resend invite to ${participant.display_name}`}
-                            title="Resend invite"
-                          >
-                            <Send className="h-3 w-3" />
-                          </Button>
-                        )}
-                        {isOwner && exchange.status !== "active" && exchange.status !== "completed" && (
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            className={ROW_REMOVE_BUTTON_CLASS}
-                            onClick={() => setParticipantToRemove(participant)}
-                            aria-label={`Remove ${participant.display_name}`}
-                            title="Remove"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
@@ -1004,31 +1070,14 @@ export default function ExchangeDetailPage({
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                {notifications.map((notification) => (
-                  <button
-                    key={notification.id}
-                    type="button"
-                    className="w-full text-left p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
-                    onClick={async () => {
-                      if (notification.read_at) return;
-                      const updated = await exchangeNotificationsService.markRead(
-                        exchange.id,
-                        notification.id
-                      );
-                      setNotifications((current) =>
-                        current.map((item) => (item.id === updated.id ? updated : item))
-                      );
-                    }}
-                  >
-                    <span className={notification.read_at ? "text-slate-600 dark:text-slate-400" : "text-slate-900 dark:text-white"}>
-                      {notification.message}
-                    </span>
-                    {!notification.read_at && (
-                      <span className="ml-2 text-xs text-violet-700 dark:text-violet-300">Mark read</span>
-                    )}
-                  </button>
-                ))}
+              <CardContent>
+                <ExchangeNotificationList
+                  notifications={notifications}
+                  exchangeSlug={slug}
+                  answeringId={answeringId}
+                  onMarkRead={handleMarkRead}
+                  onAnswer={handleAnswerRequest}
+                />
               </CardContent>
             </Card>
           )}
