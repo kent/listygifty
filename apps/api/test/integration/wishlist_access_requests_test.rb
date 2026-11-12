@@ -181,6 +181,16 @@ class WishlistAccessRequestsTest < ActionDispatch::IntegrationTest
     assert_empty @exchange.exchange_notifications.where(kind: ExchangeNotification::WISHLIST_ACCESS_KINDS)
   end
 
+  test "deleting the exchange takes every request with it" do
+    ask(@asker, @other)
+    answer(@other, json_response["id"], :approve)
+
+    ExchangeDeletionService.delete!(@exchange.reload)
+
+    assert_empty WishlistAccessRequest.where(gift_exchange_id: @exchange.id)
+    assert_empty ExchangeNotification.where(gift_exchange_id: @exchange.id)
+  end
+
   private
 
   def headers_for(participant)
