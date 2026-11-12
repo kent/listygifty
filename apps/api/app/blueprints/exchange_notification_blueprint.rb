@@ -13,7 +13,7 @@ class ExchangeNotificationBlueprint < ApplicationBlueprint
     when "wishlist_nudge"
       "Your Secret Santa would love a few more wishlist ideas."
     when "wishlist_access_requested"
-      "#{access_request.requester_participant.display_name} asked to see your wishlist."
+      "Someone has requested to view your wishlist."
     when "wishlist_access_approved"
       "#{access_request.requested_participant.display_name} said yes. You can see their wishlist now."
     when "wishlist_access_denied"

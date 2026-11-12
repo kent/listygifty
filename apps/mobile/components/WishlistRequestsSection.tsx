@@ -10,7 +10,7 @@ interface WishlistRequestsSectionProps {
   onAnswer: (notification: ExchangeNotification, approve: boolean) => void;
 }
 
-// People in the exchange who asked to see your wishlist and are waiting on you.
+// Anonymous requests to see your wishlist that are waiting on you.
 export function WishlistRequestsSection({ requests, answeringRequestId, onAnswer }: WishlistRequestsSectionProps) {
   const { colors } = useTheme();
   if (requests.length === 0) return null;
@@ -53,7 +53,7 @@ export function WishlistRequestsSection({ requests, answeringRequestId, onAnswer
                 onPress={() => onAnswer(notification, true)}
                 loading={answering}
                 disabled={busy}
-                accessibilityLabel={`Let ${request.requester_name} see your wishlist`}
+                accessibilityLabel="Let them see your wishlist"
               />
               <PrimaryButton
                 label="Say no"
@@ -64,7 +64,7 @@ export function WishlistRequestsSection({ requests, answeringRequestId, onAnswer
                 style={{ flex: 1 }}
                 onPress={() => onAnswer(notification, false)}
                 disabled={busy}
-                accessibilityLabel={`Keep your wishlist private from ${request.requester_name}`}
+                accessibilityLabel="Keep your wishlist private"
               />
             </View>
           </View>

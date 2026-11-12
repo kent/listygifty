@@ -138,16 +138,16 @@ class ExchangeMailer < ApplicationMailer
     )
   end
 
-  # To the person asked. The exchange page is where they say yes or no.
+  # To the person asked, without saying who asked. The exchange page is where
+  # they say yes or no.
   def wishlist_access_requested(notification)
     @participant = notification.recipient_participant
-    @requester = notification.wishlist_access_request.requester_participant
     @exchange = notification.gift_exchange
     @exchange_url = exchange_url(@exchange)
 
     mail(
       to: @participant.delivery_email,
-      subject: "👀 #{@requester.display_name} wants to see your wishlist"
+      subject: "👀 Someone has requested to view your wishlist"
     )
   end
 

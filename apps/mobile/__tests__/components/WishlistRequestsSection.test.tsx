@@ -4,13 +4,13 @@ import { WishlistRequestsSection } from "@/components/WishlistRequestsSection";
 
 const timestamps = { created_at: "2026-11-01T00:00:00Z", updated_at: "2026-11-01T00:00:00Z" };
 
-function request(id: number, name: string): ExchangeNotification {
+function request(id: number): ExchangeNotification {
   return {
     ...timestamps,
     id,
     gift_exchange_id: 7,
     kind: "wishlist_access_requested",
-    message: `${name} asked to see your wishlist.`,
+    message: "Someone has requested to view your wishlist.",
     wishlist_item_id: null,
     read_at: null,
     wishlist_access_request: {
@@ -19,8 +19,6 @@ function request(id: number, name: string): ExchangeNotification {
       gift_exchange_id: 7,
       status: "pending",
       decided_at: null,
-      requester_participant_id: id,
-      requester_name: name,
       requested_participant_id: 2,
       requested_name: "Ana",
     },
@@ -28,25 +26,25 @@ function request(id: number, name: string): ExchangeNotification {
 }
 
 describe("WishlistRequestsSection", () => {
-  it("lets you say yes or no to each person who asked", () => {
+  it("lets you say yes or no to each request without saying who asked", () => {
     const onAnswer = jest.fn();
-    const kent = request(1, "Kent");
-    render(<WishlistRequestsSection requests={[kent, request(3, "Bea")]} answeringRequestId={null} onAnswer={onAnswer} />);
+    const first = request(1);
+    const second = request(3);
+    render(<WishlistRequestsSection requests={[first, second]} answeringRequestId={null} onAnswer={onAnswer} />);
 
-    expect(screen.getByText("Kent asked to see your wishlist.")).toBeTruthy();
-    expect(screen.getByText("Bea asked to see your wishlist.")).toBeTruthy();
-    fireEvent.press(screen.getByLabelText("Let Kent see your wishlist"));
-    fireEvent.press(screen.getByLabelText("Keep your wishlist private from Bea"));
+    expect(screen.getAllByText("Someone has requested to view your wishlist.")).toHaveLength(2);
+    fireEvent.press(screen.getAllByLabelText("Let them see your wishlist")[0]);
+    fireEvent.press(screen.getAllByLabelText("Keep your wishlist private")[1]);
 
-    expect(onAnswer).toHaveBeenNthCalledWith(1, kent, true);
-    expect(onAnswer).toHaveBeenNthCalledWith(2, expect.objectContaining({ id: 3 }), false);
+    expect(onAnswer).toHaveBeenNthCalledWith(1, first, true);
+    expect(onAnswer).toHaveBeenNthCalledWith(2, second, false);
   });
 
   it("holds every answer while one is saving", () => {
     const onAnswer = jest.fn();
-    render(<WishlistRequestsSection requests={[request(1, "Kent"), request(3, "Bea")]} answeringRequestId={101} onAnswer={onAnswer} />);
+    render(<WishlistRequestsSection requests={[request(1), request(3)]} answeringRequestId={101} onAnswer={onAnswer} />);
 
-    fireEvent.press(screen.getByLabelText("Keep your wishlist private from Bea"));
+    fireEvent.press(screen.getAllByLabelText("Keep your wishlist private")[1]);
 
     expect(onAnswer).not.toHaveBeenCalled();
   });

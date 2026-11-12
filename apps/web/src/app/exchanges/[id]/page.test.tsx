@@ -353,8 +353,6 @@ describe("answering a wishlist request", () => {
       gift_exchange_id: 7,
       status,
       decided_at: status === "pending" ? null : timestamps.updated_at,
-      requester_participant_id: 1,
-      requester_name: "Kent",
       requested_participant_id: 2,
       requested_name: "Ana",
     };
@@ -366,7 +364,7 @@ describe("answering a wishlist request", () => {
       id: 51,
       gift_exchange_id: 7,
       kind: "wishlist_access_requested",
-      message: "Kent asked to see your wishlist.",
+      message: "Someone has requested to view your wishlist.",
       wishlist_item_id: null,
       read_at: null,
       wishlist_access_request: accessRequest("pending"),
@@ -385,13 +383,13 @@ describe("answering a wishlist request", () => {
 
     await renderPage();
     const card = await screen.findByTestId("exchange-notifications");
-    expect(within(card).getByText("Kent asked to see your wishlist.")).toBeTruthy();
-    fireEvent.click(within(card).getByRole("button", { name: "Let Kent see your wishlist" }));
+    expect(within(card).getByText("Someone has requested to view your wishlist.")).toBeTruthy();
+    fireEvent.click(within(card).getByRole("button", { name: "Let them see your wishlist" }));
 
     await waitFor(() => expect(mocks.approveRequest).toHaveBeenCalledWith(7, 41));
     expect(await within(card).findByText("You said yes")).toBeTruthy();
-    expect(within(card).queryByRole("button", { name: /Kent/ })).toBeNull();
-    expect(mocks.toastSuccess).toHaveBeenCalledWith("Kent can see your wishlist now");
+    expect(within(card).queryByRole("button", { name: /your wishlist/ })).toBeNull();
+    expect(mocks.toastSuccess).toHaveBeenCalledWith("They can see your wishlist now");
   });
 
   it("says no from the notification", async () => {
@@ -399,7 +397,7 @@ describe("answering a wishlist request", () => {
 
     await renderPage();
     const card = await screen.findByTestId("exchange-notifications");
-    fireEvent.click(within(card).getByRole("button", { name: "Keep your wishlist private from Kent" }));
+    fireEvent.click(within(card).getByRole("button", { name: "Keep your wishlist private" }));
 
     await waitFor(() => expect(mocks.denyRequest).toHaveBeenCalledWith(7, 41));
     expect(await within(card).findByText("You said no")).toBeTruthy();
@@ -413,7 +411,7 @@ describe("answering a wishlist request", () => {
     mocks.getNotifications.mockResolvedValue([
       { ...requestNotification(), read_at: timestamps.updated_at, wishlist_access_request: accessRequest("denied") },
     ]);
-    fireEvent.click(within(card).getByRole("button", { name: "Let Kent see your wishlist" }));
+    fireEvent.click(within(card).getByRole("button", { name: "Let them see your wishlist" }));
 
     expect(await within(card).findByText("You said no")).toBeTruthy();
     expect(mocks.toastError).toHaveBeenCalledWith("You already answered this request");

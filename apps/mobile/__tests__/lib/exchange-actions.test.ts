@@ -98,11 +98,11 @@ it("won't ask a match who deleted their account", async () => {
 function wishlistRequest(status: "pending" | "approved" | "denied"): ExchangeNotification {
   const timestamps = { created_at: "2026-11-01T00:00:00Z", updated_at: "2026-11-01T00:00:00Z" };
   return {
-    ...timestamps, id: 51, gift_exchange_id: 32, kind: "wishlist_access_requested", message: "Kent asked to see your wishlist.",
+    ...timestamps, id: 51, gift_exchange_id: 32, kind: "wishlist_access_requested", message: "Someone has requested to view your wishlist.",
     wishlist_item_id: null, read_at: null,
     wishlist_access_request: {
       ...timestamps, id: 141, gift_exchange_id: 32, status, decided_at: null,
-      requester_participant_id: 1, requester_name: "Kent", requested_participant_id: 2, requested_name: "Ana",
+      requested_participant_id: 2, requested_name: "Ana",
     },
   };
 }

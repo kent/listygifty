@@ -381,7 +381,7 @@ describe("opening someone in an exchange", () => {
   it("says where you stand when you can't see it", () => {
     expect(getClosedWishlistCopy("none", "Ana")).toEqual({
       title: "Ana's wishlist is private",
-      body: "Ask to see it. Ana gets a notification and can say yes or no.",
+      body: "Ask to see it. Ana can say yes or no, and won't know it was you.",
     });
     expect(getClosedWishlistCopy("pending", "Ana")).toEqual({ title: "Request sent", body: "We'll let you know when Ana answers." });
     expect(getClosedWishlistCopy("denied", "Ana").title).toBe("Ana is keeping their wishlist private");

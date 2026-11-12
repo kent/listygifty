@@ -1,6 +1,6 @@
 # Someone in an exchange asks to see the wishlist of a person they didn't draw,
-# and that person says yes or no. Each step notifies the other side in the app
-# and by email.
+# and that person says yes or no without learning who asked. Each step
+# notifies the other side in the app and by email.
 class WishlistAccessService
   class Error < ArgumentError; end
 

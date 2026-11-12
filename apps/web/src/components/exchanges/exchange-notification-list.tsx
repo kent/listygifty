@@ -45,7 +45,7 @@ export function ExchangeNotificationList({
                     className={ACTION_CLASS}
                     disabled={answering}
                     onClick={() => onAnswer(notification, true)}
-                    aria-label={`Let ${request.requester_name} see your wishlist`}
+                    aria-label="Let them see your wishlist"
                   >
                     <Check className="h-3 w-3 mr-1" />
                     Say yes
@@ -56,7 +56,7 @@ export function ExchangeNotificationList({
                     className={ACTION_CLASS}
                     disabled={answering}
                     onClick={() => onAnswer(notification, false)}
-                    aria-label={`Keep your wishlist private from ${request.requester_name}`}
+                    aria-label="Keep your wishlist private"
                   >
                     <X className="h-3 w-3 mr-1" />
                     Say no

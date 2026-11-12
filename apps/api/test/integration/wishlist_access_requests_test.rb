@@ -48,16 +48,16 @@ class WishlistAccessRequestsTest < ActionDispatch::IntegrationTest
     perform_enqueued_jobs { ask(@asker, @other) }
     assert_response :created
     assert_equal "pending", json_response["status"]
-    assert_equal @asker.display_name, json_response["requester_name"]
+    assert_equal @other.display_name, json_response["requested_name"]
     assert_equal "pending", show(@asker, @other).fetch("wishlist_access")
 
     request_mail = ActionMailer::Base.deliveries.sole
     assert_equal [ @other.email ], request_mail.to
-    assert_includes request_mail.subject, "#{@asker.display_name} wants to see your wishlist"
+    assert_equal "👀 Someone has requested to view your wishlist", request_mail.subject
 
     notification = notifications_for(@other).sole
     assert_equal "wishlist_access_requested", notification["kind"]
-    assert_equal "#{@asker.display_name} asked to see your wishlist.", notification["message"]
+    assert_equal "Someone has requested to view your wishlist.", notification["message"]
     access_request_id = notification.dig("wishlist_access_request", "id")
     assert_equal "pending", notification.dig("wishlist_access_request", "status")
 
@@ -150,6 +150,21 @@ class WishlistAccessRequestsTest < ActionDispatch::IntegrationTest
       refute_match(/matched_participant/, body.to_json)
     end
     refute show(@asker, @other).key?("email")
+  end
+
+  test "the person asked never learns who asked" do
+    perform_enqueued_jobs { ask(@asker, @other) }
+    received = notifications_for(@other)
+    perform_enqueued_jobs { answer(@other, received.sole.dig("wishlist_access_request", "id"), :approve) }
+    answered = json_response
+
+    request_mail = ActionMailer::Base.deliveries.find { |mail| mail.to == [ @other.email ] }
+    seen_by_owner = [ received.to_json, answered.to_json, notifications_for(@other).to_json,
+                      request_mail.subject, request_mail.text_part.decoded, request_mail.html_part.decoded ].join("\n")
+    [ @asker.name, @asker.display_name, @asker.email ].uniq.each do |identity|
+      assert_not_includes seen_by_owner, identity
+    end
+    refute_match(/requester/, seen_by_owner)
   end
 
   test "someone who hasn't joined can't be asked" do

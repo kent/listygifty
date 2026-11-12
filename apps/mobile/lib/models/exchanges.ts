@@ -355,7 +355,7 @@ export function getClosedWishlistCopy(access: WishlistAccess, name: string): { t
     default:
       return {
         title: `${name}'s wishlist is private`,
-        body: `Ask to see it. ${name} gets a notification and can say yes or no.`,
+        body: `Ask to see it. ${name} can say yes or no, and won't know it was you.`,
       };
   }
 }

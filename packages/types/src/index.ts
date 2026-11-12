@@ -1032,12 +1032,11 @@ export const VISIBLE_WISHLIST_ACCESS: readonly WishlistAccess[] = ["own", "match
 
 export type WishlistAccessRequestStatus = "pending" | "approved" | "denied";
 
+// Anonymous to the person asked, so it never says who asked.
 export interface WishlistAccessRequest extends BaseEntity {
   gift_exchange_id: number;
   status: WishlistAccessRequestStatus;
   decided_at: string | null;
-  requester_participant_id: number;
-  requester_name: string;
   requested_participant_id: number;
   requested_name: string;
 }

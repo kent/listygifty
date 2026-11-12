@@ -144,6 +144,16 @@ class AllMailersRenderTest < ActionMailer::TestCase
     end
   end
 
+  test "a wishlist request never says who asked" do
+    mail = ExchangeMailer.wishlist_access_requested(access_notification(@bartholomew, @annabel, "wishlist_access_requested"))
+    content = [ mail.subject, mail.text_part.decoded, mail.html_part.decoded ].join("\n")
+
+    assert_includes content, "Someone has requested to view your wishlist"
+    [ @bartholomew.name, @bartholomew.display_name, @bartholomew.email ].each do |secret|
+      assert_not_includes content, secret
+    end
+  end
+
   test "the match assignment keeps the match itself out of the email" do
     mail = ExchangeMailer.match_assignment(@annabel)
     content = [ mail.subject, mail.text_part.decoded, mail.html_part.decoded ].join("\n")

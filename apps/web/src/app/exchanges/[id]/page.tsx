@@ -421,11 +421,7 @@ export default function ExchangeDetailPage({
             : item
         )
       );
-      toast.success(
-        approve
-          ? `${request.requester_name} can see your wishlist now`
-          : `Your wishlist stays private from ${request.requester_name}`
-      );
+      toast.success(approve ? "They can see your wishlist now" : "Your wishlist stays private");
     } catch (err: unknown) {
       toast.error(humanizeError(err, "Could not answer the request"));
       // It may have been answered somewhere else.

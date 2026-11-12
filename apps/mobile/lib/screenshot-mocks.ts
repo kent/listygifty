@@ -1434,8 +1434,6 @@ export const screenshotServices = {
         gift_exchange_id: exchangeId,
         status: "pending",
         decided_at: null,
-        requester_participant_id: viewer.id,
-        requester_name: viewer.display_name,
         requested_participant_id: requested.id,
         requested_name: requested.display_name,
         created_at: nowIso,

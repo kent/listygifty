@@ -21,7 +21,7 @@ const CLOSED_COPY: Record<ClosedAccess, { icon: LucideIcon; title: (name: string
   none: {
     icon: Lock,
     title: (name) => `${name}'s wishlist is private`,
-    body: (name) => `Ask to see it. ${name} gets a notification and can say yes or no.`,
+    body: (name) => `Ask to see it. ${name} can say yes or no, and won't know it was you.`,
   },
   pending: {
     icon: Clock,
