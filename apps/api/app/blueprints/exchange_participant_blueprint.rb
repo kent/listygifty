@@ -15,7 +15,8 @@ class ExchangeParticipantBlueprint < ApplicationBlueprint
     peer = render_as_hash(
       participant,
       view: organizer ? :organizer_peer : :peer,
-      wishlist_access: viewer.wishlist_access_to(participant)
+      wishlist_access: viewer.wishlist_access_to(participant),
+      viewer: viewer.user
     )
     organizer ? peer : peer.except(:email, "email")
   end
@@ -45,15 +46,18 @@ class ExchangeParticipantBlueprint < ApplicationBlueprint
       participant.matched_participant_id
     end
 
+    # Rendered for the giver, so they see what's taken on their match's list.
     field :matched_participant do |participant|
-      return nil unless participant.matched_participant
-      ExchangeParticipantBlueprint.render_as_hash(participant.matched_participant, view: :with_wishlist)
+      next nil unless participant.matched_participant
+      ExchangeParticipantBlueprint.render_as_hash(participant.matched_participant, view: :with_wishlist, viewer: participant.user)
     end
   end
 
   view :with_wishlist do
-    field :wishlist_items do |participant|
-      ExchangeWishlistItemBlueprint.render_as_hash(participant.wishlist_items, participant_id: participant.id)
+    field :wishlist_items do |participant, options|
+      ExchangeWishlistItemBlueprint.render_as_hash(
+        participant.wishlist_items.includes(:claims, :wishlist), participant_id: participant.id, viewer: options[:viewer]
+      )
     end
   end
 
@@ -77,8 +81,10 @@ class ExchangeParticipantBlueprint < ApplicationBlueprint
     end
 
     field :wishlist_items,
-          if: ->(_name, _participant, options) { ExchangeParticipant::WISHLIST_VISIBLE_ACCESS.include?(options[:wishlist_access]) } do |participant|
-      ExchangeWishlistItemBlueprint.render_as_hash(participant.wishlist_items, participant_id: participant.id)
+          if: ->(_name, _participant, options) { ExchangeParticipant::WISHLIST_VISIBLE_ACCESS.include?(options[:wishlist_access]) } do |participant, options|
+      ExchangeWishlistItemBlueprint.render_as_hash(
+        participant.wishlist_items.includes(:claims, :wishlist), participant_id: participant.id, viewer: options[:viewer]
+      )
     end
   end
 

@@ -4,6 +4,7 @@ import { WishlistItemCard } from "@/components/WishlistItemCard";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { InlineError } from "@/components/InlineError";
 import { useTheme } from "@/lib/theme";
+import { useWishlistMarks } from "@/lib/controllers/wishlist-marks";
 
 export interface MatchNudge {
   // False once the match has deleted their account.
@@ -19,6 +20,8 @@ interface MatchWishlistSectionProps {
   items: WishlistItem[];
   nudge: MatchNudge;
   demo?: boolean;
+  /** With this, you can mark what you're getting. */
+  exchangeId?: number;
 }
 
 function nudgeLabel(nudge: MatchNudge, empty: boolean, demo: boolean) {
@@ -33,8 +36,10 @@ function nudgeCaption(nudge: MatchNudge, demo: boolean) {
 
 // The match's wishlist in their order. An empty one asks them for ideas
 // without saying who asked.
-export function MatchWishlistSection({ matchName, items, nudge, demo = false }: MatchWishlistSectionProps) {
+export function MatchWishlistSection({ matchName, items: loaded, nudge, demo = false, exchangeId }: MatchWishlistSectionProps) {
   const { colors } = useTheme();
+  const marks = useWishlistMarks(exchangeId, loaded);
+  const items = marks.items;
   const empty = items.length === 0;
 
   const ask = nudge.canNudge ? (
@@ -86,8 +91,28 @@ export function MatchWishlistSection({ matchName, items, nudge, demo = false }: 
           <Text style={{ color: colors.textTertiary, fontSize: 14 }}>
             {items.length} item{items.length === 1 ? "" : "s"} to choose from
           </Text>
+          {marks.canMark ? (
+            <Text style={{ color: colors.textTertiary, fontSize: 14 }}>
+              Mark what you're getting so nobody doubles up. {matchName} can't see it.
+            </Text>
+          ) : null}
+          {marks.error ? <InlineError message={marks.error} margin={0} /> : null}
           {items.map((item, index) => (
-            <WishlistItemCard key={item.id} item={item} rank={index + 1} />
+            <WishlistItemCard
+              key={item.id}
+              item={item}
+              rank={index + 1}
+              marking={
+                marks.canMark
+                  ? {
+                      busy: marks.busy,
+                      onReserve: () => void marks.reserve(item),
+                      onBought: () => void marks.buy(item),
+                      onUndo: () => void marks.undo(item),
+                    }
+                  : undefined
+              }
+            />
           ))}
           {ask}
         </View>

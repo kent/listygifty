@@ -1063,6 +1063,15 @@ export interface WishlistItem extends BaseEntity {
   position?: number;
   price_display?: string | null;
   wishlist_id?: number;
+  /**
+   * What's taken, for someone looking at another person's list in an
+   * exchange. The list's owner always gets true, 0 and null, so they can't
+   * tell what was bought. Older APIs leave these out, and then nothing can be
+   * marked.
+   */
+  is_available?: boolean;
+  claimed_quantity?: number;
+  my_claim?: { status: ClaimStatus } | null;
 }
 
 export interface ExchangeExclusion extends BaseEntity {

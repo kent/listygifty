@@ -53,6 +53,19 @@ class WishlistItemsService {
     });
   }
 
+  // Marking what you're getting on a list you can see. Each returns the item as it now stands.
+  async claim(exchangeId: number, participantId: number, itemId: number, purchased = false): Promise<WishlistItem> {
+    return apiClient.post<WishlistItem>(`${this.buildUrl(exchangeId, participantId, itemId)}/claim`, { purchased });
+  }
+
+  async markPurchased(exchangeId: number, participantId: number, itemId: number): Promise<WishlistItem> {
+    return apiClient.patch<WishlistItem>(`${this.buildUrl(exchangeId, participantId, itemId)}/mark_purchased`, {});
+  }
+
+  async unclaim(exchangeId: number, participantId: number, itemId: number): Promise<WishlistItem> {
+    return apiClient.delete<WishlistItem>(`${this.buildUrl(exchangeId, participantId, itemId)}/unclaim`);
+  }
+
   // Upload photo using FormData
   async uploadPhoto(
     exchangeId: number,

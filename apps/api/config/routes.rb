@@ -115,6 +115,12 @@ Rails.application.routes.draw do
         collection do
           patch :reorder
         end
+        # Marking what you're getting for someone whose list you can see.
+        member do
+          post :claim
+          patch :mark_purchased
+          delete :unclaim
+        end
       end
     end
     resources :exchange_exclusions, only: %i[index create destroy]

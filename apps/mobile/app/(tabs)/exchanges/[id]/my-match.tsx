@@ -61,6 +61,7 @@ export default function MyMatchScreen() {
           items={controller.matchWishlist}
           nudge={controller.nudge}
           demo={controller.demo}
+          exchangeId={controller.exchange.id}
         />
       </View>
 

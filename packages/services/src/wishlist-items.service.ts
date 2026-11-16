@@ -21,6 +21,10 @@ export interface WishlistItemsService {
   ): Promise<WishlistItem>;
   delete(exchangeId: number, participantId: number, itemId: number): Promise<void>;
   reorder(exchangeId: number, participantId: number, itemIds: number[]): Promise<WishlistItem[]>;
+  /** Mark an item on a list you can see as reserved, or bought. */
+  claim(exchangeId: number, participantId: number, itemId: number, purchased?: boolean): Promise<WishlistItem>;
+  markPurchased(exchangeId: number, participantId: number, itemId: number): Promise<WishlistItem>;
+  unclaim(exchangeId: number, participantId: number, itemId: number): Promise<WishlistItem>;
   uploadPhoto(
     exchangeId: number,
     participantId: number,
@@ -73,6 +77,18 @@ export function createWishlistItemsService(client: ApiClient): WishlistItemsServ
       return client.patch<WishlistItem[]>(`${buildUrl(exchangeId, participantId)}/reorder`, {
         item_ids: itemIds,
       });
+    },
+
+    claim(exchangeId: number, participantId: number, itemId: number, purchased = false) {
+      return client.post<WishlistItem>(`${buildUrl(exchangeId, participantId, itemId)}/claim`, { purchased });
+    },
+
+    markPurchased(exchangeId: number, participantId: number, itemId: number) {
+      return client.patch<WishlistItem>(`${buildUrl(exchangeId, participantId, itemId)}/mark_purchased`, {});
+    },
+
+    unclaim(exchangeId: number, participantId: number, itemId: number) {
+      return client.delete<WishlistItem>(`${buildUrl(exchangeId, participantId, itemId)}/unclaim`);
     },
 
     async uploadPhoto(

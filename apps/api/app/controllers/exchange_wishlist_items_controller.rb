@@ -2,10 +2,12 @@ class ExchangeWishlistItemsController < ApplicationController
   before_action :set_participant
   before_action :require_wishlist_viewer, only: %i[index show]
   before_action :require_participant_owner, only: %i[create update destroy reorder]
-  before_action :set_wishlist_item, only: %i[show update destroy]
+  before_action :require_marker, only: %i[claim mark_purchased unclaim]
+  before_action :set_wishlist_item, only: %i[show update destroy claim mark_purchased unclaim]
+  before_action :set_my_claim, only: %i[mark_purchased unclaim]
 
   def index
-    render json: render_items(@participant.wishlist_items.with_attached_photo)
+    render json: render_items(@participant.wishlist_items.with_attached_photo.includes(:claims, :wishlist))
   end
 
   def show
@@ -46,10 +48,50 @@ class ExchangeWishlistItemsController < ApplicationController
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
+  # POST .../exchange_wishlist_items/:id/claim with optional { purchased: true }
+  # Someone who can see the list marks what they're getting. Everyone else who
+  # can see it finds the item taken. The list's owner never does.
+  def claim
+    if @wishlist_item.claims.by_user(current_user).exists?
+      return render json: { error: "You have already marked this item" }, status: :unprocessable_entity
+    end
+
+    Wishlists::ClaimService.create!(
+      item: @wishlist_item, user: current_user, exchange_participant: current_user_participant,
+      purchased: params[:purchased]
+    )
+    render json: render_items(@wishlist_item.reload), status: :created
+  rescue ArgumentError
+    render json: { error: "Someone is already getting this one.", code: "already_claimed" }, status: :conflict
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+  end
+
+  def mark_purchased
+    @my_claim.mark_purchased!
+    render json: render_items(@wishlist_item.reload)
+  end
+
+  def unclaim
+    @my_claim.destroy!
+    render json: render_items(@wishlist_item.reload)
+  end
+
   private
 
   def render_items(items)
-    ExchangeWishlistItemBlueprint.render(items, participant_id: @participant.id)
+    ExchangeWishlistItemBlueprint.render(items, participant_id: @participant.id, viewer: current_user)
+  end
+
+  def require_marker
+    return if !participant_owner? && current_user_participant&.can_see_wishlist_of?(@participant)
+
+    render json: { error: "You can only mark items on a list you can see" }, status: :forbidden
+  end
+
+  def set_my_claim
+    @my_claim = @wishlist_item.claims.by_user(current_user).first
+    render json: { error: "You have not marked this item" }, status: :not_found unless @my_claim
   end
 
   def set_participant

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_11_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -816,6 +816,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_11_120000) do
     t.string "claimer_email"
     t.string "claimer_name"
     t.datetime "created_at", null: false
+    t.bigint "exchange_participant_id"
     t.text "message"
     t.datetime "purchased_at"
     t.integer "quantity", default: 1, null: false
@@ -825,6 +826,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_11_120000) do
     t.bigint "user_id"
     t.bigint "wishlist_item_id", null: false
     t.index ["claim_token"], name: "index_wishlist_item_claims_on_claim_token", unique: true
+    t.index ["exchange_participant_id"], name: "index_wishlist_item_claims_on_exchange_participant_id"
     t.index ["status"], name: "index_wishlist_item_claims_on_status"
     t.index ["user_id"], name: "index_wishlist_item_claims_on_user_id"
     t.index ["wishlist_item_id", "claimer_email"], name: "idx_unique_guest_claim_per_item", unique: true, where: "(claimer_email IS NOT NULL)"
@@ -992,6 +994,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_11_120000) do
   add_foreign_key "wishlist_access_requests", "exchange_participants", column: "requested_participant_id", on_delete: :cascade
   add_foreign_key "wishlist_access_requests", "exchange_participants", column: "requester_participant_id", on_delete: :cascade
   add_foreign_key "wishlist_access_requests", "gift_exchanges"
+  add_foreign_key "wishlist_item_claims", "exchange_participants", on_delete: :cascade
   add_foreign_key "wishlist_item_claims", "users"
   add_foreign_key "wishlist_item_claims", "wishlist_items"
   add_foreign_key "wishlist_items", "wishlists"

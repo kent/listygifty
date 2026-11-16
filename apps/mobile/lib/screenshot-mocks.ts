@@ -900,6 +900,20 @@ function getParticipantWishlist(participantId: number): WishlistItem[] {
   return wishlistItemsStore[participantId] ?? [];
 }
 
+function markWishlistItem(participantId: number, itemId: number, mark: WishlistItem["my_claim"]): WishlistItem {
+  wishlistItemsStore = {
+    ...wishlistItemsStore,
+    [participantId]: getParticipantWishlist(participantId).map((item) =>
+      item.id === itemId ? { ...item, my_claim: mark, is_available: !mark, claimed_quantity: mark ? 1 : 0 } : item
+    ),
+  };
+  const item = getParticipantWishlist(participantId).find((wishlistItem) => wishlistItem.id === itemId);
+  if (!item) {
+    throw new Error("Wishlist item not found");
+  }
+  return clone(item);
+}
+
 function formatGiftCost(value: string | number | null | undefined): string | null {
   if (value === null || value === undefined || value === "") {
     return null;
@@ -1639,6 +1653,15 @@ export const screenshotServices = {
         }),
       };
       return clone(getParticipantWishlist(participantId));
+    },
+    async claim(_exchangeId: number, participantId: number, itemId: number, purchased = false) {
+      return markWishlistItem(participantId, itemId, { status: purchased ? "purchased" : "reserved" });
+    },
+    async markPurchased(_exchangeId: number, participantId: number, itemId: number) {
+      return markWishlistItem(participantId, itemId, { status: "purchased" });
+    },
+    async unclaim(_exchangeId: number, participantId: number, itemId: number) {
+      return markWishlistItem(participantId, itemId, null);
     },
     async uploadPhoto(_exchangeId: number, participantId: number, itemId: number, _formData: FormData) {
       wishlistItemsStore = {
