@@ -65,6 +65,7 @@ export default function ExchangeParticipantScreen() {
             items={participant.wishlist_items ?? []}
             nudge={access === "match" ? controller.nudge : { ...controller.nudge, canNudge: false }}
             demo={controller.demo}
+            exchangeId={exchange.id}
           />
         </>
       ) : (

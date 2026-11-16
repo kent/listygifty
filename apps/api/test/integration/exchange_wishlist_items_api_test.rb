@@ -374,7 +374,213 @@ class ExchangeWishlistItemsApiTest < ActionDispatch::IntegrationTest
     get gift_exchange_exchange_participant_exchange_wishlist_items_path(@exchange, @participant), as: :json
     assert_response :unauthorized
   end
+  # ============================================================================
+  # Marking what you're getting for your match
+  # ============================================================================
+
+  test "a Santa reserves an item, marks it bought, then undoes it" do
+    santa_headers = auth_headers_for(draw_with_santa)
+
+    get gift_exchange_exchange_participant_exchange_wishlist_items_path(@exchange, @participant), headers: santa_headers, as: :json
+    assert_equal [ true, 0, nil ], json_response.first.values_at("is_available", "claimed_quantity", "my_claim")
+
+    post claim_gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+      headers: santa_headers, as: :json
+    assert_response :created
+    assert_equal [ false, 1, { "status" => "reserved" } ], json_response.values_at("is_available", "claimed_quantity", "my_claim")
+    claim = @wishlist_item.claims.sole
+    assert_equal [ users(:two), @exchange.exchange_participants.find_by!(user: users(:two)) ], [ claim.user, claim.exchange_participant ]
+
+    patch mark_purchased_gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+      headers: santa_headers, as: :json
+    assert_response :success
+    assert_equal({ "status" => "purchased" }, json_response["my_claim"])
+
+    delete unclaim_gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+      headers: santa_headers, as: :json
+    assert_response :success
+    assert_equal [ true, 0, nil ], json_response.values_at("is_available", "claimed_quantity", "my_claim")
+    assert_empty @wishlist_item.claims.reload
+  end
+
+  test "a Santa can mark an item bought in one step" do
+    santa_headers = auth_headers_for(draw_with_santa)
+
+    post claim_gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+      headers: santa_headers, params: { purchased: true }, as: :json
+
+    assert_response :created
+    assert_equal({ "status" => "purchased" }, json_response["my_claim"])
+  end
+
+  test "the owner can't tell their Santa marked something" do
+    santa_mark!(draw_with_santa)
+
+    get gift_exchange_exchange_participant_exchange_wishlist_items_path(@exchange, @participant), headers: @auth_headers, as: :json
+    assert_equal [ true, 0, nil ], json_response.first.values_at("is_available", "claimed_quantity", "my_claim")
+
+    get gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item), headers: @auth_headers, as: :json
+    assert_equal [ true, 0, nil ], json_response.values_at("is_available", "claimed_quantity", "my_claim")
+  end
+
+  test "the Santa sees their marks on the match's place in the exchange" do
+    santa = draw_with_santa
+    santa_mark!(santa)
+
+    get gift_exchange_exchange_participant_path(@exchange, @participant), headers: auth_headers_for(santa), as: :json
+    assert_response :success
+    assert_equal [ false, 1, { "status" => "reserved" } ],
+      json_response["wishlist_items"].first.values_at("is_available", "claimed_quantity", "my_claim")
+
+    get gift_exchange_path(@exchange.slug), headers: auth_headers_for(santa), as: :json
+    assert_equal({ "status" => "reserved" },
+      json_response.dig("my_participant", "matched_participant", "wishlist_items").first["my_claim"])
+  end
+
+  test "the owner and people without access can't mark, undo, or upgrade" do
+    draw_with_santa
+    bystander = User.create!(email: "carol@example.com", clerk_user_id: "user_carol")
+    @exchange.exchange_participants.create!(user: bystander, name: "Carol", email: bystander.email, status: "accepted")
+
+    [ @auth_headers, auth_headers_for(bystander) ].each do |headers|
+      assert_no_difference -> { WishlistItemClaim.count } do
+        post claim_gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+          headers: headers, as: :json
+      end
+      assert_response :forbidden
+      patch mark_purchased_gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+        headers: headers, as: :json
+      assert_response :forbidden
+      delete unclaim_gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+        headers: headers, as: :json
+      assert_response :forbidden
+    end
+  end
+
+  test "someone the owner said yes to can mark too" do
+    draw_with_santa
+    friend = User.create!(email: "carol@example.com", clerk_user_id: "user_carol")
+    place = @exchange.exchange_participants.create!(user: friend, name: "Carol", email: friend.email, status: "accepted")
+    WishlistAccessRequest.create!(gift_exchange: @exchange, requester_participant: place, requested_participant: @participant, status: "approved")
+
+    post claim_gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+      headers: auth_headers_for(friend), as: :json
+    assert_response :created
+    assert_equal place, @wishlist_item.claims.sole.exchange_participant
+
+    get gift_exchange_exchange_participant_path(@exchange, @participant), headers: auth_headers_for(friend), as: :json
+    assert_equal({ "status" => "reserved" }, json_response["wishlist_items"].first["my_claim"])
+
+    get gift_exchange_exchange_participant_exchange_wishlist_items_path(@exchange, @participant), headers: auth_headers_for(users(:two)), as: :json
+    assert_equal [ false, 1, nil ], json_response.first.values_at("is_available", "claimed_quantity", "my_claim")
+  end
+
+  test "a Santa can't mark before names are drawn" do
+    santa = draw_with_santa
+    @exchange.update!(status: "inviting")
+
+    post claim_gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+      headers: auth_headers_for(santa), as: :json
+
+    assert_response :forbidden
+  end
+
+  test "a Santa from another exchange sees the item is taken and can't double up" do
+    santa_mark!(draw_with_santa)
+    other_exchange, other_participant = second_exchange_for(@user)
+    other_santa_user = User.create!(email: "carol@example.com", clerk_user_id: "user_carol")
+    other_santa = other_exchange.exchange_participants.create!(user: other_santa_user, name: "Carol", email: "carol@example.com", status: "accepted")
+    other_santa.update!(matched_participant: other_participant)
+    other_exchange.update!(status: "active")
+    headers = auth_headers_for(other_santa_user)
+
+    get gift_exchange_exchange_participant_exchange_wishlist_items_path(other_exchange, other_participant), headers: headers, as: :json
+    assert_equal [ false, 1, nil ], json_response.first.values_at("is_available", "claimed_quantity", "my_claim")
+
+    assert_no_difference -> { WishlistItemClaim.count } do
+      post claim_gift_exchange_exchange_participant_exchange_wishlist_item_path(other_exchange, other_participant, @wishlist_item),
+        headers: headers, as: :json
+    end
+    assert_response :conflict
+    assert_equal "already_claimed", json_response["code"]
+    assert_equal "Someone is already getting this one.", json_response["error"]
+  end
+
+  test "marking twice, or undoing nothing, is refused" do
+    santa = draw_with_santa
+    santa_mark!(santa)
+    headers = auth_headers_for(santa)
+
+    post claim_gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item), headers: headers, as: :json
+    assert_response :unprocessable_entity
+
+    @wishlist_item.claims.destroy_all
+    delete unclaim_gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item), headers: headers, as: :json
+    assert_response :not_found
+    patch mark_purchased_gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item), headers: headers, as: :json
+    assert_response :not_found
+  end
+
+  test "a claim made elsewhere shows as mine on the match screen" do
+    santa = draw_with_santa
+    @wishlist_item.claims.create!(user: santa)
+    headers = auth_headers_for(santa)
+
+    get gift_exchange_exchange_participant_exchange_wishlist_items_path(@exchange, @participant), headers: headers, as: :json
+    assert_equal({ "status" => "reserved" }, json_response.first["my_claim"])
+
+    delete unclaim_gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item), headers: headers, as: :json
+    assert_response :success
+    assert_empty @wishlist_item.claims.reload
+  end
+
+  test "a redraw removes marks" do
+    santa_mark!(draw_with_santa)
+
+    ExchangeDrawingService.new(@exchange).reopen!
+
+    assert_empty @wishlist_item.claims.reload
+  end
+
+  test "drawing someone else removes the marks on the old match's list" do
+    santa = draw_with_santa
+    santa_mark!(santa)
+    carol = @exchange.exchange_participants.create!(name: "Carol", email: "carol@example.com", status: "accepted")
+
+    @exchange.exchange_participants.find_by!(user: santa).update!(matched_participant: carol)
+
+    assert_empty @wishlist_item.claims.reload
+  end
+
+  test "a redraw keeps the marks of someone the owner said yes to" do
+    draw_with_santa
+    friend = User.create!(email: "carol@example.com", clerk_user_id: "user_carol")
+    place = @exchange.exchange_participants.create!(user: friend, name: "Carol", email: friend.email, status: "accepted")
+    WishlistAccessRequest.create!(gift_exchange: @exchange, requester_participant: place, requested_participant: @participant, status: "approved")
+    @wishlist_item.claims.create!(user: friend, exchange_participant: place)
+
+    ExchangeDrawingService.new(@exchange).reopen!
+
+    assert_equal 1, @wishlist_item.claims.count
+  end
+
+  test "switching lists removes the Santa's marks" do
+    santa_mark!(draw_with_santa)
+    from_friend = @wishlist_item.wishlist.wishlist_items.create!(name: "Friend's pick")
+    from_friend.claims.create!(claimer_name: "Friend", claimer_email: "friend@example.com")
+    birthday = @user.personal_workspace.wishlists.create!(user: @user, name: "Birthday")
+
+    @participant.update!(wishlist: birthday)
+
+    assert_empty @wishlist_item.claims.reload
+    assert_equal 1, from_friend.claims.count
+  end
+
   private
+
+  def santa_mark!(santa)
+    @wishlist_item.claims.create!(user: santa, exchange_participant: @exchange.exchange_participants.find_by!(user: santa))
+  end
 
   def second_exchange_for(user)
     exchange = GiftExchange.create!(workspace: workspaces(:two), user: users(:two), name: "Cottage", budget_max: 40)

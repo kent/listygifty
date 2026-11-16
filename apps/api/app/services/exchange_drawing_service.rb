@@ -17,6 +17,8 @@ class ExchangeDrawingService
 
       participants = @exchange.exchange_participants
       participants.update_all(matched_participant_id: nil, updated_at: Time.current)
+      # Nobody has a match now, so what they marked for one no longer stands.
+      participants.each(&:forget_marks_out_of_sight!)
       # Only a draw kept these rows. Left in place they would read as invited,
       # and the organizer could resend an invite to an address that can't exist.
       participants.anonymized.destroy_all

@@ -100,3 +100,24 @@ test("reinviting a participant uses the authenticated resend endpoint", async (t
   assert.equal(options.method, "POST");
   assert.equal(options.headers.Authorization, "Bearer test-token");
 });
+
+test("a Secret Santa marks, upgrades and undoes through the exchange item endpoints", async (t) => {
+  const fetch = t.mock.method(globalThis, "fetch", async () => json({ id: 3 }));
+  const items = createWishlistItemsService(client());
+  const base = "https://api.example.test/gift_exchanges/1/exchange_participants/2/exchange_wishlist_items/3";
+
+  assert.deepEqual(await items.claim(1, 2, 3, true), { id: 3 });
+  await items.claim(1, 2, 3);
+  await items.markPurchased(1, 2, 3);
+  assert.deepEqual(await items.unclaim(1, 2, 3), { id: 3 });
+
+  const calls = fetch.mock.calls.map((call) => call.arguments);
+  assert.deepEqual(calls.map(([url, options]) => [options.method, url]), [
+    ["POST", `${base}/claim`],
+    ["POST", `${base}/claim`],
+    ["PATCH", `${base}/mark_purchased`],
+    ["DELETE", `${base}/unclaim`],
+  ]);
+  assert.deepEqual(JSON.parse(calls[0][1].body), { purchased: true });
+  assert.deepEqual(JSON.parse(calls[1][1].body), { purchased: false });
+});

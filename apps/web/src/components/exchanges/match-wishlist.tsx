@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { ExternalLink, Gift, Image, List, MessageCircle } from "lucide-react";
+import { Check, ExternalLink, Gift, Image, List, MessageCircle } from "lucide-react";
 import type { WishlistItem } from "@niftygifty/types";
-import { giftExchangesService } from "@/services";
+import { giftExchangesService, wishlistItemsService } from "@/services";
+import { ApiError } from "@/lib/api-client";
 import { humanizeError } from "@/lib/error-message";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ItemRank } from "@/components/wishlists/item-order-controls";
@@ -27,12 +29,99 @@ function nudgeLabel(state: NudgeState, empty: boolean) {
   return empty ? "Ask for ideas" : "Ask for more ideas";
 }
 
+// What you're getting for this person. Anyone else who can see the list finds
+// the item taken. The person whose list it is never does.
+function ItemMark({
+  item,
+  busy,
+  onMark,
+  onMarkBought,
+  onUndo,
+}: {
+  item: WishlistItem;
+  busy: boolean;
+  onMark: (purchased: boolean) => void;
+  onMarkBought: () => void;
+  onUndo: () => void;
+}) {
+  // An older API doesn't say what's taken, so there is nothing safe to offer.
+  if (item.is_available === undefined) return null;
+
+  if (item.my_claim) {
+    const bought = item.my_claim.status === "purchased";
+    return (
+      <div className="flex flex-wrap items-center gap-2 mt-3">
+        <Badge
+          className={
+            bought
+              ? "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/50"
+              : "bg-amber-500/20 text-amber-800 dark:text-amber-400 border-amber-500/50"
+          }
+        >
+          <Check className="h-3 w-3 mr-1" />
+          {bought ? "Bought" : "Reserved"}
+        </Badge>
+        {!bought && (
+          <Button size="sm" variant="outline" disabled={busy} onClick={onMarkBought} aria-label={`Mark ${item.name} as bought`}>
+            Mark bought
+          </Button>
+        )}
+        <Button size="sm" variant="ghost" disabled={busy} onClick={onUndo} aria-label={`Undo your mark on ${item.name}`}>
+          Undo
+        </Button>
+      </div>
+    );
+  }
+
+  if (!item.is_available) {
+    return (
+      <div className="mt-3">
+        <Badge className="bg-slate-500/20 text-slate-700 dark:text-slate-300 border-slate-500/50">Someone has this</Badge>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 mt-3">
+      <Button size="sm" variant="outline" disabled={busy} onClick={() => onMark(false)} aria-label={`Reserve ${item.name}`}>
+        Reserve
+      </Button>
+      <Button size="sm" disabled={busy} onClick={() => onMark(true)} aria-label={`Mark ${item.name} as bought`}>
+        Bought
+      </Button>
+    </div>
+  );
+}
+
 // The match's wishlist in their order. An empty one asks them for ideas
 // without saying who asked.
 export function MatchWishlist({ exchangeId, matchName, items, canNudge, headingLevel = 2 }: MatchWishlistProps) {
   const [nudge, setNudge] = useState<NudgeState>("idle");
+  // Items as the API last answered for them, over what the page loaded.
+  const [saved, setSaved] = useState<Record<number, WishlistItem>>({});
+  const [marking, setMarking] = useState(false);
   const Heading = headingLevel === 2 ? "h2" : "h3";
   const empty = items.length === 0;
+  const shown = items.map((item) => saved[item.id] ?? item);
+  const canMark = shown.some((item) => item.is_available !== undefined);
+
+  const runMark = async (item: WishlistItem, action: () => Promise<WishlistItem>) => {
+    setMarking(true);
+    try {
+      const answer = await action();
+      setSaved((current) => ({ ...current, [item.id]: answer }));
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 409) {
+        // Someone marked it after this page loaded.
+        setSaved((current) => ({ ...current, [item.id]: { ...item, is_available: false, my_claim: null } }));
+        toast.error("Someone is already getting this one. Pick something else?");
+      } else {
+        toast.error(humanizeError(err, "Could not save that. Try again."));
+      }
+    } finally {
+      setMarking(false);
+    }
+  };
   const label = nudgeLabel(nudge, empty);
 
   const handleNudge = async () => {
@@ -70,6 +159,12 @@ export function MatchWishlist({ exchangeId, matchName, items, canNudge, headingL
         {!empty && nudgeButton}
       </div>
 
+      {canMark && (
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+          Mark what you&apos;re getting so nobody doubles up. {matchName} can&apos;t see it.
+        </p>
+      )}
+
       {empty ? (
         <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
           <CardContent className="py-10 text-center">
@@ -96,7 +191,7 @@ export function MatchWishlist({ exchangeId, matchName, items, canNudge, headingL
         </Card>
       ) : (
         <ol className="space-y-3">
-          {items.map((item, index) => (
+          {shown.map((item, index) => (
             <li key={item.id}>
               <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
                 <CardContent className="p-4">
@@ -138,6 +233,23 @@ export function MatchWishlist({ exchangeId, matchName, items, canNudge, headingL
                           </a>
                         )}
                       </div>
+                      <ItemMark
+                        item={item}
+                        busy={marking}
+                        onMark={(purchased) =>
+                          runMark(item, () =>
+                            wishlistItemsService.claim(exchangeId, item.exchange_participant_id, item.id, purchased)
+                          )
+                        }
+                        onMarkBought={() =>
+                          runMark(item, () =>
+                            wishlistItemsService.markPurchased(exchangeId, item.exchange_participant_id, item.id)
+                          )
+                        }
+                        onUndo={() =>
+                          runMark(item, () => wishlistItemsService.unclaim(exchangeId, item.exchange_participant_id, item.id))
+                        }
+                      />
                     </div>
                   </div>
                 </CardContent>

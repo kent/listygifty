@@ -218,6 +218,7 @@ export default function ExchangeDetailScreen() {
                 items={matchedParticipant.wishlist_items ?? []}
                 nudge={controller.matchNudge}
                 demo={controller.demo}
+                exchangeId={exchange.id}
               />
             </View>
           ) : null}

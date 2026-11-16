@@ -5,9 +5,19 @@ import { ApiError } from "@/lib/api-client";
 import { deferred } from "@/test/deferred";
 import { MatchWishlist } from "./match-wishlist";
 
-const mocks = vi.hoisted(() => ({ nudgeMatch: vi.fn(), toastSuccess: vi.fn(), toastError: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  nudgeMatch: vi.fn(),
+  toastSuccess: vi.fn(),
+  toastError: vi.fn(),
+  claim: vi.fn(),
+  markPurchased: vi.fn(),
+  unclaim: vi.fn(),
+}));
 
-vi.mock("@/services", () => ({ giftExchangesService: { nudgeMatch: mocks.nudgeMatch } }));
+vi.mock("@/services", () => ({
+  giftExchangesService: { nudgeMatch: mocks.nudgeMatch },
+  wishlistItemsService: { claim: mocks.claim, markPurchased: mocks.markPurchased, unclaim: mocks.unclaim },
+}));
 vi.mock("sonner", () => ({ toast: { success: mocks.toastSuccess, error: mocks.toastError } }));
 
 function item(id: number, name: string): WishlistItem {
@@ -96,5 +106,118 @@ describe("a match with no ideas", () => {
     expect(screen.getByText("No ideas yet")).toBeTruthy();
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.getByText("Check back later.")).toBeTruthy();
+  });
+});
+
+describe("marking what you're getting", () => {
+  const bowl = item(1, "Mixer bowl");
+  const open: WishlistItem = { ...bowl, is_available: true, claimed_quantity: 0, my_claim: null };
+  const reserved: WishlistItem = { ...bowl, is_available: false, claimed_quantity: 1, my_claim: { status: "reserved" } };
+  const bought: WishlistItem = { ...bowl, is_available: false, claimed_quantity: 1, my_claim: { status: "purchased" } };
+  const taken: WishlistItem = { ...bowl, is_available: false, claimed_quantity: 1, my_claim: null };
+
+  beforeEach(() => {
+    mocks.claim.mockReset();
+    mocks.markPurchased.mockReset();
+    mocks.unclaim.mockReset();
+    mocks.toastError.mockReset();
+  });
+
+  it("offers nothing when the API is too old to say what's taken", () => {
+    renderWishlist([bowl]);
+
+    expect(screen.getByText("Mixer bowl")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Reserve Mixer bowl" })).toBeNull();
+    expect(screen.queryByText(/Ana can't see it/)).toBeNull();
+  });
+
+  it("says the owner can't see what you mark", () => {
+    renderWishlist([open]);
+
+    expect(screen.getByText("Mark what you're getting so nobody doubles up. Ana can't see it.")).toBeTruthy();
+  });
+
+  it("reserves an item", async () => {
+    mocks.claim.mockResolvedValue(reserved);
+    renderWishlist([open]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reserve Mixer bowl" }));
+
+    expect(await screen.findByText("Reserved")).toBeTruthy();
+    expect(mocks.claim).toHaveBeenCalledWith(7, 2, 1, false);
+    expect(screen.queryByRole("button", { name: "Reserve Mixer bowl" })).toBeNull();
+  });
+
+  it("marks an item bought in one step", async () => {
+    mocks.claim.mockResolvedValue(bought);
+    renderWishlist([open]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Mark Mixer bowl as bought" }));
+
+    expect(await screen.findByText("Bought")).toBeTruthy();
+    expect(mocks.claim).toHaveBeenCalledWith(7, 2, 1, true);
+  });
+
+  it("turns a reserved item into a bought one", async () => {
+    mocks.markPurchased.mockResolvedValue(bought);
+    renderWishlist([reserved]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Mark Mixer bowl as bought" }));
+
+    expect(await screen.findByText("Bought")).toBeTruthy();
+    expect(mocks.markPurchased).toHaveBeenCalledWith(7, 2, 1);
+  });
+
+  it("undoes a mark", async () => {
+    mocks.unclaim.mockResolvedValue(open);
+    renderWishlist([bought]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo your mark on Mixer bowl" }));
+
+    expect(await screen.findByRole("button", { name: "Reserve Mixer bowl" })).toBeTruthy();
+    expect(mocks.unclaim).toHaveBeenCalledWith(7, 2, 1);
+  });
+
+  it("shows an item someone else has, with nothing to press", () => {
+    renderWishlist([taken]);
+
+    expect(screen.getByText("Someone has this")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Reserve Mixer bowl" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Undo your mark on Mixer bowl" })).toBeNull();
+  });
+
+  it("tells you when someone got there first, and marks it taken", async () => {
+    mocks.claim.mockRejectedValue(
+      new ApiError(409, { error: "Someone is already getting this one.", code: "already_claimed" })
+    );
+    renderWishlist([open]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reserve Mixer bowl" }));
+
+    expect(await screen.findByText("Someone has this")).toBeTruthy();
+    expect(mocks.toastError).toHaveBeenCalledWith("Someone is already getting this one. Pick something else?");
+    expect(screen.queryByRole("button", { name: "Reserve Mixer bowl" })).toBeNull();
+  });
+
+  it("keeps the buttons when marking fails for another reason", async () => {
+    mocks.claim.mockRejectedValue(new ApiError(500, { error: "Server fell over" }));
+    renderWishlist([open]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reserve Mixer bowl" }));
+
+    await waitFor(() => expect(mocks.toastError).toHaveBeenCalled());
+    expect(screen.getByRole("button", { name: "Reserve Mixer bowl" })).toBeTruthy();
+  });
+
+  it("holds every item's buttons while one is saving", async () => {
+    const saving = deferred<WishlistItem>();
+    mocks.claim.mockReturnValue(saving.promise);
+    renderWishlist([open, { ...open, id: 2, name: "Wool socks" }]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reserve Mixer bowl" }));
+
+    expect((screen.getByRole("button", { name: "Reserve Wool socks" }) as HTMLButtonElement).disabled).toBe(true);
+    await act(async () => saving.resolve(reserved));
+    expect((screen.getByRole("button", { name: "Reserve Wool socks" }) as HTMLButtonElement).disabled).toBe(false);
   });
 });

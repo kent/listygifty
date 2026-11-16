@@ -6,6 +6,8 @@ class WishlistItemClaim < ApplicationRecord
 
   belongs_to :wishlist_item
   belongs_to :user, optional: true
+  # Set when someone marked this from inside a gift exchange.
+  belongs_to :exchange_participant, optional: true
 
   has_secure_token :claim_token
 
@@ -29,6 +31,7 @@ class WishlistItemClaim < ApplicationRecord
   scope :by_guest_email, ->(email) { where(claimer_email: email.downcase) }
   scope :reserved, -> { where(status: "reserved") }
   scope :purchased, -> { where(status: "purchased") }
+  scope :on_wishlist, ->(wishlist_ids) { where(wishlist_item_id: WishlistItem.where(wishlist_id: wishlist_ids).select(:id)) }
 
   delegate :wishlist, to: :wishlist_item
 

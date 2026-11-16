@@ -37,6 +37,10 @@ class ExchangeParticipant < ApplicationRecord
     dependent: :delete_all,
     inverse_of: :requested_participant
 
+  # What they marked on lists this exchange let them see. The database also
+  # removes these with the row.
+  has_many :wishlist_item_claims, dependent: :delete_all
+
   validates :name, presence: true
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :invite_token, presence: true, uniqueness: true
@@ -49,6 +53,8 @@ class ExchangeParticipant < ApplicationRecord
   before_validation :normalize_phone
   before_save :forget_text_consent
   before_save :link_default_wishlist
+  after_update :forget_marks_out_of_sight!, if: :saved_change_to_matched_participant_id?
+  after_update :forget_marks_on_old_wishlist, if: :saved_change_to_wishlist_id?
 
   scope :invited, -> { where(status: "invited") }
   scope :accepted, -> { where(status: "accepted") }
@@ -136,6 +142,17 @@ class ExchangeParticipant < ApplicationRecord
     WISHLIST_VISIBLE_ACCESS.include?(wishlist_access_to(other))
   end
 
+  # Drops what they marked on lists this exchange no longer shows them, such
+  # as the person they had drawn before a redraw. Left alone, those items would
+  # stay taken with nobody able to undo them.
+  def forget_marks_out_of_sight!
+    return if wishlist_item_claims.none?
+
+    visible = gift_exchange.exchange_participants.where.not(wishlist_id: nil)
+      .select { |other| other.id != id && can_see_wishlist_of?(other) }
+    wishlist_item_claims.where.not(id: wishlist_item_claims.on_wishlist(visible.map(&:wishlist_id)).select(:id)).delete_all
+  end
+
   # Joined with an account, so there's a list to ask about and someone to ask.
   def wishlist_requestable?
     status == "accepted" && user_id.present?
@@ -161,6 +178,16 @@ class ExchangeParticipant < ApplicationRecord
   end
 
   private
+
+  # Marks others in this exchange made on the list it used to show. They now
+  # see a different list, and could never undo these.
+  def forget_marks_on_old_wishlist
+    old_wishlist_id = wishlist_id_before_last_save
+    return if old_wishlist_id.nil?
+
+    WishlistItemClaim.where(exchange_participant_id: gift_exchange.exchange_participants.select(:id))
+      .on_wishlist(old_wishlist_id).delete_all
+  end
 
   # The giver still has to recognize who they drew, so a first name stays. It
   # comes from the row, never the account, and join links can store an email
