@@ -2,23 +2,26 @@ import { Suspense } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { StandaloneWishlistItem, WishlistWithItems } from "@niftygifty/types";
+import { ApiError } from "@/lib/api-client";
 import PublicWishlistPage from "./page";
 
 const mocks = vi.hoisted(() => ({
   getPublicWishlist: vi.fn(),
   publicClaimItem: vi.fn(),
-  auth: { isLoading: false },
+  auth: { isLoading: false, isAuthenticated: false },
+  toastError: vi.fn(),
 }));
 
 vi.mock("@/contexts/auth-context", () => ({ useAuth: () => mocks.auth }));
 
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: mocks.toastError } }));
 vi.mock("@/services", () => ({
+  AUTH_ROUTES: { signIn: "/login" },
   wishlistsService: {
     getPublicWishlist: mocks.getPublicWishlist,
     publicClaimItem: mocks.publicClaimItem,
   },
 }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 const item = {
   id: 1,
@@ -47,6 +50,8 @@ async function renderPage() {
 beforeEach(() => {
   mocks.getPublicWishlist.mockReset().mockResolvedValue(wishlist());
   mocks.publicClaimItem.mockReset().mockResolvedValue({});
+  mocks.toastError.mockReset();
+  mocks.auth.isAuthenticated = false;
 });
 
 describe("guest wishlist claim form", () => {
@@ -147,5 +152,38 @@ describe("an owner opening their own share link", () => {
 
     expect(await screen.findByRole("button", { name: /Claim this/ })).toBeTruthy();
     expect(screen.queryByText(/This is your wishlist/)).toBeNull();
+  });
+});
+
+describe("a signed-out visitor", () => {
+  it("is told to sign in to see what's taken", async () => {
+    await renderPage();
+
+    expect(screen.getByText(/Sign in to see what's already taken/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Sign in" }).getAttribute("href")).toBe("/login?redirect_url=%2Fw%2Fabc");
+  });
+
+  it("finds out an item is taken when they try to claim it", async () => {
+    mocks.publicClaimItem.mockRejectedValue(new ApiError(409, { error: "Someone is already getting this one." }));
+    await renderPage();
+    fireEvent.click(screen.getByLabelText("Claim this Lego set to reserve it"));
+    fireEvent.change(screen.getByLabelText(/Your Name/), { target: { value: "Sam" } });
+    fireEvent.change(screen.getByLabelText(/Your Email/), { target: { value: "sam@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "Claim Item" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByText("Claimed")).toBeTruthy();
+    expect(screen.queryByLabelText("Claim this Lego set to reserve it")).toBeNull();
+    expect(mocks.toastError).toHaveBeenCalledWith("Someone is already getting this one. Pick something else?");
+  });
+});
+
+describe("a signed-in friend", () => {
+  it("isn't asked to sign in", async () => {
+    mocks.auth.isAuthenticated = true;
+    await renderPage();
+
+    expect(screen.getByText(/The owner won't see what's/)).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Sign in" })).toBeNull();
   });
 });

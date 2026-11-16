@@ -6,13 +6,13 @@ class PublicWishlistsController < ApplicationController
 
   # GET /w/:token
   def show
-    render json: WishlistBlueprint.render(@wishlist, view: :public, current_user: owner_viewing)
+    render json: WishlistBlueprint.render(@wishlist, view: :public, current_user: signed_in_viewer)
   end
 
   # POST /w/:token/items/:item_id/claim
   def claim
     # Checked first: "fully claimed" would tell the owner someone bought it.
-    if owner_viewing
+    if @wishlist.owner?(signed_in_viewer)
       return render json: { error: "You cannot claim items from your own wishlist" }, status: :forbidden
     end
 
@@ -42,21 +42,22 @@ class PublicWishlistsController < ApplicationController
       message: "Item claimed! Check your email for a link to manage your claim.",
       claim_id: new_claim.id
     }, status: :created
-  rescue ArgumentError => e
-    render json: { error: e.message }, status: :unprocessable_entity
+  rescue ArgumentError
+    render json: { error: "Someone is already getting this one.", code: "already_claimed" }, status: :conflict
   rescue ActiveRecord::RecordInvalid => e
     render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
   end
 
   private
 
-  # Guests need real claim status, so only the owner is recognized here. Anyone
-  # else stays anonymous, and a missing or bad token is simply a guest.
-  def owner_viewing
+  # Sign-in is optional here. A missing or bad token is simply a guest, and a
+  # guest sees no claims because they could be the owner signed out.
+  def signed_in_viewer
+    return @signed_in_viewer if defined?(@signed_in_viewer)
+
     token = extract_bearer_token
     payload = verify_clerk_token(token) if token
-    viewer = User.find_by(clerk_user_id: payload["sub"]) if payload
-    viewer if @wishlist.owner?(viewer) && viewer
+    @signed_in_viewer = (User.find_by(clerk_user_id: payload["sub"]) if payload)
   end
 
   def set_wishlist

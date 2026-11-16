@@ -6,7 +6,8 @@ import { useState, use, useEffect, useCallback } from "react";
 import { pluralize } from "@/components/exchanges/pluralize";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
-import { wishlistsService } from "@/services";
+import { AUTH_ROUTES, wishlistsService } from "@/services";
+import { ApiError } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -137,7 +138,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
   const [error, setError] = useState<string | null>(null);
 
   // Claim dialog state
-  const { isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading, isAuthenticated } = useAuth();
   const [claimingItem, setClaimingItem] = useState<StandaloneWishlistItem | null>(null);
   const [claimerName, setClaimerName] = useState("");
   const [claimerEmail, setClaimerEmail] = useState("");
@@ -201,6 +202,22 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
       setClaimingItem(null);
       resetForm();
     } catch (err: unknown) {
+      // Signed-out visitors can't see what's taken, so this is where they find out.
+      if (err instanceof ApiError && err.status === 409) {
+        const takenId = claimingItem.id;
+        setWishlist((prev) =>
+          prev && {
+            ...prev,
+            wishlist_items: prev.wishlist_items.map((item) =>
+              item.id === takenId ? { ...item, is_available: false, available_quantity: 0 } : item
+            ),
+          }
+        );
+        toast.error("Someone is already getting this one. Pick something else?");
+        setClaimingItem(null);
+        resetForm();
+        return;
+      }
       const message = err instanceof Error ? err.message : "Failed to claim item";
       toast.error(message);
     } finally {
@@ -309,6 +326,18 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ token
                 <>
                   Claim items to let others know what you&apos;re planning to get. The owner won&apos;t see what&apos;s
                   been claimed.
+                  {!isAuthenticated && (
+                    <>
+                      {" "}
+                      Sign in to see what&apos;s already taken.{" "}
+                      <Link
+                        href={`${AUTH_ROUTES.signIn}?redirect_url=${encodeURIComponent(`/w/${token}`)}`}
+                        className="font-medium underline"
+                      >
+                        Sign in
+                      </Link>
+                    </>
+                  )}
                 </>
               )}
             </p>
