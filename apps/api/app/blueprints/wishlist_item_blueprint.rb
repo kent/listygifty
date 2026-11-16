@@ -1,7 +1,6 @@
 class WishlistItemBlueprint < ApplicationBlueprint
-  # A claim must look like no claim to the owner, so every field that describes
-  # claims starts from this. Public views only carry a current_user for the
-  # owner, so guests always get the real numbers.
+  # A claim must look like no claim to the owner or to someone signed out, so
+  # every field that describes claims starts from this.
   def self.visible_claims(item, options)
     item.wishlist.hides_claims_from?(options[:current_user]) ? item.claims.none : item.claims
   end

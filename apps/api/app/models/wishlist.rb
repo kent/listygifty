@@ -84,10 +84,11 @@ class Wishlist < ApplicationRecord
   end
 
   # The owner must never be able to tell what was reserved or bought, or they
-  # know what they're getting. Everyone else needs the real numbers to avoid
-  # doubling up.
+  # know what they're getting. A signed-out visitor could be the owner, so they
+  # get nothing either. Signed-in people who aren't the owner need the real
+  # numbers to avoid doubling up.
   def hides_claims_from?(viewer)
-    owner?(viewer)
+    viewer.nil? || owner?(viewer)
   end
 
   def claimed_count(viewer: nil)
