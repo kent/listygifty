@@ -94,14 +94,7 @@ class BootstrapPayloadService
     pending_gifts = measure(timings, :pending_gifts) do
       GiftBlueprint.render_as_hash(
         pending_gifts_scope
-          .includes(
-            :gift_status,
-            :created_by,
-            { holiday: :holiday_users },
-            :recipients,
-            :givers,
-            { gift_recipients: [ :person, :shipping_address ] }
-          )
+          .includes(*Gift::RENDER_INCLUDES)
           .by_position
           .limit(8),
         current_user: user
@@ -142,7 +135,7 @@ class BootstrapPayloadService
     Person.where(id: workspace_people_ids)
           .or(Person.where(id: shared_people_ids))
           .distinct
-          .includes(:default_shipping_address, { shared_holidays: :holiday_users })
+          .includes(*Person::RENDER_INCLUDES)
           .order(:name)
   end
 

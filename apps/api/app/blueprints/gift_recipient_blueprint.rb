@@ -19,8 +19,9 @@ class GiftRecipientBlueprint < ApplicationBlueprint
     user = options[:current_user]
     return false unless user
 
-    workspace_ids = options[:gift_address_visible_workspace_ids] ||=
+    workspace_ids = render_cached(options, [ :gift_address_visible_workspace_ids, user.id ]) do
       WorkspaceMembership.where(user_id: user.id).pluck(:workspace_id)
+    end
     workspace_ids.include?(gift_recipient.gift.holiday.workspace_id)
   end
 end

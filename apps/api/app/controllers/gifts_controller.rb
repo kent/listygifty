@@ -55,14 +55,7 @@ class GiftsController < ApplicationController
 
   def scoped_gifts
     Gift.where(holiday_id: current_user.holiday_ids)
-        .includes(
-          :gift_status,
-          :created_by,
-          { holiday: :holiday_users },
-          :recipients,
-          :givers,
-          { gift_recipients: [ :person, :shipping_address ] }
-        )
+        .includes(*Gift::RENDER_INCLUDES)
         .by_position
   end
 

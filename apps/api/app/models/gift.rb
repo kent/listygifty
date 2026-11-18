@@ -1,4 +1,14 @@
 class Gift < ApplicationRecord
+  # What GiftBlueprint renders, including the people nested inside each gift.
+  RENDER_INCLUDES = [
+    :gift_status,
+    :created_by,
+    { holiday: :holiday_users },
+    { recipients: Person::RENDER_INCLUDES },
+    { givers: Person::RENDER_INCLUDES },
+    { gift_recipients: [ { person: Person::RENDER_INCLUDES }, :shipping_address ] }
+  ].freeze
+
   belongs_to :holiday
   belongs_to :gift_status
   belongs_to :created_by, class_name: "User", foreign_key: "created_by_user_id", optional: true
