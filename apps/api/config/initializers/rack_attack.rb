@@ -94,9 +94,11 @@ class Rack::Attack
     end
   end
 
-  # Custom response for throttled requests
-  self.throttled_responder = lambda do |env|
-    retry_after = (env["rack.attack.match_data"] || {})[:period]
+  # Custom response for throttled requests. Rack::Attack 6+ passes the
+  # Rack::Attack::Request, not the env hash; indexing it raised NoMethodError
+  # and turned every throttle into a 500.
+  self.throttled_responder = lambda do |request|
+    retry_after = (request.env["rack.attack.match_data"] || {})[:period]
     [
       429,
       { "Content-Type" => "application/json", "Retry-After" => retry_after.to_s },

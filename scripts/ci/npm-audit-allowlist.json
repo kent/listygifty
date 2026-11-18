@@ -1,0 +1,6 @@
+[
+  {
+    "id": "GHSA-fc5q-39xc-vjpf",
+    "reason": "picomatch ReDoS advisory withdrawn by GitHub on 2026-11-18 with no patched release; npm's audit feed still reports it. Remove once npm audit stops reporting it."
+  }
+]

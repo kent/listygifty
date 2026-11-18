@@ -51,13 +51,13 @@ jobs:
         run: npm ci --prefer-offline --no-audit --progress=false
 
       - name: Reject high and critical root vulnerabilities
-        run: npm audit --audit-level=high
+        run: node scripts/ci/npm-audit.mjs
 
       - name: Install mobile dependencies
         run: npm ci --legacy-peer-deps --prefer-offline --no-audit --progress=false --prefix apps/mobile
 
       - name: Reject high and critical mobile vulnerabilities
-        run: npm audit --audit-level=high --prefix apps/mobile
+        run: node scripts/ci/npm-audit.mjs --prefix apps/mobile
 
   infrastructure:
     runs-on: ubuntu-latest
@@ -76,7 +76,7 @@ jobs:
         run: npm ci --prefer-offline --no-audit --progress=false --prefix infra/pulumi
 
       - name: Scan infrastructure dependencies
-        run: npm audit --audit-level=high --prefix infra/pulumi
+        run: node scripts/ci/npm-audit.mjs --prefix infra/pulumi
 
       - name: Typecheck infrastructure
         working-directory: infra/pulumi
