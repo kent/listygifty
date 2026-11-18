@@ -36,6 +36,9 @@ if [[ -f "${PROFILE_FILE}" ]]; then
   source "${PROFILE_FILE}"
 fi
 
+# shellcheck source=infra/gcp/scripts/gcloud-pin.sh
+source "${ROOT_DIR}/infra/gcp/scripts/gcloud-pin.sh"
+
 export PULUMI_CONFIG_PASSPHRASE="${PULUMI_CONFIG_PASSPHRASE-}"
 export PULUMI_BACKEND_URL="${PULUMI_BACKEND_URL:-gs://listygifty-pulumi-state}"
 if [[ -z "${GOOGLE_OAUTH_ACCESS_TOKEN:-}" ]]; then

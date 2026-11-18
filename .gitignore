@@ -49,3 +49,7 @@ gha-creds-*.json
 
 # UX audit raw run output (selected frames live in docs/ux-audit/site)
 docs/ux-audit/runs/
+
+# Claude Code agent worktrees
+.claude/worktrees/
+.envrc.local

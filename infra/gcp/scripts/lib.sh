@@ -3,6 +3,9 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
+# shellcheck source=infra/gcp/scripts/gcloud-pin.sh
+source "$(dirname "${BASH_SOURCE[0]}")/gcloud-pin.sh"
+
 log() {
   printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
 }

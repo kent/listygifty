@@ -6,17 +6,22 @@
 - Project number: `906707282968`
 - Region: `us-central1`
 
-## gcloud Configuration Profile
+## gcloud Account Pinning
 
-A named gcloud configuration `listygifty` is set up to avoid account/project switching issues:
+This machine has several gcloud configurations, and the globally active one
+can change at any time. Never rely on it, and never `gcloud config
+configurations activate` or `gcloud config set account` to fix it. The repo
+pins gcloud with `CLOUDSDK_*` environment variables, which override whatever
+configuration is active:
 
-```bash
-gcloud config configurations activate listygifty
-```
+- Claude Code sessions: `env` in `.claude/settings.json`
+- Your shell: `.envrc` (direnv; run `direnv allow` once)
+- Every infra script and `npm run deploy`: `infra/gcp/scripts/gcloud-pin.sh`
 
-This profile is configured with:
-- Account: `kent.fenwick@gmail.com`
-- Project: `listygifty`
+All three pin account `kent.fenwick@gmail.com`, project `listygifty`, region
+`us-central1`. If a gcloud command reports a different account, the pin
+isn't loaded; pass `--account kent.fenwick@gmail.com --project listygifty`
+explicitly rather than changing global config.
 
 ## Deployment Identity
 
@@ -25,12 +30,13 @@ This profile is configured with:
 - Local credentials file (gitignored): `.gcp/keys/listygifty-deployer.json`
 - Local deploy profile (gitignored): `.gcp/listygifty-deploy.env`
 
-## Always Run Before Any Deploy Command
+## Before Any Deploy Command
 
-```bash
-gcloud config configurations activate listygifty
-source .gcp/listygifty-deploy.env
-```
+`npm run deploy` pins the gcloud account and project itself and sources
+`.gcp/listygifty-deploy.env` when that file exists, so no setup is needed
+beyond having credentials for the account (`gcloud auth login
+kent.fenwick@gmail.com`). Merging to `main` also deploys through
+`.github/workflows/deploy.yml`.
 
 ## Deploys
 
