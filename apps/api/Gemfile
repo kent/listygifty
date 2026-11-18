@@ -4,7 +4,6 @@ gem "rails", "~> 8.1.1"
 gem "pg", "~> 1.5"
 gem "puma", "~> 7.2"
 gem "csv" # Required for Ruby 3.4+
-gem "ostruct" # No longer a default gem in Ruby 4.0; used by the app and clerk-sdk-ruby
 
 # Authentication (Clerk)
 gem "clerk-sdk-ruby", require: "clerk"
@@ -16,10 +15,7 @@ gem "blueprinter"
 gem "oj"
 
 # Payments
-# Each stripe major pins a newer Stripe API version. 20.0 (API 2026-09-30+)
-# drops Checkout's `payment_method_types`, which BillingController sends, so
-# moving past 18.x is a deliberate API migration verified in Stripe test mode.
-gem "stripe", "~> 18.0"
+gem "stripe"
 
 # Email
 gem "postmark-rails"
