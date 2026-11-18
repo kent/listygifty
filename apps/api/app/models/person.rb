@@ -1,4 +1,8 @@
 class Person < ApplicationRecord
+  # What PersonBlueprint reads (default address, sharing state). Preload these
+  # wherever people are rendered, including as gift recipients and givers.
+  RENDER_INCLUDES = [ :default_shipping_address, { shared_holidays: :holiday_users } ].freeze
+
   belongs_to :user
   belongs_to :workspace
   belongs_to :default_shipping_address,

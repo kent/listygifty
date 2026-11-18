@@ -43,18 +43,19 @@ class PersonBlueprint < ApplicationBlueprint
     person.shared_holidays.any? { |holiday| holiday.holiday_users.size > 1 }
   end
 
+  # Gift counts for every person the user can see, computed once per render
+  # rather than once per person.
   def self.visible_gift_counts(options)
     user = options[:current_user]
     return {} unless user
-    return options[:visible_person_gift_counts] if options.key?(:visible_person_gift_counts)
 
-    holiday_ids = user.holiday_ids
-    recipient_counts = GiftRecipient.joins(:gift)
-      .where(gifts: { holiday_id: holiday_ids }).group(:person_id).count
-    giver_counts = GiftGiver.joins(:gift)
-      .where(gifts: { holiday_id: holiday_ids }).group(:person_id).count
-    options[:visible_person_gift_counts] = recipient_counts.merge(giver_counts) do |_person_id, received, given|
-      received + given
+    render_cached(options, [ :visible_person_gift_counts, user.id ]) do
+      holiday_ids = user.holiday_ids
+      recipient_counts = GiftRecipient.joins(:gift)
+        .where(gifts: { holiday_id: holiday_ids }).group(:person_id).count
+      giver_counts = GiftGiver.joins(:gift)
+        .where(gifts: { holiday_id: holiday_ids }).group(:person_id).count
+      recipient_counts.merge(giver_counts) { |_person_id, received, given| received + given }
     end
   end
 end

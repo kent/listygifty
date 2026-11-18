@@ -28,11 +28,11 @@ class PeopleController < ApplicationController
     if params[:include] == "gifts"
       visible_holiday_ids = current_user.holiday_ids
       person[:gifts_received] = GiftBlueprint.render_as_hash(
-        @person.gifts_received.where(holiday_id: visible_holiday_ids),
+        @person.gifts_received.where(holiday_id: visible_holiday_ids).includes(*Gift::RENDER_INCLUDES),
         current_user: current_user
       )
       person[:gifts_given] = GiftBlueprint.render_as_hash(
-        @person.gifts_given.where(holiday_id: visible_holiday_ids),
+        @person.gifts_given.where(holiday_id: visible_holiday_ids).includes(*Gift::RENDER_INCLUDES),
         current_user: current_user
       )
     end
