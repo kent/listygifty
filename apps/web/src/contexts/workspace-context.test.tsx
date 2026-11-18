@@ -142,8 +142,12 @@ describe("workspace request isolation", () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     mocks.get.mockRejectedValueOnce(new Error("Network unavailable")).mockResolvedValue(payload(1));
     const { result } = renderHook(useWorkspace, { wrapper: WorkspaceProvider });
-    await screen.findByRole("alert");
-    expect(result.current.isLoading).toBe(false);
+    // Wait for the settled failure state, not the first frame the alert
+    // appears in; under CI load the two can land in separate renders.
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeTruthy();
+      expect(result.current.isLoading).toBe(false);
+    });
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(result.current.currentWorkspace?.id).toBe(1));
     expect(screen.queryByRole("alert")).toBeNull();

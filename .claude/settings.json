@@ -1,3 +1,9 @@
 {
-  "enabledPlugins": {}
+  "enabledPlugins": {},
+  "env": {
+    "CLOUDSDK_CORE_PROJECT": "listygifty",
+    "CLOUDSDK_CORE_ACCOUNT": "kent.fenwick@gmail.com",
+    "CLOUDSDK_COMPUTE_REGION": "us-central1",
+    "CLOUDSDK_RUN_REGION": "us-central1"
+  }
 }
