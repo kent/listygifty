@@ -59,6 +59,17 @@ class RackAttackTest < ActiveSupport::TestCase
     assert_nil credential.instance_variable_get(:@block).call(rack_attack_request("/gifts"))
   end
 
+  test "throttled requests get a 429 with Retry-After, not a 500" do
+    request = rack_attack_request("/gifts", method: "GET")
+    request.env["rack.attack.match_data"] = { count: 61, period: 60, limit: 60 }
+
+    status, headers, body = Rack::Attack.throttled_responder.call(request)
+
+    assert_equal 429, status
+    assert_equal "60", headers["Retry-After"]
+    assert_equal "Rate limit exceeded. Retry later.", JSON.parse(body.first)["error"]
+  end
+
   private
 
   def rack_attack_request(path, method: "POST", content_type: nil)

@@ -12,7 +12,11 @@ config:
   niftygifty:apiDomain: api.listygifty.com
   niftygifty:wwwDomain: www.listygifty.com
   niftygifty:apiMinInstances: "1"
-  niftygifty:apiMaxInstances: "10"
+  # Each API instance runs Puma plus Solid Queue (supervisor, dispatcher,
+  # worker, scheduler) and holds ~10 Postgres connections. db-f1-micro allows
+  # ~22 non-superuser connections, so a 3rd instance locks the DB out
+  # (2026-11-16 outage). Raise only alongside Postgres max_connections.
+  niftygifty:apiMaxInstances: "2"
   niftygifty:apiConcurrency: "10"
   niftygifty:webMinInstances: "1"
   niftygifty:webMaxInstances: "10"

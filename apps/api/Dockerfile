@@ -37,8 +37,10 @@ RUN apt-get update -qq && \
     libpq5 \
     libyaml-0-2 \
     libvips \
+    libjemalloc2 \
     curl \
     && rm -rf /var/lib/apt/lists/* \
+    && ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so \
     && useradd -m -s /bin/bash rails
 
 WORKDIR /app
@@ -49,12 +51,15 @@ COPY --from=builder /usr/local/bundle /usr/local/bundle
 # Copy application code with bootsnap cache from builder
 COPY --from=builder --chown=rails:rails /app .
 
-# Set environment variables
+# Set environment variables. jemalloc keeps the threaded Puma + Solid Queue
+# processes from fragmenting glibc's heap; without it memory crept to the
+# 1 GiB limit and the instance was OOM-killed about once a day.
 ENV RAILS_ENV=production \
     RAILS_LOG_TO_STDOUT=true \
     RAILS_SERVE_STATIC_FILES=true \
     BUNDLE_DEPLOYMENT=true \
-    BUNDLE_WITHOUT="development:test"
+    BUNDLE_WITHOUT="development:test" \
+    LD_PRELOAD=/usr/local/lib/libjemalloc.so
 
 # Switch to non-root user
 USER rails
