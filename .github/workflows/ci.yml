@@ -7,9 +7,15 @@ on:
 permissions:
   contents: read
 
+# A new push to a PR supersedes the previous run; don't finish stale work.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   scan_ruby:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: apps/api
@@ -21,7 +27,6 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.4'
           bundler-cache: true
           working-directory: apps/api
 
@@ -33,6 +38,7 @@ jobs:
 
   scan_js:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
@@ -41,7 +47,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: |
             package-lock.json
@@ -61,6 +67,7 @@ jobs:
 
   infrastructure:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -68,7 +75,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: infra/pulumi/package-lock.json
 
@@ -84,6 +91,7 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       RUBOCOP_CACHE_ROOT: tmp/rubocop
 
@@ -94,14 +102,13 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.4'
           bundler-cache: true
           working-directory: apps/api
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Restore RuboCop cache
@@ -132,11 +139,12 @@ jobs:
           npm --prefix apps/web run lint
           npm --prefix apps/web run typecheck
 
-  test:
+  api-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
-        image: postgres:16
+        image: postgres:17
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -152,7 +160,6 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.4'
           bundler-cache: true
           working-directory: apps/api
 
@@ -161,17 +168,21 @@ jobs:
         env:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/niftygifty_test
-          PARALLEL_WORKERS: '1'
-        run: bin/rails db:test:prepare test
+        # One worker per runner CPU; Rails gives each worker its own database.
+        run: PARALLEL_WORKERS=$(nproc) bin/rails db:test:prepare test
+
+  js-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            apps/mobile/package-lock.json
 
       - name: Install root workspace dependencies
         run: npm ci --prefer-offline --no-audit --progress=false
@@ -186,6 +197,32 @@ jobs:
 
       - name: Run web component tests
         run: npm --prefix apps/web test
+
+  mobile-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/mobile/package-lock.json
+
+      - name: Install root workspace dependencies
+        run: npm ci --prefer-offline --no-audit --progress=false
+
+      # Mobile imports these through file: links and Jest maps them to dist/.
+      - name: Build shared packages
+        run: |
+          npm --prefix packages/types run build
+          npm --prefix packages/api-client run build
+          npm --prefix packages/services run build
 
       - name: Install mobile dependencies
         run: npm ci --legacy-peer-deps --prefer-offline --no-audit --progress=false --prefix apps/mobile
@@ -202,11 +239,30 @@ jobs:
         working-directory: apps/mobile
         run: npm test -- --runInBand
 
+  # Branch protection requires a check named `test`. This gate keeps that
+  # name while the work above runs in parallel; `always()` makes it fail
+  # (rather than skip, which would count as passing) when any part fails.
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [api-test, js-test, mobile-test]
+    if: always()
+    steps:
+      - name: Require API, JS, and mobile tests to pass
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Results: ${RESULTS}"
+          for result in ${RESULTS}; do
+            [ "${result}" = "success" ] || exit 1
+          done
+
   system-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
-        image: postgres:16
+        image: postgres:17
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -222,7 +278,6 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.4'
           bundler-cache: true
           working-directory: apps/api
 
