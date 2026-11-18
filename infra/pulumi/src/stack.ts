@@ -404,10 +404,12 @@ const apiServiceResource = new gcp.cloudrunv2.Service(
         {
           image: apiImageUri,
           ports: { containerPort: apiPort },
-          // Puma also supervises Solid Queue in this service. Rails plus the
-          // dispatcher, worker, and scheduler exceeds 512 MiB during normal
-          // mail delivery and was repeatedly OOM-killed in production.
-          resources: { limits: { cpu: "1", memory: "1Gi" }, cpuIdle: false },
+          // Puma also supervises Solid Queue in this service, so each instance
+          // runs Puma plus forked supervisor, dispatcher, worker, and scheduler
+          // Rails processes. That sat at 82-98% of 1 GiB right after boot and
+          // was OOM-killed repeatedly (a Ruby 4.0 build crash-looped outright),
+          // so give it real headroom.
+          resources: { limits: { cpu: "1", memory: "2Gi" }, cpuIdle: false },
           envs: apiEnv,
         },
       ],
