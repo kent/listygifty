@@ -190,13 +190,11 @@ jobs:
       - name: Build workspace packages and production web app
         run: npm run build
 
+      # turbo runs every workspace's tests, including all of apps/web.
       - name: Run API client, services, web, and MCP tests
         env:
           TZ: America/Toronto
         run: npm test
-
-      - name: Run web component tests
-        run: npm --prefix apps/web test
 
   mobile-test:
     runs-on: ubuntu-latest
