@@ -31,19 +31,30 @@ class Workspace < ApplicationRecord
     workspace_memberships.find_by(role: "owner")&.user
   end
 
+  # These answer from preloaded memberships when the caller included them
+  # (a user has at most one membership per workspace), so rendering a list of
+  # workspaces doesn't query once per workspace and field.
   def owner?(user)
+    return membership_for(user)&.role == "owner" if workspace_memberships.loaded?
+
     workspace_memberships.exists?(user: user, role: "owner")
   end
 
   def admin?(user)
+    return %w[owner admin].include?(membership_for(user)&.role) if workspace_memberships.loaded?
+
     workspace_memberships.exists?(user: user, role: %w[owner admin])
   end
 
   def member?(user)
+    return membership_for(user).present? if workspace_memberships.loaded?
+
     workspace_memberships.exists?(user: user)
   end
 
   def membership_for(user)
+    return workspace_memberships.find { |membership| membership.user_id == user.id } if workspace_memberships.loaded?
+
     workspace_memberships.find_by(user: user)
   end
 

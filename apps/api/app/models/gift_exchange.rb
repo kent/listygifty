@@ -34,6 +34,8 @@ class GiftExchange < ApplicationRecord
   end
 
   def participant_for(check_user)
+    return exchange_participants.find { |participant| participant.user_id == check_user.id } if exchange_participants.loaded?
+
     exchange_participants.find_by(user: check_user)
   end
 
@@ -42,7 +44,14 @@ class GiftExchange < ApplicationRecord
   end
 
   def can_publish?
-    status == "inviting" && exchange_participants.accepted.count >= MIN_PARTICIPANTS
+    return false unless status == "inviting"
+
+    accepted = if exchange_participants.loaded?
+      exchange_participants.count { |participant| participant.status == "accepted" }
+    else
+      exchange_participants.accepted.count
+    end
+    accepted >= MIN_PARTICIPANTS
   end
 
   def editable?

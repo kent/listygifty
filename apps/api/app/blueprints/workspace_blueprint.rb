@@ -17,7 +17,7 @@ class WorkspaceBlueprint < ApplicationBlueprint
   end
 
   field :member_count do |workspace|
-    workspace.workspace_memberships.count
+    workspace.workspace_memberships.size
   end
 
   field :has_company_profile do |workspace|
