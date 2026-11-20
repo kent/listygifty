@@ -66,6 +66,14 @@ class ApplicationController < ActionController::API
     clerk_user_id = payload["sub"]
     email_from_token = token_email(payload)
 
+    # Most requests come from an existing user with nothing to sync. Loading
+    # them outside a transaction saves the BEGIN and COMMIT round trips.
+    if (existing_user = current_clerk_user_without_changes(clerk_user_id, email_from_token))
+      @current_user = existing_user
+      Current.user = existing_user
+      return
+    end
+
     # Auto-create local user record if they don't exist yet
     is_new_user = false
     User.transaction do
@@ -89,6 +97,17 @@ class ApplicationController < ActionController::API
     render_unauthorized
   rescue ClerkUserMissing
     render_unauthorized
+  end
+
+  # The existing user, when this request has nothing to write for them: they
+  # have a personal workspace and nothing to update from the token or Clerk.
+  def current_clerk_user_without_changes(clerk_user_id, token_email)
+    user = User.find_by(clerk_user_id: clerk_user_id)
+    return unless user
+    return if immediate_clerk_token_updates(user, token_email).any? || should_sync_clerk_profile?(user)
+    return unless user.personal_workspace
+
+    user
   end
 
   # A new user's first page fires several requests at once, and they can all miss

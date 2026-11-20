@@ -1,5 +1,10 @@
 class BootstrapPayloadService
   STATIC_CACHE_EXPIRES_IN = 12.hours
+  # How long a process trusts its last check that the static data is current.
+  # The check is two queries, so skipping it saves two database round trips on
+  # most requests; an edit to a holiday template or gift status shows up within
+  # this window.
+  STATIC_KEY_EXPIRES_IN = 1.minute
 
   attr_reader :user, :requested_workspace_id
 
@@ -18,10 +23,19 @@ class BootstrapPayloadService
       end
     end
 
+    def cached_completed_gift_status_ids
+      relation = GiftStatus.order(:position, :id)
+      Rails.cache.fetch("#{static_cache_key("gift_statuses", relation)}/completed_ids", expires_in: STATIC_CACHE_EXPIRES_IN) do
+        GiftStatus.completed_ids
+      end
+    end
+
     private
 
     def static_cache_key(name, relation)
-      "bootstrap_payload/#{name}/#{relation.cache_key_with_version}"
+      Rails.cache.fetch("bootstrap_payload/#{name}/current_key", expires_in: STATIC_KEY_EXPIRES_IN) do
+        "bootstrap_payload/#{name}/#{relation.cache_key_with_version}"
+      end
     end
   end
 
@@ -34,7 +48,7 @@ class BootstrapPayloadService
     timings = {}
 
     workspaces = measure(timings, :workspaces) do
-      user.workspaces.includes(:company_profile).order(:created_at).to_a
+      user.workspaces.includes(:company_profile, :workspace_memberships).order(:created_at).to_a
     end
     workspace = resolve_workspace(workspaces)
     billing_status = measure(timings, :billing) { billing_status_payload }
@@ -79,18 +93,19 @@ class BootstrapPayloadService
       GiftExchangeBlueprint.render_as_hash(
         workspace.gift_exchanges
                  .for_user(user)
-                 .includes(:exchange_participants)
+                 .includes(exchange_participants: [ :user, :wishlist, :wishlist_items, { matched_participant: [ :user, :wishlist_items ] } ])
                  .order(created_at: :desc),
         current_user: user,
         view: :with_my_participation
       )
     end
 
-    pending_gifts_scope = pending_gifts_scope_for(workspace_holidays)
-    gift_total = measure(timings, :gift_total) do
-      Gift.where(holiday_id: workspace_holidays.select(:id)).count
+    workspace_gifts = Gift.where(holiday_id: workspace_holidays.select(:id))
+    completed_ids = self.class.cached_completed_gift_status_ids
+    pending_gifts_scope = workspace_gifts.where.not(gift_status_id: completed_ids)
+    gift_total, pending_gift_total = measure(timings, :gift_totals) do
+      gift_totals(workspace_gifts, completed_ids)
     end
-    pending_gift_total = measure(timings, :pending_gift_total) { pending_gifts_scope.count }
     pending_gifts = measure(timings, :pending_gifts) do
       GiftBlueprint.render_as_hash(
         pending_gifts_scope
@@ -139,9 +154,12 @@ class BootstrapPayloadService
           .order(:name)
   end
 
-  def pending_gifts_scope_for(workspace_holidays)
-    Gift.where(holiday_id: workspace_holidays.select(:id))
-        .where.not(gift_status_id: GiftStatus.completed_ids)
+  # Both counts in one query. NOT IN matches `where.not`: gifts with no
+  # status aren't pending, and with no completed statuses every gift is.
+  def gift_totals(workspace_gifts, completed_ids)
+    pending = Arel.star.count
+    pending = pending.filter(Gift.arel_table[:gift_status_id].not_in(completed_ids)) if completed_ids.any?
+    workspace_gifts.pick(Arel.star.count, pending)
   end
 
   def empty_payload
