@@ -18,3 +18,12 @@ staging:
 production:
   <<: *default
   url: <%= ENV["DATABASE_URL"] %>
+  # At this traffic most requests arrive more than five minutes after the
+  # last, and Rails' default idle_timeout (300s) had closed the connection, so
+  # they paid to reconnect through the Cloud SQL connector (about 2x slower).
+  # Keep connections open instead and ping idle ones every four minutes so
+  # nothing on the path drops them. This doesn't raise the connection budget:
+  # each process still opens at most its pool size, which the instance cap in
+  # infra/pulumi/Pulumi.production.yaml already allows for.
+  idle_timeout: 0
+  keepalive: 240
