@@ -23,13 +23,17 @@ class BootstrapQueryCountTest < ActionDispatch::IntegrationTest
   end
 
   test "a user with a profile to sync from Clerk still goes through the transaction" do
-    @user.update!(image_url: nil, clerk_profile_synced_at: 2.days.ago)
-    mock_clerk_user_fetch(@user.clerk_user_id, @user.email)
+    # Its own Clerk id: mock_clerk_user_fetch registrations outlive the test,
+    # and a fixture user's would change what Clerk returns in other tests.
+    user = User.create!(email: "unsynced@example.com", clerk_user_id: "user_unsynced_bootstrap",
+                        subscription_plan: "free", clerk_profile_synced_at: 2.days.ago)
+    user.ensure_personal_workspace!
+    mock_clerk_user_fetch(user.clerk_user_id, user.email)
 
-    get "/bootstrap", headers: auth_headers_for(@user)
+    get "/bootstrap", headers: auth_headers_for(user)
 
     assert_response :success
-    assert_in_delta Time.current, @user.reload.clerk_profile_synced_at, 1.minute
+    assert_in_delta Time.current, user.reload.clerk_profile_synced_at, 1.minute
   end
 
   test "query count does not grow with workspaces or exchange participants" do
