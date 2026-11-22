@@ -34,7 +34,7 @@ module PhotoBytes
   def vips
     Photos::Processor.load_vips!
     # Rails blocks these savers; only the tests need them, to make fixtures.
-    %w[VipsForeignSaveMagick VipsForeignSaveJxl].each { |name| Vips.block(name, false) }
+    Photos::Processor.unblock(%w[magicksave_buffer jxlsave_buffer])
     Vips
   end
 

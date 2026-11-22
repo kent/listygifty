@@ -28,7 +28,7 @@ module Photos
     # Rails blocks libvips's unfuzzed loaders. These decode SVG, BMP and ICO
     # (through ImageMagick), JPEG XL, and JPEG 2000. Only bytes identified as
     # one of those formats ever reach them, and no unfuzzed saver is enabled.
-    UNFUZZED_LOADERS = %w[VipsForeignLoadSvg VipsForeignLoadMagick VipsForeignLoadJxl VipsForeignLoadJp2k].freeze
+    UNFUZZED_LOADERS = %w[svgload_buffer magickload_buffer jxlload_buffer jp2kload_buffer].freeze
 
     def self.call(bytes, basename:, declared_type: nil)
       new(bytes, basename, declared_type).attachable
@@ -39,8 +39,17 @@ module Photos
         require "active_storage/vips"
         raise Invalid, "Photos can't be processed right now. Try again later." unless ActiveStorage::VIPS_AVAILABLE
 
-        UNFUZZED_LOADERS.each { |name| Vips.block(name, false) }
+        unblock(UNFUZZED_LOADERS)
         true
+      end
+    end
+
+    # By nickname, since the class behind magickload differs between
+    # ImageMagick 6 and 7 builds.
+    def self.unblock(nicknames)
+      nicknames.each do |nickname|
+        type = Vips.type_find("VipsOperation", nickname)
+        Vips.block(GObject.g_type_name(type), false) unless type.zero?
       end
     end
 

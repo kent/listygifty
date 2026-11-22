@@ -81,7 +81,9 @@ class Photos::ProcessorTest < ActiveSupport::TestCase
   test "strips location and other metadata, after turning the photo upright" do
     %i[jpeg png webp].each do |format|
       source = PhotoBytes.with_location(format)
-      assert_includes source, PhotoBytes::LOCATION_MARKER, "the fixture carries metadata"
+      source_fields = PhotoBytes.vips::Image.new_from_buffer(source, "").get_fields
+      assert_includes source_fields, "xmp-data", "the #{format} fixture carries XMP"
+      assert_includes source_fields, "exif-data", "the #{format} fixture carries EXIF"
 
       photo = process(source)
       body = photo[:io].read
