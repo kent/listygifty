@@ -1,9 +1,8 @@
-# One stored picture, for gifts and wishlist items. Uploads and assistant
-# photos land here; Photos::Intake converts other formats to these first.
+# One stored picture, for gifts and wishlist items. Photos::Processor turns
+# whatever was sent into one of these types before it is attached.
 module HasPhoto
   extend ActiveSupport::Concern
 
-  MAX_PHOTO_BYTES = 5 * 1024 * 1024
   ALLOWED_PHOTO_TYPES = %w[image/jpeg image/png image/webp image/gif].freeze
 
   included do
@@ -27,7 +26,6 @@ module HasPhoto
   def acceptable_photo
     return unless photo.attached?
 
-    errors.add(:photo, "must be smaller than 5 MB") if photo.blob.byte_size > MAX_PHOTO_BYTES
     errors.add(:photo, "must be a JPEG, PNG, WebP, or GIF") unless ALLOWED_PHOTO_TYPES.include?(photo.blob.content_type)
   end
 end

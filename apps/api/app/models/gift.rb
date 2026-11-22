@@ -22,6 +22,8 @@ class Gift < ApplicationRecord
   has_many :gift_changes, dependent: :destroy
   has_many :match_slots, dependent: :destroy
 
+  alias_attribute :product_link, :link
+
   validates :name, presence: true, length: { maximum: 500 }
   validates :description, length: { maximum: 5_000 }, allow_blank: true
   validates :link, length: { maximum: 2_048 }, allow_blank: true

@@ -3,7 +3,7 @@ module Photos
   # every Gift List it belongs to. A shared Gift List counts in full for each
   # member, so sharing a list can't stretch it past the limit.
   module Quota
-    LIMIT = 50 * 1024 * 1024
+    LIMIT = 1024 * 1024 * 1024
 
     module_function
 

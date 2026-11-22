@@ -7,6 +7,8 @@ class WishlistItem < ApplicationRecord
   has_many :claims, class_name: "WishlistItemClaim", dependent: :destroy
   has_many :exchange_notifications, dependent: :destroy
 
+  alias_attribute :product_link, :url
+
   validates :name, presence: true, length: { maximum: 500 }
   validates :notes, length: { maximum: 5_000 }, allow_blank: true
   validates :url, length: { maximum: 2_048 }, allow_blank: true

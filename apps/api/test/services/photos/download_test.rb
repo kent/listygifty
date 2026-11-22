@@ -1,22 +1,22 @@
 require "test_helper"
-require "minitest/mock"
-require "socket"
 
-class Photos::RemoteImageTest < ActiveSupport::TestCase
+class Photos::DownloadTest < ActiveSupport::TestCase
+  include LocalHttpServer
+
   test "blocks private, loopback, link-local, and reserved addresses in both families" do
     %w[
       127.0.0.1 10.1.2.3 172.16.0.9 192.168.1.1 169.254.169.254 100.64.0.1 0.0.0.0 224.0.0.1
       ::1 :: fe80::1 fd00::1 ::ffff:127.0.0.1 ::ffff:10.0.0.1 64:ff9b::a00:1
-    ].each { |address| assert Photos::RemoteImage.blocked?(IPAddr.new(address)), address }
+    ].each { |address| assert Photos::Download.blocked?(IPAddr.new(address)), address }
 
     %w[93.184.216.34 8.8.8.8 2606:4700:10::ac42:93f3].each do |address|
-      assert_not Photos::RemoteImage.blocked?(IPAddr.new(address)), address
+      assert_not Photos::Download.blocked?(IPAddr.new(address)), address
     end
   end
 
   test "accepts only http and https links without credentials" do
     %w[ftp://example.com/a.png file:///etc/passwd javascript:alert(1) https://user:pass@example.com/a.png //example.com/a.png].each do |url|
-      assert_includes fetch_error(url), "must be an http or https link", url
+      assert_includes fetch_error(url), "must be an http or https address", url
     end
     assert_includes fetch_error("https://exa mple.com/a.png"), "isn't a valid link"
   end
@@ -38,82 +38,58 @@ class Photos::RemoteImageTest < ActiveSupport::TestCase
     end
   end
 
-  test "downloads an image and follows redirects to it" do
-    routes = {
-      "/photo.png" => ok(PhotoBytes::PNG),
-      "/moved" => redirect("/photo.png")
-    }
-    with_server(routes) do |base|
-      assert_equal PhotoBytes::PNG, Photos::RemoteImage.fetch("#{base}/photo.png")
-      assert_equal PhotoBytes::PNG, Photos::RemoteImage.fetch("#{base}/moved")
+  test "returns the body, its type, and where redirects ended" do
+    routes = { "/photo.png" => http_ok(PhotoBytes::PNG, "image/png; charset=binary"), "/moved" => http_redirect("/photo.png") }
+    with_http_server(routes) do |base|
+      response = fetch("#{base}/moved")
+      assert_equal [ PhotoBytes::PNG, "image/png", "#{base}/photo.png" ], [ response.body, response.content_type, response.url ]
     end
   end
 
   test "checks every redirect hop against private addresses" do
-    with_server("/hop" => redirect("http://169.254.169.254/latest/meta-data")) do |base|
+    with_http_server("/hop" => http_redirect("http://169.254.169.254/latest/meta-data")) do |base|
       assert_includes fetch_error("#{base}/hop"), "private or local network address"
     end
   end
 
   test "stops after too many redirects" do
-    with_server("/loop" => redirect("/loop")) do |base|
-      assert_includes fetch_error("#{base}/loop"), "redirected more than 3 times"
+    with_http_server("/loop" => http_redirect("/loop")) do |base|
+      assert_includes fetch_error("#{base}/loop"), "redirected more than 5 times"
     end
   end
 
-  test "stops reading at the size limit, with or without a declared length" do
-    huge = "x" * (HasPhoto::MAX_PHOTO_BYTES + 1)
+  test "refuses bodies over max_bytes, with or without a declared length" do
     routes = {
       "/declared" => "HTTP/1.1 200 OK\r\nContent-Length: #{8 * 1024 * 1024}\r\nConnection: close\r\n\r\n",
-      "/streamed" => "HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n#{huge}"
+      "/streamed" => "HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n#{'x' * 2048}"
     }
-    with_server(routes) do |base|
-      assert_includes fetch_error("#{base}/declared"), "is 8 MB, which is over the 5 MB limit"
-      assert_includes fetch_error("#{base}/streamed"), "is over the 5 MB limit"
+    with_http_server(routes) do |base|
+      assert_includes fetch_error("#{base}/declared", max_bytes: 1024), "(8 MB) is more than the 1 KB"
+      assert_includes fetch_error("#{base}/streamed", max_bytes: 1024), "is more than the 1 KB"
+    end
+  end
+
+  test "truncate keeps the start of a long page instead of failing" do
+    page = "<html><head><meta property=\"og:image\" content=\"/a.jpg\"></head>#{'x' * 4096}</html>"
+    with_http_server("/page" => http_ok(page, "text/html")) do |base|
+      body = fetch("#{base}/page", max_bytes: 100, truncate: true).body
+      assert_equal page.byteslice(0, 100), body
     end
   end
 
   test "reports an error status from the website" do
-    with_server({}) do |base|
+    with_http_server({}) do |base|
       assert_includes fetch_error("#{base}/missing.png"), "the website answered 404"
     end
   end
 
   private
 
-  def fetch_error(url)
-    assert_raises(Photos::Invalid) { Photos::RemoteImage.fetch(url) }.message
+  def fetch(url, max_bytes: 1024 * 1024, truncate: false)
+    Photos::Download.call(url, accept: "image/*", max_bytes: max_bytes, truncate: truncate)
   end
 
-  def ok(body)
-    "HTTP/1.1 200 OK\r\nContent-Type: image/png\r\nContent-Length: #{body.bytesize}\r\nConnection: close\r\n\r\n#{body}"
-  end
-
-  def redirect(location)
-    "HTTP/1.1 302 Found\r\nLocation: #{location}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
-  end
-
-  # Serves canned responses on loopback, which is otherwise blocked, so these
-  # tests let 127.0.0.1 through and nothing else.
-  def with_server(routes)
-    server = TCPServer.new("127.0.0.1", 0)
-    thread = Thread.new do
-      loop do
-        client = server.accept
-        path = client.gets.to_s.split[1]
-        while (line = client.gets) && line != "\r\n"; end
-        client.write(routes.fetch(path) { "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n" })
-      rescue IOError, SystemCallError
-        nil
-      ensure
-        client&.close
-      end
-    end
-    Photos::RemoteImage.stub(:blocked?, ->(address) { address.to_s != "127.0.0.1" }) do
-      yield "http://127.0.0.1:#{server.addr[1]}"
-    end
-  ensure
-    thread&.kill
-    server&.close
+  def fetch_error(url, **options)
+    assert_raises(Photos::Invalid) { fetch(url, **options) }.message
   end
 end

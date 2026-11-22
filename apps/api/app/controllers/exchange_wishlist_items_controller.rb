@@ -17,9 +17,10 @@ class ExchangeWishlistItemsController < ApplicationController
 
   def create
     attributes = wishlist_item_params
+    upload = attributes.delete(:photo)
     item = @participant.wishlist!.wishlist_items.new(attributes)
 
-    if persist_with_photo_quota(item, attributes[:photo]) { item.save }
+    if save_with_upload(item, upload)
       ExchangeNotificationService.wishlist_item_added!(item)
       render json: render_items(item), status: :created
     else
@@ -29,7 +30,9 @@ class ExchangeWishlistItemsController < ApplicationController
 
   def update
     attributes = wishlist_item_params
-    if persist_with_photo_quota(@wishlist_item, attributes[:photo]) { @wishlist_item.update(attributes) }
+    upload = attributes.delete(:photo)
+    @wishlist_item.assign_attributes(attributes)
+    if save_with_upload(@wishlist_item, upload)
       render json: render_items(@wishlist_item)
     else
       render json: { errors: @wishlist_item.errors.full_messages }, status: :unprocessable_entity
@@ -131,22 +134,22 @@ class ExchangeWishlistItemsController < ApplicationController
     @current_user_participant ||= @gift_exchange.exchange_participants.find_by(user_id: current_user.id)
   end
 
-  def persist_with_photo_quota(item, uploaded_photo)
-    return yield unless uploaded_photo
+  def save_with_upload(item, upload)
+    return item.save unless upload
 
-    unless uploaded_photo.is_a?(ActionDispatch::Http::UploadedFile)
+    unless upload.is_a?(ActionDispatch::Http::UploadedFile)
       item.errors.add(:photo, "must be uploaded as multipart file data")
       return false
     end
 
+    photo = Photos::Processor.call(upload.read, basename: File.basename(upload.original_filename.to_s, ".*"))
     current_user.with_lock do
-      if Photos::Quota.room_for?(current_user, item, uploaded_photo.size)
-        yield
-      else
-        item.errors.add(:photo, "storage limit of #{Photos.human_size(Photos::Quota::LIMIT)} has been reached")
-        false
-      end
+      Photos.assign(item, photo, user: current_user)
+      item.save
     end
+  rescue Photos::Invalid => e
+    item.errors.add(:base, e.message)
+    false
   end
 
   # The exchange screens send description, link and one price. Wishlist items

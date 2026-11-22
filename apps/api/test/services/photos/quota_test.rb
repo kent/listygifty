@@ -25,7 +25,7 @@ class Photos::QuotaTest < ActiveSupport::TestCase
     assert_not Photos::Quota.room_for?(@owner, gifts(:book), 11)
     error = assert_raises(Photos::Invalid) { Photos::Quota.ensure_room!(@owner, gifts(:book), 11) }
     assert_includes error.message, "Photo storage is full"
-    assert_includes error.message, "of the 50 MB limit"
+    assert_includes error.message, "of the 1 GB limit"
   end
 
   private

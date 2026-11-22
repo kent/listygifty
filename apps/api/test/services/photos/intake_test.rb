@@ -1,14 +1,11 @@
 require "test_helper"
-require "minitest/mock"
 
 class Photos::IntakeTest < ActiveSupport::TestCase
-  test "base64 data becomes an attachable typed by its bytes" do
-    photo = intake("data" => Base64.strict_encode64(PhotoBytes::PNG), "mime_type" => "image/png", "filename" => "boots.png")
+  test "base64 data is processed and named after the file it came from" do
+    photo = intake("data" => Base64.strict_encode64(PhotoBytes.jpeg), "mime_type" => "image/jpeg", "filename" => "boots.jpeg")
 
-    assert_equal "image/png", photo[:content_type]
-    assert_equal "boots.png", photo[:filename]
-    assert_equal PhotoBytes::PNG, photo[:io].read
-    assert_equal false, photo[:identify]
+    assert_equal [ "image/jpeg", "boots.jpg" ], photo.values_at(:content_type, :filename)
+    assert_equal "image/jpeg", Marcel::MimeType.for(photo[:io])
   end
 
   test "accepts data URLs, URL-safe or unpadded base64, and line breaks" do
@@ -18,39 +15,23 @@ class Photos::IntakeTest < ActiveSupport::TestCase
       encoded.tr("+/", "-_").delete("="),
       encoded.scan(/.{1,20}/).join("\n")
     ].each do |data|
-      assert_equal PhotoBytes::PNG, intake("data" => data)[:io].read
+      assert_equal "image/png", intake("data" => data)[:content_type]
     end
-    assert_equal PhotoBytes::PNG, intake("url" => "data:image/png;base64,#{encoded}")[:io].read
+    assert_equal "image/png", intake("url" => "data:image/png;base64,#{encoded}")[:content_type]
   end
 
-  test "trusts the bytes over the declared type and names the file to match" do
-    {
-      PhotoBytes::JPEG => [ "image/jpeg", "jpg" ],
-      PhotoBytes::GIF => [ "image/gif", "gif" ],
-      PhotoBytes::WEBP => [ "image/webp", "webp" ]
-    }.each do |bytes, (type, extension)|
-      photo = intake("data" => Base64.strict_encode64(bytes), "mime_type" => "image/png", "filename" => "../../etc/shot.png")
+  test "the bytes decide the type, whatever mime_type says" do
+    photo = intake("data" => Base64.strict_encode64(PhotoBytes.tiff), "mime_type" => "image/png", "filename" => "scan.png")
 
-      assert_equal type, photo[:content_type]
-      assert_equal "shot.#{extension}", photo[:filename]
-    end
+    assert_equal [ "image/jpeg", "scan.jpg" ], photo.values_at(:content_type, :filename)
+    assert_includes intake_error("data" => Base64.strict_encode64("%PDF-1.7"), "mime_type" => "image/png"), "application/pdf, not image/png"
   end
 
-  test "rejects files that are not a supported image, saying what they look like" do
-    pdf = intake_error("data" => Base64.strict_encode64("%PDF-1.7\n%stuff"), "mime_type" => "image/png")
-    assert_includes pdf, "application/pdf, not image/png"
-    assert_includes pdf, "JPEG, PNG, WebP, GIF, or HEIC"
+  test "has no size cap of its own" do
+    big = PhotoBytes.vips::Image.gaussnoise(1800, 1800, sigma: 80).cast(:uchar).bandjoin([ 128, 128 ]).jpegsave_buffer(Q: 100)
+    assert_operator big.bytesize, :>, 5 * 1024 * 1024, "bigger than the old 5 MB cap"
 
-    svg = intake_error("data" => Base64.strict_encode64(%(<svg xmlns="http://www.w3.org/2000/svg"></svg>)))
-    assert_includes svg, "image/svg+xml"
-  end
-
-  test "rejects photos over the size limit" do
-    too_big = PhotoBytes::PNG + ("\x00".b * HasPhoto::MAX_PHOTO_BYTES)
-
-    message = intake_error("data" => Base64.strict_encode64(too_big))
-
-    assert_includes message, "over the 5 MB limit"
+    assert_equal "image/jpeg", intake("data" => Base64.strict_encode64(big))[:content_type]
   end
 
   test "explains malformed or missing input" do
@@ -61,29 +42,23 @@ class Photos::IntakeTest < ActiveSupport::TestCase
   end
 
   test "downloads links and names the file after the link" do
-    fetched = nil
-    fetch = ->(url) { fetched = url; PhotoBytes::JPEG }
+    requested = nil
+    download = lambda do |url, **options|
+      requested = [ url, options[:max_bytes] ]
+      Photos::Download::Response.new(body: PhotoBytes.webp, content_type: "image/webp", url: url)
+    end
 
-    photo = Photos::RemoteImage.stub(:fetch, fetch) { intake("url" => "https://shop.example/images/red-sneakers.jpeg?w=800") }
+    photo = Photos::Download.stub(:call, download) { intake("url" => "https://shop.example/images/red-sneakers.webp?w=800") }
 
-    assert_equal "https://shop.example/images/red-sneakers.jpeg?w=800", fetched
-    assert_equal [ "image/jpeg", "red-sneakers.jpg" ], photo.values_at(:content_type, :filename)
+    assert_equal [ "https://shop.example/images/red-sneakers.webp?w=800", Photos::Download::MAX_IMAGE_BYTES ], requested
+    assert_equal [ "image/webp", "red-sneakers.webp" ], photo.values_at(:content_type, :filename)
   end
 
-  test "converts HEIC to JPEG" do
-    heic = PhotoBytes.heic
-    skip "libvips can't encode HEIC on this machine" unless heic
-
-    photo = intake("data" => Base64.strict_encode64(heic), "filename" => "IMG_0001.HEIC")
-
-    assert_equal [ "image/jpeg", "IMG_0001.jpg" ], photo.values_at(:content_type, :filename)
-    assert_equal "image/jpeg", Marcel::MimeType.for(photo[:io])
-  end
-
-  test "an unreadable HEIC asks for a JPEG or PNG" do
+  test "an unreadable HEIC asks for another file and lists what works" do
     message = intake_error("data" => Base64.strict_encode64(PhotoBytes::HEIC_HEADER + "garbage".b))
 
-    assert_includes message, "couldn't be read. Send it as a JPEG or PNG"
+    assert_includes message, "That HEIC file couldn't be read"
+    assert_includes message, Photos::Processor::ACCEPTED
   end
 
   private
