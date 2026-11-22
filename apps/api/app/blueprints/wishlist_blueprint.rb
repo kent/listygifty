@@ -53,7 +53,7 @@ class WishlistBlueprint < ApplicationBlueprint
 
   view :with_items do
     association :wishlist_items, blueprint: WishlistItemBlueprint do |wishlist, _options|
-      wishlist.wishlist_items.active.ordered
+      wishlist.wishlist_items.active.ordered.with_attached_photo
     end
   end
 
@@ -66,7 +66,7 @@ class WishlistBlueprint < ApplicationBlueprint
 
     # Blueprinter only merges a Hash here. A lambda is silently ignored.
     association :wishlist_items, blueprint: WishlistItemBlueprint, options: { public_view: true } do |wishlist, _options|
-      wishlist.wishlist_items.active.ordered
+      wishlist.wishlist_items.active.ordered.with_attached_photo
     end
   end
 

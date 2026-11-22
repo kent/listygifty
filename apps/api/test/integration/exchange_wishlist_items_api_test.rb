@@ -99,6 +99,8 @@ class ExchangeWishlistItemsApiTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert @wishlist_item.reload.photo.attached?
+    # The web and mobile apps load this from another origin.
+    assert_match %r{\Ahttp://www\.example\.com/rails/active_storage/blobs/proxy/[^/]+/photo\.png\z}, json_response["photo_url"]
   end
 
   test "update rejects unsupported and oversized photo uploads" do

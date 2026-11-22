@@ -10,6 +10,7 @@ class ExchangeWishlistItemsController < ApplicationController
     render json: render_items(@participant.wishlist_items.with_attached_photo.includes(:claims, :wishlist))
   end
 
+
   def show
     render json: render_items(@wishlist_item)
   end
@@ -139,23 +140,13 @@ class ExchangeWishlistItemsController < ApplicationController
     end
 
     current_user.with_lock do
-      existing_bytes = item.persisted? && item.photo.attached? ? item.photo.blob.byte_size : 0
-      requested_bytes = uploaded_photo.size
-      projected_bytes = photo_storage_bytes_for_current_user - existing_bytes + requested_bytes
-      if projected_bytes > WishlistItem::MAX_PHOTO_STORAGE_PER_USER_BYTES
-        item.errors.add(:photo, "storage limit of 50 MB has been reached")
-        false
-      else
+      if Photos::Quota.room_for?(current_user, item, uploaded_photo.size)
         yield
+      else
+        item.errors.add(:photo, "storage limit of #{Photos.human_size(Photos::Quota::LIMIT)} has been reached")
+        false
       end
     end
-  end
-
-  def photo_storage_bytes_for_current_user
-    item_ids = WishlistItem.joins(:wishlist).where(wishlists: { user_id: current_user.id }).select(:id)
-    ActiveStorage::Attachment.joins(:blob)
-      .where(record_type: "WishlistItem", record_id: item_ids, name: "photo")
-      .sum("active_storage_blobs.byte_size")
   end
 
   # The exchange screens send description, link and one price. Wishlist items

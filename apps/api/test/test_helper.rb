@@ -18,6 +18,26 @@ module ActiveSupport
   end
 end
 
+# Images for photo tests. Only the PNG is complete; the others carry just the
+# signature the type check reads.
+module PhotoBytes
+  PNG = Base64.decode64("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=")
+  JPEG = "\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00".b
+  GIF = "GIF89a\x01\x00\x01\x00\x00\x00\x00;".b
+  WEBP = "RIFF\x1A\x00\x00\x00WEBPVP8L\x0D\x00\x00\x00\x2F\x00\x00\x00\x10\x07\x10\x11\x11\x88\x88\xFE\x07\x00".b
+  HEIC_HEADER = "\x00\x00\x00\x18ftypheic\x00\x00\x00\x00mif1heic".b
+
+  module_function
+
+  # A real HEIC, when this machine's libvips can encode one.
+  def heic
+    require "vips"
+    (Vips::Image.black(8, 8, bands: 3) + 128).cast(:uchar).heifsave_buffer(compression: :hevc)
+  rescue LoadError, StandardError
+    nil
+  end
+end
+
 module ActionDispatch
   class IntegrationTest
     def json_response

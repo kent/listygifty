@@ -15,20 +15,20 @@ class RequestBodyLimiterTest < ActiveSupport::TestCase
     end
     limiter = RequestBodyLimiter.new(app)
 
-    [
-      "/analytics/events",
-      "/analytics/events.json",
-      "/admin/mcp.xml",
-      "/mcp",
-      "/apps/mcp",
-      "/oauth/register",
-      "/oauth/authorize/consent.xml"
-    ].each do |path|
+    {
+      "/analytics/events" => 256.kilobytes,
+      "/analytics/events.json" => 256.kilobytes,
+      "/admin/mcp.xml" => 256.kilobytes,
+      "/mcp" => RequestBodyLimiter::MCP_BODY_LIMIT,
+      "/apps/mcp" => RequestBodyLimiter::MCP_BODY_LIMIT,
+      "/oauth/register" => 256.kilobytes,
+      "/oauth/authorize/consent.xml" => 256.kilobytes
+    }.each do |path, limit|
       env = {
         "PATH_INFO" => path,
         "REQUEST_METHOD" => "POST",
         "CONTENT_LENGTH" => "0",
-        "rack.input" => StringIO.new("x" * (256.kilobytes + 1))
+        "rack.input" => StringIO.new("x" * (limit + 1))
       }
 
       status, headers, body = limiter.call(env)
@@ -37,6 +37,18 @@ class RequestBodyLimiterTest < ActiveSupport::TestCase
       assert_equal "no-store, private", headers["Cache-Control"]
       assert_includes body.join, "too large"
       assert_not called
+    end
+  end
+
+  test "MCP bodies have room for one base64 photo at the size limit" do
+    limiter = RequestBodyLimiter.new(->(_env) { [ 200, {}, [ "ok" ] ] })
+    photo = Base64.strict_encode64("x" * HasPhoto::MAX_PHOTO_BYTES)
+    body = { jsonrpc: "2.0", method: "tools/call", id: 1,
+             params: { name: "create_gift", arguments: { holiday_id: 1, name: "n" * 500, description: "d" * 5_000, photo: { data: photo } } } }.to_json
+
+    %w[/mcp /apps/mcp].each do |path|
+      env = { "PATH_INFO" => path, "REQUEST_METHOD" => "POST", "rack.input" => StringIO.new(body) }
+      assert_equal 200, limiter.call(env).first, path
     end
   end
 

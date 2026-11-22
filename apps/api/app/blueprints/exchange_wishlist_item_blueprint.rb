@@ -28,13 +28,7 @@ class ExchangeWishlistItemBlueprint < ApplicationBlueprint
     options[:participant_id]
   end
 
-  field :photo_url do |item|
-    if item.photo.attached?
-      Rails.application.routes.url_helpers.rails_blob_path(item.photo, only_path: true)
-    else
-      item.image_url
-    end
-  end
+  field :photo_url
 
   field :has_photo do |item|
     item.photo.attached?

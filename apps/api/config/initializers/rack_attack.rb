@@ -1,4 +1,6 @@
 class Rack::Attack
+  PHOTO_READ = ->(req) { (req.get? || req.head?) && req.path.start_with?("/rails/active_storage/") }
+
   # Disable throttling in development/test
   Rack::Attack.enabled = Rails.env.production?
 
@@ -10,8 +12,15 @@ class Rack::Attack
   throttle("req/ip", limit: 60, period: 1.minute) do |req|
     dedicated_limit = RequestBodyLimiter::ANALYTICS_PATH.match?(req.path) ||
       RequestBodyLimiter::ADMIN_PATH.match?(req.path) ||
-      RequestBodyLimiter::MCP_PATH.match?(req.path)
+      RequestBodyLimiter::MCP_PATH.match?(req.path) ||
+      PHOTO_READ.call(req)
     req.ip unless req.path.start_with?("/assets") || dedicated_limit
+  end
+
+  # One wishlist page can show dozens of photos, and each one streams through
+  # the API, so they must not use up the general limit the app needs.
+  throttle("photos/ip", limit: 300, period: 1.minute) do |req|
+    req.ip if PHOTO_READ.call(req)
   end
 
   # Dynamic registration is anonymous and persistent, so constrain it much

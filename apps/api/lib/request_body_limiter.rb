@@ -12,10 +12,13 @@ class RequestBodyLimiter
   EXCHANGE_PHOTO_BODY_LIMIT = 5 * 1024 * 1024 + 256 * 1024
   OAUTH_PATH = %r{\A/oauth/(?:authorize(?:/consent)?|token|register|revoke)(?:\.[^/]+)?/?\z}
   DEFAULT_MUTATION_LIMIT = 256 * 1024
+  # Room for one 5 MB photo (HasPhoto::MAX_PHOTO_BYTES) sent as base64, plus
+  # the usual arguments.
+  MCP_BODY_LIMIT = (5 * 1024 * 1024 + 2) / 3 * 4 + DEFAULT_MUTATION_LIMIT
   MUTATION_METHODS = %w[POST PUT PATCH DELETE].freeze
   LIMITS = {
     ADMIN_PATH => 256 * 1024,
-    MCP_PATH => 256 * 1024,
+    MCP_PATH => MCP_BODY_LIMIT,
     ANALYTICS_PATH => 256 * 1024,
     OAUTH_PATH => 256 * 1024,
     IMPORT_PATH => CsvImportLimits::MAX_FILE_BYTES

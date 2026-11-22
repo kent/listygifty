@@ -1,8 +1,11 @@
 class Gift < ApplicationRecord
+  include HasPhoto
+
   # What GiftBlueprint renders, including the people nested inside each gift.
   RENDER_INCLUDES = [
     :gift_status,
     :created_by,
+    { photo_attachment: :blob },
     { holiday: :holiday_users },
     { recipients: Person::RENDER_INCLUDES },
     { givers: Person::RENDER_INCLUDES },
