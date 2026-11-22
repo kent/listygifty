@@ -212,6 +212,8 @@ export interface Gift extends BaseEntity {
   gift_recipients: GiftRecipientWithAddress[];
   created_by: GiftCreator | null;
   is_mine: boolean;
+  /** Link to the gift's photo. Older APIs leave it out. */
+  photo_url?: string | null;
 }
 
 export interface GiftSummary extends BaseEntity {
@@ -1512,6 +1514,8 @@ export interface StandaloneWishlistItem extends BaseEntity {
   claimed_quantity: number;
   position: number;
   image_url: string | null;
+  /** The picture to show: an uploaded photo, else image_url. Older APIs leave it out. */
+  photo_url?: string | null;
   archived_at: string | null;
   is_available: boolean;
   my_claim: WishlistItemClaim | null;

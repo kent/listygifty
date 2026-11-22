@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DollarSign, ExternalLink, Image, Trash2 } from "lucide-react";
+import { ItemPhoto } from "@/components/item-photo";
 import type { WishlistItem } from "@niftygifty/types";
 
 interface WishlistItemCardProps {
@@ -17,12 +18,7 @@ export function WishlistItemCard({ item, onDelete, readOnly = false }: WishlistI
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
           {item.photo_url ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={item.photo_url}
-              alt={item.name}
-              className="w-16 h-16 rounded-lg object-cover shrink-0"
-            />
+            <ItemPhoto src={item.photo_url} alt={item.name} className="w-16 h-16" />
           ) : (
             <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
               {/* eslint-disable-next-line jsx-a11y/alt-text */}

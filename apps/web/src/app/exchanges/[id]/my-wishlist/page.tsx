@@ -28,6 +28,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ArrowLeft, Plus, Trash2, Image, ExternalLink } from "lucide-react";
+import { ItemPhoto } from "@/components/item-photo";
 import { toast } from "sonner";
 import type { ExchangeWishlistRef, GiftExchange, Wishlist, WishlistItem } from "@niftygifty/types";
 
@@ -326,12 +327,7 @@ export default function MyWishlistPage({
                       />
                     </div>
                     {item.photo_url ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={item.photo_url}
-                        alt={item.name}
-                        className="w-16 h-16 rounded-lg object-cover shrink-0"
-                      />
+                      <ItemPhoto src={item.photo_url} alt={item.name} className="w-16 h-16" />
                     ) : (
                       <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
                         {/* eslint-disable-next-line jsx-a11y/alt-text */}

@@ -9,6 +9,7 @@ import { TextCell } from "./TextCell";
 import { StatusCell } from "./StatusCell";
 import { PeopleCell } from "./PeopleCell";
 import { CurrencyCell } from "./CurrencyCell";
+import { ItemPhoto } from "@/components/item-photo";
 import { captureWebEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { getMerchantLabel, normalizeExternalUrl } from "@/lib/url";
@@ -65,6 +66,7 @@ export function MobileGiftCard({
           aria-expanded={expanded}
           className="w-full p-4 flex items-start gap-3 text-left"
         >
+          {gift.photo_url && <ItemPhoto src={gift.photo_url} alt="" className="h-10 w-10 rounded-md" />}
           <div className="flex-1 min-w-0 space-y-1">
             <div className="flex items-center gap-2">
               <span className="font-medium text-foreground truncate text-base">

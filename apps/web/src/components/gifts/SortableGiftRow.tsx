@@ -30,6 +30,7 @@ import { CurrencyCell } from "./CurrencyCell";
 import { StatusCell } from "./StatusCell";
 import { PeopleCell } from "./PeopleCell";
 import { AddressCell } from "./AddressCell";
+import { ItemPhoto } from "@/components/item-photo";
 import type { Gift, Person, GiftStatus, Address } from "@niftygifty/types";
 import { cn } from "@/lib/utils";
 import { captureWebEvent } from "@/lib/analytics";
@@ -167,23 +168,28 @@ export function SortableGiftRow({
         />
       </TableCell>
       <TableCell className="p-1">
-        <TextCell
-          value={gift.name}
-          onChange={(name) => onUpdateGift(gift.id, { name })}
-          placeholder="Gift name..."
-          aria-label="Rename gift"
-          isLink={!!gift.link}
-          linkHref={linkHref}
-          linkLabel={merchantLabel || "Open link"}
-          onLinkClick={() =>
-            captureWebEvent("gift_link_opened", {
-              gift_id: gift.id,
-              holiday_id: gift.holiday_id,
-              merchant: merchantLabel,
-              source: "gift_row",
-            })
-          }
-        />
+        <div className="flex items-center gap-2">
+          {gift.photo_url && <ItemPhoto src={gift.photo_url} alt="" className="h-8 w-8 rounded-md" />}
+          <div className="min-w-0 flex-1">
+            <TextCell
+              value={gift.name}
+              onChange={(name) => onUpdateGift(gift.id, { name })}
+              placeholder="Gift name..."
+              aria-label="Rename gift"
+              isLink={!!gift.link}
+              linkHref={linkHref}
+              linkLabel={merchantLabel || "Open link"}
+              onLinkClick={() =>
+                captureWebEvent("gift_link_opened", {
+                  gift_id: gift.id,
+                  holiday_id: gift.holiday_id,
+                  merchant: merchantLabel,
+                  source: "gift_row",
+                })
+              }
+            />
+          </div>
+        </div>
       </TableCell>
       <TableCell className="p-1">
         <StatusCell
@@ -252,6 +258,10 @@ export function SortableGiftRow({
           <DialogTitle>{gift.name}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          {gift.photo_url && (
+            <ItemPhoto src={gift.photo_url} alt={giftLabel} className="max-h-64 w-full object-contain" />
+          )}
+
           {gift.description && (
             <div>
               <p className="text-sm font-medium text-muted-foreground">Description</p>

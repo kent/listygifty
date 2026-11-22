@@ -6,6 +6,7 @@ import Link from "next/link";
 import { wishlistsService } from "@/services";
 import { moveItem } from "@/lib/move-item";
 import { ItemOrderControls, ItemRank } from "@/components/wishlists/item-order-controls";
+import { ItemPhoto } from "@/components/item-photo";
 import { useWorkspaceData } from "@/hooks";
 import { AppHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -124,6 +125,7 @@ function ItemCard({
       <CardContent className="p-4">
         <div className="flex items-start gap-3 sm:gap-4">
           <ItemRank rank={order.rank} />
+          {item.photo_url && <ItemPhoto src={item.photo_url} alt={item.name} className="w-16 h-16" />}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <h3 className="font-medium text-slate-900 dark:text-white">{item.name}</h3>
