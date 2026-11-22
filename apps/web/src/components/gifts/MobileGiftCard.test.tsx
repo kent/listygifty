@@ -59,6 +59,21 @@ describe("mobile gift card in the light theme", () => {
   });
 });
 
+describe("mobile gift card photo", () => {
+  const photoUrl = "https://api.example.com/rails/active_storage/blobs/proxy/abc/lego.jpg";
+
+  it("shows the gift's photo without changing the card button's name", () => {
+    const { container } = renderCard({ photo_url: photoUrl });
+    expect(container.querySelector("img")?.getAttribute("src")).toBe(photoUrl);
+    expect(screen.getByRole("button", { name: /^Lego set/ })).toBeTruthy();
+  });
+
+  it("shows no image when the gift has no photo", () => {
+    const { container } = renderCard();
+    expect(container.querySelector("img")).toBeNull();
+  });
+});
+
 describe("mobile gift card labels", () => {
   it("connects every visible label to its control", () => {
     renderCard();

@@ -54,6 +54,18 @@ beforeEach(() => {
   mocks.auth.isAuthenticated = false;
 });
 
+describe("public wishlist item photos", () => {
+  it("shows an item's photo, and nothing for items without one", async () => {
+    const photoUrl = "https://api.example.com/rails/active_storage/blobs/proxy/abc/lego.jpg";
+    mocks.getPublicWishlist.mockResolvedValue(
+      wishlist([{ ...item, photo_url: photoUrl }, { ...item, id: 2, name: "Socks" }])
+    );
+    await renderPage();
+    expect(screen.getByRole("img", { name: "Lego set" }).getAttribute("src")).toBe(photoUrl);
+    expect(screen.queryByRole("img", { name: "Socks" })).toBeNull();
+  });
+});
+
 describe("guest wishlist claim form", () => {
   it("names the claim button after the item, since its text is hidden on mobile", async () => {
     await renderPage();

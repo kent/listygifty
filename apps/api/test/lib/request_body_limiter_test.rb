@@ -15,20 +15,20 @@ class RequestBodyLimiterTest < ActiveSupport::TestCase
     end
     limiter = RequestBodyLimiter.new(app)
 
-    [
-      "/analytics/events",
-      "/analytics/events.json",
-      "/admin/mcp.xml",
-      "/mcp",
-      "/apps/mcp",
-      "/oauth/register",
-      "/oauth/authorize/consent.xml"
-    ].each do |path|
+    {
+      "/analytics/events" => 256.kilobytes,
+      "/analytics/events.json" => 256.kilobytes,
+      "/admin/mcp.xml" => 256.kilobytes,
+      "/mcp" => RequestBodyLimiter::PHOTO_BODY_LIMIT,
+      "/apps/mcp" => RequestBodyLimiter::PHOTO_BODY_LIMIT,
+      "/oauth/register" => 256.kilobytes,
+      "/oauth/authorize/consent.xml" => 256.kilobytes
+    }.each do |path, limit|
       env = {
         "PATH_INFO" => path,
         "REQUEST_METHOD" => "POST",
         "CONTENT_LENGTH" => "0",
-        "rack.input" => StringIO.new("x" * (256.kilobytes + 1))
+        "rack.input" => StringIO.new("x" * (limit + 1))
       }
 
       status, headers, body = limiter.call(env)
@@ -37,6 +37,19 @@ class RequestBodyLimiterTest < ActiveSupport::TestCase
       assert_equal "no-store, private", headers["Cache-Control"]
       assert_includes body.join, "too large"
       assert_not called
+    end
+  end
+
+  test "MCP takes photo-sized bodies up to Cloud Run's 32 MiB HTTP/1 ceiling" do
+    limiter = RequestBodyLimiter.new(->(_env) { [ 200, {}, [ "ok" ] ] })
+    photo = Base64.strict_encode64("x" * (20 * 1024 * 1024))
+    body = { jsonrpc: "2.0", method: "tools/call", id: 1,
+             params: { name: "create_gift", arguments: { holiday_id: 1, name: "Boots", photo: { data: photo } } } }.to_json
+
+    assert_equal 32 * 1024 * 1024, RequestBodyLimiter::PHOTO_BODY_LIMIT
+    %w[/mcp /apps/mcp].each do |path|
+      env = { "PATH_INFO" => path, "REQUEST_METHOD" => "POST", "rack.input" => StringIO.new(body) }
+      assert_equal 200, limiter.call(env).first, path
     end
   end
 
@@ -108,7 +121,7 @@ class RequestBodyLimiterTest < ActiveSupport::TestCase
     assert_equal 1, calls
 
     oversized = accepted.merge(
-      "rack.input" => StringIO.new("x" * (RequestBodyLimiter::EXCHANGE_PHOTO_BODY_LIMIT + 1))
+      "rack.input" => StringIO.new("x" * (RequestBodyLimiter::PHOTO_BODY_LIMIT + 1))
     )
     status, = limiter.call(oversized)
     assert_equal 413, status

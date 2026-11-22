@@ -56,7 +56,7 @@ class ExchangeParticipantBlueprint < ApplicationBlueprint
   view :with_wishlist do
     field :wishlist_items do |participant, options|
       ExchangeWishlistItemBlueprint.render_as_hash(
-        participant.wishlist_items.includes(:claims, :wishlist), participant_id: participant.id, viewer: options[:viewer]
+        participant.wishlist_items.with_attached_photo.includes(:claims, :wishlist), participant_id: participant.id, viewer: options[:viewer]
       )
     end
   end
@@ -83,7 +83,7 @@ class ExchangeParticipantBlueprint < ApplicationBlueprint
     field :wishlist_items,
           if: ->(_name, _participant, options) { ExchangeParticipant::WISHLIST_VISIBLE_ACCESS.include?(options[:wishlist_access]) } do |participant, options|
       ExchangeWishlistItemBlueprint.render_as_hash(
-        participant.wishlist_items.includes(:claims, :wishlist), participant_id: participant.id, viewer: options[:viewer]
+        participant.wishlist_items.with_attached_photo.includes(:claims, :wishlist), participant_id: participant.id, viewer: options[:viewer]
       )
     end
   end

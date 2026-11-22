@@ -253,6 +253,51 @@ The MCP server provides tools for managing gifts:
 - `list_exchange_exclusions`, `add_exchange_exclusion`, `remove_exchange_exclusion`
 - `list_exchange_wishlist_items`, `create_exchange_wishlist_item`, `update_exchange_wishlist_item`, `delete_exchange_wishlist_item`
 
+### Photos
+
+`create_gift`, `update_gift`, `create_wishlist_item`, `update_wishlist_item`,
+`create_exchange_wishlist_item`, and `update_exchange_wishlist_item` take a
+`photo` object with either `url` (a public http(s) link the API downloads) or
+`data` (base64 bytes, or a `data:` URL), plus optional `mime_type` and
+`filename`. A name is still required on create.
+
+- The bytes decide the type. JPEG, PNG, GIF, WebP, HEIC, HEIF, AVIF, TIFF,
+  BMP, ICO, SVG, JPEG XL, and JPEG 2000 are accepted. JPEG, PNG, WebP, and GIF
+  keep their format, animations included; the rest become JPEG, or PNG when
+  they have transparency. SVG is always rasterized to PNG.
+- Every stored photo is re-encoded upright (by its EXIF orientation) and in
+  sRGB, with EXIF, GPS, XMP, and colour profiles removed. Photos larger than
+  4096 px on the long side are scaled down to fit.
+- There is no per-photo size limit. Cloud Run caps a request at 32 MiB, which
+  bounds inline base64 photos to about 24 MB; links can be up to 100 MB. One
+  account's photos on its wishlists and Gift Lists share 1 GB.
+- Links must resolve to public addresses. Downloads follow at most 5
+  redirects and give up after 20 seconds.
+- The `update_*` tools take `remove_photo: true` to delete the photo. Sending a
+  new `photo` replaces it.
+- With a product link (`url` or `link`) and no photo, a background job fetches
+  the page and attaches its `og:image`, `twitter:image`, JSON-LD Product
+  image, or `link rel="image_src"`. The tool's response then includes
+  `photo_fetch_queued: true`. `fetch_photo_from_link: false` skips this; on
+  the `update_*` tools, `true` fetches again from the item's link and replaces
+  the current photo. An explicit `photo` always wins.
+- `create_wishlist_item` and `update_wishlist_item` still accept the older
+  `image_url`, which now works like `photo.url`. A link that can't be
+  downloaded is saved as a link, as before.
+- Read tools return `photo_url`, an absolute link that streams the stored copy
+  from the API.
+
+```json
+{
+  "name": "create_wishlist_item",
+  "arguments": {
+    "wishlist_id": 42,
+    "name": "Red trail runners",
+    "photo": { "data": "iVBORw0KGgo...", "mime_type": "image/png", "filename": "shoes.png" }
+  }
+}
+```
+
 ## MCP Resources
 
 - `listygifty://dashboard` - Dashboard overview

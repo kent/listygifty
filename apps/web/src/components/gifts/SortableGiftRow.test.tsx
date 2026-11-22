@@ -56,6 +56,20 @@ beforeAll(() => {
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
 });
 
+describe("gift row photo", () => {
+  it("shows a thumbnail beside the name when the gift has a photo", () => {
+    const photoUrl = "https://api.example.com/rails/active_storage/blobs/proxy/abc/lego.jpg";
+    renderRow({ photo_url: photoUrl });
+    expect(document.querySelector("img")?.getAttribute("src")).toBe(photoUrl);
+    expect(screen.getByText("Lego set")).toBeTruthy();
+  });
+
+  it("shows no image when the gift has no photo", () => {
+    renderRow();
+    expect(document.querySelector("img")).toBeNull();
+  });
+});
+
 describe("gift row controls", () => {
   it("names the row menu after the gift", () => {
     renderRow();

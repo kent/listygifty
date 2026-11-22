@@ -9,7 +9,8 @@ class WishlistItemBlueprint < ApplicationBlueprint
     visible_claims(item, options).sum(:quantity)
   end
 
-  fields :name, :notes, :url, :price_min, :price_max, :priority, :quantity, :position, :image_url, :created_at, :updated_at
+  fields :name, :notes, :url, :price_min, :price_max, :priority, :quantity, :position, :image_url, :photo_url,
+         :created_at, :updated_at
 
   field :wishlist_id do |item|
     item.wishlist_id

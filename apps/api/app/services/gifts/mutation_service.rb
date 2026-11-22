@@ -8,7 +8,9 @@ module Gifts
       @user = user
     end
 
-    def create(attributes)
+    # photo is an attachable from Photos::Intake, or Photos::REMOVE on update.
+    # It's positional because callers pass attributes as a braceless hash.
+    def create(attributes, photo = nil)
       attributes = normalize(attributes)
       @user.with_lock do
         raise LimitExceeded, limit_message unless @user.can_create_gift?
@@ -22,15 +24,18 @@ module Gifts
         gift.gift_status = attributes["gift_status_id"].present? ?
           GiftStatus.find(attributes["gift_status_id"]) : GiftStatus.by_position.first!
         gift.created_by = @user
+        Photos.assign(gift, photo, user: @user) if photo
         gift.save!
         assign_people!(gift, recipient_ids, giver_ids)
         gift
       end
     end
 
-    def update(gift, attributes)
+    def update(gift, attributes, photo = nil)
       attributes = normalize(attributes)
       Gift.transaction do
+        # The photo quota locks the user, and create takes the user before gifts.
+        @user.lock! if photo
         gift.lock!
         holiday_changed = attributes.key?("holiday_id")
         recipients_changed = attributes.key?("recipient_ids")
@@ -48,6 +53,7 @@ module Gifts
         gift.assign_attributes(attributes.slice(*SCALAR_ATTRIBUTES))
         gift.gift_status = GiftStatus.find(attributes["gift_status_id"]) if attributes.key?("gift_status_id")
         gift.holiday = holiday
+        Photos.assign(gift, photo, user: @user) if photo
         gift.save!
         gift.recipient_ids = recipient_ids if recipients_changed
         gift.giver_ids = giver_ids if givers_changed

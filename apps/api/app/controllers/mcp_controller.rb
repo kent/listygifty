@@ -5,7 +5,7 @@ class McpController < ApplicationController
   include McpTransportSecurity
 
   SUPPORTED_PROTOCOL_VERSIONS = McpTransportSecurity::SUPPORTED_PROTOCOL_VERSIONS
-  MAX_REQUEST_BYTES = 256.kilobytes
+  MAX_REQUEST_BYTES = RequestBodyLimiter::PHOTO_BODY_LIMIT
   MAX_JSON_DEPTH = 32
   MAX_METHOD_LENGTH = 100
 
@@ -25,6 +25,14 @@ class McpController < ApplicationController
     publish_gift_exchange redo_gift_exchange resend_exchange_invite share_wishlist start_gift_exchange
     update_wishlist update_wishlist_item
   ].freeze
+
+  PHOTO_ON_CREATE = "To attach a picture, such as a photo the user took in a store, a screenshot, or a product image, " \
+    "send photo with a url or base64 data; a name is still required. With a product link and no photo, Listy Gifty " \
+    "pulls the product's main picture from that page in the background (the response says photo_fetch_queued: true); " \
+    "fetch_photo_from_link: false skips that.".freeze
+  PHOTO_ON_UPDATE = "Send photo to add or replace its picture, or remove_photo: true to delete it. A new product link " \
+    "on an item with no photo pulls the product's main picture from the page in the background; " \
+    "fetch_photo_from_link: true pulls it again from the item's link, replacing the current photo.".freeze
 
   skip_before_action :authenticate!
   before_action :set_security_headers
@@ -449,16 +457,16 @@ class McpController < ApplicationController
 
       # Gift tools
       "list_gifts" => {
-        description: "List the gift ideas and planned gifts in a Gift List, with their recipients, givers, cost, and status.",
+        description: "List the gift ideas and planned gifts in a Gift List, with their recipients, givers, cost, status, and photo_url, a link to the gift's photo when it has one.",
         scope: "read",
         schema: { type: "object", properties: { holiday_id: { type: "integer" } }, required: [ "holiday_id" ] },
         handler: ->(args) {
           holiday = find_holiday(args["holiday_id"])
-          holiday.gifts.includes(:gift_recipients, :gift_givers, :gift_status).map { |g| gift_to_json(g) }
+          holiday.gifts.with_attached_photo.includes(:gift_recipients, :gift_givers, :gift_status).map { |g| gift_to_json(g) }
         }
       },
       "create_gift" => {
-        description: "Add a gift idea to a Gift List. Use recipient_ids from list_people to say who the gift is for. If the Gift List is shared, its other members may get an email about the new gift.",
+        description: "Add a gift idea to a Gift List. Use recipient_ids from list_people to say who the gift is for. #{PHOTO_ON_CREATE} If the Gift List is shared, its other members may get an email about the new gift.",
         scope: "write",
         schema: {
           type: "object",
@@ -470,23 +478,28 @@ class McpController < ApplicationController
             cost: { type: "number" },
             gift_status_id: { type: "integer" },
             recipient_ids: { type: "array", items: { type: "integer" }, maxItems: 100, uniqueItems: true },
-            giver_ids: { type: "array", items: { type: "integer" }, maxItems: 100, uniqueItems: true }
+            giver_ids: { type: "array", items: { type: "integer" }, maxItems: 100, uniqueItems: true },
+            photo: photo_property,
+            fetch_photo_from_link: fetch_photo_from_link_property
           },
           required: [ "holiday_id", "name" ]
         },
         handler: ->(args) {
-          gift = Gifts::MutationService.new(@current_user).create(args)
-          GiftBlueprint.render_as_hash(gift.reload, current_user: @current_user)
+          find_holiday(args["holiday_id"])
+          photo = requested_photo(args)
+          gift = Gifts::MutationService.new(@current_user).create(args.except("photo", "fetch_photo_from_link"), photo)
+          queued = queue_link_photo(gift, args)
+          with_photo_fetch(GiftBlueprint.render_as_hash(gift.reload, current_user: @current_user), queued)
         }
       },
       "get_gift" => {
-        description: "Get one gift from a Gift List, with its recipients, givers, cost, link, and status.",
+        description: "Get one gift from a Gift List, with its recipients, givers, cost, link, status, and photo_url, a link to the gift's photo when it has one.",
         scope: "read",
         schema: tool_schema({ gift_id: integer_property("Gift ID") }, [ "gift_id" ]),
         handler: ->(args) { GiftBlueprint.render_as_hash(find_gift(args["gift_id"]), current_user: @current_user) }
       },
       "update_gift" => {
-        description: "Change a gift in a Gift List, such as its name, cost, link, status, recipients, or givers. Only the fields provided are changed.",
+        description: "Change a gift in a Gift List, such as its name, cost, link, status, recipients, givers, or photo. Only the fields provided are changed. #{PHOTO_ON_UPDATE}",
         scope: "write",
         schema: gift_update_schema,
         handler: ->(args) { update_gift_from_mcp(args) }
@@ -585,7 +598,7 @@ class McpController < ApplicationController
   def wishlist_tool_handlers
     {
       "get_wishlist" => {
-        description: "Get one wishlist with all of its active items. The owner never sees what has been claimed or bought, so their surprises are not spoiled.",
+        description: "Get one wishlist with all of its active items. Each item's photo_url, when set, links to its picture. The owner never sees what has been claimed or bought, so their surprises are not spoiled.",
         scope: "read",
         schema: tool_schema({ wishlist_id: integer_property("Wishlist ID") }, [ "wishlist_id" ]),
         handler: ->(args) { serialize_wishlist(find_wishlist(args["wishlist_id"]), with_items: true) }
@@ -655,30 +668,36 @@ class McpController < ApplicationController
         }
       },
       "list_wishlist_items" => {
-        description: "List the active items on a wishlist the user can see, in the owner's order of preference.",
+        description: "List the active items on a wishlist the user can see, in the owner's order of preference. Each item's photo_url, when set, links to its picture.",
         scope: "read",
         schema: tool_schema({ wishlist_id: integer_property("Wishlist ID") }, [ "wishlist_id" ]),
-        handler: ->(args) { serialize_wishlist_items(find_wishlist(args["wishlist_id"]).wishlist_items.active.ordered) }
+        handler: ->(args) {
+          serialize_wishlist_items(find_wishlist(args["wishlist_id"]).wishlist_items.active.ordered.with_attached_photo)
+        }
       },
       "create_wishlist_item" => {
-        description: "Add an item to a wishlist the user owns, for example when they say \"add noise-cancelling headphones to my birthday wishlist\". Include a product URL, price range, priority, or quantity when the user gives one. Anyone the wishlist is shared with will see the new item.",
+        description: "Add an item to a wishlist the user owns, for example when they say \"add noise-cancelling headphones to my birthday wishlist\". Include a product URL, price range, priority, or quantity when the user gives one. #{PHOTO_ON_CREATE} Anyone the wishlist is shared with will see the new item.",
         scope: "write",
         schema: wishlist_item_schema(required: %w[wishlist_id name]),
         handler: ->(args) {
           wishlist = find_owned_wishlist(args["wishlist_id"])
-          item = wishlist.wishlist_items.create!(slice_args(args, wishlist_item_attributes))
+          photo = requested_photo(args)
+          item = wishlist.wishlist_items.new(slice_args(args, wishlist_item_attributes))
+          save_with_photo!(item, photo)
           ExchangeNotificationService.wishlist_item_added!(item)
-          serialize_wishlist_item(item)
+          with_photo_fetch(serialize_wishlist_item(item), queue_link_photo(item, args))
         }
       },
       "update_wishlist_item" => {
-        description: "Change an item on a wishlist the user owns, such as its name, notes, link, price range, priority, or quantity. Only the fields provided are changed.",
+        description: "Change an item on a wishlist the user owns, such as its name, notes, link, price range, priority, quantity, or photo. Only the fields provided are changed. #{PHOTO_ON_UPDATE}",
         scope: "write",
         schema: wishlist_item_schema(required: %w[wishlist_id item_id], include_item_id: true),
         handler: ->(args) {
           item = find_owned_wishlist(args["wishlist_id"]).wishlist_items.find(args["item_id"])
-          item.update!(slice_args(args, wishlist_item_attributes))
-          serialize_wishlist_item(item)
+          photo = requested_photo(args)
+          item.assign_attributes(slice_args(args, wishlist_item_attributes))
+          save_with_photo!(item, photo)
+          with_photo_fetch(serialize_wishlist_item(item), queue_link_photo(item, args))
         }
       },
       "delete_wishlist_item" => {
@@ -955,34 +974,40 @@ class McpController < ApplicationController
         }
       },
       "list_exchange_wishlist_items" => {
-        description: "List a participant's wishlist for a gift exchange. The user can read their own, and after names are drawn, the wishlist of the person they are giving to.",
+        description: "List a participant's wishlist for a gift exchange. The user can read their own, and after names are drawn, the wishlist of the person they are giving to. Each item's photo_url, when set, links to its picture.",
         scope: "read",
         schema: participant_reference_schema,
         handler: ->(args) {
           participant = find_exchange_participant_for_wishlist(args)
-          ExchangeWishlistItemBlueprint.render_as_hash(participant.wishlist_items, participant_id: participant.id)
+          ExchangeWishlistItemBlueprint.render_as_hash(participant.wishlist_items.with_attached_photo, participant_id: participant.id)
         }
       },
       "create_exchange_wishlist_item" => {
-        description: "Add a gift idea to the user's own wishlist for a gift exchange, so whoever draws their name knows what they would like. Needs the exchange_id and the user's own participant_id from list_gift_exchanges. Once names are drawn, their giver sees a notification about the new idea.",
+        description: "Add a gift idea to the user's own wishlist for a gift exchange, so whoever draws their name knows what they would like. Needs the exchange_id and the user's own participant_id from list_gift_exchanges. #{PHOTO_ON_CREATE} Once names are drawn, their giver sees a notification about the new idea.",
         scope: "write",
         schema: exchange_wishlist_item_schema(required: %w[exchange_id participant_id name]),
         handler: ->(args) {
           participant = find_owned_exchange_participant(args)
-          item = participant.wishlist!.wishlist_items.create!(exchange_wishlist_item_attributes(args))
+          photo = requested_photo(args)
+          item = participant.wishlist!.wishlist_items.new(exchange_wishlist_item_attributes(args))
+          save_with_photo!(item, photo)
           ExchangeNotificationService.wishlist_item_added!(item)
-          ExchangeWishlistItemBlueprint.render_as_hash(item, participant_id: participant.id)
+          queued = queue_link_photo(item, args)
+          with_photo_fetch(ExchangeWishlistItemBlueprint.render_as_hash(item, participant_id: participant.id), queued)
         }
       },
       "update_exchange_wishlist_item" => {
-        description: "Change an item on the user's own gift exchange wishlist. Only the fields provided are changed.",
+        description: "Change an item on the user's own gift exchange wishlist, including its photo. Only the fields provided are changed. #{PHOTO_ON_UPDATE}",
         scope: "write",
         schema: exchange_wishlist_item_schema(required: %w[exchange_id participant_id item_id], include_item_id: true),
         handler: ->(args) {
           participant = find_owned_exchange_participant(args)
           item = participant.wishlist_items.find(args["item_id"])
-          item.update!(exchange_wishlist_item_attributes(args))
-          ExchangeWishlistItemBlueprint.render_as_hash(item, participant_id: participant.id)
+          photo = requested_photo(args)
+          item.assign_attributes(exchange_wishlist_item_attributes(args))
+          save_with_photo!(item, photo)
+          queued = queue_link_photo(item, args)
+          with_photo_fetch(ExchangeWishlistItemBlueprint.render_as_hash(item, participant_id: participant.id), queued)
         }
       },
       "delete_exchange_wishlist_item" => {
@@ -1110,6 +1135,91 @@ class McpController < ApplicationController
     args.slice(*keys).symbolize_keys
   end
 
+  def photo_property
+    {
+      type: "object",
+      description: "A picture of the item, such as a photo the user took in a store, a screenshot, or a product image. " \
+        "Send url or data, not both. Any common image works: #{Photos::Processor::ACCEPTED}. Listy Gifty stores " \
+        "its own copy without location or other metadata, converting formats browsers can't show, so a link that " \
+        "expires later is fine.",
+      properties: {
+        url: { type: "string", maxLength: 2_048, description: "A public http(s) link to the image file itself. Listy Gifty downloads it right away." },
+        data: string_property("The image bytes, base64-encoded. A data: URL works too."),
+        mime_type: string_property("The image's type, such as image/jpeg. The bytes are checked either way."),
+        filename: { type: "string", maxLength: 255, description: "Optional file name, such as sneakers.jpg" }
+      },
+      additionalProperties: false
+    }
+  end
+
+  def remove_photo_property
+    { type: "boolean", description: "true deletes the current photo. To replace it, send photo instead." }
+  end
+
+  def fetch_photo_from_link_property(update: false)
+    description = if update
+      "true pulls the product's main picture from the item's link now, replacing its current photo; false never " \
+        "pulls one. Left out, a picture is pulled only when this call changes the link and the item has no photo."
+    else
+      "Defaults to true: with a product link and no photo, pull the product's main picture from the page in the " \
+        "background. false skips that."
+    end
+    { type: "boolean", description: description }
+  end
+
+  # Downloads or decodes the photo the call sent, after the caller has found
+  # the record it may edit. nil leaves the photo as it is.
+  def requested_photo(args)
+    sources = %w[photo image_url] & args.keys
+    raise ArgumentError, "Send photo or image_url, not both." if sources.size > 1
+
+    if args["remove_photo"]
+      raise ArgumentError, "Send photo to replace the picture, or remove_photo to delete it, not both." if sources.any?
+
+      Photos::REMOVE
+    elsif args.key?("photo")
+      Photos::Intake.call(args["photo"])
+    elsif args.key?("image_url")
+      image_url_photo(args["image_url"])
+    end
+  end
+
+  # image_url came before photo. It now stores a copy like photo.url, but a
+  # link Listy Gifty can't download is kept as a link, as it always was.
+  def image_url_photo(url)
+    Photos::Intake.call("url" => url)
+  rescue Photos::Invalid
+    Photos::LINK_ONLY
+  end
+
+  def save_with_photo!(record, photo)
+    return record.save! unless photo
+
+    @current_user.with_lock do
+      Photos.assign(record, photo, user: @current_user)
+      record.save!
+    end
+  end
+
+  # Queues LinkPhotoJob after a save that gave the record a product link but
+  # no photo of its own. Call it before reloading the record.
+  def queue_link_photo(record, args)
+    fetch = args["fetch_photo_from_link"]
+    return false if fetch == false || record.product_link.blank?
+    return false if args.key?("photo") || args.key?("image_url") || args["remove_photo"]
+
+    if fetch.nil?
+      return false unless record.previously_new_record? || record.saved_change_to_product_link?
+      return false if record.photo.attached?
+    end
+    LinkPhotoJob.perform_later(record, record.product_link, @current_user, record.photo.attachment&.blob_id)
+    true
+  end
+
+  def with_photo_fetch(result, queued)
+    queued ? result.merge(photo_fetch_queued: true) : result
+  end
+
   def wishlist_item_attributes
     %w[name notes url price_min price_max priority quantity image_url]
   end
@@ -1125,7 +1235,10 @@ class McpController < ApplicationController
       gift_status_id: integer_property("Gift status ID"),
       position: integer_property,
       recipient_ids: { type: "array", items: { type: "integer" }, maxItems: 100, uniqueItems: true },
-      giver_ids: { type: "array", items: { type: "integer" }, maxItems: 100, uniqueItems: true }
+      giver_ids: { type: "array", items: { type: "integer" }, maxItems: 100, uniqueItems: true },
+      photo: photo_property,
+      remove_photo: remove_photo_property,
+      fetch_photo_from_link: fetch_photo_from_link_property(update: true)
     }, [ "gift_id" ])
   end
 
@@ -1151,9 +1264,14 @@ class McpController < ApplicationController
       price_max: { type: "number" },
       priority: { oneOf: [ { type: "integer", enum: [ 0, 1, 2 ] }, enum_property(%w[normal high most_wanted]) ] },
       quantity: integer_property,
-      image_url: string_property
+      photo: photo_property,
+      image_url: { type: "string", maxLength: 2_048, description: "Deprecated: send photo.url instead. Treated the same, except that a link that can't be downloaded is saved as a link." },
+      fetch_photo_from_link: fetch_photo_from_link_property(update: include_item_id)
     }
-    properties[:item_id] = integer_property("Wishlist item ID") if include_item_id
+    if include_item_id
+      properties[:item_id] = integer_property("Wishlist item ID")
+      properties[:remove_photo] = remove_photo_property
+    end
     tool_schema(properties, required)
   end
 
@@ -1199,9 +1317,14 @@ class McpController < ApplicationController
       name: string_property("Item name"),
       description: string_property,
       link: string_property("Product URL"),
-      price: { type: "number" }
+      price: { type: "number" },
+      photo: photo_property,
+      fetch_photo_from_link: fetch_photo_from_link_property(update: include_item_id)
     }
-    properties[:item_id] = integer_property("Exchange wishlist item ID") if include_item_id
+    if include_item_id
+      properties[:item_id] = integer_property("Exchange wishlist item ID")
+      properties[:remove_photo] = remove_photo_property
+    end
     tool_schema(properties, required)
   end
 
@@ -1218,8 +1341,10 @@ class McpController < ApplicationController
 
   def update_gift_from_mcp(args)
     gift = find_gift(args["gift_id"])
-    Gifts::MutationService.new(@current_user).update(gift, args.except("gift_id"))
-    GiftBlueprint.render_as_hash(gift.reload, current_user: @current_user)
+    photo = requested_photo(args)
+    Gifts::MutationService.new(@current_user).update(gift, args.except("gift_id", "photo", "remove_photo", "fetch_photo_from_link"), photo)
+    queued = queue_link_photo(gift, args)
+    with_photo_fetch(GiftBlueprint.render_as_hash(gift.reload, current_user: @current_user), queued)
   end
 
   def find_person(id)
@@ -1382,6 +1507,7 @@ class McpController < ApplicationController
       link: gift.link,
       cost: gift.cost&.to_f,
       status: gift.gift_status&.name,
+      photo_url: gift.photo_url,
       recipients: gift.gift_recipients.includes(:person).map { |gr| { id: gr.person.id, name: gr.person.name } }
     }
   end

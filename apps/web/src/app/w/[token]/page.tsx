@@ -37,6 +37,7 @@ import {
 import { toast } from "sonner";
 import type { WishlistWithItems, StandaloneWishlistItem, GuestClaimRequest } from "@niftygifty/types";
 import { BRAND_NAME } from "@/lib/brand";
+import { ItemPhoto } from "@/components/item-photo";
 
 function PriorityBadge({ priority }: { priority: number }) {
   if (priority === 2) {
@@ -71,6 +72,7 @@ function PublicItemCard({
     <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
+          {item.photo_url && <ItemPhoto src={item.photo_url} alt={item.name} className="w-16 h-16" />}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <h3 className="font-medium text-slate-900 dark:text-white">{item.name}</h3>

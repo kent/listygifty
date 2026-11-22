@@ -1,5 +1,7 @@
 class ApplicationController < ActionController::API
   include ApiKeyAuthenticatable
+  # Photo links point at this host, since the web and mobile apps live elsewhere.
+  include ActiveStorage::SetCurrent
 
   class ClerkUserMissing < StandardError; end
 

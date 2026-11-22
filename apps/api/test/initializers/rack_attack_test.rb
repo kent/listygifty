@@ -59,6 +59,19 @@ class RackAttackTest < ActiveSupport::TestCase
     assert_nil credential.instance_variable_get(:@block).call(rack_attack_request("/gifts"))
   end
 
+  test "photo reads have their own limit so a page of photos can't use up the general one" do
+    general = Rack::Attack.throttles.fetch("req/ip")
+    photos = Rack::Attack.throttles.fetch("photos/ip")
+    read = rack_attack_request("/rails/active_storage/blobs/proxy/signed-id/gift.jpg", method: "GET")
+    upload = rack_attack_request("/rails/active_storage/direct_uploads")
+
+    assert_nil general.instance_variable_get(:@block).call(read)
+    assert_equal "192.0.2.1", photos.instance_variable_get(:@block).call(read)
+    assert_equal "192.0.2.1", general.instance_variable_get(:@block).call(upload)
+    assert_nil photos.instance_variable_get(:@block).call(upload)
+    assert_equal 300, photos.limit
+  end
+
   test "throttled requests get a 429 with Retry-After, not a 500" do
     request = rack_attack_request("/gifts", method: "GET")
     request.env["rack.attack.match_data"] = { count: 61, period: 60, limit: 60 }

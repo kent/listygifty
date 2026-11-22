@@ -9,13 +9,15 @@ class RequestBodyLimiter
   IMPORT_PATH = %r{\A/imports/(?:people|gifts)(?:\.[^/]+)?/?\z}
   OAUTH_REGISTRATION_PATH = %r{\A/oauth/register(?:\.[^/]+)?/?\z}
   EXCHANGE_PHOTO_PATH = %r{\A/gift_exchanges/\d+/exchange_participants/\d+/exchange_wishlist_items/\d+(?:\.[^/]+)?/?\z}
-  EXCHANGE_PHOTO_BODY_LIMIT = 5 * 1024 * 1024 + 256 * 1024
   OAUTH_PATH = %r{\A/oauth/(?:authorize(?:/consent)?|token|register|revoke)(?:\.[^/]+)?/?\z}
   DEFAULT_MUTATION_LIMIT = 256 * 1024
+  # Requests that can carry a photo get as much as Cloud Run lets through to
+  # an HTTP/1 server, so the app never turns away what the platform accepts.
+  PHOTO_BODY_LIMIT = 32 * 1024 * 1024
   MUTATION_METHODS = %w[POST PUT PATCH DELETE].freeze
   LIMITS = {
     ADMIN_PATH => 256 * 1024,
-    MCP_PATH => 256 * 1024,
+    MCP_PATH => PHOTO_BODY_LIMIT,
     ANALYTICS_PATH => 256 * 1024,
     OAUTH_PATH => 256 * 1024,
     IMPORT_PATH => CsvImportLimits::MAX_FILE_BYTES
@@ -27,7 +29,7 @@ class RequestBodyLimiter
 
   def call(env)
     path = env["PATH_INFO"].to_s
-    limit = EXCHANGE_PHOTO_BODY_LIMIT if EXCHANGE_PHOTO_PATH.match?(path) && multipart_request?(env)
+    limit = PHOTO_BODY_LIMIT if EXCHANGE_PHOTO_PATH.match?(path) && multipart_request?(env)
     limit ||= LIMITS.find { |pattern, _bytes| pattern.match?(path) }&.last
     mutation = MUTATION_METHODS.include?(env["REQUEST_METHOD"])
     limit ||= DEFAULT_MUTATION_LIMIT if mutation

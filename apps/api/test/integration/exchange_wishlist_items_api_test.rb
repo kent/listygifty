@@ -99,19 +99,33 @@ class ExchangeWishlistItemsApiTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert @wishlist_item.reload.photo.attached?
+    # The web and mobile apps load this from another origin.
+    assert_match %r{\Ahttp://www\.example\.com/rails/active_storage/blobs/proxy/[^/]+/photo\.png\z}, json_response["photo_url"]
   end
 
-  test "update rejects unsupported and oversized photo uploads" do
+  test "update rejects files that aren't images, whatever they claim to be" do
     [
       uploaded_file("not an image", "text/plain", "payload.txt"),
-      uploaded_file("x" * (WishlistItem::MAX_PHOTO_BYTES + 1), "image/png", "too-large.png")
+      uploaded_file("x" * 4096, "image/png", "fake.png")
     ].each do |upload|
       patch gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
         headers: @auth_headers,
         params: { wishlist_item: { photo: upload } }
       assert_response :unprocessable_entity
+      assert_includes json_response["errors"].join, Photos::Processor::ACCEPTED
       assert_not @wishlist_item.reload.photo.attached?
     end
+  end
+
+  test "uploads go through the same conversion and metadata stripping as assistant photos" do
+    patch gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+      headers: @auth_headers,
+      params: { wishlist_item: { photo: uploaded_file(PhotoBytes.with_location(:jpeg), "image/jpeg", "IMG_0001.JPG") } }
+
+    assert_response :success
+    stored = @wishlist_item.reload.photo
+    assert_equal [ "image/jpeg", "IMG_0001.jpg" ], [ stored.content_type, stored.filename.to_s ]
+    assert_not_includes stored.download, PhotoBytes::LOCATION_MARKER
   end
 
   # ============================================================================
