@@ -11,7 +11,6 @@ import { AUTH_ROUTES } from "@/services";
 
 import { SampleConversation } from "./SampleConversation";
 import { conversations } from "./conversations";
-import sherwayTrip from "./sherway-trip.json";
 
 const chatGptListing = "https://chatgpt.com/plugins/plugin_asdk_app_6aece563192c8191922c4988bb7b9e20";
 const claudeConnectors = "https://claude.ai/customize/connectors";
@@ -36,21 +35,6 @@ function SetupCard({ id, title, children }: { id: keyof typeof conversations; ti
         {children}
       </ol>
       <SampleConversation assistant={title} turns={conversations[id]} />
-      {id === "chatgpt" && (
-        <details className="mt-4">
-          <summary className="cursor-pointer text-sm font-semibold underline underline-offset-4">Read the full Sherway shopping trip</summary>
-          <ol id="sherway-trip" aria-label="Example trip to CF Sherway Gardens" className="mt-4 scroll-mt-5 space-y-4">
-            {sherwayTrip.map(scene => (
-              <li key={scene.title} className="space-y-1 text-sm leading-relaxed">
-                <h4 className="font-semibold">{scene.title}</h4>
-                <p><strong>You</strong> · {scene.question}</p>
-                <p className="text-xs text-slate-600 dark:text-indigo-200">Listy Gifty · {scene.activity}</p>
-                <p><strong>ChatGPT</strong> · {scene.reply}</p>
-              </li>
-            ))}
-          </ol>
-        </details>
-      )}
     </section>
   );
 }

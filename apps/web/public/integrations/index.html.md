@@ -13,5 +13,3 @@ Try one of these after connecting. Use the names from your own lists.
 - “Can you add the new Hunger Games book as a gift idea for Alice?”
 - “I’m heading to CF Sherway Gardens. What can I knock off my Christmas 2026 list today?”
 - “Can you add a 3D printer to my wishlist?”
-
-[Read the full example shopping trip at CF Sherway Gardens](/integrations#sherway-trip), with stops at Indigo, Roots, and the LEGO Store.
