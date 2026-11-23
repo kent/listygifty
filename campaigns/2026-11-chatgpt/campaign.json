@@ -1,0 +1,44 @@
+{
+  "from": "Listy Gifty <hello@listygifty.com>",
+  "subject": "ChatGPT + ListyGifty",
+  "html": "email.html",
+  "text": "email.txt",
+  "attachments": [
+    {
+      "path": "assets/alice.gif",
+      "name": "alice.gif",
+      "content_type": "image/gif",
+      "content_id": "cid:alice.gif@listygifty.com"
+    },
+    {
+      "path": "assets/alice.png",
+      "name": "alice.png",
+      "content_type": "image/png",
+      "content_id": "cid:alice.png@listygifty.com"
+    },
+    {
+      "path": "assets/sherway.gif",
+      "name": "sherway.gif",
+      "content_type": "image/gif",
+      "content_id": "cid:sherway.gif@listygifty.com"
+    },
+    {
+      "path": "assets/sherway.png",
+      "name": "sherway.png",
+      "content_type": "image/png",
+      "content_id": "cid:sherway.png@listygifty.com"
+    },
+    {
+      "path": "assets/printer.gif",
+      "name": "printer.gif",
+      "content_type": "image/gif",
+      "content_id": "cid:printer.gif@listygifty.com"
+    },
+    {
+      "path": "assets/printer.png",
+      "name": "printer.png",
+      "content_type": "image/png",
+      "content_id": "cid:printer.png@listygifty.com"
+    }
+  ]
+}

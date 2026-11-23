@@ -1,0 +1,34 @@
+ListyGifty is now on ChatGPT, Claude, Runner, GrokBot and more
+
+You can now save gift ideas to ListyGifty right from a ChatGPT conversation. When you’re at the store, just ask, “Which scarf did Dad want again?”
+
+ListyGifty also works with Claude, Runner, GrokBot, and other compatible AI tools.
+Set up another assistant → https://listygifty.com/integrations#connect
+
+A book for Alice
+You: Can you save the new Hunger Games book as an idea for Alice?
+Listy Gifty · Finding your gift lists
+ChatGPT: Sunrise on the Reaping? Which list should I put it on?
+You: Christmas 2026. She’s been talking about it for weeks.
+Listy Gifty · Saving Alice’s gift idea
+ChatGPT: It’s on your Christmas 2026 list for Alice.
+
+An afternoon at Sherway
+You: I’m at CF Sherway Gardens. What can I knock off my Christmas 2026 list today?
+Listy Gifty · Reading your Christmas 2026 list
+ChatGPT: Try Indigo for Alice’s book, Roots for Dad’s scarf, and the LEGO Store for Maya’s space rover.
+You: I’m in Roots now. Grey or navy for Dad?
+Listy Gifty · Reading your note on Dad’s scarf
+ChatGPT: Charcoal grey. You wrote “wool, if they have it.”
+
+One for your own wishlist
+You: Can you add a 3D printer to my wishlist?
+Listy Gifty · Adding to your wishlist
+ChatGPT: Added. Do you have a particular model in mind?
+You: No model yet. Just something small enough for my desk.
+Listy Gifty · Updating your wishlist note
+ChatGPT: I added “small enough for my desk” to the printer’s notes.
+
+Connect ListyGifty to ChatGPT: https://listygifty.com/integrations#chatgpt
+
+Manage notifications: https://listygifty.com/settings
