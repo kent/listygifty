@@ -574,7 +574,7 @@ export default function HomePage() {
                     analyticsProperties={{ location: "assistant_integrations", destination: "integrations" }}
                     className="inline-flex items-center gap-2 text-cyan-600 dark:text-cyan-400 font-medium hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors"
                   >
-                    Learn more about integrations
+                    Set up ChatGPT, Claude, or another assistant
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
