@@ -1,0 +1,44 @@
+[
+  {
+    "title": "Save an idea",
+    "question": "Can you add the new Hunger Games book as a gift idea for Alice?",
+    "activity": "Saving Alice’s gift idea",
+    "reply": "Saved Sunrise on the Reaping for Alice on your Christmas 2026 gift list."
+  },
+  {
+    "title": "Plan the trip",
+    "question": "I’m heading to CF Sherway Gardens. What can I knock off my Christmas 2026 list today?",
+    "activity": "Reading your Christmas 2026 gift list",
+    "reply": "Try Indigo for Alice’s book, Roots for Dad’s scarf, and the LEGO Store for Maya’s space set."
+  },
+  {
+    "title": "At Indigo",
+    "question": "I’m at Indigo. What’s the title again?",
+    "activity": "Looking up Alice’s gift",
+    "reply": "Sunrise on the Reaping, by Suzanne Collins. That’s the one you saved for Alice."
+  },
+  {
+    "title": "One down",
+    "question": "Got the book! Can you mark Alice’s gift as bought?",
+    "activity": "Updating Alice’s gift",
+    "reply": "Alice’s book is checked off. Dad’s scarf and Maya’s space set are still on your list."
+  },
+  {
+    "title": "At Roots",
+    "question": "Roots has a few scarves. Which colour did Dad want?",
+    "activity": "Reading the note on Dad’s scarf",
+    "reply": "Charcoal grey. Your note says he’d like wool, too."
+  },
+  {
+    "title": "At the LEGO Store",
+    "question": "I picked up a space rover for Maya at the LEGO Store. Check hers off too?",
+    "activity": "Updating Maya’s gift",
+    "reply": "Maya’s space set is marked as bought. Just Dad’s scarf left."
+  },
+  {
+    "title": "One for me",
+    "question": "One for me before I forget. Can you add a 3D printer to my wishlist?",
+    "activity": "Adding to your wishlist",
+    "reply": "Added a 3D printer to your wishlist."
+  }
+]
