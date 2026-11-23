@@ -2,14 +2,16 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowDown, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { TrackedLink } from "@/components/tracked-link";
 import { Button } from "@/components/ui/button";
+import { TabsContent } from "@/components/ui/tabs";
 import { MCP_SERVER_URL } from "@/lib/mcp";
 import { createPageMetadata } from "@/lib/seo";
 import { AUTH_ROUTES } from "@/services";
 
 import { SampleConversation } from "./SampleConversation";
+import { ProviderTabs, SetupInstructionsLink } from "./ProviderTabs";
 import { conversations } from "./conversations";
 
 const chatGptListing = "https://chatgpt.com/plugins/plugin_asdk_app_6aece563192c8191922c4988bb7b9e20";
@@ -26,16 +28,17 @@ export const metadata: Metadata = createPageMetadata({
 
 function SetupCard({ id, title, children }: { id: keyof typeof conversations; title: string; children: ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-6 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900 sm:p-8">
-      <div className="mb-5 flex items-center gap-3">
-        <Image src={`/integrations/logos/${id}.png`} alt="" width={44} height={44} className="shrink-0 rounded-xl" />
-        <h3 id={`${id}-title`} className="text-2xl font-bold tracking-tight">{title}</h3>
+    <TabsContent value={id} aria-labelledby={id} className="rounded-2xl border border-slate-200 bg-white p-5 focus-visible:outline-2 dark:border-slate-700 dark:bg-slate-900 sm:p-8">
+      <div className="grid min-w-0 gap-5 lg:grid-cols-2 lg:items-start lg:gap-10 [&>figure]:mt-0">
+        <div className="min-w-0">
+          <h3 className="mb-5 text-2xl font-bold tracking-tight">{title}</h3>
+          <ol className="list-decimal space-y-3 pl-5 leading-relaxed marker:font-semibold marker:text-violet-700 dark:marker:text-violet-300 [&>li]:pl-1">
+            {children}
+          </ol>
+        </div>
+        <SampleConversation assistant={title} turns={conversations[id]} />
       </div>
-      <ol className="list-decimal space-y-3 pl-5 leading-relaxed marker:font-semibold marker:text-violet-700 dark:marker:text-violet-300 [&>li]:pl-1">
-        {children}
-      </ol>
-      <SampleConversation assistant={title} turns={conversations[id]} />
-    </section>
+    </TabsContent>
   );
 }
 
@@ -70,9 +73,7 @@ export default function IntegrationsPage() {
                   Open in ChatGPT <ArrowUpRight aria-hidden="true" />
                 </TrackedLink>
               </Button>
-              <TrackedLink href="#connect" analyticsEvent="integration_how_to_connect_clicked" analyticsProperties={{ location: "hero", destination: "connect_section" }} className={`inline-flex items-center gap-1 ${textLink}`}>
-                Setup instructions <ArrowDown size={16} aria-hidden="true" />
-              </TrackedLink>
+              <SetupInstructionsLink className={`inline-flex items-center gap-1 ${textLink}`} />
             </div>
           </div>
           <figure className="rounded-2xl border border-violet-200 bg-violet-50 p-6 dark:border-violet-700 dark:bg-violet-950 sm:p-8">
@@ -85,7 +86,7 @@ export default function IntegrationsPage() {
         <section id="connect" aria-labelledby="setup-title" className="scroll-mt-6 pt-10 sm:pt-14">
           <h2 id="setup-title" className="text-3xl font-bold tracking-tight">Choose your assistant</h2>
           <p className="mb-6 mt-3 text-slate-700 dark:text-slate-300">Sign in to the Listy Gifty account that holds your lists when your assistant asks you to connect.</p>
-          <div className="grid gap-4 md:grid-cols-2">
+          <ProviderTabs>
             <SetupCard id="chatgpt" title="ChatGPT">
               <li>Open the <a className={textLink} href={chatGptListing}>Listy Gifty plugin</a> in ChatGPT and select <strong>Install plugin</strong>.</li>
               <li>Select <strong>Connect</strong> if prompted. Sign in to Listy Gifty, review the permissions, and approve access.</li>
@@ -108,7 +109,7 @@ export default function IntegrationsPage() {
               <li>Select <strong>Add plugin</strong>, then <strong>Authenticate</strong> when prompted. Sign in to Listy Gifty and review the permissions.</li>
               <li>In a conversation, type <strong>@</strong> and attach Listy Gifty to your task.</li>
             </SetupCard>
-          </div>
+          </ProviderTabs>
         </section>
 
         <details id="other-tools" className="mt-6 scroll-mt-6 rounded-2xl border border-slate-200 bg-white px-6 py-5 dark:border-slate-700 dark:bg-slate-900">
