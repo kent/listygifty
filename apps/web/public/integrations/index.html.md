@@ -8,4 +8,8 @@ Read the [public setup guide](https://listygifty.com/integrations) to connect an
 - **Grok Bot** — In the desktop app, go to **Connect apps → Add a custom connector**. Name it **Listy Gifty**, choose **Remote HTTPS**, and enter `https://api.listygifty.com/mcp`. Select **Add plugin**, authenticate with Listy Gifty, then use **@** to attach it in a chat.
 - **Other AI tools** — Use a client that supports remote MCP over Streamable HTTP with OAuth. Add the same server URL and complete the Listy Gifty browser authorization.
 
-Try “Add a pottery class to my birthday wishlist.” Use the name of one of your own lists. You can also ask what gifts you have planned or who you drew in a gift exchange.
+Try one of these after connecting. Use the names from your own lists.
+
+- “Can you add the new Hunger Games book as a gift idea for Alice?”
+- “I’m heading to Sherway. What can I knock off my Christmas 2026 list today?”
+- “Can you add a 3D printer to my wishlist?”
