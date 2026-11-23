@@ -10,6 +10,7 @@ const isPublic = (pathname: string) => matchesPublicRoute({ nextUrl: { pathname 
 describe("route protection", () => {
   it.each([
     "/",
+    "/integrations",
     "/login",
     "/login/factor-one",
     "/signup",

@@ -1,27 +1,10 @@
-# Listy Gifty AI Assistant Integrations
+# Use Listy Gifty with your AI assistant
 
-Listy Gifty supports AI assistant integrations through the Model Context Protocol and OAuth.
+Read the [public setup guide](https://listygifty.com/integrations) to connect an assistant to the Listy Gifty account that holds your lists.
 
-## Summary
+- **ChatGPT** — Open the [Listy Gifty plugin](https://chatgpt.com/plugins/plugin_asdk_app_6aece563192c8191922c4988bb7b9e20). Select **Install plugin**, then **Connect** if prompted. Sign in to Listy Gifty and approve access. Mention **@Listy Gifty** in a chat.
+- **Claude** — In **Customize → Connectors**, add a custom web connector named **Listy Gifty** with server URL `https://api.listygifty.com/mcp`. Choose browser sign-in and **Register automatically** if asked for an OAuth client. Approve access, then enable Listy Gifty under **+ → Connectors** in a chat.
+- **Runner** — Under **Connected Apps**, connect a **Custom MCP** server at the same URL. Choose **Sign in with the provider**, connect the server, and approve access.
+- **Other AI tools** — Use a client that supports remote MCP over Streamable HTTP with OAuth. Add the same server URL and complete the Listy Gifty browser authorization.
 
-Users can connect compatible assistants such as Claude, ChatGPT, Claude Code, or another MCP client to help review gift lists, spot missing details, create records, and answer planning questions. Assistant access is scoped and must be authorized by the user.
-
-## Public Integration Facts
-
-- Integrations page: https://listygifty.com/integrations
-- MCP endpoint: https://api.listygifty.com/mcp
-- Authentication: OAuth with scoped permissions
-- Supported assistant categories: Claude, ChatGPT, Claude Code, MCP-compatible tools
-- Access control: users can grant read or write scopes and revoke access
-
-## Example Assistant Tasks
-
-- Review holidays, people, gifts, and wishlists in a workspace.
-- Find gifts missing links, budgets, recipients, givers, or status.
-- Create new holidays, people, or gift ideas after authorization.
-- Summarize spending and gift progress.
-- Help prepare business gifting exports and exception lists.
-
-## Privacy Notes
-
-Connected assistants do not see a user's password. Private gift data is only available after OAuth authorization, and only within granted scopes.
+Try “Add a pottery class to my birthday wishlist.” Use the name of one of your own lists. You can also ask what gifts you have planned or who you drew in a gift exchange.
