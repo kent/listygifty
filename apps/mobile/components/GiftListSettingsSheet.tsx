@@ -22,14 +22,13 @@ import { useTheme } from "@/lib/theme";
 
 export type GiftListSettingsPage = "menu" | "stats" | "sharing" | "gift-emails";
 
-export const GIFT_EMAIL_OPTIONS: { value: GiftNotificationSetting; label: string; detail: string }[] = [
-  { value: "instant", label: "Right away", detail: "Email me a few minutes after someone adds a gift" },
-  { value: "daily", label: "Daily summary", detail: "Include new gifts in my daily email of list changes" },
+const GIFT_EMAIL_OPTIONS: { value: GiftNotificationSetting; label: string; detail: string }[] = [
+  { value: "daily", label: "Daily digest", detail: "Include new gifts from this list in my evening email" },
   { value: "off", label: "Off", detail: "Don't email me about this list" },
 ];
 
 function giftEmailsLabel(setting: GiftNotificationSetting | null | undefined) {
-  return GIFT_EMAIL_OPTIONS.find((option) => option.value === (setting ?? "instant"))?.label ?? "Right away";
+  return GIFT_EMAIL_OPTIONS.find((option) => option.value === setting)?.label ?? "Daily digest";
 }
 
 interface GiftListSettingsSheetProps {
@@ -251,14 +250,14 @@ export function GiftListSettingsSheet(props: GiftListSettingsSheetProps) {
 
 function GiftEmailsPage({ holiday, savingGiftEmails, onBack, onChangeGiftEmails }: GiftListSettingsSheetProps) {
   const { colors } = useTheme();
-  const current = holiday.gift_notifications ?? "instant";
+  const current = holiday.gift_notifications === "off" ? "off" : "daily";
 
   return (
     <>
       <SheetHeader title="New Gift Emails" left={<BackButton onPress={onBack} />} />
       <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
         <Text style={{ color: colors.textTertiary, fontSize: 14 }}>
-          When someone else adds a gift to {holiday.name}. Only you see this setting.
+          Get a recap of new gifts on {holiday.name}, including gifts you add. Only you see this setting.
         </Text>
         {GIFT_EMAIL_OPTIONS.map((option) => {
           const selected = option.value === current;

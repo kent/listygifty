@@ -38,6 +38,7 @@ import { getMerchantLabel, normalizeExternalUrl } from "@/lib/url";
 
 interface SortableGiftRowProps {
   gift: Gift & { _isNew?: boolean; _isSaving?: boolean };
+  isLinked?: boolean;
   people: Person[];
   statuses: GiftStatus[];
   addresses: Address[];
@@ -58,6 +59,7 @@ interface SortableGiftRowProps {
 
 export function SortableGiftRow({
   gift,
+  isLinked,
   people,
   statuses,
   addresses,
@@ -97,8 +99,11 @@ export function SortableGiftRow({
     <TableRow
       ref={setNodeRef}
       style={style}
+      data-linked-gift={isLinked ? "" : undefined}
+      tabIndex={isLinked ? -1 : undefined}
       className={cn(
         "group transition-colors",
+        isLinked && "bg-accent outline outline-2 -outline-offset-2 outline-ring",
         gift._isNew && "bg-violet-500/5",
         gift._isSaving && "opacity-50",
         isDragging && "bg-muted/50 opacity-80 shadow-lg z-50",

@@ -206,21 +206,35 @@ class HolidaysApiTest < ActionDispatch::IntegrationTest
   test "notifications changes only your own setting for the list" do
     holiday = holidays(:christmas)
 
-    patch notifications_holiday_path(holiday), params: { gift_notifications: "daily" }, headers: @auth_headers, as: :json
+    patch notifications_holiday_path(holiday), params: { gift_notifications: "off" }, headers: @auth_headers, as: :json
 
     assert_response :success
-    assert_equal "daily", json_response["gift_notifications"]
-    assert_equal "daily", HolidayUser.find_by!(holiday: holiday, user: @user).gift_notifications
-    assert_equal "instant", HolidayUser.find_by!(holiday: holiday, user: users(:two)).gift_notifications
+    assert_equal "off", json_response["gift_notifications"]
+    assert_equal "off", holiday_users(:user_one_christmas).reload.gift_notifications
+    assert_equal "daily", holiday_users(:user_two_christmas).reload.gift_notifications
+
+    get holidays_path, headers: @auth_headers, as: :json
+    assert_equal "off", json_response.find { |h| h["id"] == holiday.id }["gift_notifications"]
+  end
+
+  test "notifications treats the legacy instant setting as daily" do
+    holiday = holidays(:christmas)
+    membership = holiday_users(:user_one_christmas)
+    membership.update!(gift_notifications: "instant")
 
     get holidays_path, headers: @auth_headers, as: :json
     assert_equal "daily", json_response.find { |h| h["id"] == holiday.id }["gift_notifications"]
+
+    patch notifications_holiday_path(holiday), params: { gift_notifications: "instant" }, headers: @auth_headers, as: :json
+    assert_response :success
+    assert_equal "daily", json_response["gift_notifications"]
+    assert_equal "daily", membership.reload.gift_notifications
   end
 
   test "notifications rejects an unknown setting" do
     patch notifications_holiday_path(holidays(:christmas)), params: { gift_notifications: "hourly" }, headers: @auth_headers, as: :json
 
     assert_response :unprocessable_entity
-    assert_equal "instant", HolidayUser.find_by!(holiday: holidays(:christmas), user: @user).gift_notifications
+    assert_equal "daily", holiday_users(:user_one_christmas).reload.gift_notifications
   end
 end

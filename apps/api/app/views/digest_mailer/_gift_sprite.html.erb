@@ -1,0 +1,25 @@
+<%# Gift sprite from the app's Festive theme. A tiny table keeps it visible when email images are blocked. %>
+<% rows = %w[
+  ....YY..YY..
+  ...Y..YY..Y.
+  ....YYYYYY..
+  KKKKKKKKKKKK
+  KRRRRYYRRRRK
+  KRRRRYYRRRRK
+  KKKKKKKKKKKK
+  .KrRRYYRRrK.
+  .KrRRYYRRrK.
+  .KrRRYYRRrK.
+  .KrRRYYRRrK.
+  .KKKKKKKKKK.
+] %>
+<% colors = { "K" => "#15114a", "Y" => "#ffcc11", "R" => "#e8242a", "r" => "#a00a10" } %>
+<table role="presentation" aria-hidden="true" width="24" height="24" cellspacing="0" cellpadding="0" border="0" style="width:24px;height:24px;border-collapse:collapse;table-layout:fixed;">
+  <% rows.each do |row| %>
+    <tr>
+      <% row.each_char do |pixel| %>
+        <td width="2" height="2"<% if colors[pixel] %> bgcolor="<%= colors[pixel] %>"<% end %> style="width:2px;height:2px;padding:0;font-size:0;line-height:2px;">&nbsp;</td>
+      <% end %>
+    </tr>
+  <% end %>
+</table>

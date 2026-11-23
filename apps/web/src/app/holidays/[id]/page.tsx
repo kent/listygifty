@@ -3,7 +3,7 @@
 import { parseCalendarDate } from "@/lib/dates";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { useWorkspace } from "@/contexts/workspace-context";
@@ -67,6 +67,9 @@ export default function HolidayDetailPage() {
   const router = useRouter();
   const params = useParams();
   const holidayId = Number(params.id);
+  const searchParams = useSearchParams();
+  const requestedGiftId = Number(searchParams.get("gift"));
+  const linkedGiftId = Number.isSafeInteger(requestedGiftId) && requestedGiftId > 0 ? requestedGiftId : undefined;
 
   const [holiday, setHoliday] = useState<Holiday | null>(null);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
@@ -94,6 +97,10 @@ export default function HolidayDetailPage() {
     hasActiveFilters,
     activeFilterCount,
   } = useGiftFilters(gifts);
+
+  useEffect(() => {
+    if (linkedGiftId !== undefined) clearFilters();
+  }, [linkedGiftId, clearFilters]);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -431,7 +438,7 @@ export default function HolidayDetailPage() {
             </p>
           </div>
         ) : (
-          <Tabs defaultValue="gifts" className="w-full">
+          <Tabs key={linkedGiftId} defaultValue="gifts" className="w-full">
             <div className="mb-6 flex items-center gap-2">
               <TabsList className="flex-1 md:flex-none">
                 <TabsTrigger value="gifts" className="gap-1.5 md:gap-2 flex-1 md:flex-none">
@@ -456,6 +463,9 @@ export default function HolidayDetailPage() {
               </Button>
             </div>
             <TabsContent value="gifts" className="space-y-4">
+              {linkedGiftId !== undefined && !gifts.some((gift) => gift.id === linkedGiftId) && (
+                <p role="status" className="text-sm text-muted-foreground">This gift is no longer on this list.</p>
+              )}
               <GiftFilters
                 filters={filters}
                 statuses={statuses}
@@ -481,6 +491,7 @@ export default function HolidayDetailPage() {
                 showAddresses={showAddresses}
                 defaultHolidayId={holidayId}
                 defaultStatusId={statuses[0]?.id}
+                linkedGiftId={linkedGiftId}
                 onGiftsChange={setGifts}
                 onPeopleChange={setPeople}
                 hasActiveFilters={hasActiveFilters}

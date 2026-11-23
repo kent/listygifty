@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useTransition, useRef, useMemo } from "react";
+import { useState, useCallback, useTransition, useRef, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { Plus, Loader2, Crown, ListChecks } from "lucide-react";
 import {
@@ -66,6 +66,7 @@ interface GiftGridProps {
   showAddresses: boolean;
   defaultHolidayId?: number;
   defaultStatusId?: number;
+  linkedGiftId?: number;
   onGiftsChange: (gifts: Gift[]) => void;
   onPeopleChange: (people: Person[]) => void;
   hasActiveFilters?: boolean;
@@ -82,6 +83,7 @@ export function GiftGrid({
   showAddresses,
   defaultHolidayId,
   defaultStatusId,
+  linkedGiftId,
   onGiftsChange,
   onPeopleChange,
   hasActiveFilters = false,
@@ -94,6 +96,17 @@ export function GiftGrid({
   const [pendingDeleteGift, setPendingDeleteGift] = useState<Gift | null>(null);
   const [isBulkUpdatingStatus, setIsBulkUpdatingStatus] = useState(false);
   const { canCreateGift, giftsRemaining, isPremium, refreshBillingStatus } = useAuth();
+  const gridRef = useRef<HTMLDivElement>(null);
+  const visibleLinkedGiftId = displayGifts.some((gift) => gift.id === linkedGiftId) ? linkedGiftId : undefined;
+
+  useEffect(() => {
+    if (visibleLinkedGiftId === undefined) return;
+
+    const candidates = gridRef.current?.querySelectorAll<HTMLElement>("[data-linked-gift]");
+    const target = Array.from(candidates ?? []).find((element) => element.getClientRects().length > 0);
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView({ block: "center" });
+  }, [visibleLinkedGiftId]);
   
   const onGiftsChangeRef = useRef(onGiftsChange);
   onGiftsChangeRef.current = onGiftsChange;
@@ -426,7 +439,7 @@ export function GiftGrid({
   const atLimit = !canCreateGift;
 
   return (
-    <div className="w-full space-y-4">
+    <div ref={gridRef} className="w-full space-y-4">
       <UpgradePrompt variant="banner" />
       
       <div className="flex flex-wrap items-center gap-2">
@@ -524,6 +537,7 @@ export function GiftGrid({
                   <SortableGiftRow
                     key={gift.id}
                     gift={gift}
+                    isLinked={gift.id === linkedGiftId}
                     people={people}
                     statuses={statuses}
                     addresses={addresses}
@@ -562,6 +576,7 @@ export function GiftGrid({
             <MobileGiftCard
               key={gift.id}
               gift={gift}
+              isLinked={gift.id === linkedGiftId}
               people={people}
               statuses={statuses}
               isDeleting={deletingId === gift.id}

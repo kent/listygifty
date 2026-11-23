@@ -1,70 +1,106 @@
-<% content_for :preview_text do %><%= @total_changes %> gift update<%= 's' if @total_changes != 1 %> from your shared holidays<% end %>
-
-<h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #18181b;">
-  Your gift updates 🔔
-</h1>
-
-<p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
-  <%= @total_changes %> update<%= 's' if @total_changes != 1 %> from your shared holidays
-</p>
-
-<% @changes_by_holiday.each do |holiday, changes| %>
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 24px;">
-  <tr>
-    <td style="background: linear-gradient(135deg, #faf5ff, #fdf2f8); border-radius: 12px; padding: 20px;">
-      <p style="margin: 0 0 16px 0; font-size: 14px; font-weight: 600; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.5px;">
-        <%= holiday.icon.presence || '🎁' %> <%= holiday.name %>
-      </p>
-
-      <% changes.each do |change| %>
-      <% gift = change.gift %>
-      <% gift_name = gift&.name || 'Gift' %>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 12px;">
-        <tr>
-          <td style="background-color: #ffffff; border-radius: 8px; padding: 16px;">
-            <p style="margin: 0 0 4px 0;">
-              <strong style="color: #18181b;"><%= gift_name %></strong>
-              <% if change.created? %>
-              <span style="display: inline-block; margin-left: 8px; padding: 2px 8px; font-size: 10px; font-weight: 600; background-color: #dcfce7; color: #166534; border-radius: 4px;">NEW</span>
-              <% else %>
-              <span style="display: inline-block; margin-left: 8px; padding: 2px 8px; font-size: 10px; font-weight: 600; background-color: #fef3c7; color: #92400e; border-radius: 4px;">UPDATED</span>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>Your Listy Gifty digest</title>
+  <style>
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    @media only screen and (max-width: 480px) {
+      .digest-page { padding: 12px !important; }
+      .digest-content { padding: 22px 16px !important; }
+      .digest-header { padding: 12px 16px !important; }
+      .digest-date { font-size: 11px !important; }
+      .gift-name { font-size: 14px !important; }
+      .gift-status { font-size: 11px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:<%= @colors[:canvas] %>;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:<%= @colors[:text] %>;-webkit-text-size-adjust:100%;">
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;"><%= pluralize(@total_gifts, "new gift") %> on your shared lists for <%= @digest_date %>.</div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="<%= @colors[:canvas] %>">
+    <tr>
+      <td align="center" class="digest-page" style="padding:32px 20px;">
+        <!--[if mso]><table role="presentation" width="580" cellspacing="0" cellpadding="0" border="0"><tr><td><![endif]-->
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:580px;border:2px solid <%= @colors[:edge] %>;background:<%= @colors[:surface] %>;">
+          <tr>
+            <td class="digest-header" bgcolor="<%= @colors[:header] %>" style="padding:14px 24px;border-bottom:2px solid <%= @colors[:edge] %>;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td width="24" valign="middle"><%= render "digest_mailer/gift_sprite" %></td>
+                  <td valign="middle" style="padding-left:9px;color:<%= @colors[:title] %>;font-family:<%= @festive ? "'Courier New',monospace" : "Arial,sans-serif" %>;font-size:17px;line-height:1.2;font-weight:700;">Listy Gifty</td>
+                  <td align="right" valign="middle" class="digest-date" style="padding-left:8px;color:<%= @colors[:text] %>;font-size:13px;line-height:1.3;"><%= @digest_date %></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="digest-content" bgcolor="<%= @colors[:surface] %>" style="padding:30px 26px 26px;">
+              <h1 style="margin:0 0 8px;color:<%= @colors[:title] %>;font-family:<%= @festive ? "'Courier New',monospace" : "Arial,sans-serif" %>;font-size:30px;line-height:1.12;letter-spacing:-1px;">Your gift digest</h1>
+              <p style="margin:0 0 24px;color:<%= @colors[:muted] %>;font-size:15px;line-height:1.5;"><%= pluralize(@total_gifts, "new gift") %> added to your shared lists.</p>
+              <% @changes_by_holiday.each do |holiday, changes| %>
+                <% authors = @authors_by_holiday.fetch(holiday) %>
+                <% list_url = "#{@frontend_url}/holidays/#{holiday.id}" %>
+                <% list_details = [] %>
+                <% list_details << pluralize(changes.size, "new gift") if @changes_by_holiday.many? %>
+                <% list_details << "Added by #{authors.first}" if authors.one? %>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:20px;border:1px solid <%= @colors[:edge] %>;">
+                  <tr>
+                    <td colspan="2" bgcolor="<%= @colors[:list] %>" style="padding:15px 13px;border-bottom:1px solid <%= @colors[:edge] %>;">
+                      <h2 style="margin:0;color:<%= @colors[:text] %>;font-size:18px;line-height:1.25;"><span style="margin-right:5px;" aria-hidden="true"><%= holiday.icon.presence || "🎁" %></span> <%= holiday.name %></h2>
+                      <% if list_details.any? %>
+                        <p style="margin:3px 0 0;color:<%= @colors[:muted] %>;font-size:13px;line-height:1.4;"><%= list_details.join(" · ") %></p>
+                      <% end %>
+                    </td>
+                  </tr>
+                  <% changes.each do |change| %>
+                    <% gift = change.gift %>
+                    <% item_url = gift_url(holiday, gift) %>
+                    <% status = gift_status(gift) %>
+                    <% badge_bg, badge_text = badge_colors(status) %>
+                    <% details = [] %>
+                    <% details << "For #{gift.recipients.map(&:name).join(', ')}" if gift&.recipients&.any? %>
+                    <% details << "From #{gift.givers.map(&:name).join(', ')}" if gift&.givers&.any? %>
+                    <% details << "Added by #{added_by(change.user)}" if authors.many? %>
+                    <tr>
+                      <td class="gift-name" valign="middle" width="72%" style="padding:12px 6px 12px 13px;border-bottom:1px solid <%= @colors[:edge] %>;color:<%= @colors[:text] %>;font-size:15px;line-height:1.35;overflow-wrap:anywhere;">
+                        <strong>
+                          <% if item_url %>
+                            <a href="<%= item_url %>" style="color:<%= @colors[:link] %>;text-decoration:underline;"><%= gift_label(change) %></a>
+                          <% else %>
+                            <%= gift_label(change) %>
+                          <% end %>
+                        </strong>
+                        <% if details.any? %>
+                          <p style="margin:3px 0 0;color:<%= @colors[:muted] %>;font-size:13px;line-height:1.35;"><%= details.join(" · ") %></p>
+                        <% end %>
+                      </td>
+                      <td align="right" valign="middle" width="28%" style="padding:12px 12px 12px 3px;border-bottom:1px solid <%= @colors[:edge] %>;">
+                        <span class="gift-status" style="display:inline-block;padding:3px 8px;border-radius:12px;background:<%= badge_bg %>;color:<%= badge_text %>;font-size:12px;line-height:1.3;font-weight:700;overflow-wrap:anywhere;"><%= status %></span>
+                      </td>
+                    </tr>
+                  <% end %>
+                  <tr>
+                    <td colspan="2" bgcolor="<%= @colors[:list] %>" style="padding:13px;">
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                        <tr>
+                          <td bgcolor="<%= @colors[:button] %>" style="border:1px solid <%= @colors[:button_edge] %>;border-radius:<%= @festive ? "3px" : "16px" %>;">
+                            <a href="<%= list_url %>" style="display:inline-block;padding:9px 14px;color:#ffffff;font-size:14px;line-height:1.25;font-weight:700;text-decoration:none;" aria-label="Open <%= holiday.name %>">Open list &rarr;</a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
               <% end %>
-            </p>
-            <% if gift.respond_to?(:recipients) && gift.recipients.any? %>
-            <p style="margin: 4px 0 0 0; font-size: 13px; color: #52525b;">
-              <strong>For:</strong> <%= gift.recipients.map(&:name).join(', ') %>
-            </p>
-            <% end %>
-            <% if gift.respond_to?(:givers) && gift.givers.any? %>
-            <p style="margin: 4px 0 0 0; font-size: 13px; color: #52525b;">
-              <strong>From:</strong> <%= gift.givers.map(&:name).join(', ') %>
-            </p>
-            <% end %>
-            <p style="margin: 8px 0 0 0; font-size: 12px; color: #a1a1aa;">Added by <%= change.user&.first_name.presence || change.user.email.split('@').first %></p>
-            <% if change.updated? && change.changes_data.present? %>
-            <% change.changes_data.each do |field, values| %>
-            <% next unless values.is_a?(Array) %>
-            <% next if field == 'updated_at' %>
-            <p style="margin: 8px 0 0 0; font-size: 13px; color: #52525b;">
-              <%= field.humanize %>: <span style="text-decoration: line-through; color: #a1a1aa;"><%= values[0].presence || 'none' %></span> → <%= values[1] %>
-            </p>
-            <% end %>
-            <% end %>
-          </td>
-        </tr>
-      </table>
-      <% end %>
-    </td>
-  </tr>
-</table>
-<% end %>
-
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-  <tr>
-    <td align="center">
-      <a href="<%= @frontend_url %>/holidays" class="button" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px;">
-        View All Gifts
-      </a>
-    </td>
-  </tr>
-</table>
+              <p style="margin:0;font-size:13px;line-height:1.5;"><a href="<%= @frontend_url %>/holidays" style="color:<%= @colors[:link] %>;text-decoration:underline;">View all gift lists</a></p>
+            </td>
+          </tr>
+        </table>
+        <!--[if mso]></td></tr></table><![endif]-->
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
