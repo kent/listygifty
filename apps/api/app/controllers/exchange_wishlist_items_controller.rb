@@ -33,6 +33,7 @@ class ExchangeWishlistItemsController < ApplicationController
     upload = attributes.delete(:photo)
     @wishlist_item.assign_attributes(attributes)
     if save_with_upload(@wishlist_item, upload)
+      ExchangeNotificationService.wishlist_changed!(@wishlist_item.wishlist) if upload || @wishlist_item.saved_change_for_giver?
       render json: render_items(@wishlist_item)
     else
       render json: { errors: @wishlist_item.errors.full_messages }, status: :unprocessable_entity
@@ -41,6 +42,7 @@ class ExchangeWishlistItemsController < ApplicationController
 
   def destroy
     @wishlist_item.destroy!
+    ExchangeNotificationService.wishlist_changed!(@wishlist_item.wishlist)
     head :no_content
   end
 

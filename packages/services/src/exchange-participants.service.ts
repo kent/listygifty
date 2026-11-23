@@ -19,6 +19,8 @@ export interface ExchangeParticipantsService {
     exchangeId: number,
     data: CreateExchangeParticipantRequest["exchange_participant"]
   ): Promise<ExchangeParticipant>;
+  // Point your own place in an exchange at another of your wishlists.
+  chooseWishlist(exchangeId: number, participantId: number, wishlistId: number): Promise<ExchangeParticipant>;
 }
 
 export function createExchangeParticipantsService(
@@ -41,6 +43,12 @@ export function createExchangeParticipantsService(
       return client.post<ExchangeParticipant>(
         `/gift_exchanges/${exchangeId}/exchange_participants`,
         { exchange_participant: data }
+      );
+    },
+    chooseWishlist(exchangeId, participantId, wishlistId) {
+      return client.patch<ExchangeParticipant>(
+        `/gift_exchanges/${exchangeId}/exchange_participants/${participantId}/wishlist`,
+        { wishlist_id: wishlistId }
       );
     },
   };

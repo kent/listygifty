@@ -52,6 +52,12 @@ class WishlistItem < ApplicationRecord
     super || image_url.presence
   end
 
+  # True when the last save changed something a giver would see. A new place
+  # in the order doesn't count.
+  def saved_change_for_giver?
+    (saved_changes.keys - %w[updated_at position]).any?
+  end
+
   def archive!
     update!(archived_at: Time.current)
   end

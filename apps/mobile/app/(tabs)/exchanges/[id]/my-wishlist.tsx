@@ -78,12 +78,46 @@ export default function MyWishlistScreen() {
           </View>
         }
         ListHeaderComponent={
-          controller.items.length > 0 ? (
-            <Text style={{ color: colors.textTertiary, fontSize: 14, marginBottom: 8 }}>
-              {controller.items.length} item{controller.items.length !== 1 ? "s" : ""} in your
-              wishlist. Your Secret Santa sees them in this order.
-            </Text>
-          ) : null
+          <View style={{ gap: 8, marginBottom: 8 }}>
+            {controller.currentWishlist ? (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: 12,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.card,
+                }}
+              >
+                <Text style={{ flex: 1, color: colors.text, fontSize: 14 }}>
+                  This exchange uses your wishlist{" "}
+                  <Text style={{ fontWeight: "600" }}>{controller.currentWishlist.name}</Text>
+                </Text>
+                {controller.canChangeWishlist ? (
+                  <TouchableOpacity
+                    onPress={() => void controller.handleChangeWishlist()}
+                    disabled={controller.switchingWishlist}
+                    accessibilityRole="button"
+                    accessibilityLabel="Change which wishlist this exchange uses"
+                    style={{ minHeight: 44, justifyContent: "center", paddingHorizontal: 8 }}
+                  >
+                    <Text style={{ color: colors.primary, fontWeight: "600" }}>
+                      {controller.switchingWishlist ? "Switching…" : "Change"}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            ) : null}
+            {controller.items.length > 0 ? (
+              <Text style={{ color: colors.textTertiary, fontSize: 14 }}>
+                {controller.items.length} item{controller.items.length !== 1 ? "s" : ""} in your
+                wishlist. Your Secret Santa sees them in this order.
+              </Text>
+            ) : null}
+          </View>
         }
       />
 

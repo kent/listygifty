@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { List, Sparkles } from "lucide-react";
-import type { ExchangeParticipantWithWishlist } from "@niftygifty/types";
+import type { ExchangeParticipantWithWishlist, ExchangeWishlistRef } from "@niftygifty/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MatchWishlist } from "@/components/exchanges/match-wishlist";
@@ -10,9 +10,10 @@ interface MatchOverviewCardProps {
   exchangeId: number;
   exchangeSlug: string;
   canNudge: boolean;
+  myWishlist?: ExchangeWishlistRef | null;
 }
 
-export function MatchOverviewCard({ match, exchangeId, exchangeSlug, canNudge }: MatchOverviewCardProps) {
+export function MatchOverviewCard({ match, exchangeId, exchangeSlug, canNudge, myWishlist }: MatchOverviewCardProps) {
   return (
     <Card
       data-testid="match-overview"
@@ -33,12 +34,25 @@ export function MatchOverviewCard({ match, exchangeId, exchangeSlug, canNudge }:
             </h2>
           </div>
 
-          <Button asChild variant="outline" className="border-slate-300 dark:border-slate-700 md:w-64">
-            <Link href={`/exchanges/${exchangeSlug}/my-wishlist`}>
-              <List className="mr-2 h-4 w-4" />
-              Update my wishlist
-            </Link>
-          </Button>
+          <div className="flex flex-col gap-2 md:w-64">
+            <Button asChild variant="outline" className="border-slate-300 dark:border-slate-700">
+              <Link href={`/exchanges/${exchangeSlug}/my-wishlist`}>
+                <List className="mr-2 h-4 w-4" />
+                Update my wishlist
+              </Link>
+            </Button>
+            {myWishlist && (
+              <p className="break-words text-center text-xs text-slate-600 dark:text-slate-400">
+                Using <strong>{myWishlist.name}</strong>.{" "}
+                <Link
+                  href={`/exchanges/${exchangeSlug}/my-wishlist`}
+                  className="text-violet-700 underline dark:text-violet-300"
+                >
+                  Change
+                </Link>
+              </p>
+            )}
+          </div>
         </div>
 
         <MatchWishlist

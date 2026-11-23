@@ -10,6 +10,8 @@ class ExchangeNotificationBlueprint < ApplicationBlueprint
     case notification.kind
     when "wishlist_item_added"
       "Your match added a new wishlist item."
+    when "wishlist_changed"
+      "Your match updated their wishlist."
     when "wishlist_nudge"
       "Your Secret Santa would love a few more wishlist ideas."
     when "wishlist_access_requested"

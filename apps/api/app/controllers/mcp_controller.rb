@@ -697,6 +697,7 @@ class McpController < ApplicationController
           photo = requested_photo(args)
           item.assign_attributes(slice_args(args, wishlist_item_attributes))
           save_with_photo!(item, photo)
+          ExchangeNotificationService.wishlist_changed!(item.wishlist) if photo || item.saved_change_for_giver?
           with_photo_fetch(serialize_wishlist_item(item), queue_link_photo(item, args))
         }
       },
@@ -708,7 +709,9 @@ class McpController < ApplicationController
           item_id: integer_property("Wishlist item ID")
         }, %w[wishlist_id item_id]),
         handler: ->(args) {
-          find_owned_wishlist(args["wishlist_id"]).wishlist_items.find(args["item_id"]).destroy!
+          wishlist = find_owned_wishlist(args["wishlist_id"])
+          wishlist.wishlist_items.find(args["item_id"]).destroy!
+          ExchangeNotificationService.wishlist_changed!(wishlist)
           { deleted: true }
         }
       },
@@ -1006,6 +1009,7 @@ class McpController < ApplicationController
           photo = requested_photo(args)
           item.assign_attributes(exchange_wishlist_item_attributes(args))
           save_with_photo!(item, photo)
+          ExchangeNotificationService.wishlist_changed!(item.wishlist) if photo || item.saved_change_for_giver?
           queued = queue_link_photo(item, args)
           with_photo_fetch(ExchangeWishlistItemBlueprint.render_as_hash(item, participant_id: participant.id), queued)
         }
@@ -1019,7 +1023,9 @@ class McpController < ApplicationController
           item_id: integer_property("Exchange wishlist item ID")
         }, %w[exchange_id participant_id item_id]),
         handler: ->(args) {
-          find_owned_exchange_participant(args).wishlist_items.find(args["item_id"]).destroy!
+          item = find_owned_exchange_participant(args).wishlist_items.find(args["item_id"])
+          item.destroy!
+          ExchangeNotificationService.wishlist_changed!(item.wishlist)
           { deleted: true }
         }
       },

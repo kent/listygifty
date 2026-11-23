@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, Share } from "react-native";
+import { ActionSheetIOS, Alert, Platform, Share } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
@@ -954,10 +954,28 @@ export function useExchangeParticipantController() {
   };
 }
 
+type WishlistChoice = { label: string; onPress: () => void };
+
+// A short list of choices: a native action sheet on iOS, an alert elsewhere.
+function pickOne(title: string, choices: WishlistChoice[]) {
+  if (Platform.OS === "ios") {
+    ActionSheetIOS.showActionSheetWithOptions(
+      { title, options: [...choices.map((choice) => choice.label), "Cancel"], cancelButtonIndex: choices.length },
+      (index) => choices[index]?.onPress()
+    );
+    return;
+  }
+  Alert.alert(title, undefined, [
+    ...choices.map((choice) => ({ text: choice.label, onPress: choice.onPress })),
+    { text: "Cancel", style: "cancel" as const },
+  ]);
+}
+
 export function useExchangeWishlistController() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { giftExchanges, wishlistItems } = useServices();
+  const { giftExchanges, wishlistItems, exchangeParticipants, wishlists } = useServices();
+  const [switchingWishlist, setSwitchingWishlist] = useState(false);
   const exchangeId = Number.parseInt(id ?? "", 10);
   const isValidExchangeId = Number.isFinite(exchangeId);
 
@@ -1053,9 +1071,95 @@ export function useExchangeWishlistController() {
     [exchangeId, resource, wishlistItems]
   );
 
+  const switchToWishlist = useCallback(
+    async (wishlistId: number) => {
+      const me = resource.data.exchange?.my_participant;
+      if (!me || me.wishlist?.id === wishlistId) {
+        return;
+      }
+
+      setSwitchingWishlist(true);
+      try {
+        await exchangeParticipants.chooseWishlist(exchangeId, me.id, wishlistId);
+        await resource.reload();
+      } catch {
+        Alert.alert("Error", "Couldn't switch wishlists");
+      } finally {
+        setSwitchingWishlist(false);
+      }
+    },
+    [exchangeId, exchangeParticipants, resource]
+  );
+
+  // A new, empty list just for this exchange. Other exchanges keep theirs.
+  const startNewWishlist = useCallback(
+    async (name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) {
+        return;
+      }
+
+      setSwitchingWishlist(true);
+      try {
+        const created = await wishlists.create(trimmed);
+        setSwitchingWishlist(false);
+        await switchToWishlist(created.id);
+      } catch {
+        setSwitchingWishlist(false);
+        Alert.alert("Error", "Couldn't make that wishlist");
+      }
+    },
+    [switchToWishlist, wishlists]
+  );
+
+  const changeWishlist = useCallback(async () => {
+    const exchange = resource.data.exchange;
+    const current = exchange?.my_participant?.wishlist;
+    if (!exchange || !wishlists) {
+      return;
+    }
+
+    let mine: Awaited<ReturnType<typeof wishlists.getMine>>;
+    try {
+      mine = await wishlists.getMine();
+    } catch {
+      Alert.alert("Error", "Couldn't load your wishlists");
+      return;
+    }
+
+    const askForName = () => {
+      if (Platform.OS === "ios") {
+        Alert.prompt(
+          "New wishlist",
+          "It starts empty. Your other exchanges keep the lists they use now.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Make and use it", onPress: (name?: string) => void startNewWishlist(name ?? "") },
+          ],
+          "plain-text",
+          exchange.name
+        );
+      } else {
+        void startNewWishlist(exchange.name);
+      }
+    };
+
+    pickOne("Wishlist for this exchange", [
+      ...mine.map((list) => ({
+        label: list.id === current?.id ? `✓ ${list.name}` : list.name,
+        onPress: () => void switchToWishlist(list.id),
+      })),
+      { label: "New wishlist…", onPress: askForName },
+    ]);
+  }, [resource.data.exchange, startNewWishlist, switchToWishlist, wishlists]);
+
   return {
     error: !isValidExchangeId ? "Invalid exchange ID" : resource.error,
     exchange: resource.data.exchange,
+    currentWishlist: resource.data.exchange?.my_participant?.wishlist ?? null,
+    canChangeWishlist: Boolean(wishlists),
+    handleChangeWishlist: changeWishlist,
+    switchingWishlist,
     handleAddItem: addItem,
     handleDeleteItem: deleteItem,
     handleMoveItem: moveItemInList,

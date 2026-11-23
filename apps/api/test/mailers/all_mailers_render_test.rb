@@ -23,6 +23,7 @@ class AllMailersRenderTest < ActionMailer::TestCase
       organizer_ready_to_draw: -> { ExchangeMailer.organizer_ready_to_draw(@exchange, [ @annabel, @bartholomew, @cordelia ]) },
       match_assignment: -> { ExchangeMailer.match_assignment(@annabel) },
       wishlist_updated: -> { ExchangeMailer.wishlist_updated(wishlist_added_notification(@annabel)) },
+      wishlist_changed: -> { ExchangeMailer.wishlist_changed(changed_notification(@annabel)) },
       wishlist_nudge: -> { ExchangeMailer.wishlist_nudge(nudge_notification(@annabel)) },
       wishlist_access_requested: -> {
         ExchangeMailer.wishlist_access_requested(access_notification(@bartholomew, @annabel, "wishlist_access_requested"))
@@ -126,6 +127,7 @@ class AllMailersRenderTest < ActionMailer::TestCase
       {
         match_assignment: ExchangeMailer.match_assignment(recipient),
         wishlist_updated: ExchangeMailer.wishlist_updated(wishlist_added_notification(recipient)),
+        wishlist_changed: ExchangeMailer.wishlist_changed(changed_notification(recipient)),
         wishlist_nudge: ExchangeMailer.wishlist_nudge(nudge_notification(recipient)),
         wishlist_access_requested: ExchangeMailer.wishlist_access_requested(
           access_notification(asker, recipient, "wishlist_access_requested")
@@ -195,6 +197,10 @@ class AllMailersRenderTest < ActionMailer::TestCase
       kind: "wishlist_item_added",
       wishlist_item: item
     )
+  end
+
+  def changed_notification(recipient)
+    ExchangeNotification.create!(gift_exchange: @exchange, recipient_participant: recipient, kind: "wishlist_changed")
   end
 
   def nudge_notification(recipient)

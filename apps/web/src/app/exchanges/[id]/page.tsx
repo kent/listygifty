@@ -734,6 +734,7 @@ export default function ExchangeDetailPage({
               exchangeId={exchange.id}
               exchangeSlug={slug}
               canNudge={exchange.capabilities.nudge_match}
+              myWishlist={myParticipant.wishlist}
             />
           )}
 
@@ -1092,6 +1093,11 @@ export default function ExchangeDetailPage({
                   <p className="text-slate-900 dark:text-white">
                     {pluralize(myParticipant.wishlist_count, "item")}
                   </p>
+                  {myParticipant.wishlist && (
+                    <p className="mt-1 break-words text-sm text-slate-600 dark:text-slate-400">
+                      From your wishlist <strong>{myParticipant.wishlist.name}</strong>
+                    </p>
+                  )}
                 </div>
                 <Button asChild variant="outline" className="w-full border-slate-200 dark:border-slate-700">
                   <Link href={`/exchanges/${slug}/my-wishlist`}>

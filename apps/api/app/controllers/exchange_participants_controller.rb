@@ -70,6 +70,7 @@ class ExchangeParticipantsController < ApplicationController
     return render json: { error: "Wishlist not found" }, status: :not_found unless wishlist
 
     @participant.update!(wishlist: wishlist)
+    ExchangeNotificationService.exchange_wishlist_switched!(@participant) if @participant.saved_change_to_wishlist_id?
     render json: ExchangeParticipantBlueprint.render(@participant, view: :own)
   end
 

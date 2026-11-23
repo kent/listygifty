@@ -15,6 +15,7 @@ import {
   createWishlistAccessRequestsService,
   createAnalyticsService,
   createAccountService,
+  createWishlistsService,
 } from "@niftygifty/services";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { isDemoMode } from "@/lib/demo-mode";
@@ -53,6 +54,7 @@ const basePeopleService = createPeopleService(apiClient);
 const baseGiftExchangesService = createGiftExchangesService(apiClient);
 const baseExchangeParticipantsService = createExchangeParticipantsService(apiClient);
 const baseExchangeExclusionsService = createExchangeExclusionsService(apiClient);
+const baseWishlistsService = createWishlistsService(apiClient);
 const baseBootstrapService = createBootstrapService(apiClient);
 export const wishlistItemsService = createWishlistItemsService(apiClient);
 export const exchangeInvitesService = createExchangeInvitesService(apiClient);
@@ -392,6 +394,23 @@ export const exchangeParticipantsService = {
     resetBootstrapState();
     invalidateCachedResources("gift-exchanges:");
     return participant;
+  },
+  // Point your own place in an exchange at another of your wishlists.
+  async chooseWishlist(exchangeId: number, participantId: number, wishlistId: number) {
+    const participant = await baseExchangeParticipantsService.chooseWishlist(exchangeId, participantId, wishlistId);
+    invalidateCachedResources("gift-exchanges:");
+    return participant;
+  },
+};
+
+// Just enough of your wishlists to pick or start the one an exchange uses.
+export const wishlistsService = {
+  async getMine() {
+    const lists = await baseWishlistsService.getAll();
+    return lists.filter((list) => list.is_owner);
+  },
+  create(name: string) {
+    return baseWishlistsService.create({ name, visibility: "private" });
   },
 };
 
