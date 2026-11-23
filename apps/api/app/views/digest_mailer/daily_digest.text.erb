@@ -1,25 +1,34 @@
-Your gift updates!
+Your gift digest
+<%= @digest_date %>
 
-<%= @total_changes %> update<%= 's' if @total_changes != 1 %> from your shared holidays
+<%= pluralize(@total_gifts, "new gift") %> added to your shared lists.
 
-<% @changes_by_holiday.each do |holiday, changes| %>
-<%= holiday.icon.presence || '🎁' %> <%= holiday.name %>
-<%= '=' * (holiday.name.length + 4) %>
+<% @changes_by_holiday.each do |holiday, changes| -%>
+<% authors = @authors_by_holiday.fetch(holiday) -%>
+<%= holiday.name %> · <%= pluralize(changes.size, "new gift") %>
+<% if authors.one? -%>
+Added by <%= authors.first %>
+<% end -%>
 
-<% changes.each do |change| %>
-<% gift_name = change.gift&.name || change.changes_data.dig('name', 1) || change.changes_data['name'] || 'Gift' %>
-• <%= gift_name %> [<%= change.created? ? 'NEW' : 'UPDATED' %>]
-  Added by <%= change.user&.first_name.presence || change.user.email.split('@').first %>
-<% if change.updated? && change.changes_data.present? %>
-<% change.changes_data.each do |field, values| %>
-<% next if field == 'updated_at' %>
-<% if values.is_a?(Array) %>
-  <%= field.humanize %>: <%= values[0].presence || 'empty' %> → <%= values[1] %>
-<% end %>
-<% end %>
-<% end %>
+<% changes.each do |change| -%>
+<% gift = change.gift -%>
+<% item_url = gift_url(holiday, gift) -%>
+• <%= gift_label(change) %> [<%= gift_status(gift) %>]
+<% if item_url -%>
+  <%= item_url %>
+<% end -%>
+<% if gift&.recipients&.any? -%>
+  For <%= gift.recipients.map(&:name).join(", ") %>
+<% end -%>
+<% if gift&.givers&.any? -%>
+  From <%= gift.givers.map(&:name).join(", ") %>
+<% end -%>
+<% if authors.many? -%>
+  Added by <%= added_by(change.user) %>
+<% end -%>
+<% end -%>
 
-<% end %>
-<% end %>
+Open list: <%= @frontend_url %>/holidays/<%= holiday.id %>
 
-View your holidays: <%= @frontend_url %>/holidays
+<% end -%>
+View all gift lists: <%= @frontend_url %>/holidays

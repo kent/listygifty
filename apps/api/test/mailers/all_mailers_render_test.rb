@@ -11,7 +11,7 @@ class AllMailersRenderTest < ActionMailer::TestCase
       custom_message: -> { AdminMailer.custom_message("recipient@example.com", "A note from us", "Hello there") }
     },
     DigestMailer => {
-      daily_digest: -> { DigestMailer.daily_digest(@user, { holidays(:christmas) => gift_changes }) }
+      daily_digest: -> { DigestMailer.daily_digest(@user, { holidays(:christmas) => [ gift_addition ] }) }
     },
     ExchangeMailer => {
       invitation: -> { ExchangeMailer.invitation(@annabel) },
@@ -41,9 +41,6 @@ class AllMailersRenderTest < ActionMailer::TestCase
           owner_name: @exchange.user.safe_name
         )
       }
-    },
-    GiftListMailer => {
-      gifts_added: -> { GiftListMailer.gifts_added(@user, holidays(:christmas), gift_changes.select(&:created?)) }
     },
     GuestClaimMailer => {
       claim_confirmation: -> { GuestClaimMailer.claim_confirmation(guest_claim) }
@@ -214,17 +211,11 @@ class AllMailersRenderTest < ActionMailer::TestCase
     access_request.exchange_notifications.create!(gift_exchange: @exchange, recipient_participant: recipient, kind: kind)
   end
 
-  def gift_changes
-    [
-      GiftChange.create!(
-        gift: gifts(:sweater), holiday: holidays(:christmas), user: @user, change_type: "created",
-        changes_data: { name: "Wool Sweater", description: nil, cost: 49.99 }
-      ),
-      GiftChange.create!(
-        gift: gifts(:sweater), holiday: holidays(:christmas), user: @user, change_type: "updated",
-        changes_data: { name: [ "Sweater", "Wool Sweater" ] }
-      )
-    ]
+  def gift_addition
+    GiftChange.create!(
+      gift: gifts(:sweater), holiday: holidays(:christmas), user: @user, change_type: "created",
+      changes_data: { name: "Wool Sweater", description: nil, cost: 49.99 }
+    )
   end
 
   def guest_claim

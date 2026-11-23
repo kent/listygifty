@@ -124,8 +124,8 @@ export interface UpdateGiftStatusRequest {
 
 export type HolidayRole = "owner" | "collaborator";
 
-/** How you hear about gifts other people add to a shared list. */
-export type GiftNotificationSetting = "instant" | "daily" | "off";
+/** How you hear about new gifts on a shared list. */
+export type GiftNotificationSetting = "daily" | "off";
 
 export interface Holiday extends BaseEntity {
   name: string;

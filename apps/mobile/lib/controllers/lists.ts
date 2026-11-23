@@ -331,7 +331,7 @@ export function useGiftListDetailController() {
   const { setData: setDetailData } = resource;
   const changeGiftEmails = useCallback(
     async (setting: GiftNotificationSetting) => {
-      if (!holiday || savingGiftEmails || setting === (holiday.gift_notifications ?? "instant")) {
+      if (!holiday || savingGiftEmails || setting === (holiday.gift_notifications ?? "daily")) {
         return;
       }
 

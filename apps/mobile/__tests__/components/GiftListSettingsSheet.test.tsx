@@ -139,7 +139,7 @@ describe("new gift emails", () => {
   it("shows your setting on a shared list and opens its page", () => {
     const props = renderSheet({ holiday: { ...holiday, gift_notifications: "daily" } });
 
-    expect(screen.getByText("Daily summary")).toBeTruthy();
+    expect(screen.getByText("Daily digest")).toBeTruthy();
     fireEvent.press(screen.getByLabelText("New gift emails"));
     expect(props.onOpenGiftEmails).toHaveBeenCalled();
   });
@@ -151,9 +151,10 @@ describe("new gift emails", () => {
   });
 
   it("marks your current choice and saves a new one", () => {
-    const props = renderSheet({ page: "gift-emails", holiday: { ...holiday, gift_notifications: "instant" } });
+    const props = renderSheet({ page: "gift-emails", holiday: { ...holiday, gift_notifications: "daily" } });
 
-    expect(screen.getByLabelText("Right away").props.accessibilityState.checked).toBe(true);
+    expect(screen.getByLabelText("Daily digest").props.accessibilityState.checked).toBe(true);
+    expect(screen.getAllByRole("radio")).toHaveLength(2);
     fireEvent.press(screen.getByLabelText("Off"));
     expect(props.onChangeGiftEmails).toHaveBeenCalledWith("off");
   });

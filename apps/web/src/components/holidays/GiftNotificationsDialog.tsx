@@ -16,9 +16,8 @@ import { holidaysService } from "@/services";
 import { humanizeError } from "@/lib/error-message";
 import type { GiftNotificationSetting, Holiday } from "@niftygifty/types";
 
-export const GIFT_NOTIFICATION_OPTIONS: { value: GiftNotificationSetting; label: string; detail: string }[] = [
-  { value: "instant", label: "Right away", detail: "Email me a few minutes after someone adds a gift" },
-  { value: "daily", label: "Daily summary", detail: "Include new gifts in my daily email of list changes" },
+const GIFT_NOTIFICATION_OPTIONS: { value: GiftNotificationSetting; label: string; detail: string }[] = [
+  { value: "daily", label: "Daily digest", detail: "Include new gifts from this list in my evening email" },
   { value: "off", label: "Off", detail: "Don't email me about this list" },
 ];
 
@@ -27,11 +26,11 @@ interface GiftNotificationsDialogProps {
   onUpdated: (holiday: Holiday) => void;
 }
 
-/** Your own setting for emails about gifts other people add to this list. */
+/** Your own setting for emails about gifts added to this list. */
 export function GiftNotificationsDialog({ holiday, onUpdated }: GiftNotificationsDialogProps) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState<GiftNotificationSetting | null>(null);
-  const current = holiday.gift_notifications ?? "instant";
+  const current = holiday.gift_notifications === "off" ? "off" : "daily";
 
   async function choose(value: GiftNotificationSetting) {
     if (value === current || saving) return;
@@ -59,7 +58,7 @@ export function GiftNotificationsDialog({ holiday, onUpdated }: GiftNotification
         <DialogHeader>
           <DialogTitle>New gift emails</DialogTitle>
           <DialogDescription>
-            When someone else adds a gift to {holiday.name}. Only you see this setting.
+            Get a recap of new gifts on {holiday.name}, including gifts you add. Only you see this setting.
           </DialogDescription>
         </DialogHeader>
         <div role="radiogroup" aria-label="New gift emails" className="space-y-2">

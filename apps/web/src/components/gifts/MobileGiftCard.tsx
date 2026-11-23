@@ -17,6 +17,7 @@ import type { Gift, Person, GiftStatus } from "@niftygifty/types";
 
 interface MobileGiftCardProps {
   gift: Gift & { _isNew?: boolean; _isSaving?: boolean };
+  isLinked?: boolean;
   people: Person[];
   statuses: GiftStatus[];
   isDeleting: boolean;
@@ -33,6 +34,7 @@ interface MobileGiftCardProps {
 
 export function MobileGiftCard({
   gift,
+  isLinked,
   people,
   statuses,
   isDeleting,
@@ -52,8 +54,11 @@ export function MobileGiftCard({
 
   return (
     <Card
+      data-linked-gift={isLinked ? "" : undefined}
+      tabIndex={isLinked ? -1 : undefined}
       className={cn(
         "border-border/50 bg-card/50 backdrop-blur-sm transition-all",
+        isLinked && "outline outline-2 outline-ring",
         gift._isNew && "ring-1 ring-violet-500/50",
         gift._isSaving && "opacity-50",
         isShared && "border-l-2 border-l-cyan-500/50"

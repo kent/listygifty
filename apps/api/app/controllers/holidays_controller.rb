@@ -85,8 +85,9 @@ class HolidaysController < ApplicationController
   # Changes only the current user's own setting for this list.
   def notifications
     membership = @holiday.holiday_users.find { |holiday_user| holiday_user.user_id == current_user.id }
+    setting = HolidayUser.normalize_gift_notifications(params.require(:gift_notifications))
 
-    if membership.update(gift_notifications: params.require(:gift_notifications))
+    if membership.update(gift_notifications: setting)
       render json: HolidayBlueprint.render(@holiday, current_user: current_user)
     else
       render json: { errors: membership.errors.full_messages }, status: :unprocessable_entity

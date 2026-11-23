@@ -5,11 +5,35 @@ import type { Gift, GiftStatus } from "@niftygifty/types";
 import { GiftGrid } from "./GiftGrid";
 import { giftsService } from "@/services";
 
+const { scrollIntoView } = vi.hoisted(() => ({ scrollIntoView: vi.fn() }));
+
 vi.mock("@/services", () => ({ giftsService: { getAll: vi.fn() } }));
 vi.mock("@/contexts/auth-context", () => ({ useAuth: () => ({ canCreateGift: true, isPremium: true, refreshBillingStatus: vi.fn() }) }));
 vi.mock("@/components/upgrade-prompt", () => ({ UpgradePrompt: () => null }));
-vi.mock("./SortableGiftRow", () => ({ SortableGiftRow: () => null }));
-vi.mock("./MobileGiftCard", () => ({ MobileGiftCard: () => null }));
+vi.mock("./SortableGiftRow", () => ({
+  SortableGiftRow: ({ gift, isLinked }: { gift: Gift; isLinked: boolean }) => (
+    <tr
+      ref={(node) => { if (node) node.scrollIntoView = scrollIntoView; }}
+      data-testid={`desktop-${gift.id}`}
+      data-linked-gift={isLinked ? "" : undefined}
+      tabIndex={isLinked ? -1 : undefined}
+    >
+      <td>{gift.name}</td>
+    </tr>
+  ),
+}));
+vi.mock("./MobileGiftCard", () => ({
+  MobileGiftCard: ({ gift, isLinked }: { gift: Gift; isLinked: boolean }) => (
+    <div
+      ref={(node) => { if (node) node.scrollIntoView = scrollIntoView; }}
+      data-testid={`mobile-${gift.id}`}
+      data-linked-gift={isLinked ? "" : undefined}
+      tabIndex={isLinked ? -1 : undefined}
+    >
+      {gift.name}
+    </div>
+  ),
+}));
 vi.mock("./NewGiftDialog", () => ({
   NewGiftDialog: ({ onGiftCreated }: { onGiftCreated: (gift: Gift) => void }) => (
     <button onClick={() => onGiftCreated({ id: nextId++, position: 0 } as Gift)}>Save gift</button>
@@ -49,4 +73,29 @@ describe("gift capture list refresh", () => {
     await act(async () => older.resolve([{ id: 1, holiday_id: 1, position: 0 }] as Gift[]));
     expect(screen.getByTestId("gift-ids").textContent).toBe("2,1");
   });
+});
+
+it.each(["desktop", "mobile"])("focuses the requested gift on %s even when two gifts have the same name", (layout) => {
+  scrollIntoView.mockClear();
+  const rects = vi.spyOn(HTMLElement.prototype, "getClientRects").mockImplementation(function (this: HTMLElement) {
+    return { length: this.dataset.testid?.startsWith(`${layout}-`) ? 1 : 0 } as DOMRectList;
+  });
+  try {
+    const gifts = [
+      { id: 1, holiday_id: 1, position: 0, name: "Puzzle" },
+      { id: 2, holiday_id: 1, position: 1, name: "Puzzle" },
+    ] as Gift[];
+    render(
+      <GiftGrid gifts={gifts} allGifts={gifts} linkedGiftId={2} people={[]} statuses={[]} holidays={[]}
+        addresses={[]} showAddresses={false} onGiftsChange={() => {}} onPeopleChange={() => {}} />
+    );
+
+    expect(screen.getByTestId("desktop-1").hasAttribute("data-linked-gift")).toBe(false);
+    expect(screen.getByTestId("mobile-1").hasAttribute("data-linked-gift")).toBe(false);
+    expect(document.activeElement).toBe(screen.getByTestId(`${layout}-2`));
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "center" });
+  } finally {
+    rects.mockRestore();
+  }
 });

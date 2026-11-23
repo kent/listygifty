@@ -28,7 +28,7 @@ production:
 
   send_digest:
     class: SendDigestJob
-    schedule: at 8am every day
+    schedule: every day at 9pm America/Toronto
 
   send_organizer_exchange_reminders:
     class: SendOrganizerExchangeRemindersJob
@@ -37,10 +37,6 @@ production:
   send_wishlist_reminders:
     class: SendWishlistRemindersJob
     schedule: every day at 11am America/Toronto
-
-  send_gift_added_emails:
-    class: SendGiftAddedEmailsJob
-    schedule: every 5 minutes
 
 development:
   send_seasonal_reminders:
@@ -49,7 +45,7 @@ development:
 
   send_digest:
     class: SendDigestJob
-    schedule: at 8am every day
+    schedule: every day at 9pm America/Toronto
 
   send_organizer_exchange_reminders:
     class: SendOrganizerExchangeRemindersJob
@@ -58,7 +54,3 @@ development:
   send_wishlist_reminders:
     class: SendWishlistRemindersJob
     schedule: every day at 11am America/Toronto
-
-  send_gift_added_emails:
-    class: SendGiftAddedEmailsJob
-    schedule: every 5 minutes

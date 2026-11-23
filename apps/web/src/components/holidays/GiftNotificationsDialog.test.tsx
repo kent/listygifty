@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({ updateNotifications: vi.fn(), toastError: vi.f
 vi.mock("@/services", () => ({ holidaysService: { updateNotifications: mocks.updateNotifications } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: mocks.toastError } }));
 
-const holiday = { id: 3, name: "Christmas", gift_notifications: "instant", collaborator_count: 2 } as Holiday;
+const holiday = { id: 3, name: "Christmas", gift_notifications: "daily", collaborator_count: 2 } as Holiday;
 
 function openDialog(onUpdated = vi.fn(), list: Holiday = holiday) {
   render(<GiftNotificationsDialog holiday={list} onUpdated={onUpdated} />);
@@ -24,8 +24,8 @@ beforeEach(() => {
 describe("new gift emails setting", () => {
   it("shows your current choice", () => {
     openDialog(vi.fn(), { ...holiday, gift_notifications: "daily" });
-    expect(screen.getByRole("radio", { name: /Daily summary/ }).getAttribute("aria-checked")).toBe("true");
-    expect(screen.getByRole("radio", { name: /Right away/ }).getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByRole("radio", { name: /Daily digest/ }).getAttribute("aria-checked")).toBe("true");
+    expect(screen.getAllByRole("radio")).toHaveLength(2);
   });
 
   it("saves a new choice and hands back the updated list", async () => {
@@ -41,7 +41,7 @@ describe("new gift emails setting", () => {
 
   it("does nothing when you pick the choice you already have", () => {
     openDialog();
-    fireEvent.click(screen.getByRole("radio", { name: /Right away/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /Daily digest/ }));
     expect(mocks.updateNotifications).not.toHaveBeenCalled();
   });
 
@@ -49,7 +49,7 @@ describe("new gift emails setting", () => {
     mocks.updateNotifications.mockRejectedValue(new Error("Network down"));
     const onUpdated = openDialog();
 
-    fireEvent.click(screen.getByRole("radio", { name: /Daily summary/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /Off/ }));
 
     await waitFor(() => expect(mocks.toastError).toHaveBeenCalled());
     expect(onUpdated).not.toHaveBeenCalled();
