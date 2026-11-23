@@ -77,8 +77,8 @@ export default function IntegrationsPage() {
           </div>
           <figure className="rounded-2xl border border-violet-200 bg-violet-50 p-6 dark:border-violet-700 dark:bg-violet-950 sm:p-8">
             <figcaption className="mb-4 text-sm font-semibold text-violet-800 dark:text-violet-200">Try this after connecting</figcaption>
-            <blockquote className="text-2xl font-medium leading-snug tracking-tight sm:text-3xl">“Add a pottery class to my birthday wishlist.”</blockquote>
-            <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">Use the name of one of your own wishlists.</p>
+            <blockquote className="text-2xl font-medium leading-snug tracking-tight sm:text-3xl">“{conversations.chatgpt[0]}”</blockquote>
+            <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">Swap in the name of someone on your gift list.</p>
           </figure>
         </section>
 
