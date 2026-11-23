@@ -1,0 +1,18 @@
+@keyframes arrive {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .panel:is([data-playback="playing"], [data-playback="paused"]) .turn {
+    animation: arrive 300ms ease-out both;
+  }
+
+  .panel[data-playback="paused"] .turn {
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control { display: none; }
+}
