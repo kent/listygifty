@@ -1,8 +1,12 @@
-import sherwayTrip from "./sherway-trip.json";
 import type { Conversation } from "./SampleConversation";
 
 export const conversations = {
-  chatgpt: [sherwayTrip[0].question, sherwayTrip[0].reply, sherwayTrip[1].question, sherwayTrip[1].reply],
+  chatgpt: [
+    "Can you add the new Hunger Games book as a gift idea for Alice?",
+    "Saved Sunrise on the Reaping for Alice on your Christmas 2026 gift list.",
+    "I’m heading to CF Sherway Gardens. What can I knock off my Christmas 2026 list today?",
+    "Try Indigo for Alice’s book, Roots for Dad’s scarf, and the LEGO Store for Maya’s space set.",
+  ],
   claude: [
     "Can you add a 3D printer to my wishlist?",
     "Added a 3D printer to your wishlist.",
