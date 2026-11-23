@@ -9,6 +9,9 @@ import { MCP_SERVER_URL } from "@/lib/mcp";
 import { createPageMetadata } from "@/lib/seo";
 import { AUTH_ROUTES } from "@/services";
 
+import { SampleConversation } from "./SampleConversation";
+import { conversations } from "./conversations";
+
 const chatGptListing = "https://chatgpt.com/plugins/plugin_asdk_app_6aece563192c8191922c4988bb7b9e20";
 const claudeConnectors = "https://claude.ai/customize/connectors";
 const textLink = "font-semibold underline decoration-1 underline-offset-4 hover:decoration-2";
@@ -21,13 +24,17 @@ export const metadata: Metadata = createPageMetadata({
   keywords: ["ChatGPT gift planner", "Claude gift planning", "Runner MCP", "wishlist app"],
 });
 
-function SetupCard({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+function SetupCard({ id, title, children }: { id: keyof typeof conversations; title: string; children: ReactNode }) {
   return (
     <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-6 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900 sm:p-8">
-      <h3 id={`${id}-title`} className="mb-4 text-2xl font-bold tracking-tight">{title}</h3>
+      <div className="mb-5 flex items-center gap-3">
+        <Image src={`/integrations/logos/${id}.png`} alt="" width={44} height={44} className="shrink-0 rounded-xl" />
+        <h3 id={`${id}-title`} className="text-2xl font-bold tracking-tight">{title}</h3>
+      </div>
       <ol className="list-decimal space-y-3 pl-5 leading-relaxed marker:font-semibold marker:text-violet-700 dark:marker:text-violet-300 [&>li]:pl-1">
         {children}
       </ol>
+      <SampleConversation assistant={title} turns={conversations[id]} />
     </section>
   );
 }
@@ -95,14 +102,23 @@ export default function IntegrationsPage() {
               <li>Use <strong>Listy Gifty</strong> as the name and {serverUrl} as the HTTPS endpoint.</li>
               <li>Choose <strong>Sign in with the provider</strong>, select <strong>Connect server</strong>, and approve access. Open a conversation and ask about a wishlist.</li>
             </SetupCard>
-            <SetupCard id="other-tools" title="Other AI tools">
-              <li>In a tool that supports remote <strong>Model Context Protocol (MCP)</strong> servers with OAuth, open its connector settings and add a server.</li>
-              <li>Name it <strong>Listy Gifty</strong>, choose <strong>Streamable HTTP</strong>, and enter {serverUrl}.</li>
-              <li>Choose OAuth or browser sign-in, then connect and approve the requested permissions. Enable the connection in your conversation if prompted.</li>
+            <SetupCard id="grok-bot" title="Grok Bot">
+              <li>In the Grok Bot desktop app, open <strong>Connect apps</strong> and select <strong>Add a custom connector</strong>.</li>
+              <li>Name it <strong>Listy Gifty</strong>, choose <strong>Remote HTTPS</strong>, and enter {serverUrl} as the server URL.</li>
+              <li>Select <strong>Add plugin</strong>, then <strong>Authenticate</strong> when prompted. Sign in to Listy Gifty and review the permissions.</li>
+              <li>In a conversation, type <strong>@</strong> and attach Listy Gifty to your task.</li>
             </SetupCard>
           </div>
         </section>
 
+        <details id="other-tools" className="mt-6 scroll-mt-6 rounded-2xl border border-slate-200 bg-white px-6 py-5 dark:border-slate-700 dark:bg-slate-900">
+          <summary className="cursor-pointer font-semibold">Other AI tools</summary>
+          <ol className="mt-4 max-w-3xl list-decimal space-y-2 pl-5 leading-relaxed">
+            <li>In a tool that supports remote <strong>Model Context Protocol (MCP)</strong> servers with OAuth, open its connector settings and add a server.</li>
+            <li>Name it <strong>Listy Gifty</strong>, choose <strong>Streamable HTTP</strong>, and enter {serverUrl}.</li>
+            <li>Choose OAuth or browser sign-in, then connect and approve the requested permissions. Enable the connection in your conversation if prompted.</li>
+          </ol>
+        </details>
         <details className="mt-6 rounded-2xl border border-slate-200 bg-white px-6 py-5 dark:border-slate-700 dark:bg-slate-900">
           <summary className="cursor-pointer font-semibold">Developer details and Claude Code setup</summary>
           <div className="mt-4 max-w-3xl space-y-3 leading-relaxed">
