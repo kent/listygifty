@@ -380,6 +380,153 @@ class ExchangeWishlistItemsApiTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "editing an item quietly tells the Secret Santa the list changed" do
+    santa = draw_with_santa
+
+    assert_enqueued_emails 1 do
+      patch gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+        headers: @auth_headers, params: { wishlist_item: { name: "Cozy Cardigan" } }, as: :json
+      assert_response :success
+    end
+
+    notification = ExchangeNotification.find_by!(kind: "wishlist_changed")
+    assert_equal santa.id, notification.recipient_participant.user_id
+    assert_nil notification.wishlist_item_id
+    assert_empty ExchangeNotification.where(recipient_participant: @participant)
+    assert_not_includes response.body, "wishlist_changed"
+  end
+
+  test "removing an item tells the Secret Santa the list changed" do
+    draw_with_santa
+
+    assert_difference("ExchangeNotification.where(kind: 'wishlist_changed').count", 1) do
+      delete gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+        headers: @auth_headers, as: :json
+      assert_response :no_content
+    end
+  end
+
+  test "a run of edits sends one notice until the Secret Santa reads it" do
+    santa = draw_with_santa
+    edit = ->(name) {
+      patch gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+        headers: @auth_headers, params: { wishlist_item: { name: name } }, as: :json
+    }
+
+    assert_difference("ExchangeNotification.where(kind: 'wishlist_changed').count", 1) do
+      edit.call("Cardigan")
+      edit.call("Wool Cardigan")
+      edit.call("Wool Cardigan, green")
+    end
+
+    ExchangeNotification.find_by!(kind: "wishlist_changed").mark_read!
+    assert_difference("ExchangeNotification.where(kind: 'wishlist_changed').count", 1) { edit.call("Scarf") }
+
+    travel ExchangeNotificationService::CHANGE_QUIET_PERIOD + 1.minute do
+      assert_difference("ExchangeNotification.where(kind: 'wishlist_changed').count", 1) { edit.call("Hat") }
+    end
+    assert_equal [ santa.id ], ExchangeNotification.where(kind: "wishlist_changed").map { |n| n.recipient_participant.user_id }.uniq
+  end
+
+  test "an edit right after adding an idea doesn't send a second email" do
+    draw_with_santa
+    post gift_exchange_exchange_participant_exchange_wishlist_items_path(@exchange, @participant),
+      headers: @auth_headers, params: { wishlist_item: { name: "Lamp" } }, as: :json
+    lamp = WishlistItem.find(json_response["id"])
+
+    assert_no_difference("ExchangeNotification.count") do
+      patch gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, lamp),
+        headers: @auth_headers, params: { wishlist_item: { name: "Desk lamp" } }, as: :json
+    end
+  end
+
+  test "reordering or saving with nothing changed tells nobody" do
+    draw_with_santa
+    second = @participant.wishlist.wishlist_items.create!(name: "Book")
+
+    assert_no_difference("ExchangeNotification.count") do
+      patch reorder_gift_exchange_exchange_participant_exchange_wishlist_items_path(@exchange, @participant),
+        headers: @auth_headers, params: { item_ids: [ second.id, @wishlist_item.id ] }, as: :json
+      patch gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+        headers: @auth_headers, params: { wishlist_item: { name: @wishlist_item.name } }, as: :json
+    end
+  end
+
+  test "changes before names are drawn tell nobody" do
+    giver = @exchange.exchange_participants.create!(user: users(:two), name: "Bob", email: users(:two).email, status: "accepted")
+    giver.update!(matched_participant: @participant)
+
+    assert_no_difference("ExchangeNotification.count") do
+      patch gift_exchange_exchange_participant_exchange_wishlist_item_path(@exchange, @participant, @wishlist_item),
+        headers: @auth_headers, params: { wishlist_item: { name: "Cardigan" } }, as: :json
+    end
+  end
+
+  test "editing on the Wishlists page tells the Secret Santa in every exchange using that list" do
+    draw_with_santa
+    other_exchange, other_participant = second_exchange_for(@user)
+    other_participant.update!(wishlist: @participant.wishlist)
+    carol = User.create!(email: "carol@example.com", clerk_user_id: "user_carol")
+    other_santa = other_exchange.exchange_participants.create!(user: carol, name: "Carol", email: carol.email, status: "accepted")
+    other_santa.update!(matched_participant: other_participant)
+    other_exchange.update!(status: "active")
+
+    assert_difference("ExchangeNotification.where(kind: 'wishlist_changed').count", 2) do
+      patch wishlist_wishlist_item_path(@participant.wishlist, @wishlist_item),
+        headers: auth_headers_for(@user, workspace: @user.personal_workspace),
+        params: { wishlist_item: { price_max: 80 } }, as: :json
+      assert_response :success
+    end
+  end
+
+  test "editing a list another exchange doesn't use leaves this Santa alone" do
+    draw_with_santa
+    birthday = @user.personal_workspace.wishlists.create!(user: @user, name: "Birthday")
+    socks = birthday.wishlist_items.create!(name: "Socks")
+
+    assert_no_difference("ExchangeNotification.count") do
+      delete wishlist_wishlist_item_path(birthday, socks),
+        headers: auth_headers_for(@user, workspace: @user.personal_workspace), as: :json
+      assert_response :no_content
+    end
+  end
+
+  test "switching this exchange to another list tells only this exchange's Secret Santa" do
+    santa = draw_with_santa
+    birthday = @user.personal_workspace.wishlists.create!(user: @user, name: "Birthday")
+
+    assert_enqueued_emails 1 do
+      patch wishlist_gift_exchange_exchange_participant_path(@exchange, @participant),
+        headers: @auth_headers, params: { wishlist_id: birthday.id }, as: :json
+      assert_response :success
+    end
+    assert_equal santa.id, ExchangeNotification.find_by!(kind: "wishlist_changed").recipient_participant.user_id
+
+    assert_no_difference("ExchangeNotification.count") do
+      patch wishlist_gift_exchange_exchange_participant_path(@exchange, @participant),
+        headers: @auth_headers, params: { wishlist_id: birthday.id }, as: :json
+    end
+  end
+
+  test "editing or removing through Claude or ChatGPT tells the Secret Santa too" do
+    draw_with_santa
+    key = ApiKey.generate_for(@user, name: "MCP", scopes: %w[read write]).raw_key
+    call = ->(name, arguments) {
+      post "/mcp", headers: { "Authorization" => "Bearer #{key}", "Content-Type" => "application/json" }, params: {
+        jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: name, arguments: arguments }
+      }.to_json
+      assert_nil JSON.parse(response.body).dig("result", "isError"), response.body
+    }
+
+    assert_difference("ExchangeNotification.where(kind: 'wishlist_changed').count", 1) do
+      call.call("update_wishlist_item", { wishlist_id: @participant.wishlist.id, item_id: @wishlist_item.id, name: "Cardigan" })
+    end
+    ExchangeNotification.find_by!(kind: "wishlist_changed").mark_read!
+    assert_difference("ExchangeNotification.where(kind: 'wishlist_changed').count", 1) do
+      call.call("delete_exchange_wishlist_item", { exchange_id: @exchange.id, participant_id: @participant.id, item_id: @wishlist_item.id })
+    end
+  end
+
   # ============================================================================
   # Authentication Tests
   # ============================================================================

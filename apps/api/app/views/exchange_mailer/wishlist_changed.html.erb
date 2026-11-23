@@ -1,0 +1,22 @@
+<% content_for :preview_text do %>Your match changed their wishlist. Take a look before you buy.<% end %>
+
+<h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #18181b;">
+  Their wishlist changed.
+</h1>
+<p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b;">
+  Hi <strong><%= @participant.display_name %></strong>. Your match in
+  <strong><%= @exchange.name %></strong> updated their wishlist. Take a look
+  before you buy, so your gift is still the one they want.
+</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td align="center">
+      <a href="<%= @exchange_url %>" class="button" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px;">
+        See Their Wishlist
+      </a>
+    </td>
+  </tr>
+</table>
+<p style="margin: 32px 0 0 0; font-size: 14px; color: #71717a; text-align: center;">
+  They don't know you were told. Your secret is safe.
+</p>

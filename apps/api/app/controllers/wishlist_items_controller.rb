@@ -27,6 +27,7 @@ class WishlistItemsController < ApplicationController
 
   def update
     if @item.update(item_params)
+      ExchangeNotificationService.wishlist_changed!(@wishlist) if @item.saved_change_for_giver?
       render json: WishlistItemBlueprint.render(@item, current_user: current_user)
     else
       render json: { errors: @item.errors.full_messages }, status: :unprocessable_entity
@@ -35,6 +36,7 @@ class WishlistItemsController < ApplicationController
 
   def destroy
     @item.destroy!
+    ExchangeNotificationService.wishlist_changed!(@wishlist)
     head :no_content
   end
 

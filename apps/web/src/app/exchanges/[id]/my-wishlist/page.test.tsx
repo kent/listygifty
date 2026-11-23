@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   deleteItem: vi.fn(),
   reorder: vi.fn(),
   myWishlists: vi.fn(),
+  createWishlist: vi.fn(),
   chooseWishlist: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -31,7 +32,7 @@ vi.mock("@/services", () => ({
     delete: mocks.deleteItem,
     reorder: mocks.reorder,
   },
-  wishlistsService: { getAll: mocks.myWishlists },
+  wishlistsService: { getAll: mocks.myWishlists, create: mocks.createWishlist },
   exchangeParticipantsService: { chooseWishlist: mocks.chooseWishlist },
 }));
 
@@ -249,10 +250,42 @@ describe("which wishlist this exchange uses", () => {
 
     await renderPage();
 
-    expect(screen.getByText(/This is your wishlist/)).toBeTruthy();
+    expect(screen.getByText(/This exchange uses your wishlist/)).toBeTruthy();
     expect(screen.getByText("My Wishlist", { selector: "strong" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Open in Wishlists" }).getAttribute("href")).toBe("/wishlists/9");
-    expect(screen.queryByLabelText("Use a different wishlist")).toBeNull();
+  });
+
+  it("offers a new list even when you only have one", async () => {
+    mocks.getBySlug.mockResolvedValue(exchange({ my_participant: { ...me, wishlist: myWishlist } }));
+    mocks.myWishlists.mockResolvedValue([{ id: 9, name: "My Wishlist", is_owner: true }]);
+
+    await renderPage();
+    const picker = (await screen.findByLabelText("Wishlist for this exchange")) as HTMLSelectElement;
+
+    expect(Array.from(picker.options).map((option) => option.textContent)).toEqual(["My Wishlist", "New wishlist…"]);
+  });
+
+  it("makes a new list just for this exchange and switches to it", async () => {
+    mocks.getBySlug.mockResolvedValue(exchange({ my_participant: { ...me, wishlist: myWishlist } }));
+    mocks.myWishlists.mockResolvedValue([{ id: 9, name: "My Wishlist", is_owner: true }]);
+    mocks.createWishlist.mockResolvedValue({ id: 15, name: "Family Christmas", is_owner: true });
+    mocks.chooseWishlist.mockResolvedValue({ ...me, wishlist: { id: 15, name: "Family Christmas", item_count: 0 } });
+
+    await renderPage();
+    const picker = await screen.findByLabelText("Wishlist for this exchange");
+    await act(async () => {
+      fireEvent.change(picker, { target: { value: "new" } });
+    });
+
+    const nameInput = (await screen.findByLabelText("Name")) as HTMLInputElement;
+    expect(nameInput.value).toBe("Family Christmas");
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Make and use it" }));
+    });
+
+    expect(mocks.createWishlist).toHaveBeenCalledWith({ name: "Family Christmas", visibility: "private" });
+    expect(mocks.chooseWishlist).toHaveBeenCalledWith(7, me.id, 15);
+    expect(await screen.findByText("Family Christmas", { selector: "strong" })).toBeTruthy();
   });
 
   it("lets you switch to another of your wishlists", async () => {
@@ -265,8 +298,12 @@ describe("which wishlist this exchange uses", () => {
     mocks.chooseWishlist.mockResolvedValue({ ...me, wishlist: { id: 12, name: "Birthday", item_count: 0 } });
 
     await renderPage();
-    const picker = (await screen.findByLabelText("Use a different wishlist")) as HTMLSelectElement;
-    expect(Array.from(picker.options).map((option) => option.textContent)).toEqual(["My Wishlist", "Birthday"]);
+    const picker = (await screen.findByLabelText("Wishlist for this exchange")) as HTMLSelectElement;
+    expect(Array.from(picker.options).map((option) => option.textContent)).toEqual([
+      "My Wishlist",
+      "Birthday",
+      "New wishlist…",
+    ]);
 
     await act(async () => {
       fireEvent.change(picker, { target: { value: "12" } });

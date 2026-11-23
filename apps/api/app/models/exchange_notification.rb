@@ -1,6 +1,6 @@
 class ExchangeNotification < ApplicationRecord
   # About the draw, so a redraw or reopen clears them.
-  DRAW_KINDS = %w[wishlist_item_added wishlist_nudge].freeze
+  DRAW_KINDS = %w[wishlist_item_added wishlist_changed wishlist_nudge].freeze
   WISHLIST_ACCESS_KINDS = %w[wishlist_access_requested wishlist_access_approved wishlist_access_denied].freeze
   KINDS = (DRAW_KINDS + WISHLIST_ACCESS_KINDS).freeze
 

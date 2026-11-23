@@ -112,6 +112,20 @@ class ExchangeMailer < ApplicationMailer
     )
   end
 
+  # An edit, a removal, or a switch to another list. It names no item, since
+  # a removed one is gone by the time this is read.
+  def wishlist_changed(notification)
+    @participant = notification.recipient_participant
+    @exchange = notification.gift_exchange
+    @frontend_url = ENV.fetch("FRONTEND_URL", "https://listygifty.com")
+    @exchange_url = "#{@frontend_url}/exchanges/#{@exchange.slug}/my-match"
+
+    mail(
+      to: @participant.delivery_email,
+      subject: "🎁 Your match updated their wishlist"
+    )
+  end
+
   # Plain string args only: by the time this delivers, the exchange and its
   # participants have already been destroyed.
   def cancellation(email:, participant_name:, exchange_name:, owner_name:)

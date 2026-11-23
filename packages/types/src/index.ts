@@ -1092,6 +1092,7 @@ export interface ExchangeExclusion extends BaseEntity {
 
 export type ExchangeNotificationKind =
   | "wishlist_item_added"
+  | "wishlist_changed"
   | "wishlist_nudge"
   | "wishlist_access_requested"
   | "wishlist_access_approved"

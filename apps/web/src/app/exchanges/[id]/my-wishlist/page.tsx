@@ -130,6 +130,28 @@ export default function MyWishlistPage({
     }
   };
 
+  // A list just for this exchange, so other exchanges keep theirs.
+  const handleNewWishlist = async (name: string) => {
+    const me = exchange?.my_participant;
+    if (!exchange || !me) return false;
+
+    setSwitching(true);
+    try {
+      const created = await wishlistsService.create({ name, visibility: "private" });
+      setMyWishlists((lists) => [...lists, created]);
+      const updated = await exchangeParticipantsService.chooseWishlist(exchange.id, me.id, created.id);
+      setExchange({ ...exchange, my_participant: { ...me, wishlist: updated.wishlist ?? null } });
+      await loadItems(exchange.id, me.id);
+      toast.success(`${exchange.name} now uses ${created.name}`);
+      return true;
+    } catch {
+      toast.error("Couldn't make that wishlist");
+      return false;
+    } finally {
+      setSwitching(false);
+    }
+  };
+
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItem.name.trim() || !exchange?.my_participant) return;
@@ -291,7 +313,9 @@ export default function MyWishlistPage({
             current={exchange.my_participant.wishlist}
             choices={myWishlists}
             switching={switching}
+            suggestedName={exchange.name}
             onChoose={handleChooseWishlist}
+            onCreate={handleNewWishlist}
           />
         )}
 
@@ -377,50 +401,106 @@ export default function MyWishlistPage({
   );
 }
 
-/** Which of your wishlists this exchange shows, and a way to pick another. */
+const NEW_WISHLIST = "new";
+
+/**
+ * Which of your wishlists this exchange shows, and a way to pick another or
+ * start a new one, so each exchange can have its own list.
+ */
 function WishlistInUse({
   current,
   choices,
   switching,
+  suggestedName,
   onChoose,
+  onCreate,
 }: {
   current: ExchangeWishlistRef;
   choices: Wishlist[];
   switching: boolean;
+  suggestedName: string;
   onChoose: (wishlistId: number) => void;
+  onCreate: (name: string) => Promise<boolean>;
 }) {
+  const [naming, setNaming] = useState(false);
+  const [name, setName] = useState(suggestedName);
   const options = choices.some((list) => list.id === current.id)
     ? choices.map((list) => ({ id: list.id, name: list.name }))
     : [{ id: current.id, name: current.name }, ...choices.map((list) => ({ id: list.id, name: list.name }))];
 
+  const handleSelect = (value: string) => {
+    if (value === NEW_WISHLIST) {
+      setName(suggestedName);
+      setNaming(true);
+      return;
+    }
+    onChoose(Number(value));
+  };
+
+  const handleCreate = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!name.trim()) return;
+    if (await onCreate(name.trim())) setNaming(false);
+  };
+
   return (
     <div className="mb-6 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white/60 p-4 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
       <p className="break-words">
-        This is your wishlist <strong>{current.name}</strong>. Anything you add here shows there too.{" "}
+        This exchange uses your wishlist <strong>{current.name}</strong>. Anything you add here shows there too.{" "}
         <Link href={`/wishlists/${current.id}`} className="text-violet-600 underline dark:text-violet-400">
           Open in Wishlists
         </Link>
       </p>
-      {options.length > 1 && (
-        <div className="flex shrink-0 items-center gap-2">
-          <Label htmlFor="exchange-wishlist-choice" className="whitespace-nowrap">
-            Use a different wishlist
-          </Label>
-          <select
-            id="exchange-wishlist-choice"
-            value={current.id}
-            disabled={switching}
-            onChange={(event) => onChoose(Number(event.target.value))}
-            className="h-11 rounded-md border border-slate-200 bg-white px-2 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white sm:h-9"
-          >
-            {options.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div className="flex shrink-0 items-center gap-2">
+        <Label htmlFor="exchange-wishlist-choice" className="whitespace-nowrap">
+          Wishlist for this exchange
+        </Label>
+        <select
+          id="exchange-wishlist-choice"
+          value={current.id}
+          disabled={switching}
+          onChange={(event) => handleSelect(event.target.value)}
+          className="h-11 min-w-0 max-w-48 rounded-md border border-slate-200 bg-white px-2 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white sm:h-9"
+        >
+          {options.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.name}
+            </option>
+          ))}
+          <option value={NEW_WISHLIST}>New wishlist…</option>
+        </select>
+      </div>
+
+      <Dialog open={naming} onOpenChange={setNaming}>
+        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900 dark:text-white">New wishlist for this exchange</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreate} className="space-y-4">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              It starts empty. Your other exchanges keep the lists they use now.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="new-exchange-wishlist-name" className="text-slate-700 dark:text-slate-300">Name</Label>
+              <Input
+                id="new-exchange-wishlist-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                required
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setNaming(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={switching || !name.trim()}>
+                {switching ? "Making..." : "Make and use it"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
