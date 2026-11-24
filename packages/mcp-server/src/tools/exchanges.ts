@@ -7,6 +7,9 @@ import type {
   ExchangeExclusion,
 } from "../types.js";
 
+const SHARED_WISHLISTS_DESCRIPTION =
+  "When true, everyone who joined can see and mark each other's exchange wishlists. Owners never see marks on their own list, and nobody sees who drew whom.";
+
 export const exchangeTools: Tool[] = [
   {
     name: "niftygifty_list_gift_exchanges",
@@ -61,13 +64,17 @@ export const exchangeTools: Tool[] = [
           type: "number",
           description: "Maximum budget per gift",
         },
+        shared_wishlists: {
+          type: "boolean",
+          description: SHARED_WISHLISTS_DESCRIPTION,
+        },
       },
       required: ["name"],
     },
   },
   {
     name: "niftygifty_update_gift_exchange",
-    description: "Update a gift exchange's details.",
+    description: "Update a gift exchange's details. After names are drawn, only shared_wishlists can change.",
     inputSchema: {
       type: "object",
       properties: {
@@ -90,6 +97,10 @@ export const exchangeTools: Tool[] = [
         budget_max: {
           type: "number",
           description: "New maximum budget",
+        },
+        shared_wishlists: {
+          type: "boolean",
+          description: SHARED_WISHLISTS_DESCRIPTION,
         },
       },
       required: ["exchange_id"],
@@ -429,6 +440,7 @@ export async function handleExchangeTool(
       if (args.exchange_date) exchangeData.exchange_date = args.exchange_date;
       if (args.budget_min) exchangeData.budget_min = args.budget_min;
       if (args.budget_max) exchangeData.budget_max = args.budget_max;
+      if (args.shared_wishlists !== undefined) exchangeData.shared_wishlists = args.shared_wishlists;
 
       const exchange = await client.post<GiftExchange>("/gift_exchanges", {
         gift_exchange: exchangeData,
@@ -447,6 +459,7 @@ export async function handleExchangeTool(
         updateData.exchange_date = args.exchange_date;
       if (args.budget_min !== undefined) updateData.budget_min = args.budget_min;
       if (args.budget_max !== undefined) updateData.budget_max = args.budget_max;
+      if (args.shared_wishlists !== undefined) updateData.shared_wishlists = args.shared_wishlists;
 
       const exchange = await client.patch<GiftExchange>(
         `/gift_exchanges/${exchangeId}`,

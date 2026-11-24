@@ -18,6 +18,7 @@ import type {
   WishlistAccessRequest,
   WishlistItem,
 } from "@niftygifty/types";
+import { VISIBLE_WISHLIST_ACCESS } from "@niftygifty/types";
 
 const nowIso = "2026-03-03T00:00:00.000Z";
 
@@ -1029,6 +1030,7 @@ function getSampleWishlistAccess(exchangeId: number, viewer: ExchangeParticipant
   const drawn = exchange?.status === "active" || exchange?.status === "completed";
   if (other.id === viewer.id) return "own";
   if (drawn && viewer.matched_participant_id === other.id) return "match";
+  if (exchange?.shared_wishlists && other.status === "accepted" && other.has_user) return "shared";
   return wishlistAccessStore[`${viewer.id}:${other.id}`]
     ?? (other.status === "accepted" && other.has_user ? "none" : "unavailable");
 }
@@ -1296,6 +1298,13 @@ export const screenshotServices = {
       }
       return clone(buildExchangeSummary(exchange));
     },
+    async update(id: number, data: Partial<Pick<GiftExchange, "shared_wishlists">>) {
+      const exchange = exchangesStore.find((item) => item.id === id);
+      if (!exchange) throw new Error("Exchange not found");
+      const updated = { ...exchange, ...data, updated_at: nowIso };
+      exchangesStore = exchangesStore.map((item) => (item.id === id ? updated : item));
+      return clone(buildExchangeSummary(updated));
+    },
     async start(id: number) {
       const exchangeToStart = exchangesStore.find((exchange) => exchange.id === id);
       if (!exchangeToStart || !buildExchangeSummary(exchangeToStart).can_start) {
@@ -1350,7 +1359,7 @@ export const screenshotServices = {
       const participant = getExchangeParticipants(exchangeId).find((item) => item.id === participantId);
       if (!participant) throw new Error("Sample participant not found.");
       const access = getSampleWishlistAccess(exchangeId, getSampleViewer(exchangeId), participant);
-      const visible = access === "own" || access === "match" || access === "approved";
+      const visible = VISIBLE_WISHLIST_ACCESS.includes(access);
       const { matched_participant_id: _secret, ...peer } = participant;
       return clone({
         ...peer,

@@ -1,6 +1,8 @@
 class GiftExchange < ApplicationRecord
   STATUSES = %w[draft inviting active completed].freeze
   MIN_PARTICIPANTS = 2
+  # Settings that say nothing about who drew whom, so they can change after the draw.
+  CHANGEABLE_AFTER_DRAW = %w[shared_wishlists].freeze
 
   belongs_to :user
   belongs_to :workspace
@@ -56,6 +58,10 @@ class GiftExchange < ApplicationRecord
 
   def editable?
     %w[draft inviting].include?(status)
+  end
+
+  def changeable?(attribute_names)
+    editable? || (attribute_names.map(&:to_s) - CHANGEABLE_AFTER_DRAW).empty?
   end
 
   def drawn?

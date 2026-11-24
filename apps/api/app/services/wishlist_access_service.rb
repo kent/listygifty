@@ -8,6 +8,7 @@ class WishlistAccessService
   REFUSALS = {
     "own" => "That's your own wishlist",
     "match" => "You can already see their wishlist",
+    "shared" => "You can already see their wishlist",
     "approved" => "You can already see their wishlist",
     "pending" => ALREADY_ASKED,
     "denied" => "They'd rather keep their wishlist private",

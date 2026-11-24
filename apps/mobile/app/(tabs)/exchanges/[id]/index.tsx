@@ -5,6 +5,7 @@ import {
   Text,
   ScrollView,
   RefreshControl,
+  Switch,
   TouchableOpacity,
 } from "react-native";
 import { Stack } from "expo-router";
@@ -408,6 +409,40 @@ export default function ExchangeDetailScreen() {
         />
       ) : null}
 
+      {exchange.is_owner ? (
+        <View
+          testID="shared-wishlists-setting"
+          style={{
+            backgroundColor: colors.card,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+            padding: 16,
+            marginBottom: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <Ionicons name="eye-outline" size={22} color={colors.primary} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: "700" }}>Shared wishlists</Text>
+            <Text style={{ color: colors.textTertiary, fontSize: 13, marginTop: 2 }}>
+              Everyone who joined can see each other's wishlist and mark what they're getting. Nobody sees who
+              drew whom, or what was marked on their own list.
+            </Text>
+          </View>
+          <Switch
+            accessibilityLabel="Let everyone see each other's wishlists"
+            value={exchange.shared_wishlists ?? false}
+            disabled={controller.savingSharedWishlists}
+            onValueChange={controller.setSharedWishlists}
+            trackColor={{ false: colors.borderSecondary, true: colors.primaryLight }}
+            thumbColor={exchange.shared_wishlists ? colors.primary : colors.surface}
+          />
+        </View>
+      ) : null}
+
       <View
         style={{
           backgroundColor: colors.card,
@@ -418,6 +453,12 @@ export default function ExchangeDetailScreen() {
         <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600", marginBottom: 8 }}>
           Participants
         </Text>
+
+        {exchange.shared_wishlists && exchange.my_participant?.status === "accepted" ? (
+          <Text testID="shared-wishlists-hint" style={{ color: colors.textTertiary, fontSize: 13, marginBottom: 8 }}>
+            Everyone's wishlist is shared in this exchange. Tap a name to see theirs and mark what you're getting.
+          </Text>
+        ) : null}
 
         {canAddParticipants ? (
           <TouchableOpacity

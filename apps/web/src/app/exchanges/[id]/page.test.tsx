@@ -15,6 +15,7 @@ import ExchangeDetailPage from "./page";
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   getBySlug: vi.fn(),
+  updateExchange: vi.fn(),
   createParticipant: vi.fn(),
   deleteParticipant: vi.fn(),
   resendInvite: vi.fn(),
@@ -40,7 +41,7 @@ vi.mock("sonner", () => ({
 }));
 vi.mock("@/services", () => ({
   AUTH_ROUTES: { signIn: "/login" },
-  giftExchangesService: { getBySlug: mocks.getBySlug, nudgeMatch: mocks.nudgeMatch },
+  giftExchangesService: { getBySlug: mocks.getBySlug, update: mocks.updateExchange, nudgeMatch: mocks.nudgeMatch },
   exchangeParticipantsService: {
     create: mocks.createParticipant,
     delete: mocks.deleteParticipant,
@@ -158,6 +159,7 @@ async function removePerson(name: string) {
 beforeEach(() => {
   mocks.push.mockReset();
   mocks.getBySlug.mockReset();
+  mocks.updateExchange.mockReset();
   mocks.createParticipant.mockReset();
   mocks.deleteParticipant.mockReset().mockResolvedValue(undefined);
   mocks.resendInvite.mockReset().mockResolvedValue({ message: "Invitation resent" });
@@ -340,6 +342,84 @@ describe("opening someone from the roster", () => {
     await renderPage();
 
     expect(within(roster()).queryAllByRole("link")).toHaveLength(0);
+  });
+
+  it("says so when everyone's wishlist is shared", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({
+        status: "active",
+        is_owner: false,
+        share_url: null,
+        shared_wishlists: true,
+        exchange_participants: [organizer, ana, bea],
+        my_participant: ana,
+      })
+    );
+
+    await renderPage();
+
+    expect(within(roster()).getByTestId("shared-wishlists-hint")).toBeTruthy();
+  });
+
+  it("says nothing about sharing when wishlists aren't shared", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({ status: "active", is_owner: false, share_url: null, my_participant: ana })
+    );
+
+    await renderPage();
+
+    expect(screen.queryByTestId("shared-wishlists-hint")).toBeNull();
+  });
+});
+
+describe("sharing everyone's wishlists", () => {
+  function sharingSwitch() {
+    return screen.getByRole("switch", { name: "Let everyone see each other's wishlists" });
+  }
+
+  it("turns on for the organizer, even after names are drawn", async () => {
+    mocks.getBySlug.mockResolvedValue(exchangeWith({ status: "active" }));
+    mocks.updateExchange.mockResolvedValue(exchangeWith({ status: "active", shared_wishlists: true }));
+
+    await renderPage();
+    expect(sharingSwitch().getAttribute("aria-checked")).toBe("false");
+    fireEvent.click(sharingSwitch());
+
+    await waitFor(() => expect(sharingSwitch().getAttribute("aria-checked")).toBe("true"));
+    expect(mocks.updateExchange).toHaveBeenCalledWith(7, { shared_wishlists: true });
+    expect(mocks.toastSuccess).toHaveBeenCalledWith("Everyone can see each other's wishlists");
+  });
+
+  it("turns off again", async () => {
+    mocks.getBySlug.mockResolvedValue(exchangeWith({ shared_wishlists: true }));
+    mocks.updateExchange.mockResolvedValue(exchangeWith({ shared_wishlists: false }));
+
+    await renderPage();
+    fireEvent.click(sharingSwitch());
+
+    await waitFor(() => expect(sharingSwitch().getAttribute("aria-checked")).toBe("false"));
+    expect(mocks.updateExchange).toHaveBeenCalledWith(7, { shared_wishlists: false });
+  });
+
+  it("stays as it was when the change fails", async () => {
+    mocks.getBySlug.mockResolvedValue(exchangeWith());
+    mocks.updateExchange.mockRejectedValue(new ApiError(403, { error: "Only the owner can perform this action" }));
+
+    await renderPage();
+    fireEvent.click(sharingSwitch());
+
+    await waitFor(() => expect(mocks.toastError).toHaveBeenCalled());
+    expect(sharingSwitch().getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("isn't offered to participants", async () => {
+    mocks.getBySlug.mockResolvedValue(
+      exchangeWith({ is_owner: false, share_url: null, my_participant: person(2, "Ana", { status: "accepted" }) })
+    );
+
+    await renderPage();
+
+    expect(screen.queryByTestId("shared-wishlists-setting")).toBeNull();
   });
 });
 

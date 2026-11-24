@@ -182,6 +182,7 @@ export function useExchangeDetailController() {
   const isValidExchangeId = Number.isFinite(exchangeId);
   const [starting, setStarting] = useState(false);
   const [answeringRequestId, setAnsweringRequestId] = useState<number | null>(null);
+  const [savingSharedWishlists, setSavingSharedWishlists] = useState(false);
   const [schedulingReminder, setSchedulingReminder] = useState(false);
   const [resendingParticipantId, setResendingParticipantId] = useState<number | null>(null);
   const [exclusionModalVisible, setExclusionModalVisible] = useState(false);
@@ -244,6 +245,25 @@ export function useExchangeDetailController() {
       }
     },
     [answeringRequestId, exchangeId, notificationsResource, track, wishlistAccessRequests]
+  );
+
+  const setSharedWishlists = useCallback(
+    async (shared: boolean) => {
+      if (savingSharedWishlists) return;
+      setSavingSharedWishlists(true);
+      try {
+        const updated = await giftExchanges.update(exchangeId, { shared_wishlists: shared });
+        resource.setData((current) => (current ? { ...current, shared_wishlists: updated.shared_wishlists } : current));
+        track("mobile_exchange_shared_wishlists_changed", { exchange_id: exchangeId, shared });
+        await haptics.success();
+      } catch (shareError) {
+        await haptics.error();
+        Alert.alert("Couldn't Change Sharing", humanizeError(shareError, "Try again."));
+      } finally {
+        setSavingSharedWishlists(false);
+      }
+    },
+    [exchangeId, giftExchanges, resource, savingSharedWishlists, track]
   );
 
   const startExchange = useCallback(() => {
@@ -642,7 +662,9 @@ export function useExchangeDetailController() {
     shareExchangeJoinLink,
     shareParticipantInvite,
     savingExclusion,
+    savingSharedWishlists,
     schedulingReminder,
+    setSharedWishlists,
     starting,
     startBlocker: resource.data ? getExchangeStartBlocker(resource.data) : null,
     triggerRefresh,

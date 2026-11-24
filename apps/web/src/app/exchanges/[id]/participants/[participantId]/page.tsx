@@ -15,7 +15,7 @@ import { MatchWishlist } from "@/components/exchanges/match-wishlist";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-type ClosedAccess = Exclude<WishlistAccess, "own" | "match" | "approved">;
+type ClosedAccess = Exclude<WishlistAccess, "own" | "match" | "shared" | "approved">;
 
 const CLOSED_COPY: Record<ClosedAccess, { icon: LucideIcon; title: (name: string) => string; body: (name: string) => string }> = {
   none: {
@@ -154,7 +154,7 @@ export default function ExchangeParticipantPage({
               </Button>
             </CardContent>
           </Card>
-        ) : access === "match" || access === "approved" ? (
+        ) : access === "match" || access === "shared" || access === "approved" ? (
           <MatchWishlist
             exchangeId={exchange.id}
             matchName={name}

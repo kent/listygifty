@@ -81,7 +81,7 @@ function exchange(overrides: Partial<GiftExchangeWithParticipants> = {}): GiftEx
 }
 
 function bea(access: WishlistAccess) {
-  const visible = access === "match" || access === "approved";
+  const visible = access === "match" || access === "shared" || access === "approved";
   return person(3, "Bea", {
     wishlist_access: access,
     ...(visible
@@ -167,6 +167,17 @@ describe("someone you didn't draw", () => {
 
     expect(await screen.findByText("Wool socks")).toBeTruthy();
     expect(screen.queryByText(/getting a gift for/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /anonymously/ })).toBeNull();
+  });
+
+  it("shows their wishlist to mark, without asking, when the exchange shares everyone's", async () => {
+    mocks.getParticipant.mockResolvedValue(bea("shared"));
+
+    await renderPage();
+
+    expect(await screen.findByText("Wool socks")).toBeTruthy();
+    expect(screen.queryByText(/getting a gift for/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Ask to see their wishlist" })).toBeNull();
     expect(screen.queryByRole("button", { name: /anonymously/ })).toBeNull();
   });
 });
