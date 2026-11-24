@@ -16,6 +16,28 @@ describe("screenshot mocks", () => {
     expect(exchange.my_participant?.matched_participant?.display_name).toBe("Sam Lee");
   });
 
+  it("opens everyone's wishlist in the sample exchange once it's shared", async () => {
+    const exchange = await screenshotServices.giftExchanges.getById(301);
+    const me = exchange.my_participant;
+    const other = exchange.exchange_participants.find(
+      (participant) =>
+        participant.status === "accepted" &&
+        participant.has_user &&
+        participant.id !== me?.id &&
+        participant.id !== me?.matched_participant_id
+    );
+    if (!other) throw new Error("The sample exchange needs someone else who joined.");
+
+    expect((await screenshotServices.exchangeParticipants.getById(301, other.id)).wishlist_access).not.toBe("shared");
+    expect((await screenshotServices.giftExchanges.update(301, { shared_wishlists: true })).shared_wishlists).toBe(true);
+    const peer = await screenshotServices.exchangeParticipants.getById(301, other.id);
+    await screenshotServices.giftExchanges.update(301, { shared_wishlists: false });
+
+    expect(peer.wishlist_access).toBe("shared");
+    expect(peer.wishlist_items).toBeDefined();
+    expect(peer).not.toHaveProperty("matched_participant_id");
+  });
+
   it("seeds wishlist items for the screenshot match reveal", async () => {
     const items = await screenshotServices.wishlistItems.getAll(301, 402);
 

@@ -373,8 +373,8 @@ describe("opening someone in an exchange", () => {
     expect(canOpenExchangeParticipant(buildExchange({ my_participant: null }), joined)).toBe(false);
   });
 
-  it("shows a wishlist only for you, your match, or after a yes", () => {
-    expect((["own", "match", "approved"] as const).every(canSeeWishlist)).toBe(true);
+  it("shows a wishlist only for you, your match, an exchange that shares them, or after a yes", () => {
+    expect((["own", "match", "shared", "approved"] as const).every(canSeeWishlist)).toBe(true);
     expect((["pending", "denied", "none", "unavailable"] as const).some(canSeeWishlist)).toBe(false);
   });
 

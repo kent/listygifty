@@ -15,6 +15,7 @@ const mockNudge = jest.fn();
 const mockCreateRequest = jest.fn();
 const mockApprove = jest.fn();
 const mockDeny = jest.fn();
+const mockUpdateExchange = jest.fn();
 let mockData: unknown;
 let mockList: unknown[] = [];
 const mockSetError = jest.fn();
@@ -31,7 +32,7 @@ jest.mock("@/lib/controllers/use-focus-resource", () => ({
 }));
 jest.mock("@/lib/use-api", () => ({ useServices: () => ({
   exchangeInvites: { accept: mockAccept, decline: mockDecline },
-  giftExchanges: { nudgeMatch: mockNudge }, wishlistItems: {}, exchangeParticipants: {}, exchangeNotifications: {},
+  giftExchanges: { nudgeMatch: mockNudge, update: mockUpdateExchange }, wishlistItems: {}, exchangeParticipants: {}, exchangeNotifications: {},
   wishlistAccessRequests: { create: mockCreateRequest, approve: mockApprove, deny: mockDeny },
 }) }));
 jest.mock("@/lib/analytics", () => ({ useAnalytics: () => jest.fn() }));
@@ -155,6 +156,32 @@ describe("wishlist requests on the exchange screen", () => {
   });
 });
 
+describe("sharing everyone's wishlists", () => {
+  beforeEach(() => {
+    mockData = { id: 32, status: "active", is_owner: true, shared_wishlists: false, capabilities: { nudge_match: false }, exchange_participants: [] };
+  });
+
+  it("turns on and shows the saved setting", async () => {
+    mockUpdateExchange.mockResolvedValue({ id: 32, shared_wishlists: true });
+    const { result } = renderHook(useExchangeDetailController);
+    await act(async () => result.current.setSharedWishlists(true));
+    expect(mockUpdateExchange).toHaveBeenCalledWith(32, { shared_wishlists: true });
+    const update = mockSetData.mock.calls[0][0] as (current: { shared_wishlists: boolean }) => { shared_wishlists: boolean };
+    expect(update({ shared_wishlists: false }).shared_wishlists).toBe(true);
+    expect(result.current.savingSharedWishlists).toBe(false);
+  });
+
+  it("says why when the change fails, and leaves the setting alone", async () => {
+    jest.spyOn(Alert, "alert").mockImplementation(() => {});
+    mockUpdateExchange.mockRejectedValue(Object.assign(new Error("Only the owner can perform this action"), { status: 403 }));
+    const { result } = renderHook(useExchangeDetailController);
+    await act(async () => result.current.setSharedWishlists(true));
+    expect(Alert.alert).toHaveBeenCalledWith("Couldn't Change Sharing", "You don't have permission to do that.");
+    expect(mockSetData).not.toHaveBeenCalled();
+    jest.restoreAllMocks();
+  });
+});
+
 describe("someone else in the exchange", () => {
   function opened(access: string) {
     return {
@@ -183,7 +210,7 @@ describe("someone else in the exchange", () => {
     expect(result.current.asking).toBe(false);
   });
 
-  it.each(["match", "approved", "pending", "denied", "unavailable"])("isn't asked when access is %s", async (access) => {
+  it.each(["match", "shared", "approved", "pending", "denied", "unavailable"])("isn't asked when access is %s", async (access) => {
     mockData = opened(access);
     const { result } = renderHook(useExchangeParticipantController);
     await act(async () => result.current.askForWishlist());

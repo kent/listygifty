@@ -349,6 +349,13 @@ export const giftExchangesService = {
     return exchange;
   },
 
+  async update(id: number, data: Parameters<typeof baseGiftExchangesService.update>[1]) {
+    const exchange = await baseGiftExchangesService.update(id, data);
+    invalidateCachedResources("gift-exchanges:");
+    invalidateCachedResources(`gift-exchanges:${id}`);
+    return exchange;
+  },
+
   async start(id: number) {
     const exchange = await baseGiftExchangesService.start(id);
     resetBootstrapState();
