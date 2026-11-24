@@ -800,6 +800,10 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     assert late_update["isError"]
     assert_equal "An exchange can't be changed after names are drawn", tool_payload(late_update)["error"]
 
+    shared = tool_payload(call_tool("update_gift_exchange", { exchange_id: exchange.id, shared_wishlists: true }))
+    assert shared["shared_wishlists"]
+    assert exchange.reload.shared_wishlists?
+
     participant_roster = tool_payload(call_tool(
       "list_exchange_participants",
       { exchange_id: exchange.id },

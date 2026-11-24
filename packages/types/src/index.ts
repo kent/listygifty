@@ -948,6 +948,8 @@ export interface GiftExchange extends BaseEntity {
   status: ExchangeStatus;
   budget_min: string | null;
   budget_max: string | null;
+  // Everyone who joined can see each other's wishlist. Older APIs leave it out.
+  shared_wishlists?: boolean;
   user_id: number;
   is_owner: boolean;
   participant_count: number;
@@ -1020,17 +1022,19 @@ export interface ExchangeParticipant extends BaseEntity {
 }
 
 // What you can see of another person's wishlist in an exchange. "match" is
-// the person you drew. Everyone else's list opens once they approve a request.
+// the person you drew. "shared" means the organizer opened everyone's list.
+// Otherwise a list opens once its owner approves a request.
 export type WishlistAccess =
   | "own"
   | "match"
+  | "shared"
   | "approved"
   | "pending"
   | "denied"
   | "none"
   | "unavailable";
 
-export const VISIBLE_WISHLIST_ACCESS: readonly WishlistAccess[] = ["own", "match", "approved"];
+export const VISIBLE_WISHLIST_ACCESS: readonly WishlistAccess[] = ["own", "match", "shared", "approved"];
 
 export type WishlistAccessRequestStatus = "pending" | "approved" | "denied";
 
@@ -1123,6 +1127,7 @@ export interface CreateGiftExchangeRequest {
     exchange_date?: string;
     budget_min?: number;
     budget_max?: number;
+    shared_wishlists?: boolean;
     include_creator?: boolean;
   };
 }

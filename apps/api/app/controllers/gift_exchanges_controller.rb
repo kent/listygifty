@@ -106,7 +106,7 @@ class GiftExchangesController < ApplicationController
   end
 
   def require_editable
-    return if @gift_exchange.editable?
+    return if @gift_exchange.changeable?(gift_exchange_params.keys)
 
     render_error("An exchange can't be changed after names are drawn", status: :unprocessable_entity)
   end
@@ -117,6 +117,7 @@ class GiftExchangesController < ApplicationController
       :exchange_date,
       :budget_min,
       :budget_max,
+      :shared_wishlists,
       :include_creator
     )
   end

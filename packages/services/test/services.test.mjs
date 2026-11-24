@@ -75,6 +75,16 @@ test("anonymous wishlist requests preserve the server's cooldown feedback", asyn
   assert.equal(fetch.mock.calls[0].arguments[1].method, "POST");
 });
 
+test("exchange settings patch the exchange envelope", async (t) => {
+  const { createGiftExchangesService } = await import("../dist/gift-exchanges.service.js");
+  const fetch = t.mock.method(globalThis, "fetch", async () => json({ id: 5, shared_wishlists: true }));
+  assert.deepEqual(await createGiftExchangesService(client()).update(5, { shared_wishlists: true }), { id: 5, shared_wishlists: true });
+  const [url, options] = fetch.mock.calls[0].arguments;
+  assert.equal(url, "https://api.example.test/gift_exchanges/5");
+  assert.equal(options.method, "PATCH");
+  assert.deepEqual(JSON.parse(options.body), { gift_exchange: { shared_wishlists: true } });
+});
+
 test("wishlist requests ask by participant and answer by request", async (t) => {
   const { createWishlistAccessRequestsService } = await import("../dist/wishlist-access-requests.service.js");
   const fetch = t.mock.method(globalThis, "fetch", async () => json({ id: 9, status: "pending" }));

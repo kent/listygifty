@@ -781,12 +781,15 @@ class McpController < ApplicationController
         handler: ->(args) { create_exchange(args) }
       },
       "update_gift_exchange" => {
-        description: "Update an owned gift exchange",
+        description: "Update an owned gift exchange. After names are drawn, only shared_wishlists can change.",
         scope: "write",
         schema: exchange_schema(required: [ "exchange_id" ], include_exchange_id: true),
         handler: ->(args) {
-          exchange = ensure_exchange_editable!(find_owned_exchange(args["exchange_id"]))
-          exchange.update!(slice_args(args, exchange_attributes))
+          exchange = find_owned_exchange(args["exchange_id"])
+          attributes = slice_args(args, exchange_attributes)
+          raise ArgumentError, "An exchange can't be changed after names are drawn" unless exchange.changeable?(attributes.keys)
+
+          exchange.update!(attributes)
           serialize_exchange(exchange.reload)
         }
       },
@@ -1282,7 +1285,7 @@ class McpController < ApplicationController
   end
 
   def exchange_attributes
-    %w[name exchange_date budget_min budget_max]
+    %w[name exchange_date budget_min budget_max shared_wishlists]
   end
 
   def exchange_schema(required:, include_workspace: false, include_creator: false, include_exchange_id: false)
@@ -1290,7 +1293,11 @@ class McpController < ApplicationController
       name: string_property("Exchange name"),
       exchange_date: string_property("Exchange date in YYYY-MM-DD format"),
       budget_min: { type: "number" },
-      budget_max: { type: "number" }
+      budget_max: { type: "number" },
+      shared_wishlists: {
+        type: "boolean",
+        description: "When true, everyone who joined can see and mark each other's exchange wishlists. Owners never see marks on their own list, and nobody sees who drew whom."
+      }
     }
     properties[:workspace_id] = integer_property("Workspace ID") if include_workspace
     properties[:include_creator] = boolean_property if include_creator

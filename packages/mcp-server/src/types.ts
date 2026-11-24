@@ -197,6 +197,7 @@ export interface GiftExchange extends BaseEntity {
   status: ExchangeStatus;
   budget_min: string | null;
   budget_max: string | null;
+  shared_wishlists?: boolean;
   user_id: number;
   is_owner: boolean;
   participant_count: number;

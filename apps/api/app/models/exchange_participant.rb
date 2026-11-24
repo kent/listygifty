@@ -1,7 +1,7 @@
 class ExchangeParticipant < ApplicationRecord
   STATUSES = %w[invited accepted declined].freeze
   # The wishlist_access_to answers that let someone read the list.
-  WISHLIST_VISIBLE_ACCESS = %w[own match approved].freeze
+  WISHLIST_VISIBLE_ACCESS = %w[own match shared approved].freeze
   ANONYMIZED_NAME = "Former member".freeze
   # .invalid is reserved (RFC 2606), so this can never reach a real mailbox.
   ANONYMIZED_EMAIL_DOMAIN = "deleted.invalid".freeze
@@ -125,12 +125,15 @@ class ExchangeParticipant < ApplicationRecord
     email
   end
 
-  # What this person can see of other's wishlist: own, match, approved,
-  # pending, denied, none, or unavailable. It only ever describes this
-  # person's own draw, so it can't give away who anyone else drew.
+  # What this person can see of other's wishlist: own, match, shared,
+  # approved, pending, denied, none, or unavailable. It only ever describes
+  # this person's own draw, so it can't give away who anyone else drew.
+  # Shared means the organizer opened every joined person's list to everyone
+  # else who joined.
   def wishlist_access_to(other)
     return "own" if other.id == id
     return "match" if gift_exchange.drawn? && matched_participant_id == other.id
+    return "shared" if gift_exchange.shared_wishlists? && wishlist_requestable? && other.wishlist_requestable?
 
     request = sent_wishlist_access_requests.find_by(requested_participant_id: other.id)
     return request.status if request

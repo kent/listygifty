@@ -3,12 +3,14 @@ import type {
   CreateGiftExchangeRequest,
   GiftExchange,
   GiftExchangeWithParticipants,
+  UpdateGiftExchangeRequest,
 } from "@niftygifty/types";
 
 export interface GiftExchangesService {
   getAll(): Promise<GiftExchange[]>;
   getBySlug(slug: string): Promise<GiftExchangeWithParticipants>;
   create(data: CreateGiftExchangeRequest["gift_exchange"]): Promise<GiftExchange>;
+  update(id: number, data: UpdateGiftExchangeRequest["gift_exchange"]): Promise<GiftExchange>;
   start(id: number): Promise<GiftExchangeWithParticipants>;
   redo(id: number, mode: "reopen" | "redraw"): Promise<GiftExchangeWithParticipants>;
   nudgeMatch(id: number): Promise<void>;
@@ -26,6 +28,10 @@ export function createGiftExchangesService(client: ApiClient): GiftExchangesServ
 
     create(data: CreateGiftExchangeRequest["gift_exchange"]) {
       return client.post<GiftExchange>("/gift_exchanges", { gift_exchange: data });
+    },
+
+    update(id: number, data: UpdateGiftExchangeRequest["gift_exchange"]) {
+      return client.patch<GiftExchange>(`/gift_exchanges/${id}`, { gift_exchange: data });
     },
 
     start(id: number) {
