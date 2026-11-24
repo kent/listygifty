@@ -28,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -73,6 +74,7 @@ import {
   RotateCcw,
   Shuffle,
   BellRing,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import type {
@@ -154,6 +156,7 @@ export default function ExchangeDetailPage({
   const [starting, setStarting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [redoingMode, setRedoingMode] = useState<"reopen" | "redraw" | null>(null);
+  const [savingSharing, setSavingSharing] = useState(false);
   const [participantToRemove, setParticipantToRemove] = useState<ExchangeParticipant | null>(null);
   const [participantToNudge, setParticipantToNudge] = useState<ExchangeParticipant | null>(null);
   const [newParticipant, setNewParticipant] = useState({ name: "", email: "" });
@@ -389,6 +392,20 @@ export default function ExchangeDetailPage({
       toast.error(message);
     } finally {
       setRedoingMode(null);
+    }
+  };
+
+  const handleToggleSharedWishlists = async (shared: boolean) => {
+    if (!exchange) return;
+    setSavingSharing(true);
+    try {
+      const updated = await giftExchangesService.update(exchange.id, { shared_wishlists: shared });
+      setExchange((prev) => (prev ? { ...prev, shared_wishlists: updated.shared_wishlists } : prev));
+      toast.success(shared ? "Everyone can see each other's wishlists" : "Wishlists are no longer shared");
+    } catch (err: unknown) {
+      toast.error(humanizeError(err, "Could not change wishlist sharing"));
+    } finally {
+      setSavingSharing(false);
     }
   };
 
@@ -818,6 +835,12 @@ export default function ExchangeDetailPage({
               )}
             </CardHeader>
             <CardContent>
+              {exchange.shared_wishlists && myParticipant?.status === "accepted" && (
+                <p data-testid="shared-wishlists-hint" className="mb-3 text-sm text-slate-600 dark:text-slate-400">
+                  Everyone&apos;s wishlist is shared in this exchange. Open a name to see theirs and mark what
+                  you&apos;re getting.
+                </p>
+              )}
               {participants.length === 0 ? (
                 <p className="text-slate-600 dark:text-slate-400 text-center py-8">
                   No participants yet. Add people to get started!
@@ -927,6 +950,41 @@ export default function ExchangeDetailPage({
               )}
             </CardContent>
           </Card>
+
+          {isOwner && (
+            <Card
+              data-testid="shared-wishlists-setting"
+              className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50"
+            >
+              <CardHeader>
+                <CardTitle className="text-slate-900 dark:text-white flex items-center gap-2">
+                  <Eye className="h-5 w-5 text-violet-500 dark:text-violet-400" />
+                  Shared wishlists
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 space-y-1">
+                    <Label htmlFor="shared-wishlists" className="text-slate-900 dark:text-white">
+                      Let everyone see each other&apos;s wishlists
+                    </Label>
+                    <p id="shared-wishlists-help" className="text-sm text-slate-600 dark:text-slate-400">
+                      Anyone who joined can open someone&apos;s name to see their wishlist and mark what
+                      they&apos;re getting. Nobody sees who drew whom, or what was marked on their own list.
+                    </p>
+                  </div>
+                  <Switch
+                    id="shared-wishlists"
+                    aria-describedby="shared-wishlists-help"
+                    checked={exchange.shared_wishlists ?? false}
+                    disabled={savingSharing}
+                    onCheckedChange={handleToggleSharedWishlists}
+                    className="mt-1"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Exclusion Rules */}
           {isOwner && (
